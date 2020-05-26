@@ -1,0 +1,62 @@
+#!/bin/bash
+#
+# UNICORE UFTPD
+#
+# chkconfig: 235 96 04
+# description: UNICORE UFTPD server
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+NAME="UNICORE UFTPD server"
+
+#This must be equal to this file name
+SERVICE=unicore-uftpd
+START=/usr/sbin/unicore-uftpd-start.sh
+STOP=/usr/sbin/unicore-uftpd-stop.sh
+LASTPID=/var/run/unicore/uftpd.pid
+
+start() {
+	echo -n "Starting $NAME: "
+	# if necessary, re-create the pid dir
+	test -e /var/run/unicore || install -m 755 -o unicore -g unicore -d /var/run/unicore
+	daemon "$START"
+	RETVAL=$?
+        if [ $RETVAL -eq 0 ] ; then 
+	    touch "/var/lock/subsys/$SERVICE"
+            MYPID=$(cat $LASTPID)
+            [ -e /proc/$MYPID/oom_score_adj ] && echo "-17" > /proc/$MYPID/oom_score_adj
+            [ -e /proc/$MYPID/oom_adj ] && echo "-17" > /proc/$MYPID/oom_adj
+        fi
+	echo
+	return $RETVAL
+}
+stop() {
+	echo -n $"Stopping $NAME: "
+        $STOP
+	rm -f "/var/lock/subsys/$SERVICE"
+	echo
+}
+
+# See how we were called.
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  status)
+	status -p "$LASTPID" "$SERVICE"
+	RETVAL=$?
+	;;
+  restart)
+	stop
+	start
+	;;
+  *)
+	echo $"Usage: $0 {start|stop|status|restart|help}"
+	exit 1
+esac
+
+exit $RETVAL

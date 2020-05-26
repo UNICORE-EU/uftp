@@ -1,0 +1,6 @@
+# Example SSH users file used with the SSHKEY authentication method
+
+#
+#format: username:sshkey:DN
+#
+demouser:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDQDTCtE7cEcfUGbBUI8960zI7n4rP6YJFDQYyxgxepBKt9a6aURezah3rnWZQnvsscG/XAhQDxzx+NiRo1+sGDABFwQMFfixKE3n4FztpPiVVXu3K8DVAlH3xVFwg1xahbFdIO267bT9bBeuiSeDo6KmrABWHOQdS0tvHZTzza2oxD30MTbTE9BP7W0XeSGxoCXtde2a1DzwYmhGcQvu1nnBKqmz6CSJ5yG66Do1GYy/1YusySdLPg12mngaQE145KvKrdl0oNh82lv98XoldbCRqcZ58UIRcsoz2BMFOTF8SteywbHv6jbI/0Ftl9kaj7t7Qh+dYIS0Igyarb5413 testkey:CN=Demo User, O=UNICORE, C=EU

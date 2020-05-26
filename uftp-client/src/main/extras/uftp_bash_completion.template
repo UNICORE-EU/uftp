@@ -1,0 +1,30 @@
+
+_uftp()
+{
+  local cur prev commands global_opts opts
+  COMPREPLY=()
+  cur=`_get_cword`
+  prev="${COMP_WORDS[COMP_CWORD-1]}"
+  commands="%(commands)s"
+  global_opts="%(global_opts)s"
+
+
+  # parsing for uftp command word (2nd word in commandline.
+  # uftp <command> [OPTIONS] <args>)
+  if [ $COMP_CWORD -eq 1 ]; then
+    COMPREPLY=( $(compgen -W "${commands}" -- ${cur}) )
+    return 0
+  fi
+
+  # looking for arguments matching to command
+  case "${COMP_WORDS[1]}" in
+%(case_body)s
+  esac
+
+  COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+  
+  _filedir
+
+}
+
+complete -o filenames -F _uftp uftp

@@ -1,0 +1,92 @@
+Buildroot: %{_builddir}/%{name}-root
+Name: unicore-@component-name@
+Version: @component-version@
+Release: @component-release@@component-disttag@
+Summary: UNICORE UFTP Authentication Server
+License: BSD
+Distribution: RedHat
+Group: System Environment/Daemons
+URL: http://www.unicore.eu
+Requires: java-1.@java-main-version@.0-openjdk
+AutoReqProv: no
+BuildArch: x86_64
+Packager: Bernd Schuller unicore-support@lists.sourceforge.net
+@preamble@
+
+%description
+UNICORE (Uniform Interface to Computing Resources) offers a
+ready-to-run Grid system including client and server software.
+UNICORE makes distributed computing and data resources available
+in a seamless and secure way in intranets and the internet.
+
+This package contains the UNICORE UFTP Authentication Server,
+which can be used to authenticate UFTP transfers using via its
+RESTful APIs.
+
+
+%changelog
+
+* Mon Nov 28 2016 Bernd Schuller <unicore-support@lists.sourceforge.net> 
+-Initial rpm package
+
+@install_command@
+
+%files
+%defattr(755, root, root, -)
+
+#
+# Config files
+#
+%dir %attr(0750 unicore unicore) "/etc/unicore/authserver/"
+%dir %attr(0750 unicore unicore) "/etc/unicore/authserver/xacml2Policies"
+%dir %attr(0750 unicore unicore) "/etc/unicore/authserver/trusted-certs"
+%config %attr(0600 unicore unicore) "/etc/unicore/authserver/container.properties"
+%config %attr(0600 unicore unicore) "/etc/unicore/authserver/startup.properties"
+%config %attr(0600 unicore unicore) "/etc/unicore/authserver/auth.p12"
+%config %attr(0600 unicore unicore) "/etc/unicore/authserver/truststore.jks"
+%config %attr(0600 unicore unicore) "/etc/unicore/authserver/trusted-certs/cacert.pem"
+%config %attr(0600 unicore unicore) "/etc/unicore/authserver/simpleuudb"
+%config %attr(0600 unicore unicore) "/etc/unicore/authserver/userdb.txt"
+%config %attr(0600 unicore unicore) "/etc/unicore/authserver/ssh-users.txt"
+%config %attr(0600 unicore unicore) "/etc/unicore/authserver/xacml2.config"
+%config %attr(0600 unicore unicore) "/etc/unicore/authserver/xacml2Policies/30uftpAuthService.xml"
+%config %attr(0660 unicore unicore) "/etc/unicore/authserver/logging.properties"
+%config %attr(0755 unicore unicore) "/etc/rc.d/init.d/unicore-authserver"
+
+%attr(0755 unicore unicore) "/usr/sbin/unicore-authserver-start.sh"
+%attr(0755 unicore unicore) "/usr/sbin/unicore-authserver-stop.sh"
+%attr(0755 unicore unicore) "/usr/sbin/unicore-authserver-status.sh"
+
+
+#
+# Documentation 
+#
+%docdir "/usr/share/doc/unicore/authserver/"
+"/usr/share/doc/unicore/authserver/*"
+
+#
+# jar files
+#
+%dir "/usr/share/unicore/authserver/lib"
+"/usr/share/unicore/authserver/lib/*.jar"
+
+#
+# logs
+#
+%dir %attr(0775 unicore unicore) "/var/log/unicore/authserver"
+%dir %attr(0775 unicore unicore) "/var/run/unicore"
+
+
+%pre
+/usr/sbin/groupadd -r unicore 2>/dev/null || :
+/usr/sbin/useradd -c "UNICORE" -g unicore \
+    -s /sbin/nologin -r -d /usr/share/unicore unicore 2>/dev/null || :
+    
+%post
+/sbin/chkconfig --add unicore-authserver
+
+%preun
+if [ "$1" = "0" ]; then
+    /etc/init.d/unicore-authserver stop >/dev/null 2>&1
+    /sbin/chkconfig --del unicore-authserver
+fi

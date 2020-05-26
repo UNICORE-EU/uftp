@@ -1,0 +1,73 @@
+Changelog
+---------
+The UFTP issue tracker is at
+https://sourceforge.net/p/unicore/uftp-issues
+
+***
+***  see README-UPGRADE.txt for how to update from 1.x
+***
+
+Auth Server 2.1.0 (released Feb 21, 2020)
+-----------------------------------------
+ - mew feature: anonymous (http) download sets the Content-Disposition header
+ - mew feature: anonymous (http) download has basic support for byte ranges
+ - fix: DB table name for storing shares is now 'SHARES_<servername>'
+   WARNING if you use data sharing in production, your existing shares
+   need to be converted/transferred or they will be lost.
+   Please contact us!
+ - allow uftp access to anonymous shares via "uftp get-share"
+ - improved error responses
+
+Auth Server 2.0.0 (released Jan 20, 2020)
+-----------------------------------------
+ - update to UNICORE 8.0 base libs
+ - simpler, properties-only configuration
+ - new feature: multiple UFTPD servers can be configured
+   to provide round-robin and/or failover operation (#51)
+
+Auth Server 1.5.0 (released Aug 20, 2019)
+-----------------------------------------
+ - update to UNICORE 7.13 base libs
+ - smarter handling of errors when retrieving SSH keys
+ 
+Auth Server 1.4.0 (released Jul 11, 2018)
+-----------------------------------------
+ - update to UNICORE 7.10 base libs
+ - new feature: data sharing service included in authserver (#33)
+ - new feature: SSHKey authentication can use ~/.ssh/authorized_keys (#47)
+ - fix: SSHKey authentication does not work when SSHKey is
+   the first authenticator in the chain (#37)
+
+Auth Server 1.3.0 (released Nov 29, 2016)
+-----------------------------------------
+ - update to UNICORE 7.7 base libs
+ - provide rmp and deb packages
+ - new feature: handle user's groups correctly: pass the
+   preferred group to UFTPD and report the available groups via
+   the 'info' reply (https://sourceforge.net/p/unicore/uftp-issues/31)
+
+Auth Server 1.2.0 (released June 3, 2016)
+-----------------------------------------
+ - update to UNICORE 7.6 base libs
+ - report UFTPD connection status via REST GET
+   operation (i.e. 'uftp info' command)
+
+Auth Server 1.1.1 (released Nov 18, 2014)
+-----------------------------------------
+ - fix: real client IP from Gateway was not forwarded
+   to UFTPD
+ - fix: disable SSLv3 ("poodle" vulnerability) 
+ - fix: typos in manual and example userdb.txt file
+
+Auth Server 1.1.0 (released Nov 3, 2014)
+----------------------------------------
+ - new feature: support include/exclude patterns
+   (works with UFTPD 2.2.0 and higher)
+ - fix: pass on encryption and compression options to
+   UFTPD
+
+Auth Server 1.0.0 (released Sept 19, 2014)
+------------------------------------------
+
+First release
+

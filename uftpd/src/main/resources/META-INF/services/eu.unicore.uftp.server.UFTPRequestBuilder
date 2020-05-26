@@ -1,0 +1,4 @@
+eu.unicore.uftp.server.requests.UFTPPingRequestBuilder
+eu.unicore.uftp.server.requests.UFTPTransferRequestBuilder
+eu.unicore.uftp.server.requests.UFTPTunnelRequestBuilder
+eu.unicore.uftp.server.requests.UFTPGetUserInfoRequestBuilder

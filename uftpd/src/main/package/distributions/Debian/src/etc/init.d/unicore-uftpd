@@ -1,0 +1,86 @@
+#!/bin/bash
+#
+# UNICORE UFTPD
+#
+### BEGIN INIT INFO
+# Provides:          unicore-uftpd
+# Required-Start:    $remote_fs $syslog
+# Required-Stop:     $remote_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start daemon at boot time
+# Description:       UNICORE UFTPD
+### END INIT INFO
+
+# Source function library.
+. /lib/lsb/init-functions
+
+NAME="UNICORE UFTPD"
+
+#This must be equal to this file name
+SERVICE=unicore-uftpd
+START=/usr/sbin/unicore-uftpd-start.sh
+STOP=/usr/sbin/unicore-uftpd-stop.sh
+LASTPID=/var/run/unicore/uftpd.pid
+
+# source defaults file
+[ -f /etc/default/$SERVICE ] && . /etc/default/$SERVICE
+
+start() {
+        log_daemon_msg "Starting $NAME"
+	# if necessary, re-create the pid dir
+        test -e /var/run/unicore || install -m 755 -o unicore -g unicore -d /var/run/unicore
+        start-stop-daemon --start --exec "$START"
+        RETVAL=$?
+        if [ $RETVAL -eq 0 ] ; then 
+          touch "/var/lock/$SERVICE"
+          MYPID=$(cat $LASTPID)
+          [ -e /proc/$MYPID/oom_score_adj ] && echo "-17" > /proc/$MYPID/oom_score_adj
+          [ -e /proc/$MYPID/oom_adj ] && echo "-17" > /proc/$MYPID/oom_adj
+        fi
+        log_end_msg $RETVAL
+        echo
+        return $RETVAL
+
+}
+stop() {
+         log_daemon_msg "Stopping $NAME"
+         echo
+         "$STOP"
+         log_end_msg $?
+         rm -f "/var/lock/$SERVICE"
+         echo
+}
+
+
+status(){
+         if [ -a "$LASTPID" ]; then
+                 status_of_proc -p "$LASTPID" "$SERVICE" "$NAME"
+         else
+                 log_failure_msg "$SERVICE is not running"
+         fi
+}
+
+# See how we were called.
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  status)
+	status
+	;;
+  restart)
+	stop
+	start
+	;;
+  force-reload)
+	;;
+  *)
+	echo $"Usage: $0 {start|stop|status|restart|force-reload|help}"
+	exit 1
+esac
+
+exit $RETVAL

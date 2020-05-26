@@ -1,0 +1,19 @@
+Source: unicore-authserver
+Section: contrib/misc
+Priority: extra
+Maintainer: Bernd Schuller <b.schuller@fz-juelich.de>
+Build-Depends: debhelper (>= 7)
+Standards-Version: 3.8.3
+Homepage: http://www.unicore.eu
+
+Package: unicore-authserver
+Architecture: all
+Depends: openjdk-@java-main-version@-jre
+Description: UNICORE (Uniform Interface to Computing Resources) offers a
+ ready-to-run Grid system including client and server software.
+ UNICORE makes distributed computing and data resources available
+ in a seamless and secure way in intranets and the internet.
+ .
+ This package contains the UNICORE UFTP Authentication Server,
+ which can be used to authenticate UFTP transfers using via its
+ RESTful APIs.

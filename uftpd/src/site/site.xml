@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<project name="UNICORE UFTP server">
+  <bannerLeft>
+    <name>UNICORE</name>
+    <src>images/unicorelogo.gif</src>
+    <href>http://www.unicore.eu/</href>
+  </bannerLeft>
+  <version/>
+  <body>
+    <links>
+      <item name="UNICORE" href="http://www.unicore.eu" />
+    </links> 
+    <menu name="UNICORE UFTP server">
+      <item name="Main" href="index.html"/>
+    </menu>
+    <menu ref="reports"/>
+  </body>
+</project>
+

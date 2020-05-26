@@ -1,0 +1,42 @@
+====================
+uftp bash completion
+====================
+
+
+Prerequisites
+=============
+
+You need to have the package "bash-completion" installed.
+
+
+Installation
+============
+
+
+If bash completion is not automatically loaded on your machine,
+or if you are unsure, add the following lines to your .bashrc:
+
+  if [ -f /etc/bash_completion ]; then
+      . /etc/bash_completion 
+  fi
+
+
+Add the following lines to your .bashrc:
+
+  if [ -f ~/unicore/uftp_bash_completion.sh ]; then
+      . ~/unicore/uftp_bash_completion.sh
+  fi
+
+Of course, change the lines so that they point to the correct location
+of your ucc.bash_completion.sh.
+
+If you now start a new shell, the completion for ucc options should
+work, e.g. typing
+
+  uftp in<TAB>
+
+should complete to
+
+  uftp info
+
+etc.

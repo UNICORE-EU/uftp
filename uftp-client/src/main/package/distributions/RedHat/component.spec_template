@@ -1,0 +1,61 @@
+Buildroot: %{_builddir}/%{name}-root
+Name: unicore-@component-name@@component-suffix@
+Obsoletes: unicore-@component-name@6
+Version: @component-version@
+Release: @component-release@@component-disttag@
+Summary: UNICORE UFTP Client
+License: BSD
+Distribution: RedHat
+Group: Converted/contrib/misc
+URL: http://www.unicore.eu
+Requires: java-1.@java-main-version@.0-openjdk
+AutoReqProv: no
+BuildArch: @component-architecture@
+Packager: Bernd Schuller unicore-support@lists.sourceforge.net
+@preamble@
+
+%description
+UNICORE (Uniform Interface to Computing Resources) offers a
+ready-to-run Grid system including client and server software.
+UNICORE makes distributed computing and data resources available
+in a seamless and secure way in intranets and the internet.
+
+This package contains the standalone UFTP commandline client.
+
+
+%changelog
+* Mon Sep 30 2019 Bernd Schuller <unicore-support@lists.sourceforge.net> 1.0.0-1
+-Initial rpm package
+
+@install_command@
+
+%files
+%defattr(644, root, root, 755)
+
+#
+# Config file template(s)
+#
+%dir %attr(755 root root) "/etc/unicore/uftp/"
+%config %attr(644 root root) "/etc/unicore/uftp/logging.properties"
+
+#
+# Bash completion
+#
+%attr(644 root root) "/etc/bash_completion.d/unicore-uftp"
+
+#
+# Documentation
+#
+%docdir %attr(755 root root) "/usr/share/doc/unicore/uftp/"
+%attr(644 root root) "/usr/share/doc/unicore/uftp/*"
+
+#
+# jar files
+#
+%dir %attr(755 root root) "/usr/share/unicore/uftp/lib"
+%attr(644 root root) "/usr/share/unicore/uftp/lib/*.jar"
+
+#
+# uftp script
+#
+%attr(755 root root) "/usr/bin/uftp"

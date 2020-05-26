@@ -1,0 +1,92 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>eu.unicore.uftp</groupId>
+  <artifactId>uftp-authserver</artifactId>
+  <version>2.2.0</version>
+  <packaging>jar</packaging>
+  <name>UFTP Authentication Server</name>
+  <url>http://www.unicore.eu</url>
+
+  <parent>
+    <groupId>eu.unicore.uftp</groupId>
+    <artifactId>uftp-parent</artifactId>
+    <version>2.6.0</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
+
+  <properties>
+    <use.version>4.0.3</use.version>
+    <uftp.version>2.8.0</uftp.version>
+    <datashare.version>0.3.0</datashare.version>
+    
+    <package.version>${project.version}</package.version>
+    <package.release>1</package.release>
+
+    <docman.enabled/>
+    <doc.src>src/main/docs/authserver-manual.txt</doc.src>
+    <doc.target>authserver-manual</doc.target>
+    <doc.template>plain</doc.template>
+  </properties>
+
+  <repositories>
+    <repository>
+      <id>unicore.eu</id>
+      <name>UNICORE repository</name>
+      <url>https://unicore-dev.zam.kfa-juelich.de/maven</url>
+    </repository>
+  </repositories>
+
+  <distributionManagement>
+    <!-- where the website is deployed -->
+    <site>
+      <id>unicore.eu</id>
+      <url>dav:https://unicore-dev.zam.kfa-juelich.de/documentation/authserver-${project.version}</url>
+    </site>
+  </distributionManagement>
+
+  <dependencies>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>log4j</groupId>
+      <artifactId>log4j</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>eu.unicore.services</groupId>
+      <artifactId>use-rest</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>eu.unicore.services</groupId>
+      <artifactId>use-aip</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>eu.unicore.services</groupId>
+      <artifactId>use-pdp</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>eu.unicore.uftp</groupId>
+      <artifactId>uftp-core</artifactId>
+      <version>${uftp.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>eu.unicore.uftp</groupId>
+      <artifactId>uftp-datashare</artifactId>
+      <version>${datashare.version}</version>
+    </dependency>
+  </dependencies>
+
+  
+  <build>
+    <plugins>
+       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-site-plugin</artifactId>
+        <version>2.2</version>
+       </plugin>
+     </plugins>
+  </build>
+
+</project>

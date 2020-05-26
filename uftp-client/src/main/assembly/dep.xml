@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<assembly>
+  <id>all</id>
+  <formats>
+    <format>zip</format>
+  </formats>
+  <fileSets>
+    <fileSet>
+      <includes>
+        <include>LICENSE</include>
+        <include>CHANGES.txt</include>
+	<include>README</include>
+      </includes>
+    </fileSet>
+    <fileSet>
+      <directory>src/main/bin</directory>
+      <outputDirectory>/bin</outputDirectory>
+      <fileMode>0744</fileMode>
+    </fileSet>
+    <fileSet>
+      <directory>src/main/config</directory>
+      <outputDirectory>/conf</outputDirectory>
+      <fileMode>0744</fileMode>
+    </fileSet> 
+    <fileSet>
+      <directory>src/main/doc</directory>
+      <outputDirectory>/doc</outputDirectory>
+      <fileMode>0744</fileMode>
+    </fileSet> 
+  </fileSets>
+
+
+  <dependencySets>
+    <dependencySet>
+      <useStrictFiltering>true</useStrictFiltering>
+      <outputDirectory>lib</outputDirectory>
+      <unpack>false</unpack>
+      <scope>runtime</scope>
+    </dependencySet>
+  </dependencySets>
+</assembly>

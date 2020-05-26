@@ -1,0 +1,10 @@
+#
+#format: username:hashedpassword:salt:DN
+#
+
+# password is 'test123'
+demouser:7a066bbc4c14cd9d7fb869f8cb3ecee2:09e9ba795983c2862d1fa83ad9b28959:CN=Demo User, O=UNICORE, C=EU
+
+# password is 'test123'
+otheruser:7a066bbc4c14cd9d7fb869f8cb3ecee2:09e9ba795983c2862d1fa83ad9b28959:CN=Other User, O=Testing
+

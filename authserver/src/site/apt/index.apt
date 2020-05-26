@@ -1,0 +1,14 @@
+UNICORE UFTP Authentication Server
+
+* Overview
+
+  The UFTP Auth server is used together with a UFTPD server 
+  for authenticating users without a full UNICORE installation.
+ 
+  For more information about UNICORE visit {{http://www.unicore.eu}}
+
+* UFTP Auth server manual
+
+   * {{{./authserver-manual.html}HTML format}} 
+   
+   * {{{./authserver-manual.pdf}PDF format}} 

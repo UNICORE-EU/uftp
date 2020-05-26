@@ -1,0 +1,13 @@
+UFTP Standalone Client
+
+* Overview
+
+  The UFTP standalone client provides high-performance file transfer.
+ 
+  For more information about UNICORE visit {{http://www.unicore.eu}}
+
+* UFTP client manual
+
+   * {{{./uftpclient-manual.html}HTML format}} 
+   
+   * {{{./uftpclient-manual.pdf}PDF format}} 
