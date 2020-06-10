@@ -55,6 +55,10 @@
       <artifactId>log4j</artifactId>
     </dependency>
     <dependency>
+      <groupId>eu.unicore.security</groupId>
+      <artifactId>securityLibrary</artifactId>
+    </dependency>
+    <dependency>
       <groupId>eu.unicore.services</groupId>
       <artifactId>use-rest</artifactId>
     </dependency>
@@ -76,6 +80,11 @@
       <artifactId>uftp-datashare</artifactId>
       <version>${datashare.version}</version>
     </dependency>
+    <dependency>
+      <groupId>com.hierynomus</groupId>
+      <artifactId>sshj</artifactId>
+    </dependency>
+    
   </dependencies>
 
   

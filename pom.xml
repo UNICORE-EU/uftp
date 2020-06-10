@@ -77,35 +77,14 @@
 	<version>2.6.0</version>
       </dependency>
       <dependency>
+	<groupId>com.hierynomus</groupId>
+	<artifactId>sshj</artifactId>
+	<version>0.29.0</version>
+      </dependency>
+      <dependency>
 	<groupId>eu.unicore.security</groupId>
 	<artifactId>securityLibrary</artifactId>
 	<version>${seclib.version}</version>
-	<exclusions>
-	  <exclusion>
-	    <groupId>com.fasterxml.woodstox</groupId>
-	    <artifactId>woodstox-core</artifactId>
-	  </exclusion>
-	  <exclusion>
-	    <groupId>org.apache.xmlbeans</groupId>
-	    <artifactId>xmlbeans-jdk8</artifactId>
-	  </exclusion>
-	  <exclusion>
-	    <groupId>pl.edu.icm.saml</groupId>
-	    <artifactId>samly2</artifactId>
-	  </exclusion>
-	  <exclusion>
-	    <groupId>org.slf4j</groupId>
-	    <artifactId>slf4j-api</artifactId>
-	  </exclusion>
-	  <exclusion>
-	    <groupId>org.slf4j</groupId>
-	    <artifactId>slf4j-log4j12</artifactId>
-	  </exclusion>
-	  <exclusion>
-	    <groupId>log4j</groupId>
-	    <artifactId>apache-log4j-extras</artifactId>
-	  </exclusion>
-	</exclusions>
       </dependency>
       <dependency>
 	<groupId>org.apache.commons</groupId>

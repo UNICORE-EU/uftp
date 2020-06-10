@@ -121,7 +121,7 @@ public class BaseClient {
 
 	public JSONObject asJSON(HttpResponse response) throws IOException, JSONException {
 		try{
-			String reply = IOUtils.toString(response.getEntity().getContent());
+			String reply = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
 			return new JSONObject(reply);
 		}
 		finally{

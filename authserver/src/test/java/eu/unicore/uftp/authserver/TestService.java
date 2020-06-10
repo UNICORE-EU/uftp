@@ -48,7 +48,7 @@ public class TestService {
 		HttpResponse response=client.execute(get);
 		int status=response.getStatusLine().getStatusCode();
 		assertEquals("got "+response.getStatusLine(),200, status);
-		String reply=IOUtils.toString(response.getEntity().getContent());
+		String reply=IOUtils.toString(response.getEntity().getContent(), "UTF-8");
 		System.out.println("Service reply: "+reply);
 		JSONObject o = new JSONObject(reply);
 		JSONObject s = o.getJSONObject("TEST");
@@ -65,7 +65,7 @@ public class TestService {
 		response=client.execute(post);
 		status=response.getStatusLine().getStatusCode();
 		assertEquals("got "+response.getStatusLine(),200, status);
-		reply=IOUtils.toString(response.getEntity().getContent());
+		reply=IOUtils.toString(response.getEntity().getContent(), "UTF-8");
 		System.out.println("Service reply: "+reply);
 	
 		url = server.getUrls()[0].toExternalForm()+"/rest";
@@ -75,7 +75,7 @@ public class TestService {
 		response=client.execute(get);
 		status=response.getStatusLine().getStatusCode();
 		assertEquals("got "+response.getStatusLine(),200, status);
-		reply=IOUtils.toString(response.getEntity().getContent());
+		reply=IOUtils.toString(response.getEntity().getContent(), "UTF-8");
 		System.out.println("Service reply: "+reply);
 		o = new JSONObject(reply);
 		s = o.getJSONObject("TEST");
@@ -91,7 +91,7 @@ public class TestService {
 		response=client.execute(post);
 		status=response.getStatusLine().getStatusCode();
 		assertEquals("got "+response.getStatusLine(),200, status);
-		reply=IOUtils.toString(response.getEntity().getContent());
+		reply=IOUtils.toString(response.getEntity().getContent(), "UTF-8");
 		System.out.println("Service reply: "+reply);
 		k.shutdown();
 		stopUFTPD();

@@ -25,6 +25,8 @@ public class SSHAgent {
 
 	private AgentProxy ap ;
 
+	private String identitySelector;
+	
 	public SSHAgent() throws Exception {
 		if(!isAgentAvailable())throw new IOException("SSH-Agent is not available");
 		USocketFactory udsf = null;
@@ -39,12 +41,16 @@ public class SSHAgent {
 		}
 		for(String className: attempts){
 			try{
-				udsf = (USocketFactory)(Class.forName(className).newInstance());
+				udsf = (USocketFactory)(Class.forName(className).getConstructor().newInstance());
 				ap = new AgentProxy(new SSHAgentConnector(udsf));
 				if(!ap.isRunning())throw new IOException("Error communicating with ssh-agent");
 			}catch(Exception ex){}
 		}
 		if(ap==null || !ap.isRunning())throw new IOException("Error communicating with ssh-agent");
+	}
+
+	public void selectIdentity(String selector) {
+		this.identitySelector = selector;
 	}
 
 	/**
@@ -55,8 +61,26 @@ public class SSHAgent {
 	 */
 	public byte[] sign(String data) throws GeneralSecurityException {
 		byte[] signature = null;
-		if(ap.getIdentities().length==0)throw new GeneralSecurityException("No identities loaded in SSH agent!");
-		Identity id = ap.getIdentities()[0];
+		Identity[] ids = ap.getIdentities();
+		if(ids.length==0)throw new GeneralSecurityException("No identities loaded in SSH agent!");
+		Identity id =ids[0];
+		
+		if(ids.length>1){
+			if(identitySelector==null) {
+				System.out.println("WARNING more than one identity in SSH agent - might want to use '--identity' option.");
+			}
+			else {
+				for(Identity i : ids) {
+					String s = new String(i.getComment());
+					// System.out.println("select: "+identitySelector+ " <--> "+s);
+					if(identitySelector.equals(s)) {
+						id = i;
+						break;
+					}
+			}
+		}
+		}
+	
 		byte[] blob = id.getBlob();
 		byte[] rawSignature = ap.sign(blob, data.getBytes());
 		int offset = 15;
@@ -84,6 +108,9 @@ public class SSHAgent {
 	}
 
 	public static boolean isAgentAvailable(){
+		if(System.getenv("UFTP_NO_AGENT")!=null){
+			return false;
+		}
 		return SSHAgentConnector.isConnectorAvailable();
 	}
 

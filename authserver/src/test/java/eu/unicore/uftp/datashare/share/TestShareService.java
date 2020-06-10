@@ -243,7 +243,7 @@ public class TestShareService {
 		cleanup(r);
 		
 		// check it
-		assertTrue(FileUtils.readFileToString(new File(f, "test.txt")).contains("some content"));
+		assertTrue(FileUtils.readFileToString(new File(f, "test.txt"), "UTF-8").contains("some content"));
 		
 		// delete share via URL
 		// bc.delete(shareLink);

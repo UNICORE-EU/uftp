@@ -235,13 +235,14 @@ public abstract class BaseCommand implements ICommand {
 		if(SSHIdentityFile==null){
 			File sshDir = new File(System.getProperty("user.home"),".ssh");
 			if(sshDir.exists()){
-				keyFile = new File(sshDir,"id_rsa");
-				if(!keyFile.exists()){
-					keyFile = new File(sshDir,"id_dsa");
+				String[] opts = new String[] {"id_rsa", "id_ed25519", "id_dsa"};
+				for(String o: opts) {
+					keyFile = new File(sshDir, o);
+					if(keyFile.exists())break;
 				}
 				if(!keyFile.exists() && !SSHAgent.isAgentAvailable()){
-					throw new IOException("No RSA or DSA private key found in "+sshDir.getAbsolutePath()
-					+" and no SSH agent available.");
+					throw new IOException("No private key recognised in "+sshDir.getAbsolutePath()
+					+" and no SSH agent available. Please use the --identity option!");
 				}
 			}
 			else {
@@ -261,7 +262,9 @@ public abstract class BaseCommand implements ICommand {
 				System.err.println("Using SSH key <"+keyFile.getAbsolutePath()+">");
 			}
 		}
-		return new SshKeyHandler(keyFile, username, token).getAuthData();
+		SshKeyHandler ssh = new SshKeyHandler(keyFile, username, token);
+		if(SSHIdentityFile!=null)ssh.forceIdentity();
+		return  ssh.getAuthData();
 	}
 
 

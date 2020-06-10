@@ -108,7 +108,7 @@ public class AuthserverClient implements AuthClient {
 		Iterator<String>keys = info.sortedKeys();
 		while(keys.hasNext()) {
 			String key = keys.next();
-			if("client".equals(key))continue;
+			if("client".equals(key) || "server".equals(key))continue;
 			JSONObject server = info.getJSONObject(key);
 			sb.append("Server: ").append(key).append(crlf);
 			sb.append("  URL base:         ").append(infoURL).append("/").append(key).append(":").append(crlf);
@@ -130,7 +130,7 @@ public class AuthserverClient implements AuthClient {
 	
 	private String getUserInfo(JSONObject info) throws JSONException {
 		StringBuilder sb = new StringBuilder();
-		String uid = info.getString("uid");
+		String uid = info.optString("uid", "N/A");
 		String gid = info.optString("gid","N/A");
 		sb.append("uid=").append(uid);
 		sb.append(";gid=").append(gid);

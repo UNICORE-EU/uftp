@@ -20,7 +20,7 @@ public class PubkeyHolder {
 	}
 	
 	public PubkeyHolder(File file) throws IOException, GeneralSecurityException {
-		this.encoded = FileUtils.readFileToString(file);
+		this.encoded = FileUtils.readFileToString(file, "UTF-8");
 		this.publicKey = SSHUtils.readPubkey(encoded);
 	}
 
