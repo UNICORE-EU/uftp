@@ -1,5 +1,6 @@
 package eu.unicore.uftp.standalone;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -16,7 +17,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 
 import eu.unicore.uftp.authserver.messages.AuthResponse;
@@ -343,16 +343,11 @@ public class ClientFacade {
 			throws Exception {
 		Map<String, String> params = connectionManager.extractConnectionParameters(destinationURL);
 		String remotePath = params.get("path");
-		ClientPool pool = null;
-		try{
-			pool = new ClientPool(numClients, this, destinationURL, verbose, largeFileThreshold);
+		try(ClientPool pool = new ClientPool(numClients, this, destinationURL, verbose, largeFileThreshold)){
 			LocalFileCrawler fileList = new LocalFileCrawler(localSource, remotePath, sc);
 			fileList.crawl(getUploadCommand(preserveAttributes, pool), policy);
-		}finally{
-			IOUtils.closeQuietly(pool);
 		}
 	}
-	
 	
 
 	private void uploadFile(String local, String remotePath, ClientPool pool) throws FileNotFoundException, URISyntaxException, IOException {
@@ -415,7 +410,7 @@ public class ClientFacade {
 			}
 		}
 		finally{
-			IOUtils.closeQuietly(pb);
+			closeQuietly(pb);
 			sc.setProgressListener(null);
 		}
 	}
@@ -440,9 +435,7 @@ public class ClientFacade {
 			throws Exception {
 		Map<String, String> params = connectionManager.extractConnectionParameters(remote);
 		String path = params.get("path");
-		ClientPool pool = null;
-		try{
-			pool = new ClientPool(numClients, this, remote, verbose, largeFileThreshold);
+		try(ClientPool pool = new ClientPool(numClients, this, remote, verbose, largeFileThreshold)){
 			FileCrawler fileList = new RemoteFileCrawler(path, destination, sc);
 			if (fileList.isSingleFile(path)) {
 				downloadFile(path, destination, pool);
@@ -451,8 +444,6 @@ public class ClientFacade {
 				Command cmd = getDownloadCommand(preserveAttributes, pool);
 				fileList.crawl(cmd, policy);
 			}
-		}finally{
-			IOUtils.closeQuietly(pool);
 		}
 	}
 
@@ -529,9 +520,9 @@ public class ClientFacade {
 			}
 		}
 		finally{
-			IOUtils.closeQuietly(fos);
-			IOUtils.closeQuietly(raf);
-			IOUtils.closeQuietly(pb);
+			closeQuietly(fos);
+			closeQuietly(raf);
+			closeQuietly(pb);
 			sc.setProgressListener(null);
 		}
 	}
@@ -560,8 +551,8 @@ public class ClientFacade {
 				}
 			}
 		}finally{
-			IOUtils.closeQuietly(fos);
-			IOUtils.closeQuietly(raf);
+			closeQuietly(fos);
+			closeQuietly(raf);
 			sc.setProgressListener(null);
 		}
 	}
@@ -752,4 +743,9 @@ public class ClientFacade {
 		this.verbose = verbose;
 	}
 
+	private void closeQuietly(Closeable c) {
+		if(c!=null)try {
+			c.close();
+		}catch(Exception e) {}
+	}
 }

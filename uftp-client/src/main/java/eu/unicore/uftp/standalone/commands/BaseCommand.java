@@ -38,7 +38,8 @@ public abstract class BaseCommand implements ICommand {
 
 	protected String username, password, group, authheader;
 	protected boolean enableSSH = true;
-	protected String SSHIdentityFile = null;
+	protected String sshIdentity = null;
+	protected Integer agentIdentityIndex = null;
 
 	protected boolean queryPassword = false;
 
@@ -154,7 +155,7 @@ public abstract class BaseCommand implements ICommand {
 				if(username==null)username = System.getProperty("user.name");
 			}
 			if (line.hasOption('i')){
-				SSHIdentityFile = line.getOptionValue('i');
+				sshIdentity = line.getOptionValue('i');
 			}
 		}
 	}
@@ -232,7 +233,9 @@ public abstract class BaseCommand implements ICommand {
 
 	protected SSHKey getSSHAuthData(String token) throws Exception {
 		File keyFile = null;
-		if(SSHIdentityFile==null){
+		boolean haveAgent = SSHAgent.isAgentAvailable();
+
+		if(sshIdentity==null){
 			File sshDir = new File(System.getProperty("user.home"),".ssh");
 			if(sshDir.exists()){
 				String[] opts = new String[] {"id_rsa", "id_ed25519", "id_dsa"};
@@ -240,31 +243,37 @@ public abstract class BaseCommand implements ICommand {
 					keyFile = new File(sshDir, o);
 					if(keyFile.exists())break;
 				}
-				if(!keyFile.exists() && !SSHAgent.isAgentAvailable()){
+				if(!keyFile.exists() && !haveAgent){
 					throw new IOException("No private key recognised in "+sshDir.getAbsolutePath()
 					+" and no SSH agent available. Please use the --identity option!");
 				}
 			}
 			else {
-				if(!SSHAgent.isAgentAvailable()){
+				if(!haveAgent){
 					throw new IOException("No ssh key found in "+sshDir.getAbsolutePath());
 				}
 			}
 		}
 		else {
-			keyFile = new File(SSHIdentityFile);
-			if(!keyFile.exists()){
-				throw new IOException("Private key file " + SSHIdentityFile + " does not exist.");
+			keyFile = new File(sshIdentity);
+			if(!haveAgent && !keyFile.exists()){
+				throw new IOException("Private key file " + sshIdentity + " does not exist.");
 			}
 		}
 		if(verbose){
 			if(keyFile!=null){
 				System.err.println("Using SSH key <"+keyFile.getAbsolutePath()+">");
 			}
+			if(haveAgent) {
+				System.err.println("Using SSH agent");
+			}
 		}
 		SshKeyHandler ssh = new SshKeyHandler(keyFile, username, token);
-		if(SSHIdentityFile!=null)ssh.forceIdentity();
-		return  ssh.getAuthData();
+		ssh.setVerbose(verbose);
+		if(haveAgent && sshIdentity!=null) {
+			ssh.selectIdentity();
+		}
+		return ssh.getAuthData();
 	}
 
 

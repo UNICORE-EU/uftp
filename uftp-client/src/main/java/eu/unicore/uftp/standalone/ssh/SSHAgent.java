@@ -1,13 +1,18 @@
 package eu.unicore.uftp.standalone.ssh;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.security.GeneralSecurityException;
+import java.util.StringTokenizer;
 
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.io.FileUtils;
 import org.bouncycastle.asn1.ASN1Integer;
 import org.bouncycastle.asn1.DEROutputStream;
 import org.bouncycastle.asn1.DERSequence;
+import org.bouncycastle.util.Arrays;
 
 import com.jcraft.jsch.agentproxy.AgentProxy;
 import com.jcraft.jsch.agentproxy.Buffer;
@@ -25,15 +30,17 @@ public class SSHAgent {
 
 	private AgentProxy ap ;
 
-	private String identitySelector;
-	
+	private String keyFile;
+
+	private static boolean verbose = false;
+
 	public SSHAgent() throws Exception {
 		if(!isAgentAvailable())throw new IOException("SSH-Agent is not available");
 		USocketFactory udsf = null;
 		String[] attempts = new String[]{
 				"com.jcraft.jsch.agentproxy.usocket.JNAUSocketFactory",
-				"com.jcraft.jsch.agentproxy.usocket.NCUSocketFactory"};
-		
+		"com.jcraft.jsch.agentproxy.usocket.NCUSocketFactory"};
+
 		// if some smart ass has set the 'jna.nosys' property, we honor it, 
 		// otherwise we set it to true, which usually works better
 		if(System.getProperty("jna.nosys")==null){
@@ -49,8 +56,12 @@ public class SSHAgent {
 		if(ap==null || !ap.isRunning())throw new IOException("Error communicating with ssh-agent");
 	}
 
-	public void selectIdentity(String selector) {
-		this.identitySelector = selector;
+	public void selectIdentity(String keyFile) {
+		this.keyFile = keyFile;
+	}
+
+	public void setVerbose(boolean verboseS) {
+		verbose = verboseS;
 	}
 
 	/**
@@ -63,43 +74,39 @@ public class SSHAgent {
 		byte[] signature = null;
 		Identity[] ids = ap.getIdentities();
 		if(ids.length==0)throw new GeneralSecurityException("No identities loaded in SSH agent!");
-		Identity id =ids[0];
-		
+		Identity id = ids[0];
+
 		if(ids.length>1){
-			if(identitySelector==null) {
-				System.out.println("WARNING more than one identity in SSH agent - might want to use '--identity' option.");
+			if(keyFile==null) {
+				if(verbose)System.err.println("WARNING more than one identity in SSH agent - you might want to use '--identity <number>' option.");
 			}
 			else {
-				for(Identity i : ids) {
-					String s = new String(i.getComment());
-					// System.out.println("select: "+identitySelector+ " <--> "+s);
-					if(identitySelector.equals(s)) {
-						id = i;
-						break;
-					}
+				int identityIndex = 0;
+				try {
+					identityIndex = selectIdentity(ids);
+				}catch(IOException ioe) {
+					throw new GeneralSecurityException(ioe);
+				}
+				id = ids[identityIndex];
 			}
 		}
-		}
-	
 		byte[] blob = id.getBlob();
 		byte[] rawSignature = ap.sign(blob, data.getBytes());
-		int offset = 15;
-		//raw sig contains a few extra bytes: 4 bytes for the length, "ssh-rsa"
+		//raw sig from agent contains a few extra bytes
 		Buffer buf = new Buffer(rawSignature);
 		String description = new String(buf.getString());
+		int offset = 8 + description.length();
+
 		signature = new byte[rawSignature.length-offset];
 		System.arraycopy(rawSignature, offset, signature, 0, signature.length);
-		
 		if(description.contains("ssh-dss")){
-			// need to convert to proper format
 			try{
-				signature = convertToDER(signature);
+				signature = dsa_convertToDER(signature);
 			}
 			catch(IOException e){
 				throw new GeneralSecurityException(e);
 			}
 		}
-		
 		return signature;
 	}
 
@@ -107,14 +114,35 @@ public class SSHAgent {
 		return ap;
 	}
 
+	// get the "intended" identity from the agent
+	private int selectIdentity(Identity[]ids) throws IOException {
+		String pubkey = FileUtils.readFileToString(new File(keyFile+".pub"), "UTF-8");
+		StringTokenizer st = new StringTokenizer(pubkey);
+		st.nextToken(); // ignored
+		String base64 = st.nextToken();
+		byte[] bytes = Base64.decodeBase64(base64);
+		
+		for(int i=0; i<ids.length; i++) {
+			Identity id = ids[i];
+			if(Arrays.areEqual(bytes, id.getBlob())){
+				return i;
+			}
+		}
+		return 0;
+	}
+	
 	public static boolean isAgentAvailable(){
-		if(System.getenv("UFTP_NO_AGENT")!=null){
+		if(System.getenv("UFTP_NO_AGENT")!=null ){
+			if(verbose) {
+				System.err.println("Agent DISABLED via environment setting 'UFTP_NO_AGENT'");
+			}
 			return false;
 		}
 		return SSHAgentConnector.isConnectorAvailable();
 	}
 
-	private byte[] convertToDER(byte[] rawSignature) throws IOException {
+	// signature DSA format
+	private byte[] dsa_convertToDER(byte[] rawSignature) throws IOException {
 		byte[] val = new byte[20];
 		System.arraycopy(rawSignature, 0, val, 0, 20);
 		BigInteger r = new BigInteger(val);
