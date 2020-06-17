@@ -7,6 +7,10 @@ https://sourceforge.net/p/unicore/uftp-issues
 ***  see README-UPGRADE.txt for how to update from 1.x
 ***
 
+Auth Server 2.2.0 (released Jun 17, 2020)
+-----------------------------------------
+ - support for more SSH key types (esp. ed25519)
+
 Auth Server 2.1.0 (released Feb 21, 2020)
 -----------------------------------------
  - mew feature: anonymous (http) download sets the Content-Disposition header

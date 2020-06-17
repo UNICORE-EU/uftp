@@ -100,7 +100,7 @@
       <dependency>
 	<groupId>de.fzj.unicore</groupId>
 	<artifactId>persistence</artifactId>
-	<version>0.101</version>
+	<version>0.103</version>
       </dependency>
 
       <dependency>

@@ -53,7 +53,7 @@ public interface IdentityExtractor {
 				return dn_extractor;
 			}
 			else if(IdentityType.CUSTOM.equals(type)){
-				return custom.newInstance();
+				return custom.getConstructor().newInstance();
 			}else{
 				throw new Exception("Extractor type is not known / not yet implemented");
 			}

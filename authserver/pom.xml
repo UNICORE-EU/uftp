@@ -55,6 +55,16 @@
       <artifactId>log4j</artifactId>
     </dependency>
     <dependency>
+      <groupId>eu.unicore.uftp</groupId>
+      <artifactId>uftp-core</artifactId>
+      <version>${uftp.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>eu.unicore.uftp</groupId>
+      <artifactId>uftp-datashare</artifactId>
+      <version>${datashare.version}</version>
+    </dependency>
+    <dependency>
       <groupId>eu.unicore.security</groupId>
       <artifactId>securityLibrary</artifactId>
     </dependency>
@@ -69,16 +79,6 @@
     <dependency>
       <groupId>eu.unicore.services</groupId>
       <artifactId>use-pdp</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>eu.unicore.uftp</groupId>
-      <artifactId>uftp-core</artifactId>
-      <version>${uftp.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>eu.unicore.uftp</groupId>
-      <artifactId>uftp-datashare</artifactId>
-      <version>${datashare.version}</version>
     </dependency>
     <dependency>
       <groupId>com.hierynomus</groupId>

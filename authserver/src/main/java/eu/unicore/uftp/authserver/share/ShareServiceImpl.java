@@ -39,6 +39,7 @@ import eu.unicore.uftp.datashare.SharingUser;
 import eu.unicore.uftp.datashare.Target;
 import eu.unicore.uftp.datashare.db.ACLStorage;
 import eu.unicore.uftp.datashare.db.ShareDAO;
+import eu.unicore.uftp.dpc.Session.Mode;
 import eu.unicore.uftp.server.workers.UFTPWorker;
 import eu.unicore.util.Log;
 
@@ -51,7 +52,7 @@ public class ShareServiceImpl extends ShareServiceBase {
 	private static final Logger logger = Log.getLogger(Log.SERVICES,ShareServiceImpl.class);
 
 	/**
-	 * authenticate a transfer using the current client's attributes
+	 * authenticate a transfer of a shared file using the current client's attributes
 	 */
 	@POST
 	@Path("/{serverName}/auth")
@@ -93,7 +94,12 @@ public class ShareServiceImpl extends ShareServiceBase {
 				}
 				ua.uid = share.getUid();
 				ua.gid = share.getGid();
+				ua.excludes = null;
+				ua.includes = path;
 				TransferRequest transferRequest = new TransferRequest(authRequest, ua, clientIP);
+				// limit UFTP session to read/write the specified path
+				transferRequest.setAccessPermissions(write ? Mode.WRITE : Mode.READ);
+				
 				AuthResponse response = new TransferInitializer().initTransfer(transferRequest,uftp);            
 				response.secret = transferRequest.getSecret();
 				r = Response.ok().entity(gson.toJson(response)).build();

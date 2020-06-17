@@ -7,6 +7,7 @@ import eu.unicore.uftp.authserver.authenticate.UserAttributes;
 import eu.unicore.uftp.authserver.messages.AuthRequest;
 import eu.unicore.uftp.dpc.Utils;
 import eu.unicore.uftp.server.requests.UFTPTransferRequest;
+import eu.unicore.uftp.server.workers.UFTPWorker;
 
 /**
  * @author mgolik
@@ -28,8 +29,9 @@ public final class TransferRequest extends UFTPTransferRequest {
 
     public TransferRequest(AuthRequest authRequest, UserAttributes authData, String clientIp) {
         super(Utils.parseInetAddresses(clientIp, logger), authData.uid, generateSecret(), 
-        		new File(authRequest.serverPath),
+        		authRequest.sessionMode? new File(UFTPWorker.sessionModeTag): new File(authRequest.serverPath),
         		authRequest.send);
+        
         setStreams(authRequest.streamCount);
         setGroup(authData.gid);
         setAppend(authRequest.append);

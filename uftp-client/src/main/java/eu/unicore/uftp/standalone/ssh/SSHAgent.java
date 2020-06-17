@@ -78,7 +78,10 @@ public class SSHAgent {
 
 		if(ids.length>1){
 			if(keyFile==null) {
-				if(verbose)System.err.println("WARNING more than one identity in SSH agent - you might want to use '--identity <number>' option.");
+				if(verbose) {
+					System.err.println("WARNING more than one identity in SSH agent -"
+							+ " you might want to use '--identity <path_to_private_key>' option.");
+				}
 			}
 			else {
 				int identityIndex = 0;

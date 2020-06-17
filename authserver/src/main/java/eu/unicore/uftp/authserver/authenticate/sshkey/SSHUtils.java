@@ -135,8 +135,8 @@ public class SSHUtils {
 			return sigOK; // TODO also, check that token is OK
 		}
 		catch(Exception ex){
-			if(logger.isInfoEnabled()){
-				logger.info("Error verifying signature",ex);
+			if(logger.isDebugEnabled()){
+				logger.debug("Error verifying signature",ex);
 			}
 			return false;
 		}

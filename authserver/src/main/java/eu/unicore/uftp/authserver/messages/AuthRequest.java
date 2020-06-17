@@ -12,4 +12,5 @@ public class AuthRequest {
 	public String encryptionKey = null;  
 	public String group = null;
 	public String client = null;
+	public boolean sessionMode = false;
 }

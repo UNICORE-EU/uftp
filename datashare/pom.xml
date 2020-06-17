@@ -25,15 +25,18 @@
     <dependency>
       <groupId>log4j</groupId>
       <artifactId>log4j</artifactId>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>de.fzj.unicore</groupId>
       <artifactId>persistence</artifactId>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>eu.unicore.uftp</groupId>
       <artifactId>uftp-core</artifactId>
       <version>${uftp.version}</version>
+      <scope>provided</scope>
     </dependency>
   </dependencies>
 

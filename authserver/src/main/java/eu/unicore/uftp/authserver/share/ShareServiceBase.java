@@ -12,7 +12,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.BoundedInputStream;
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
@@ -115,7 +114,6 @@ public abstract class ShareServiceBase extends ServiceBase {
 	 */
 	protected Response doUpload(InputStream content, ShareDAO share, UFTPDInstance uftp, String clientIP){
 		Response r = null;
-		UFTPClient uc = null;
 		try{
 			AuthRequest authRequest = new AuthRequest();
 			authRequest.send = false;
@@ -124,15 +122,13 @@ public abstract class ShareServiceBase extends ServiceBase {
 			TransferRequest transferRequest = new TransferRequest(authRequest, ua, clientIP);
 			AuthResponse response = new TransferInitializer().initTransfer(transferRequest,uftp);            
 			InetAddress[] server = new InetAddress[]{InetAddress.getByName(response.serverHost)};
-			uc = new UFTPClient(server, response.serverPort, content);
-			uc.setSecret(transferRequest.getSecret());
-			uc.run();
-			r = Response.ok().build();
+			try (UFTPClient uc = new UFTPClient(server, response.serverPort, content)){
+				uc.setSecret(transferRequest.getSecret());
+				uc.run();
+				r = Response.ok().build();
+			}
 		}catch(Exception ex){
 			r = handleError(500, "", ex, logger);
-		}
-		finally{
-			IOUtils.closeQuietly(uc);
 		}
 		return r;
 	}
