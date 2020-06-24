@@ -8,7 +8,11 @@ UFTP 2.8.0 (released MMM dd 2020)
 ---------------------------------
  - new feature: session features can be limited 
    by authserver (e.g. to readonly access)
-
+ - new feature: read public keys from configurable
+   list of files (defaults to ~/.ssh/authorized_keys) (#61)
+ - new feature: allow to blacklist writing to certain
+   files (#62)
+ 
 UFTP 2.7.1 (released Nov 4 2019)
 --------------------------------
  - fix: files were not closed when receiving archive

@@ -25,6 +25,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 
 import eu.unicore.uftp.dpc.DPCServer;
+import eu.unicore.uftp.dpc.UFTPConstants;
 import eu.unicore.uftp.dpc.Utils;
 import eu.unicore.uftp.server.requests.UFTPBaseRequest;
 import eu.unicore.uftp.server.requests.UFTPGetUserInfoRequest;
@@ -33,6 +34,7 @@ import eu.unicore.uftp.server.requests.UFTPRequestBuilderRegistry;
 import eu.unicore.uftp.server.requests.UFTPTransferRequest;
 import eu.unicore.uftp.server.unix.UnixUser;
 import eu.unicore.util.Log;
+import eu.unicore.util.configuration.ConfigurationException;
 
 /**
  * Server for sending/receiving data using dynamic port opening in firewalls via
@@ -84,7 +86,8 @@ public class UFTPServer implements Runnable {
 	private final SSLHelper sslHelper;
 	private volatile boolean stopped = false;
 	private String advertiseAddress;
-
+	private String[] keyFileList;
+	
 	public UFTPServer(InetAddress cmdip, int cmdport, InetAddress srvip,
 			int srvport, String advertiseAddress, PortManager portManager, boolean checkClientIP) throws IOException {
 		this.cmdip = cmdip;
@@ -139,6 +142,19 @@ public class UFTPServer implements Runnable {
 		logger.info("File buffer size per client: " + bufferSize + " kB");
 		logger.info("Client IP check is " + (checkClientIP ? "ENABLED" : "DISABLED"));
 
+		// setup key file list for getUserinfo()
+		String fileListS = System.getenv(UFTPConstants.ENV_UFTP_KEYFILES);
+		if(fileListS==null || fileListS.isEmpty()) {
+			fileListS = ".ssh/authorized_keys";
+		}
+		try {
+			keyFileList = fileListS.split(":");
+		}catch(Exception ex) {
+			throw new ConfigurationException("Cannot parse file list from UFTP_KEYFILES", ex);
+		}
+		for(String s: keyFileList) {
+			logger.info("Reading user's keys from $HOME/"+s);
+		}
 		while (!stopped) {
 			Socket jobSocket = null;
 			try {
@@ -364,7 +380,8 @@ public class UFTPServer implements Runnable {
 		return sb.toString();
 	}
 
-
+	
+	
 	public String getUserInfo(String username) {
 
 		StringBuilder sb = new StringBuilder();
@@ -377,23 +394,26 @@ public class UFTPServer implements Runnable {
 				String home = uu.getHome();
 				sb.append("\nHome: "+home);
 				// get the accepted ssh keys
-				try{
-					String path = home+"/.ssh/authorized_keys";
-					InputStream in = svrThread.getFileAccess().readFile(path, 
-							uu.getLoginName(), null, FileAccess.DEFAULT_BUFFERSIZE); 
-					List<String> auth_keys = null;
+				int i = 0;
+				for(String keyFile: keyFileList) {
 					try{
-						auth_keys = IOUtils.readLines(in, "UTF-8");
-					}catch(Exception ex) {
-						auth_keys = IOUtils.readLines(in, "US-ASCII");
+						String path = home+"/"+keyFile;
+						InputStream in = svrThread.getFileAccess().readFile(path, 
+								uu.getLoginName(), null, FileAccess.DEFAULT_BUFFERSIZE); 
+						List<String> auth_keys = null;
+						try{
+							auth_keys = IOUtils.readLines(in, "UTF-8");
+						}catch(Exception ex) {
+							auth_keys = IOUtils.readLines(in, "US-ASCII");
+						}
+						for(String key: auth_keys){
+							if(key.startsWith("#"))continue;
+							sb.append("\nAccepted key "+i+": "+key);
+							i++;
+						}
 					}
-					int i = 0;
-					for(String key: auth_keys){
-						sb.append("\nAccepted key "+i+": "+key);
-						i++;
-					}
+					catch(Exception ex){}
 				}
-				catch(Exception ex){}
 			}catch(IllegalArgumentException ex){
 				sb.append("\nStatus: Error - no such user!");
 			}

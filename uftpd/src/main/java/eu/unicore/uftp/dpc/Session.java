@@ -9,6 +9,7 @@ import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.FileTime;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -77,6 +78,7 @@ public class Session {
 
 	// forbidden file patterns
 	private String[]excludes = {};
+	private String[] defaultExcludes = {};
 
 	// original file name for rename operation
 	private String renameFrom = null;
@@ -97,6 +99,8 @@ public class Session {
 		this.fileAccess = new UserFileAccess(fileAccess,job.getUser(),job.getGroup());
 		this.includes = parsePathlist(job.getIncludes());
 		this.excludes = parsePathlist(job.getExcludes());
+		this.defaultExcludes = parsePathlist(System.getenv(UFTPConstants.ENV_UFTP_NO_WRITE));
+		
 		if (job.getFile().getParentFile() != null) {
 			baseDirectory = job.getFile().getParentFile();
 		} else {
@@ -267,7 +271,7 @@ public class Session {
 		localFile = getFile(localFileName);
 
 		try{
-			assertACL(localFile);
+			assertACL(localFile, Mode.READ);
 			localRandomAccessFile = createRandomAccessFile(localFile, "r");
 		}catch(Exception e){
 			connection.sendError( "Can't open file for reading: "+e.getMessage());
@@ -295,7 +299,7 @@ public class Session {
 		if(!file.isAbsolute()){
 			file = new File(currentDirectory,localFileName);
 		}
-		if(!checkACL(file)){
+		if(!checkACL(file, Mode.INFO)){
 			connection.sendError("Access denied!");	
 		}
 		else {
@@ -347,7 +351,7 @@ public class Session {
 		if(!file.isAbsolute()){
 			file = new File(currentDirectory,path);
 		}
-		if(!checkACL(file)){
+		if(!checkACL(file, Mode.INFO)){
 			connection.sendError("Access denied!");
 		}
 		else{
@@ -384,7 +388,7 @@ public class Session {
 		if(!file.isAbsolute()){
 			file = new File(currentDirectory,path);
 		}
-		if(!checkACL(file)){
+		if(!checkACL(file, Mode.INFO)){
 			connection.sendError("Access denied!");
 		}
 		else{
@@ -415,7 +419,7 @@ public class Session {
 			file = new File(currentDirectory,path);
 		}
 		
-		if(!checkACL(file)){
+		if(!checkACL(file, Mode.INFO)){
 			connection.sendError("Access denied!");
 			return false;
 		}
@@ -456,7 +460,7 @@ public class Session {
 		if(!file.isAbsolute()){
 			file = new File(currentDirectory,path);
 		}
-		if(!checkACL(file)){
+		if(!checkACL(file, Mode.INFO)){
 			connection.sendError("Access denied!");
 			return false;
 		}
@@ -518,7 +522,7 @@ public class Session {
 			newDir = new File(currentDirectory, dir);
 		}
 		try {
-			assertACL(newDir);
+			assertACL(newDir, Mode.WRITE);
 			fileAccess.mkdir(newDir.getAbsolutePath());
 		} catch (Exception ex) {
 			String msg = Utils.createFaultMessage("Can't create directory " + newDir.getAbsolutePath(), ex);
@@ -536,7 +540,7 @@ public class Session {
 			toRemove = new File(currentDirectory, dir);
 		}
 		try {
-			assertACL(toRemove);
+			assertACL(toRemove, Mode.WRITE);
 			fileAccess.rm(toRemove.getAbsolutePath());
 		} catch (Exception ex) {
 			connection.sendError("Can't delete " + toRemove.getAbsolutePath());
@@ -560,7 +564,7 @@ public class Session {
 		String localFileName = tok[1];
 		localFile = getFile(localFileName);
 		try {
-			assertACL(localFile);
+			assertACL(localFile, Mode.WRITE);
 			if(!archiveMode)localRandomAccessFile = createRandomAccessFile(localFile, "rw");
 		} catch (Exception ex) {
 			connection.sendError("Can't open file for writing: " + ex.getMessage());
@@ -581,7 +585,7 @@ public class Session {
 		String localFileName = tok[1];
 		localFile = getFile(localFileName);
 		try {
-			assertACL(localFile);
+			assertACL(localFile, Mode.WRITE);
 			localRandomAccessFile = createRandomAccessFile(localFile, "rw");
 		} catch (Exception ex) {
 			connection.sendError("Can't open file for writing: " + ex.getMessage());
@@ -603,7 +607,7 @@ public class Session {
 		String localFileName = tok[1];
 		localFile = getFile(localFileName);
 		try {
-			assertACL(localFile);
+			assertACL(localFile, Mode.READ);
 			localRandomAccessFile = createRandomAccessFile(localFile, "r");
 		} catch (Exception ex) {
 			connection.sendError("Can't open file for reading: " + ex.getMessage());
@@ -863,8 +867,8 @@ public class Session {
 	 * @param path
 	 * @return <code>true</code> if the file can be accessed, <code>false</code> otherwise
 	 */
-	public boolean checkACL(File path) {
-		return isAllowed(path) && !isForbidden(path);
+	public boolean checkACL(File path, Mode requestedAccess) {
+		return isAllowed(path, requestedAccess) && !isForbidden(path, requestedAccess);
 	}
 
 	/**
@@ -872,11 +876,11 @@ public class Session {
 	 * @param path
 	 * @throws AuthorizationFailureException if the file cannot be accessed
 	 */
-	public void assertACL(File path) throws AuthorizationFailureException {
-		if(!checkACL(path))throw new AuthorizationFailureException("Access denied!");
+	public void assertACL(File path, Mode requestedAccess) throws AuthorizationFailureException {
+		if(!checkACL(path, requestedAccess))throw new AuthorizationFailureException("Access denied!");
 	}
 
-	public boolean isAllowed(File path){
+	public boolean isAllowed(File path, Mode requestedAccess){
 		boolean res=false;
 		//check if it is in the includes
 		if(includes!=null && includes.length>0){
@@ -889,9 +893,14 @@ public class Session {
 		return res;
 	}
 
-	public boolean isForbidden(File path){
+	public boolean isForbidden(File path, Mode requestedAccess){
 		if(excludes!=null && excludes.length>0){
 			for(String exclude: excludes){
+				if(match(path,exclude))return true;
+			}
+		}
+		if(Mode.READ.compareTo(requestedAccess)>0 && defaultExcludes!=null && defaultExcludes.length>0){
+			for(String exclude: defaultExcludes){
 				if(match(path,exclude))return true;
 			}
 		}
@@ -940,6 +949,19 @@ public class Session {
 		sb.append(fileAccess.getUser()).append(":");
 		sb.append(fileAccess.getGroup()!=null?fileAccess.getGroup():"n/a").append(":");
 		sb.append(connection.getAddress()).append("]");
+		return sb.toString();
+	}
+	
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		sb.append("Session for ").append(getClientDescription());
+		sb.append(" base_directory=\"").append(getBaseDirectory()).append("\"");
+		sb.append(" access_level=").append(String.valueOf(accessLevel));
+		if(includes!=null)sb.append(" include=").append(Arrays.asList(includes));
+		if(excludes!=null)sb.append(" exclude=").append(Arrays.asList(excludes));
+		if(defaultExcludes!=null)sb.append(" write_forbidden=").append(Arrays.asList(defaultExcludes));
+		
 		return sb.toString();
 	}
 }

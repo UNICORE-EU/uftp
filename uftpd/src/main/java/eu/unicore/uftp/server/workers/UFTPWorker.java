@@ -18,6 +18,7 @@ import org.apache.log4j.Logger;
 
 import eu.unicore.uftp.dpc.DPCServer.Connection;
 import eu.unicore.uftp.dpc.Session;
+import eu.unicore.uftp.dpc.UFTPConstants;
 import eu.unicore.uftp.dpc.Utils;
 import eu.unicore.uftp.jparss.PSocket;
 import eu.unicore.uftp.rsync.Master;
@@ -36,7 +37,7 @@ import eu.unicore.uftp.server.requests.UFTPTransferRequest;
  * @author Tim Pohlmann, 2010, Forschungszentrum Juelich - JSC
  * @author schuller
  */
-public class UFTPWorker extends Thread {
+public class UFTPWorker extends Thread implements UFTPConstants {
 
 	private static final Logger logger = Utils.getLogger(Utils.LOG_SERVER, UFTPWorker.class);
 
@@ -70,12 +71,6 @@ public class UFTPWorker extends Thread {
 	 * FILE read/write buffer size
 	 */
 	private final int bufferSize;
-
-	/**
-	 * tag used as "filename" to indicate session mode, i.e. multifile and byte
-	 * range support
-	 */
-	public static final String sessionModeTag = "___UFTP___MULTI___FILE___SESSION___MODE___";
 
 	/**
 	 *
@@ -118,8 +113,7 @@ public class UFTPWorker extends Thread {
 	 */
 	protected void runSession(Session session) {
 		int action = 0;
-		logger.info("Processing session for " + session.getClientDescription()
-			+ " base directory \"" + session.getBaseDirectory() + "\"");
+		logger.info("Processing "+String.valueOf(session));
 
 		try {
 			action = Session.ACTION_NONE;
