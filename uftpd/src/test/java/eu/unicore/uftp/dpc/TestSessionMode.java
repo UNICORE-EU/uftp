@@ -26,6 +26,7 @@ import org.junit.Test;
 import eu.unicore.uftp.client.FileInfo;
 import eu.unicore.uftp.client.SessionCommands.Get;
 import eu.unicore.uftp.client.UFTPSessionClient;
+import eu.unicore.uftp.dpc.Session.Mode;
 import eu.unicore.uftp.rsync.RsyncStats;
 import eu.unicore.uftp.rsync.TestRsync;
 import eu.unicore.uftp.server.ClientServerTestBase;
@@ -491,12 +492,12 @@ public class TestSessionMode extends ClientServerTestBase{
 		UFTPTransferRequest job = new UFTPTransferRequest(properties);
 		Session s = new Session(null,job,Utils.getFileAccess(null),1);
 		assertEquals(3,s.getIncludes().length);
-		assertFalse(s.checkACL(new File("/ham")));
-		assertTrue(s.checkACL(new File("/foo")));
-		assertTrue(s.checkACL(new File("/bar")));
-		assertTrue(s.checkACL(new File("thisisok")));
-		assertFalse(s.checkACL(new File("/this/is/a/forbidden/directory/")));
-		assertFalse(s.checkACL(new File("/this/foo/is/forbidden/")));
+		assertFalse(s.checkACL(new File("/ham"), Mode.READ));
+		assertTrue(s.checkACL(new File("/foo"),Mode.READ));
+		assertTrue(s.checkACL(new File("/bar"),Mode.READ));
+		assertTrue(s.checkACL(new File("thisisok"),Mode.READ));
+		assertFalse(s.checkACL(new File("/this/is/a/forbidden/directory/"),Mode.READ));
+		assertFalse(s.checkACL(new File("/this/foo/is/forbidden/"),Mode.READ));
 	}
 
 	@Test

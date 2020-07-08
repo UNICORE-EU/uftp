@@ -67,7 +67,6 @@ public final class ClientDispatcher {
 
 		String[] cmdArgs = Arrays.copyOfRange(args, 1, args.length);
 		if(cmdArgs.length==0 || isHelp(cmdArgs[0])){
-			System.err.println("UFTP Client " + getVersion());
 			cmd.printUsage();
 			return 0;
 		}

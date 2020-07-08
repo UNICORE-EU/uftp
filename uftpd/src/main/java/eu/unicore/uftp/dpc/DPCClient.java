@@ -154,7 +154,7 @@ public class DPCClient implements Closeable{
 	 */
 	public List<Socket>openDataConnections(int numParCons) throws IOException {
 		checkConnected();
-		logger.info("Creating parallel socket with " + numParCons + " streams.");
+		logger.info("Opening <"+numParCons+"> data connection(s).");
 
 		if (dataSockets.size() > 0) {
 			throw new IllegalStateException("There are already open data connections.");
@@ -167,6 +167,7 @@ public class DPCClient implements Closeable{
 		if (noopResponse.startsWith("223")) {
 			// adjust our number of connections since server may have imposed a limit
 			numParCons = Integer.parseInt(noopResponse.split(" ")[2]);
+			logger.info("Server limit: <"+numParCons+"> data connection(s).");
 		}
 
 		//send "PASV" and open data connections

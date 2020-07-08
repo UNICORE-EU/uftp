@@ -16,6 +16,7 @@ import org.apache.commons.cli.ParseException;
 import eu.unicore.uftp.authserver.authenticate.AuthData;
 import eu.unicore.uftp.authserver.authenticate.UsernamePassword;
 import eu.unicore.uftp.authserver.authenticate.sshkey.SSHKey;
+import eu.unicore.uftp.standalone.ClientDispatcher;
 import eu.unicore.uftp.standalone.ClientFacade;
 import eu.unicore.uftp.standalone.ConnectionInfoManager;
 import eu.unicore.uftp.standalone.UFTPClientFactory;
@@ -50,6 +51,13 @@ public abstract class BaseCommand implements ICommand {
 	@SuppressWarnings("static-access")
 	protected Options getOptions() {
 		Options options = new Options();
+
+		options.addOption(
+				OptionBuilder.withLongOpt("help")
+				.withDescription("Show help / usage information")
+				.isRequired(false)
+				.create("h")
+				);
 
 		options.addOption(
 				OptionBuilder.withLongOpt("user")
@@ -167,6 +175,10 @@ public abstract class BaseCommand implements ICommand {
 	protected abstract void run(ClientFacade facade) throws Exception;
 
 	public void runCommand() throws Exception {
+		if(line.hasOption("h")) {
+			printUsage();
+			return;
+		}
 		ConnectionInfoManager cim = new ConnectionInfoManager(getAuthData());
 		ClientFacade facade = new ClientFacade(cim, new UFTPClientFactory());
 		setOptions(facade);
@@ -179,6 +191,8 @@ public abstract class BaseCommand implements ICommand {
 	 */
 	@Override
 	public void printUsage() {
+		System.err.println("UFTP Client " + ClientDispatcher.getVersion());
+
 		HelpFormatter formatter = new HelpFormatter();
 		String newLine=System.getProperty("line.separator");
 

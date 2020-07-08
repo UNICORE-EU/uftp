@@ -8,6 +8,8 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.net.InetAddress;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.http.HttpMessage;
@@ -71,6 +73,7 @@ public class TestShareService {
 	@Test
 	public void testDownload() throws Exception {
 		checkDownload();
+		checkDownloadPartial();
 	}
 	
 	@Test
@@ -210,21 +213,32 @@ public class TestShareService {
 	}
 	
 	private void checkDownload() throws Exception {
-		File f = new File("pom.xml");
+		String s = doDownload(0, -1);
+		assertTrue(s.contains("modelVersion"));
+	}
+
+	private void checkDownloadPartial() throws Exception {
+		String s = doDownload(2, 11);
+		assertEquals("xml version",s);
+	}
+
+	private String doDownload(long offset, long length) throws Exception {
+		File f = new File("./pom.xml");
 		JSONObject share = createShare(f, "READ", "CN=Demo User, O=UNICORE, C=EU");
 		String shareLink = share.getJSONObject("share").getString("http");
 		BaseClient bc = new BaseClient(shareLink, k.getClientConfiguration(), getSharingUserAuth());
+		Map<String,String>headers = new HashMap<>();
+
+		if(length > 0) {
+			String range = "bytes="+offset+"-"+(offset+length-1);
+			headers.put("range", range);
+		}
 		// download the file
 		bc.setURL(shareLink);
-		HttpResponse r = bc.get(null);
+		HttpResponse r = bc.get(null, headers);
 		String s = EntityUtils.toString(r.getEntity());
 		cleanup(r);
-		
-		// check it
-		assertTrue(s.contains("modelVersion"));
-		
-		// delete share via URL
-		//bc.delete(shareLink);
+		return s;
 	}
 
 	private void checkUpload() throws Exception {

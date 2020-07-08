@@ -6,7 +6,6 @@ import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.util.NoSuchElementException;
 import java.util.StringTokenizer;
 
 import org.apache.commons.codec.binary.Base64;
@@ -63,20 +62,24 @@ public class SSHUtils {
 		return readPubkey(FileUtils.readFileToString(file, "UTF-8"));
 	}
 	
+	final static String[] ssh_options = { "from=", "no-", "environment=",
+			"permitopen=", "principals=", "tunnel=",
+			"ssh-rsa", "ssh-ed25519",
+	};
+
 	public static PublicKey readPubkey(String pubkey) throws IOException, GeneralSecurityException {
-		String base64 = null;
 		StringTokenizer st = new StringTokenizer(pubkey);
-		try {
-			st.nextToken(); // format
-			base64 = st.nextToken();
-			try{
-				st.nextToken();
-			}catch(NoSuchElementException e){/*ignored since comment is not important*/}
-		} catch (NoSuchElementException e) {
-			throw new IllegalArgumentException("Cannot read public key, expect SSH format");
-		}
-		Buffer.PlainBuffer buf = new Buffer.PlainBuffer(Base64.decodeBase64(base64.getBytes()));
-		return buf.readPublicKey();
+			outer: while(st.hasMoreTokens()) {
+				String token = st.nextToken();
+				for(String opt: ssh_options){
+					if(token.startsWith(opt))continue outer;
+				}
+				try{
+					Buffer.PlainBuffer buf = new Buffer.PlainBuffer(Base64.decodeBase64(token.getBytes()));
+					return buf.readPublicKey();
+				}catch(Exception ex) {}
+			}
+		throw new GeneralSecurityException("Not recognized as public key: "+pubkey);
 	}
 	
 	/**

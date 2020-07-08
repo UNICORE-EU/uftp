@@ -4,7 +4,7 @@ The UFTP issue tracker is at
 https://sourceforge.net/p/unicore/uftp-issues
 
 
-UFTP 2.8.0 (released MMM dd 2020)
+UFTP 2.8.0 (released Jul 06 2020)
 ---------------------------------
  - new feature: session features can be limited 
    by authserver (e.g. to readonly access)

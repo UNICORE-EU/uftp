@@ -1,7 +1,6 @@
 package eu.unicore.uftp.authserver.share;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
@@ -12,7 +11,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
 
-import org.apache.commons.io.input.BoundedInputStream;
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -29,11 +27,13 @@ import eu.unicore.uftp.authserver.authenticate.UserAttributes;
 import eu.unicore.uftp.authserver.messages.AuthRequest;
 import eu.unicore.uftp.authserver.messages.AuthResponse;
 import eu.unicore.uftp.client.UFTPClient;
+import eu.unicore.uftp.client.UFTPSessionClient;
 import eu.unicore.uftp.datashare.AccessType;
 import eu.unicore.uftp.datashare.SharingUser;
 import eu.unicore.uftp.datashare.Target;
 import eu.unicore.uftp.datashare.db.ACLStorage;
 import eu.unicore.uftp.datashare.db.ShareDAO;
+import eu.unicore.uftp.dpc.UFTPConstants;
 import eu.unicore.util.Log;
 
 /**
@@ -82,7 +82,8 @@ public abstract class ShareServiceBase extends ServiceBase {
 
 			AuthRequest authRequest = new AuthRequest();
 			authRequest.send = true;
-			authRequest.serverPath = share.getPath();
+			authRequest.serverPath = new File(new File(share.getPath()).getParentFile(), 
+					"/"+UFTPConstants.sessionModeTag).getPath();
 			UserAttributes ua = new UserAttributes(share.getUid(), share.getGid(), null);
 			TransferRequest transferRequest = new TransferRequest(authRequest, ua, clientIP);
 			AuthResponse response = new TransferInitializer().initTransfer(transferRequest,uftp);            
@@ -90,17 +91,32 @@ public abstract class ShareServiceBase extends ServiceBase {
 			PipedOutputStream src = new PipedOutputStream();
 			PipedInputStream pin = new PipedInputStream(src);
 
-			UFTPClient uc = new UFTPClient(server, response.serverPort, src);
-			uc.setSecret(transferRequest.getSecret());
-			kernel.getContainerProperties().getThreadingServices().getExecutorService().submit(uc);
+			final Range range = new Range(rangeHeader);
+			final String remoteFile = share.getPath();
+			final Runnable task = new Runnable() {
+				public void run() {
+					try(final UFTPSessionClient uc = new UFTPSessionClient(server, response.serverPort)){
+						uc.setSecret(transferRequest.getSecret());
+						uc.connect();
+						if(range.haveRange) {
+							uc.get(remoteFile, range.offset, range.length, src);
+						} else {
+							uc.get(remoteFile, src);
+						}
+					}catch(Exception ex) {
+						Log.logException("Error downloading", ex, logger);
+					}
+				}
+			};
+			kernel.getContainerProperties().getThreadingServices().getExecutorService().submit(task);
+
 			String name = null;
 			try {
 				name = new File(share.getPath()).getName();
 			}catch(Exception ex) {}
-			InputStream in = wantRange ? makeRangedStream(rangeHeader, pin) : pin;
 
 			ResponseBuilder rb = wantRange? Response.status(Status.PARTIAL_CONTENT) :Response.ok();
-			rb.entity(in);
+			rb.entity(pin);
 			if(name!=null)rb.header("Content-Disposition", "attachment; filename=\""+name+"\"");
 			r = rb.build();
 		}catch(Exception ex){
@@ -207,24 +223,33 @@ public abstract class ShareServiceBase extends ServiceBase {
 		usage.info(msg);
 	}
 
-	protected InputStream makeRangedStream(String rangeHeader, InputStream source) throws IOException {
-		String[] rangeSpec = rangeHeader.split("=");
-		if(!"bytes".equals(rangeSpec[0]))throw new IllegalArgumentException("Range header "+rangeHeader+ " cannot be parsed");
-		String range = rangeSpec[1];
+	public static class Range {
 
-		long offset = 0;
-		long length = -1;
-		String[] tok = range.split("-");
-		offset = Long.parseLong(tok[0]);
-		if(offset<0)throw new IllegalArgumentException("Range header "+rangeHeader+ " cannot be parsed");
-		if(tok.length>1){
-			long last = Long.parseLong(tok[1]);
-			if(last<offset)throw new IllegalArgumentException("Range header "+rangeHeader+ " cannot be parsed");
-			length = last+1-offset;
+		public long offset;
+
+		public long length;
+
+		public boolean haveRange = false;
+
+		public Range(String rangeHeader) {
+			offset = 0;
+			length = -1;
+			if(rangeHeader!=null) {
+				haveRange = true;
+				String[] rangeSpec = rangeHeader.split("=");
+				if(!"bytes".equals(rangeSpec[0]))throw new IllegalArgumentException("Range header "+rangeHeader+ " cannot be parsed");
+				String range = rangeSpec[1];
+
+				String[] tok = range.split("-");
+				offset = Long.parseLong(tok[0]);
+				if(offset<0)throw new IllegalArgumentException("Range header "+rangeHeader+ " cannot be parsed");
+				if(tok.length>1){
+					long last = Long.parseLong(tok[1]);
+					if(last<offset)throw new IllegalArgumentException("Range header "+rangeHeader+ " cannot be parsed");
+					length = last+1-offset;
+				}
+			}
 		}
-		while(offset>0){
-			offset -= source.skip(offset);
-		}
-		return length>=0? new BoundedInputStream(source, length) : source;
 	}
+
 }

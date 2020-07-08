@@ -348,21 +348,18 @@ public class Session {
 		String path = tok.length>2 ? tok[2]:".";
 		
 		File file = getFile(path);
-		if(!file.isAbsolute()){
-			file = new File(currentDirectory,path);
-		}
 		if(!checkACL(file, Mode.INFO)){
 			connection.sendError("Access denied!");
 		}
 		else{
-			FileInfo dir = stat(file); 
-			if(!file.exists()){
+			FileInfo info = stat(file); 
+			if(!info.exists()){
 				connection.sendError("Directory/file does not exist or cannot be accessed!");
 			}
 			else{
 				FileInfo[] files;
-				if(!dir.isDirectory() || asFile){
-					files = new FileInfo[]{dir};
+				if(!info.isDirectory() || asFile){
+					files = new FileInfo[]{info};
 				}
 				else {
 					files = listFiles(file);
@@ -385,20 +382,17 @@ public class Session {
 		String[] tok = cmd.split(" ", 2);
 		String path = tok.length>1 ? tok[1]:".";
 		File file = getFile(path);
-		if(!file.isAbsolute()){
-			file = new File(currentDirectory,path);
-		}
 		if(!checkACL(file, Mode.INFO)){
 			connection.sendError("Access denied!");
 		}
 		else{
-			FileInfo dir = stat(file); 
-			if(!file.exists()){
+			FileInfo info = stat(file); 
+			if(!info.exists()){
 				connection.sendError("Directory/file does not exist or cannot be accessed!");
 			}
 			else{
-				connection.sendControl("250- Listing "+dir.getPath());
-				connection.sendControl(" "+dir.toMListEntry());
+				connection.sendControl("250- Listing " + info.getPath());
+				connection.sendControl(" " + info.toMListEntry());
 				connection.sendControl("250 End");
 			}
 		}
@@ -415,9 +409,6 @@ public class Session {
 		}
 		
 		File file = getFile(path);
-		if(!file.isAbsolute()){
-			file = new File(currentDirectory,path);
-		}
 		
 		if(!checkACL(file, Mode.INFO)){
 			connection.sendError("Access denied!");
@@ -457,9 +448,7 @@ public class Session {
 
 		String path = tok.length>1 ? tok[1]:".";
 		File file = getFile(path);
-		if(!file.isAbsolute()){
-			file = new File(currentDirectory,path);
-		}
+		
 		if(!checkACL(file, Mode.INFO)){
 			connection.sendError("Access denied!");
 			return false;

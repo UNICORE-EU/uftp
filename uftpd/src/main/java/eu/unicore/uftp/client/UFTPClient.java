@@ -22,13 +22,7 @@ import eu.unicore.uftp.dpc.ProtocolViolationException;
 import eu.unicore.uftp.dpc.Utils;
 
 /**
- * Client class for handling UFTP transfers.
- *
- * There are two ways to use this class:
- * <ul>
- * <li> as a commandline tool </li>
- * <li> directly via its API </li>
- * </ul>
+ * Client class for handling single-file UFTP transfers.
  *
  * @author Tim Pohlmann, 2010, Forschungszentrum Juelich - JSC
  * @author schuller

@@ -7,14 +7,21 @@ https://sourceforge.net/p/unicore/uftp-issues
 ***  see README-UPGRADE.txt for how to update from 1.x
 ***
 
+Auth Server 2.2.1 (released Jul 07, 2020)
+-----------------------------------------
+ - fix: correctly parse user's access keys (ssh pubkeys)
+   as returned by uftpd
+ - optimized partial downloads of shared files
+   via plain HTTPs
+
 Auth Server 2.2.0 (released Jun 17, 2020)
 -----------------------------------------
  - support for more SSH key types (esp. ed25519)
 
 Auth Server 2.1.0 (released Feb 21, 2020)
 -----------------------------------------
- - mew feature: anonymous (http) download sets the Content-Disposition header
- - mew feature: anonymous (http) download has basic support for byte ranges
+ - new feature: anonymous (http) download sets the Content-Disposition header
+ - new feature: anonymous (http) download has basic support for byte ranges
  - fix: DB table name for storing shares is now 'SHARES_<servername>'
    WARNING if you use data sharing in production, your existing shares
    need to be converted/transferred or they will be lost.

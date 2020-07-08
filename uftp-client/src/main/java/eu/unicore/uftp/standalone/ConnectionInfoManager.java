@@ -16,7 +16,7 @@ import eu.unicore.uftp.standalone.authclient.UNICOREStorageAuthClient;
  */
 public class ConnectionInfoManager {
 
-    public static final int defaultPort = 9000;
+    public static final int defaultPort = 443;
 
     private String uri;
     

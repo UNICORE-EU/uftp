@@ -21,11 +21,14 @@ UNICORE UFTP
 
 UFTP is a data streaming library and file transfer tool. 
 
-It can be used integrated into UNICORE, allowing to transfer data from client
-to server (and vice versa), as well as providing data staging between
-UFTP-enabled UNICORE sites. UFTP can also be used independently from
-UNICORE, requiring a authentication server and a standalone UFTP
-client.
+UFTP is best used using the 'uftp' client-side application (available
+from https://sourceforge.net/projects/unicore/files/Clients/UFTP-Client),
+but is easily integrated into custom applications due to its FTP
+compliance.
+
+It can be also integrated into UNICORE, allowing to transfer data from
+client to server (and vice versa), as well as providing data staging
+and third-party transfer between UFTP-enabled UNICORE sites.
 
 A full UFTP server installation consists of two parts
 
@@ -254,6 +257,13 @@ The following variables can be defined in the configuration file (uftpd.conf):
                      the one that was sent to the UFTPD server. This will lead to rejected
 		     transfers. Setting this variable to a non-zero value will disable the
 		     IP check. Only the one-time password will be checked.
+
+  UFTP_KEYFILES     : (optional) list of files (relative to current user's $HOME) where uftpd will
+                      read public keys for authentication. List is separated by ":". This defaults
+		      to ".ssh/authorized_keys"
+
+  UFTP_NO_WRITE     : (optional) ":"-separated list of file name patters that uftpd should
+                      not write to
 
 As usual if you set the SERVER_HOST to be "0.0.0.0", the server will bind to all the available 
 network interfaces.
@@ -616,19 +626,6 @@ characters (really a base64-encoded 64 bit key).
 Performance measurement hints
 -----------------------------
 
-To run performance tests, it is possible to read and write from/to
-pseudo files in "/dev". Since UFTP needs to know the number of bytes
-to transfer, this can be given using a "pseudo" filename.  For
-example, you could read from "/dev/zero_<number_of_bytes>" and write
-to "/dev/null".
-
-UFTP will treat any filename that starts with "/dev" and contains an
-underscore "_" character in this manner.
-
-For example, to transfer a gigabyte of zeros to /dev/null, 
-
-------------
-. /etc/unicore/uftpd/uftpd.conf
-uftp-job.sh -c localhost -f /dev/zero_1000000000 -s true -x my_secret -n 2 -u unicore -g unicore
-uftp.sh -r -f /dev/null -L $SERVER_PORT -l $SERVER_HOST -x my_secret -n 2
-------------
+You should use the 'uftp' client to run performance tests, which contains
+many options such as the number of concurrent FTP connections, and can
+use /dev/null and /dev/zero as data source/sink.

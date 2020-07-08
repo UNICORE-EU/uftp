@@ -160,7 +160,7 @@ public class UFTPServer implements Runnable {
 			try {
 				jobSocket = cmdSocket.accept();
 				try {
-					logger.info("New control connection from " + jobSocket.getInetAddress());
+					logger.debug("New control connection from " + jobSocket.getInetAddress());
 					jobSocket.setSoTimeout(jobReadTimeout);
 					sslHelper.checkAccess(jobSocket);
 
