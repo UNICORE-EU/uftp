@@ -9,6 +9,9 @@ import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import net.schmizz.sshj.userauth.password.PasswordFinder;
+import net.schmizz.sshj.userauth.password.Resource;
+
 public class TestUtils {
 
 	@Test
@@ -58,5 +61,34 @@ public class TestUtils {
 				+ "AAAAC3NzaC1lZDI1NTE5AAAAIDSrmN76orlz7Zf0oSXlum5uYfpMEjKpAxp2W0OQWaLl"
 				+ " comment@somewhere";
 		Assert.assertNotNull(SSHUtils.readPubkey(data));
+	}
+	
+	@Test
+	public void testNoPassKey() throws Exception {
+		String orig = new Date().toString();
+		File key = new File("src/test/resources/ssh/id_nopass");
+		String pubkey = FileUtils.readFileToString(new File("src/test/resources/ssh/id_nopass.pub"), "UTF-8");
+		SSHKey sshAuth = SSHUtils.createAuthData(key, (char[])null, orig);
+		Assert.assertTrue(SSHUtils.validateAuthData(sshAuth,pubkey));
+	}
+	
+	@Test
+	public void testNoPassKeyWithoutQuery() throws Exception {
+		PasswordFinder pf = new PasswordFinder() {
+			@Override
+			public boolean shouldRetry(Resource<?> resource) {
+				return false;
+			}
+			@Override
+			public char[] reqPassword(Resource<?> resource) {
+				throw new IllegalStateException("Should not query for password-less key");
+			}
+		};
+		
+		String orig = new Date().toString();
+		File key = new File("src/test/resources/ssh/id_nopass");
+		String pubkey = FileUtils.readFileToString(new File("src/test/resources/ssh/id_nopass.pub"), "UTF-8");
+		SSHKey sshAuth = SSHUtils.createAuthData(key, pf, orig);
+		Assert.assertTrue(SSHUtils.validateAuthData(sshAuth,pubkey));
 	}
 }

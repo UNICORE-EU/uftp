@@ -20,5 +20,5 @@ public interface ICommand {
 	
 	public String getSynopsis();
 	
-	public void runCommand() throws Exception;
+	public boolean runCommand() throws Exception;
 }

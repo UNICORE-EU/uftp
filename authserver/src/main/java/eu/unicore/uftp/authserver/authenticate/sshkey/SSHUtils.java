@@ -30,10 +30,14 @@ public class SSHUtils {
 	
 	private static final ConfigImpl sshConfig = new DefaultConfig();
 	
+	public static PrivateKey readPrivateKey(File priv, PasswordFinder passwordFinder) throws IOException {
+		FileKeyProvider fkp = getFileKeyProvider(priv);
+		fkp.init(priv, passwordFinder);
+		return fkp.getPrivate();
+	}
 	
 	public static PrivateKey readPrivateKey(File priv, char[] password) throws IOException {
-		FileKeyProvider fkp = getFileKeyProvider(priv);
-		fkp.init(priv, new PasswordFinder() {
+		PasswordFinder passwordFinder = new PasswordFinder() {
 			
 			@Override
 			public boolean shouldRetry(Resource<?> resource) {
@@ -45,8 +49,8 @@ public class SSHUtils {
 			public char[] reqPassword(Resource<?> resource) {
 				return password;
 			}
-		});
-		return fkp.getPrivate();
+		};
+		return readPrivateKey(priv, passwordFinder);
 	}
 	
 	private static FileKeyProvider getFileKeyProvider(File key) throws IOException {
@@ -80,6 +84,25 @@ public class SSHUtils {
 				}catch(Exception ex) {}
 			}
 		throw new GeneralSecurityException("Not recognized as public key: "+pubkey);
+	}
+	
+	
+	public static SSHKey createAuthData(File key, PasswordFinder pf, String token) throws GeneralSecurityException, IOException {
+		SSHKey authData = new SSHKey();
+		byte[] hashedToken = hash(token.getBytes());
+		authData.token = new String(Base64.encodeBase64(hashedToken));
+		PrivateKey pk = readPrivateKey(key, pf);
+		
+		final String kt = KeyType.fromKey(pk).toString();
+		Signature signature = Factory.Named.Util.create(sshConfig.getSignatureFactories(), kt);
+		if (signature == null) {
+			throw new GeneralSecurityException("Could not create signature instance for " + kt + " key");
+		}
+		signature.initSign(pk);
+		signature.update(hashedToken);
+		byte[]signed = signature.sign();
+		authData.signature = new String(Base64.encodeBase64(signed)); 
+		return authData;
 	}
 	
 	/**

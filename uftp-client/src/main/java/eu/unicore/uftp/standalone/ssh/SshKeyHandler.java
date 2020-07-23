@@ -11,6 +11,8 @@ import eu.unicore.uftp.authserver.authenticate.sshkey.SSHKey;
 import eu.unicore.uftp.authserver.authenticate.sshkey.SSHUtils;
 import eu.unicore.uftp.dpc.Utils;
 import eu.unicore.uftp.standalone.util.ConsoleUtils;
+import net.schmizz.sshj.userauth.password.PasswordFinder;
+import net.schmizz.sshj.userauth.password.Resource;
 
 /**
  * create SSHKey auth info using SSH agent, if possible. 
@@ -48,17 +50,17 @@ public class SshKeyHandler implements PasswordSupplier {
 	}
 	
 	public SSHKey getAuthData() throws Exception {
+		SSHKey result = null;
 		if(SSHAgent.isAgentAvailable()){
 			try{
-				return useAgent();
+				result = useAgent();
 			}catch(Exception ex){
 				System.err.println(Utils.createFaultMessage("WARNING: SSH agent is available, but there was an error when using it",ex));
-				return create();
 			}
 		}
-		else{
-			return create();
-		}
+		if(result==null)result = create();
+		
+		return result;
 	}
 	
 	public void selectIdentity() {
@@ -69,7 +71,17 @@ public class SshKeyHandler implements PasswordSupplier {
 		if(privateKey == null || !privateKey.exists()){
 	                 throw new IOException("No private key found!");
 		}
-		SSHKey sshauth = SSHUtils.createAuthData(privateKey, this.getPassword(), token);
+		final PasswordFinder pf = new PasswordFinder() {
+			@Override
+			public boolean shouldRetry(Resource<?> resource) {
+				return false;
+			}
+			@Override
+			public char[] reqPassword(Resource<?> resource) {
+				return getPassword();
+			}
+		};
+		SSHKey sshauth = SSHUtils.createAuthData(privateKey, pf , token);
 		sshauth.username = userName;
 		return sshauth;
 	}
@@ -78,8 +90,13 @@ public class SshKeyHandler implements PasswordSupplier {
 		SSHAgent agent = new SSHAgent();
 		agent.setVerbose(verbose);
 		if(selectIdentity) {
-			agent.selectIdentity(privateKey.getAbsolutePath());
+			try{
+				agent.selectIdentity(privateKey.getAbsolutePath());
+			}catch(Exception ex) {
+				return null;
+			}
 		}
+		
 		byte[] signature = agent.sign(token);
 		SSHKey authData = new SSHKey();
 		authData.signature = new String(Base64.encodeBase64(signature));

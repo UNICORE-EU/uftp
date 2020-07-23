@@ -1,7 +1,9 @@
 package eu.unicore.uftp.standalone.commands;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,6 +26,7 @@ import eu.unicore.uftp.standalone.oidc.OIDCAgentAuth;
 import eu.unicore.uftp.standalone.ssh.SSHAgent;
 import eu.unicore.uftp.standalone.ssh.SshKeyHandler;
 import eu.unicore.uftp.standalone.util.ConsoleUtils;
+import eu.unicore.util.Log;
 
 public abstract class BaseCommand implements ICommand {
 
@@ -174,16 +177,27 @@ public abstract class BaseCommand implements ICommand {
 
 	protected abstract void run(ClientFacade facade) throws Exception;
 
-	public void runCommand() throws Exception {
+	public boolean runCommand() throws Exception {
+		boolean OK = true;
 		if(line.hasOption("h")) {
 			printUsage();
-			return;
+			return OK;
 		}
-		ConnectionInfoManager cim = new ConnectionInfoManager(getAuthData());
-		ClientFacade facade = new ClientFacade(cim, new UFTPClientFactory());
-		setOptions(facade);
-		run(facade);
-		facade.disconnect();
+		try{
+			ConnectionInfoManager cim = new ConnectionInfoManager(getAuthData());
+			ClientFacade facade = new ClientFacade(cim, new UFTPClientFactory());
+			setOptions(facade);
+			run(facade);
+			facade.disconnect();
+		}catch(Exception ex) {
+			if(verbose) {
+				ex.printStackTrace();
+				System.err.println();
+			}
+			System.err.println(Log.createFaultMessage("Error: ", ex));
+			OK = false;
+		}
+		return OK;
 	}
 	
 	/**
@@ -248,24 +262,38 @@ public abstract class BaseCommand implements ICommand {
 	protected SSHKey getSSHAuthData(String token) throws Exception {
 		File keyFile = null;
 		boolean haveAgent = SSHAgent.isAgentAvailable();
-
+		int numKeys = 0;
+		
+		File[] dirs = new File[] {
+				 new File(System.getProperty("user.home"),".uftp"),
+				 new File(System.getProperty("user.home"),".ssh")
+		};
+		
 		if(sshIdentity==null){
-			File sshDir = new File(System.getProperty("user.home"),".ssh");
-			if(sshDir.exists()){
-				String[] opts = new String[] {"id_rsa", "id_ed25519", "id_dsa"};
-				for(String o: opts) {
-					keyFile = new File(sshDir, o);
-					if(keyFile.exists())break;
+			FilenameFilter ff = new FilenameFilter() {
+				@Override
+				public boolean accept(File dir, String name) {
+					return name.startsWith("id_") && !name.endsWith(".pub");
 				}
-				if(!keyFile.exists() && !haveAgent){
-					throw new IOException("No private key recognised in "+sshDir.getAbsolutePath()
-					+" and no SSH agent available. Please use the --identity option!");
+			};
+			for(File keysDir: dirs) {
+				if(keysDir.exists()){
+					File[] ops = keysDir.listFiles(ff);
+					numKeys+=ops.length;
+					for(File key: keysDir.listFiles(ff)) {
+						if(!key.isDirectory() && key.canRead()) {
+							keyFile = key;
+							break;
+						};
+					}
 				}
 			}
-			else {
-				if(!haveAgent){
-					throw new IOException("No ssh key found in "+sshDir.getAbsolutePath());
-				}
+			if(keyFile == null || !keyFile.exists()){
+				throw new IOException("No useable private key found in "+Arrays.asList(dirs)+". Please use the --identity option!");
+			}
+			if(numKeys>1 && verbose) {
+				System.err.println("NOTE: more than one useable key found -"
+						+ " you might want to use '--identity <path_to_private_key>'");
 			}
 		}
 		else {
@@ -275,11 +303,11 @@ public abstract class BaseCommand implements ICommand {
 			}
 		}
 		if(verbose){
-			if(keyFile!=null){
-				System.err.println("Using SSH key <"+keyFile.getAbsolutePath()+">");
-			}
 			if(haveAgent) {
 				System.err.println("Using SSH agent");
+			}
+			if(keyFile!=null){
+				System.err.println("Using SSH key <"+keyFile.getAbsolutePath()+">");
 			}
 		}
 		SshKeyHandler ssh = new SshKeyHandler(keyFile, username, token);

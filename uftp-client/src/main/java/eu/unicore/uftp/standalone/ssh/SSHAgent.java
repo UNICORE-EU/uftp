@@ -34,6 +34,8 @@ public class SSHAgent {
 
 	private static boolean verbose = false;
 
+	Identity id = null;
+	
 	public SSHAgent() throws Exception {
 		if(!isAgentAvailable())throw new IOException("SSH-Agent is not available");
 		USocketFactory udsf = null;
@@ -56,10 +58,37 @@ public class SSHAgent {
 		if(ap==null || !ap.isRunning())throw new IOException("Error communicating with ssh-agent");
 	}
 
-	public void selectIdentity(String keyFile) {
+	/**
+	 * choose the identity - if not available in the agent, an exception is thrown
+	 * 
+	 * @param keyFile
+	 * @throws IOException
+	 */
+	public void selectIdentity(String keyFile) throws IOException {
 		this.keyFile = keyFile;
+		Identity[] ids = ap.getIdentities();
+		if(ids.length==0)throw new IOException("No identities loaded in SSH agent!");
+		id = ids[doSelectIdentity(ids)];
 	}
 
+
+	// get the "intended" identity from the agent
+	private int doSelectIdentity(Identity[]ids) throws IOException {
+		String pubkey = FileUtils.readFileToString(new File(keyFile+".pub"), "UTF-8");
+		StringTokenizer st = new StringTokenizer(pubkey);
+		st.nextToken(); // ignored
+		String base64 = st.nextToken();
+		byte[] bytes = Base64.decodeBase64(base64);
+		
+		for(int i=0; i<ids.length; i++) {
+			Identity id = ids[i];
+			if(Arrays.areEqual(bytes, id.getBlob())){
+				return i;
+			}
+		}
+		throw new IOException("No matching identity found in agent");
+	}
+	
 	public void setVerbose(boolean verboseS) {
 		verbose = verboseS;
 	}
@@ -70,28 +99,16 @@ public class SSHAgent {
 	 * @return signature (only the actual signature data without any headers)
 	 * @throws GeneralSecurityException
 	 */
-	public byte[] sign(String data) throws GeneralSecurityException {
+	public byte[] sign(String data) throws GeneralSecurityException, IOException {
 		byte[] signature = null;
-		Identity[] ids = ap.getIdentities();
-		if(ids.length==0)throw new GeneralSecurityException("No identities loaded in SSH agent!");
-		Identity id = ids[0];
-
-		if(ids.length>1){
-			if(keyFile==null) {
-				if(verbose) {
-					System.err.println("WARNING more than one identity in SSH agent -"
-							+ " you might want to use '--identity <path_to_private_key>' option.");
-				}
+		if(id==null) {
+			Identity[] ids = ap.getIdentities();
+			if(ids.length>1 && verbose) {
+				System.err.println("NOTE: more than one identity in SSH agent -"
+						+ " you might want to use '--identity <path_to_private_key>'");
 			}
-			else {
-				int identityIndex = 0;
-				try {
-					identityIndex = selectIdentity(ids);
-				}catch(IOException ioe) {
-					throw new GeneralSecurityException(ioe);
-				}
-				id = ids[identityIndex];
-			}
+			if(ids.length==0)throw new GeneralSecurityException("No identities loaded in SSH agent!");
+			id = ids[0];
 		}
 		byte[] blob = id.getBlob();
 		byte[] rawSignature = ap.sign(blob, data.getBytes());
@@ -117,23 +134,6 @@ public class SSHAgent {
 		return ap;
 	}
 
-	// get the "intended" identity from the agent
-	private int selectIdentity(Identity[]ids) throws IOException {
-		String pubkey = FileUtils.readFileToString(new File(keyFile+".pub"), "UTF-8");
-		StringTokenizer st = new StringTokenizer(pubkey);
-		st.nextToken(); // ignored
-		String base64 = st.nextToken();
-		byte[] bytes = Base64.decodeBase64(base64);
-		
-		for(int i=0; i<ids.length; i++) {
-			Identity id = ids[i];
-			if(Arrays.areEqual(bytes, id.getBlob())){
-				return i;
-			}
-		}
-		return 0;
-	}
-	
 	public static boolean isAgentAvailable(){
 		if(System.getenv("UFTP_NO_AGENT")!=null ){
 			if(verbose) {

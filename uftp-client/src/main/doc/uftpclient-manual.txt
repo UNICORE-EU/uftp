@@ -14,7 +14,7 @@ This is a commandline client for UFTP. It allows to
  * manage shares and access shared data
 
 The 'uftp' client will connect to an authentication server (either a
-UNICORE/X server or a special UFTP Auth server) to authenticate and
+UNICORE/X server or the UFTP Auth server) to authenticate and
 then to the 'uftpd' server for transferring data or making a file
 operation.
 
@@ -35,10 +35,6 @@ Prerequisites
    authentication service.
 
  * You need valid credentials for the UFTP authentication service
- 
- * If the UFTP authentication service is configured to use SSH-key 
-   authentication, you cannot use this client on Windows. We do not yet
-   support SSH keys on Windows.
 
 Installation
 ------------
@@ -128,8 +124,9 @@ The credentials can be given in multiple ways.
 
   * If no password is given, the client will attempt to use your SSH key for
   authentication, this has to be configured on the authentication server 
-  accordingly. If you have multiple keys, use the "-i" option to select one, otherwise
-  the default "~/.ssh/id_rsa" will be used. SSH agent is supported, too.
+  accordingly. If you have multiple keys, use the "-i" option to select one.
+  Otherwise, the client will check "~/.uftp/" and "~/.ssh/" for useable keys.
+  The SSH agent is supported, too.
 
   * The very useful 'oidc-agent' tool is also directly supported via '-O <account_name>'.
   In this case no username is required.

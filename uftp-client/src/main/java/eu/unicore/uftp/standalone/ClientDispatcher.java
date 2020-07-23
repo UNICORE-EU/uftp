@@ -72,9 +72,9 @@ public final class ClientDispatcher {
 		}
 
 		cmd.parseOptions(cmdArgs);
-		cmd.runCommand();
+		boolean OK = cmd.runCommand();
 		
-		return 0;
+		return OK ? 0 : 1;
 	}
 
 	public void printUsage() {
