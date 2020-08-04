@@ -110,7 +110,9 @@ public class TestShareService {
 		JettyServer server=k.getServer();
 		String url = server.getUrls()[0].toExternalForm()+"/rest";
 		BaseClient bc = new BaseClient(url, k.getClientConfiguration(), getSharingUserAuth());
-
+		ShareServiceProperties ssp = k.getAttribute(ShareServiceProperties.class);
+		ssp.getDB("TEST").deleteAllData();
+		
 		String resource  = url+"/share/TEST";
 		JSONObject o = new JSONObject();
 		o.put("path","/tmp/");
