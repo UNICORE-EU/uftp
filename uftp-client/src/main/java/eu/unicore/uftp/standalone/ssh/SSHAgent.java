@@ -20,6 +20,8 @@ import com.jcraft.jsch.agentproxy.Identity;
 import com.jcraft.jsch.agentproxy.USocketFactory;
 import com.jcraft.jsch.agentproxy.connector.SSHAgentConnector;
 
+import eu.unicore.uftp.dpc.Utils;
+
 /**
  * support for SSH-Agent using jsch-agent-proxy<br/>
  * https://github.com/ymnk/jsch-agent-proxy/blob/master/README.md
@@ -135,7 +137,7 @@ public class SSHAgent {
 	}
 
 	public static boolean isAgentAvailable(){
-		if(System.getenv("UFTP_NO_AGENT")!=null ){
+		if(Boolean.parseBoolean(Utils.getProperty("UFTP_NO_AGENT", "false"))){
 			if(verbose) {
 				System.err.println("Agent DISABLED via environment setting 'UFTP_NO_AGENT'");
 			}

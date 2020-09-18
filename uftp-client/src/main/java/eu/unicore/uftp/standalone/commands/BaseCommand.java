@@ -18,6 +18,7 @@ import org.apache.commons.cli.ParseException;
 import eu.unicore.uftp.authserver.authenticate.AuthData;
 import eu.unicore.uftp.authserver.authenticate.UsernamePassword;
 import eu.unicore.uftp.authserver.authenticate.sshkey.SSHKey;
+import eu.unicore.uftp.dpc.Utils;
 import eu.unicore.uftp.standalone.ClientDispatcher;
 import eu.unicore.uftp.standalone.ClientFacade;
 import eu.unicore.uftp.standalone.ConnectionInfoManager;
@@ -162,7 +163,7 @@ public abstract class BaseCommand implements ICommand {
 		
 		if(enableSSH){
 			if(!line.hasOption('u')) {
-				username = System.getenv(UFTP_USER);
+				username = Utils.getProperty(UFTP_USER, null);
 				if(username==null)username = System.getProperty("user.name");
 			}
 			if (line.hasOption('i')){
@@ -276,14 +277,14 @@ public abstract class BaseCommand implements ICommand {
 					return name.startsWith("id_") && !name.endsWith(".pub");
 				}
 			};
-			for(File keysDir: dirs) {
+			outer: for(File keysDir: dirs) {
 				if(keysDir.exists()){
 					File[] ops = keysDir.listFiles(ff);
 					numKeys+=ops.length;
 					for(File key: keysDir.listFiles(ff)) {
 						if(!key.isDirectory() && key.canRead()) {
 							keyFile = key;
-							break;
+							break outer;
 						};
 					}
 				}

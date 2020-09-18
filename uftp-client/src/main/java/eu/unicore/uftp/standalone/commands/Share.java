@@ -10,6 +10,7 @@ import org.json.JSONObject;
 
 import eu.unicore.security.Client;
 import eu.unicore.uftp.datashare.AccessType;
+import eu.unicore.uftp.dpc.Utils;
 import eu.unicore.uftp.standalone.ClientFacade;
 import eu.unicore.uftp.standalone.util.BaseClient;
 
@@ -73,7 +74,7 @@ public class Share extends BaseCommand {
 
 	@Override
 	protected void run(ClientFacade client) throws Exception {
-		url = line.getOptionValue("s", System.getenv(UFTP_SHARE_URL));
+		url = line.getOptionValue("s", Utils.getProperty(UFTP_SHARE_URL, null));
 		
 		if(line.hasOption("l")){
 			listShares(client);
