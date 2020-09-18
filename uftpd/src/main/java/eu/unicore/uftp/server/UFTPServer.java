@@ -75,7 +75,7 @@ public class UFTPServer implements Runnable {
 	//timeout on the control connection
 	int timeout = 30000;
 	//timeout when reading jobs
-	int jobReadTimeout = 5000;
+	int jobReadTimeout = 15000;
 	//limit on streams per client
 	int maxStreams = 8;
 	//limit on control connections per client IP
@@ -143,7 +143,7 @@ public class UFTPServer implements Runnable {
 		logger.info("Client IP check is " + (checkClientIP ? "ENABLED" : "DISABLED"));
 
 		// setup key file list for getUserinfo()
-		String fileListS = System.getenv(UFTPConstants.ENV_UFTP_KEYFILES);
+		String fileListS = Utils.getProperty(UFTPConstants.ENV_UFTP_KEYFILES, null);
 		if(fileListS==null || fileListS.isEmpty()) {
 			fileListS = ".ssh/authorized_keys";
 		}

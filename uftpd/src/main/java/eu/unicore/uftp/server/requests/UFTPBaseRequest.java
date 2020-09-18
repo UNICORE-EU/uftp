@@ -10,6 +10,7 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.log4j.Logger;
 
@@ -62,6 +63,14 @@ public abstract class UFTPBaseRequest {
 	private final String secret;
 
 	/**
+	 * allow multiple sessions/connections for the same request
+	 * (usually: no)
+	 */
+	protected boolean isPersistent = false;
+	
+    private final AtomicInteger activeSessions = new AtomicInteger(0);
+
+	/**
      * writes out the request in properties format 'client-ip=...' 'send=...' etc
      *
      * @param os output stream where the options are written to
@@ -71,6 +80,9 @@ public abstract class UFTPBaseRequest {
     	os.write(("client-ip=" + Utils.encodeInetAddresses(clientAddress) + "\n").getBytes());
         os.write(("user=" + ( user != null ? user : "") + "\n").getBytes());
         os.write(("secret=" + secret + "\n").getBytes());
+        if (isPersistent) {
+            os.write(("persistent=" + isPersistent + "\n").getBytes());
+        }
     };
     
     protected abstract String getRequestType();
@@ -150,6 +162,25 @@ public abstract class UFTPBaseRequest {
 	public String getSecret() {
 	    return secret;
 	}
-     
+	
+	public void setPersistent(boolean persistent) {
+		this.isPersistent = persistent;
+	}
+	
+	public boolean isPersistent() {
+		return isPersistent;
+	}
+
+	public int getActiveSessions() {
+		return activeSessions.get();
+	}
+	
+	public int newActiveSession() {
+		return activeSessions.incrementAndGet();
+	}
+	
+	public int endActiveSession() {
+		return activeSessions.decrementAndGet();
+	}
 
 }

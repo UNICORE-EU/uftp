@@ -17,88 +17,72 @@ public class ClientProtocol {
      * String array containing request messages used to establish the pseudo-FTP
      * connection
      */
-    public static final String[] requests = {UFTPCommands.USER_ANON, UFTPCommands.USER_ANON, UFTPCommands.SYST};
+   // public static final String[] requests = {UFTPCommands.USER_ANON, UFTPCommands.USER_ANON, UFTPCommands.SYST};
 
-	protected DPCClient client;
-	
-	public static final int protocolVersion = 2;
+	private final DPCClient client;
 	
 	private final List<String> features = new ArrayList<>();
 	
-	public ClientProtocol(){
-		this(2);
-	}
-	
-	public ClientProtocol(int version){
-		if(version!=2)throw new IllegalArgumentException("Unsupported protocol version!");
+	public ClientProtocol(DPCClient client){
+		this.client = client;
 	}
 
 	/**
-	 * establish a connection with the server
-	 * 
-	 * @param client
-	 * @param secret
-	 * @return the list of server features
+	 * initial connect to the server - reads 220 message and
+	 * returns the server reply
 	 * @throws IOException
-	 * @throws AuthorizationFailureException
 	 */
-	public List<String> establishConnection(DPCClient client, String secret) throws IOException, AuthorizationFailureException {
-		this.client = client;
-		connectV2(secret);
-		return features;
+    public List<String> initialHandshake() throws IOException {
+        // read initial line(s) from server containing code 220 and version
+        Reply reply = null;
+        try {
+        	reply = Reply.read(client);
+        }catch(ProtocolViolationException pve) {
+            throw new IOException("The connection was refused by the UFTPD server. "
+                    + "Please check the client IP and other parameters.");
+        }
+        if (reply.getCode()!=220) {
+            throw new ProtocolViolationException("Code '220' expected, got " + reply.getCode());
+        }
+        return reply.getResults();
     }
-	
-	/**
-	 * connect with protocol version 2
+
+    /**
+	 * login to the (U)FTP server
 	 * 
+	 * @param user (usually 'anonymous')
+	 * @param password
 	 * @throws IOException
-	 * @throws AuthorizationFailureException
 	 */
-	protected void connectV2(String secret) throws IOException, AuthorizationFailureException {
-		 initialHandshake();
-		 pseudoLogin(secret);
+	public void login(String user, String password) throws IOException {
+        client.sendControl(user);
+        String response = client.readControl(true);
+        if(response.startsWith("331")){
+        	client.sendControl("PASS "+password);
+        }
+        else{
+            throw new ProtocolViolationException("'" + response + "' does not comply with protocol.");
+        }
+        response = client.readControl(true);
+        if(!response.startsWith("230")){
+            throw new ProtocolViolationException( "Login failed: "+response);
+        }
+	}
+
+	public  List<String> checkFeatures() throws IOException {
 		 readFeatures();
 		 checkPassiveSupport(features);
 		 // server must acknowledge that the v2 login was OK
 		 if(!features.contains(UFTPCommands.PROTOCOL_VER_2_LOGIN_OK)){
 			 throw new IOException("Unexpected server features: missing protocol v2 support.");
 		 }
+		 return features;
 	}
 	
-    protected void initialHandshake() throws IOException {
-        // read initial line from server containing code 220 and version
-        String response;
-        response = client.readControl();
-        if (response == null) {
-            throw new IOException("The connection was refused by the UFTPD server. "
-                    + "Please check the client IP and other parameters.");
-        }
-        if (!response.startsWith("220")) {
-            throw new ProtocolViolationException("Code '220' expected, got " + response);
-        }
-    }
-
-
-    protected void pseudoLogin(String password) throws IOException {
-        String response="";
-        for (int i = 0; i < requests.length; i++) {
-            if(response.startsWith("331")){
-        		client.sendControl("USER "+password);
-            }
-            else{
-            	client.sendControl(requests[i]);
-            }
-            response = client.readControl();
-            if (!DPCServer.responses[i + 1].equals(response)) {
-                String err = "'" + response + "' does not comply with protocol.";
-                client.sendControl(UFTPCommands.ERROR + " " + err);
-                throw new ProtocolViolationException(err);
-            }
-        }
-    }
-
     protected void readFeatures() throws IOException {
         String response;
+        client.sendControl(UFTPCommands.SYST);
+        response = client.readControl(true);
         client.sendControl(UFTPCommands.FEATURES_REQUEST);
         response = client.readControl();
         if (!response.startsWith("211")) {
@@ -106,7 +90,7 @@ public class ClientProtocol {
         }
         while (true) {
             response = client.readControl();
-            if (response == null || features.size() > 21) {
+            if (response == null || features.size() > 64) {
                 throw new ProtocolViolationException("Illegal server reply: too many features");
             }
             if (UFTPCommands.ENDCODE.equals(response)) {

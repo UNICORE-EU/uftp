@@ -75,6 +75,7 @@ public class UFTPTransferRequest extends UFTPBaseRequest {
     
     // overall session permissions
     private Session.Mode accessPermissions = null;
+    
     /**
      * 
      * @param client - acceptable IP address(es) of the client
@@ -113,6 +114,7 @@ public class UFTPTransferRequest extends UFTPBaseRequest {
         includes = properties.getProperty("includes");
         excludes = properties.getProperty("excludes");
         accessPermissions = Session.Mode.valueOf(properties.getProperty("access-permissions", "FULL"));
+        isPersistent = Boolean.parseBoolean(properties.getProperty("persistent"));
     }
 
     public UFTPTransferRequest(String properties) throws UnknownHostException, IOException {
@@ -159,6 +161,7 @@ public class UFTPTransferRequest extends UFTPBaseRequest {
     @Override
     public String toString() {
         return "UFTPRequest for client=" + Arrays.asList(getClient())
+        		+ " persistent=" + isPersistent
                 + " send=" + send
                 + " file=" + file.getPath()
                 + " user=" + getUser() + " group=" + group

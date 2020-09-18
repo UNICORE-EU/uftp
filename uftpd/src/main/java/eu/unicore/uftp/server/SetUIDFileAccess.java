@@ -136,7 +136,6 @@ public class SetUIDFileAccess implements FileAccess {
 			switchTo(user, groupID);
 			String[] ls = dir.list();
 			if (ls == null) return null;
-			
 			FileInfo[] res = new FileInfo[ls.length];
 			int i = 0;
 			for(String name : ls){

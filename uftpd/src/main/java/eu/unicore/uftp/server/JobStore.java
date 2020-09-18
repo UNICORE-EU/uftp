@@ -82,7 +82,13 @@ public class JobStore {
 		while (iterator.hasNext()) {
 			Map.Entry<String, UFTPBaseRequest> entry = iterator.next();
 			UFTPBaseRequest job = entry.getValue();
+			
 			long age = System.currentTimeMillis() - job.getCreatedTime();
+			boolean remove = age > maxJobAge;
+			if(job.isPersistent()) {
+				// persistent requests don't expire as long as there is a active session
+				remove = remove && job.getActiveSessions()==0;
+			}
 			if (age > maxJobAge) {
 				logger.info("Removing expired job from " + job.getUser()
 				+ " @ " + Utils.encodeInetAddresses(job.getClient()));

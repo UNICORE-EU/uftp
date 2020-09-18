@@ -199,7 +199,7 @@ public class TestSessionMode extends ClientServerTestBase{
 
 		String newDir="test-"+System.currentTimeMillis();
 		client.mkdir(newDir);
-		List<String>ls=client.getFileList(".");
+		List<FileInfo>ls=client.getFileInfoList(".");
 		System.out.println("Files:\n"+ls);
 		assertTrue(ls.toString().contains(newDir));
 		client.cd(newDir);

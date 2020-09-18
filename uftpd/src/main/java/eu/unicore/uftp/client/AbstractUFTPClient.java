@@ -9,7 +9,6 @@ import java.net.Socket;
 import java.util.List;
 
 import eu.unicore.uftp.dpc.AuthorizationFailureException;
-import eu.unicore.uftp.dpc.ClientProtocol;
 import eu.unicore.uftp.dpc.DPCClient;
 import eu.unicore.uftp.dpc.Utils;
 import eu.unicore.uftp.jparss.PSocket;
@@ -49,11 +48,7 @@ public abstract class AbstractUFTPClient implements Runnable, Closeable {
 
 	protected UFTPProgressListener progressListener = null;
 
-	// initial version of protocol to use
-	// make this configurable for testing!?
-	final int protocol_version = 2;
-
-	protected final DPCClient client = new DPCClient(new ClientProtocol(protocol_version));
+	protected final DPCClient client = new DPCClient();
 
 	// data socket
 	protected Socket socket = null;

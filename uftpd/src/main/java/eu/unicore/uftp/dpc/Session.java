@@ -99,7 +99,7 @@ public class Session {
 		this.fileAccess = new UserFileAccess(fileAccess,job.getUser(),job.getGroup());
 		this.includes = parsePathlist(job.getIncludes());
 		this.excludes = parsePathlist(job.getExcludes());
-		this.defaultExcludes = parsePathlist(System.getenv(UFTPConstants.ENV_UFTP_NO_WRITE));
+		this.defaultExcludes = parsePathlist(Utils.getProperty(UFTPConstants.ENV_UFTP_NO_WRITE, null));
 		
 		if (job.getFile().getParentFile() != null) {
 			baseDirectory = job.getFile().getParentFile();
@@ -286,11 +286,10 @@ public class Session {
 			size = stat(localFile).getSize();
 			numberOfBytes = size;
 		}
-		String OK = connection.getProtocolVersion()>1 ? UFTPCommands.RETR_OK : UFTPCommands.OK;
-		connection.sendControl(OK+" " + size + " bytes available for reading.");
+		connection.sendControl( UFTPCommands.RETR_OK+" " + size + " bytes available for reading.");
 		return true;
 	}
-
+	
 	private void handleSize(String cmd) throws IOException {
 		assertMode(Mode.INFO);
 		String[] tok = cmd.trim().split(" ", 2);
@@ -304,9 +303,12 @@ public class Session {
 		}
 		else {
 			FileInfo fi = stat(file);
-			if(!fi.exists())connection.sendError("File does not exist");
-			long size = fi.getSize();
-			connection.sendControl(UFTPCommands.SIZE_REPLY + " " + size);
+			if(!fi.exists()) {
+				connection.sendError("File does not exist");
+			}
+			else{
+				connection.sendControl(UFTPCommands.SIZE_REPLY + " " + fi.getSize());
+			}
 		}
 	}
 
@@ -368,9 +370,9 @@ public class Session {
 						return;
 					}
 				}
-				connection.sendControl("211-Sending file list");
+				connection.sendControl("211- Sending file list");
 				for (FileInfo f : files) {
-					connection.sendControl(f.toString());
+					connection.sendControl(" "+f.toString());
 				}
 				connection.sendControl("211 End of file list.");
 			}
@@ -402,10 +404,13 @@ public class Session {
 		assertMode(Mode.INFO);
 		String[] tok = cmd.split(" ", 2);
 		String path = tok.length>1 ? tok[1]:".";
+		boolean linuxMode = false;
+		
 		if("-a".equals(path)){
 			// the authors of certain linux file browsers apparently 
 			// did not read the FTP RFC and send options with "LIST"
 			path=".";
+			linuxMode = true;
 		}
 		
 		File file = getFile(path);
@@ -433,7 +438,12 @@ public class Session {
 		
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
 		for (FileInfo f : files) {
-			bos.write((f.toString()+"\r\n").getBytes());
+			if(linuxMode) {
+				bos.write(f.getLISTFormat().getBytes());
+			}
+			else {
+				bos.write((f.toString()+"\r\n").getBytes());
+			}
 		}
 		stream = new ByteArrayInputStream(bos.toByteArray());
 		numberOfBytes = bos.size();
@@ -477,7 +487,7 @@ public class Session {
 	}
 
 	private void handleCDUP() throws IOException {
-		assertMode(Mode.READ);
+		assertMode(Mode.FULL);
 		if (!currentDirectory.getAbsolutePath().equals(baseDirectory.getAbsolutePath())) {
 			currentDirectory = currentDirectory.getParentFile();
 			connection.sendControl(UFTPCommands.OK);
@@ -487,9 +497,11 @@ public class Session {
 	}
 
 	private void handleCWD(String cmd) throws IOException {
-		assertMode(Mode.READ);
+		assertMode(Mode.FULL);
 		String dir = cmd.split(" ", 2)[1];
-		File newWD = new File(currentDirectory, dir);
+		File newDir = new File(dir);
+		File newWD = newDir.isAbsolute()?
+				newDir : new File(currentDirectory, dir);
 		if (!(newWD.exists() && newWD.isDirectory())) {
 			connection.sendError("Can't cd to " + newWD.getAbsolutePath());
 		} else {
@@ -500,7 +512,7 @@ public class Session {
 
 	private void handlePWD() throws IOException {
 		assertMode(Mode.READ);
-		connection.sendControl("257 " + currentDirectory.getAbsolutePath());
+		connection.sendControl("257 \"" + currentDirectory.getAbsolutePath()+"\"");
 	}
 
 	private void handleMKD(String cmd) throws IOException {
@@ -772,10 +784,8 @@ public class Session {
 	public void reset() throws IOException {
 		resetRange();
 		Utils.closeQuietly(localRandomAccessFile);
-		if(connection.getProtocolVersion()>1){
-			if(!keepAlive)connection.closeData();
-			connection.sendControl("226 File transfer successful");
-		}
+		if(!keepAlive)connection.closeData();
+		connection.sendControl("226 File transfer successful");
 		Utils.closeQuietly(stream);
 		stream = null;
 	}

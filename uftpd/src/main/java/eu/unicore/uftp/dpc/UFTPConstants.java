@@ -21,5 +21,14 @@ public interface UFTPConstants {
 	 */
 	public static final String ENV_UFTP_KEYFILES = "UFTP_KEYFILES";
 	
+	/**
+	 * environment setting for defining an FTP proxy that UFTP 
+	 * client should use
+	 */
+	public static final String ENV_UFTP_PROXY      = "UFTP_PROXY_HOST";
+	public static final String ENV_UFTP_PROXY_PORT = "UFTP_PROXY_PORT";
+	public static final String ENV_UFTP_PROXY_USER = "UFTP_PROXY_USER";
+	public static final String ENV_UFTP_PROXY_PASS = "UFTP_PROXY_PASS";
+	
 	
 }

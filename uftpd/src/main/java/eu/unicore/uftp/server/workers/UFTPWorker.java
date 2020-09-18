@@ -101,7 +101,14 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 		Session session = new Session(connection, job, server.getFileAccess(), maxStreams);
 		isSession = job.getFile().getName().endsWith(sessionModeTag);
 		if (isSession) {
+			boolean isPersistent = job.isPersistent();
+			int count = job.newActiveSession();
+			if(isPersistent)logger.info("New session for <"+job.getUser()+"> this is number <"+count+">");
 			runSession(session);
+			count = job.endActiveSession();
+			if(isPersistent)logger.info("Ending session for <"+job.getUser()+"> remaining: "+count
+					+( count==0 ?", request processing finished.":""));
+			if(count==0 && isPersistent)server.invalidateJob(job);
 		} else {
 			runSingle(session, job.getFile());
 		}
@@ -114,7 +121,6 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 	protected void runSession(Session session) {
 		int action = 0;
 		logger.info("Processing "+String.valueOf(session));
-
 		try {
 			action = Session.ACTION_NONE;
 
@@ -579,7 +585,15 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 		sb.append(group!=null?group:"n/a").append("] ");
 		if(numFiles>0)sb.append("[").append(numFiles).append(" files] ");
 		sb.append("[").append(dataSize).append(" bytes] ");
-		sb.append("[").append((long)r).append(" kb/sec]");
+		if(dataSize>10000) {
+			String unit = " kB/sec";
+			if(r>1000) {
+				r = r / 1000f;
+				unit = " MB/sec";
+			}
+			sb.append("[").append((long)r).append(unit);
+		}
+		sb.append("]");
 		String msg = sb.toString();
 
 		logger.debug(msg);

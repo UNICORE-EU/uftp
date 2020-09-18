@@ -82,9 +82,18 @@ public class TestVarious {
 	}
 	
 	@Test
-	public void testMListEntry(){
+	public void testToMListEntry(){
 		FileInfo f = new FileInfo(new File("pom.xml"));
 		System.out.println(f.toMListEntry());
 	}
 
+	@Test
+	public void testFromMListEntry(){
+		FileInfo f = new FileInfo(new File("pom.xml"));
+		String s = f.toMListEntry();
+		System.out.println(s);
+		FileInfo f2 = FileInfo.fromMListEntry(s);
+		System.out.println(f2);
+		assertEquals(s, f2.toMListEntry());
+	}
 }

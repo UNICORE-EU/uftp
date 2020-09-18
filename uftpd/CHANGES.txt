@@ -4,6 +4,20 @@ The UFTP issue tracker is at
 https://sourceforge.net/p/unicore/uftp-issues
 
 
+UFTP 2.9.0 (released Sep dd 2020)
+---------------------------------
+ - new feature: support for FTP proxies (DeleGate and Frox)
+ - new feature: "persistent" sessions to allow mounting via
+   'curlftpfs' where the login secret is re-used
+   several times
+ - simplify login handshake handling to better support
+   login from non-UFTP clients
+ - fix: stat'ing the "/" directory returned empty filename
+   and thus listing "/" did not work
+ - fix: client sent extra empty lines over the control
+   channel
+ - fix: less harsh timeouts for control socket communications
+
 UFTP 2.8.0 (released Jul 06 2020)
 ---------------------------------
  - new feature: session features can be limited 

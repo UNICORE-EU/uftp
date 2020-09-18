@@ -49,7 +49,7 @@ public class DPCClient implements Closeable{
 
 	private BufferedReader controlReader;
 
-	private ClientProtocol protocol;
+	private final ClientProtocol protocol;
 
 	private final List<String> features = new ArrayList<>();
 
@@ -59,13 +59,13 @@ public class DPCClient implements Closeable{
 	private int so_buffer_size;
 
 	public DPCClient(){
-		this(new ClientProtocol());
+		protocol = new ClientProtocol(this);
 	}
 
 	public DPCClient(ClientProtocol protocol){
 		this.protocol = protocol;
 		try {
-			so_buffer_size = Integer.parseInt(System.getenv().getOrDefault("UFTP_SO_BUFSIZE", "-1"));
+			so_buffer_size = Integer.parseInt(Utils.getProperty("UFTP_SO_BUFSIZE", "-1"));
 		}catch(Exception ex) {
 			so_buffer_size = -1;
 		}
@@ -88,6 +88,70 @@ public class DPCClient implements Closeable{
 		if (connected) {
 			throw new IllegalStateException("Already connected");
 		}
+		ProxyType proxyType = ProxyType.NONE;
+		if(checkProxy()) {
+			InetAddress proxy = InetAddress.getByName(ftpProxyHost);
+			openControlSocket(new InetAddress[] {proxy}, ftpProxyPort);
+			List<String>reply = protocol.initialHandshake();
+			logger.debug(reply);
+			proxyType = determineProxyType(reply);
+			if(proxyType==null)throw new IOException("Unsupported proxy implementation!");
+			switch (proxyType) {
+				case DELEGATE:
+					protocol.login("USER anonymous", ftpProxyPass);
+					protocol.login("user anonymous@"+server[0].getHostAddress()+":"+port, secret);
+					break;
+				case FROX:
+					protocol.login("user anonymous@"+server[0].getHostAddress()+":"+port, secret);
+					break;
+				case NONE:
+					break;
+			}
+		}
+		else {
+			openControlSocket(server, port);
+			protocol.initialHandshake();
+			protocol.login("USER anonymous", secret);
+		}
+		if(proxyType!=ProxyType.FROX) {
+			features.addAll(protocol.checkFeatures());
+		}
+		else {
+			features.addAll(getFroxFeatures());
+		}
+		connected = true;
+		logger.info("Connection established.");
+	}
+	
+	String ftpProxyHost;
+	int ftpProxyPort;
+	String ftpProxyUser = "anonymous";
+	String ftpProxyPass = "";
+	
+	protected boolean checkProxy() {
+		ftpProxyHost = Utils.getProperty(UFTPConstants.ENV_UFTP_PROXY, null);
+		if(ftpProxyHost==null)return false;
+		ftpProxyPort = Integer.parseInt(Utils.getProperty(UFTPConstants.ENV_UFTP_PROXY_PORT, "21"));
+		ftpProxyUser = Utils.getProperty(UFTPConstants.ENV_UFTP_PROXY_USER, "anonymous");
+		ftpProxyPass = Utils.getProperty(UFTPConstants.ENV_UFTP_PROXY_PASS, "");
+		return true;
+	}
+
+	static enum ProxyType {
+		NONE, DELEGATE, FROX	
+	}
+	
+	protected ProxyType determineProxyType(List<String>serverInfo) {
+		for(String s: serverInfo) {
+			if(s.contains("DeleGate"))return ProxyType.DELEGATE;
+			if(s.contains("Frox"))return ProxyType.FROX;
+		}
+		return ProxyType.FROX;
+	}
+
+	protected void openControlSocket(InetAddress[] server, int port) throws IOException,
+	AuthorizationFailureException {
+		
 		InetAddress selectedServer = null;
 		StringBuilder errors = new StringBuilder();
 
@@ -129,19 +193,11 @@ public class DPCClient implements Closeable{
 		if (selectedServer == null) {
 			throw new IOException("Can't connect to server(s) " + Arrays.asList(server) + " at port " + port + ". Error message " + errors);
 		}
-		logger.info("Authenticating to UFTP server at IP: " + selectedServer.getHostAddress() + " port: " + port);
-		establishConnection(secret);
-		logger.info("Connection established, client/server protocol version "+protocolVersion);
-	}
-
-	private void establishConnection(String secret) throws IOException, AuthorizationFailureException {
 		controlWriter = new BufferedWriter(new OutputStreamWriter(controlSocket.getOutputStream()));
 		controlReader = new BufferedReader(new InputStreamReader(controlSocket.getInputStream()));
-		features.addAll(protocol.establishConnection(this, secret));
-		if(!features.contains(UFTPCommands.PROTOCOL_VER_2_LOGIN_OK)){
-			protocolVersion=1;
-		}
-		connected = true;
+		
+		logger.info("FTP control connection established to " + selectedServer.getHostAddress() + ":" + port);
+		
 	}
 
 	/**
@@ -317,14 +373,31 @@ public class DPCClient implements Closeable{
 		controlWriter.write(message + "\r\n");
 		controlWriter.flush();
 	}
-
+	
 	/**
 	 * read a single line from the control channel
 	 */
 	public String readControl() throws IOException {
+		return readControl(false);
+	}
+
+	/**
+	 * read a single line from the control channel
+	 * @param skipMulti - if true, multiline replies are skipped over, returning only the last line
+	 */
+	public String readControl(boolean skipMulti) throws IOException {
 		String res = controlReader.readLine();
 		if (logger.isDebugEnabled() && res!=null) {
 			logger.debug("<-- " + res.trim());
+		}
+		if(skipMulti && res!=null && '-'==res.charAt(3)) {
+			String endcode = res.substring(0, 3)+" ";
+			while(res!=null && !res.startsWith(endcode)) {
+				res = controlReader.readLine();
+				if (logger.isDebugEnabled() && res!=null) {
+					logger.debug("<-- " + res.trim());
+				}
+			}
 		}
 		return res;
 	}
@@ -333,6 +406,17 @@ public class DPCClient implements Closeable{
 		if (!connected) {
 			throw new IllegalStateException("Not connected");
 		}
+	}
+	
+	private List<String> getFroxFeatures(){
+		return Arrays.asList(new String[]{ UFTPCommands.PASV,
+				UFTPCommands.RANGSTREAM, 
+				UFTPCommands.MFMT,
+				UFTPCommands.MLSD,
+				UFTPCommands.APPE,
+				UFTPCommands.ARCHIVE,
+				UFTPCommands.RESTRICTED_SESSION,
+		});
 	}
 
 }

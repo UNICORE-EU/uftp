@@ -145,7 +145,7 @@ public class ServerThread extends Thread {
     		}
     		else {
     			job = connection.establish();
-    	        jobStore.remove(job);
+    			if(!job.isPersistent())jobStore.remove(job);
     	        counter.incrementAndGet();
     		}
     	}
@@ -272,5 +272,9 @@ public class ServerThread extends Thread {
     public FileAccess getFileAccess() {
         return fileAccess;
     }
-
+    
+    public void invalidateJob(UFTPBaseRequest job) {
+    	jobStore.remove(job);
+    }
+   
 }

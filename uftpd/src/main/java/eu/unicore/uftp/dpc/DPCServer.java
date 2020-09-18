@@ -36,7 +36,9 @@ public class DPCServer {
 
 	private static final Logger logger = Utils.getLogger(Utils.LOG_SERVER, DPCServer.class);
 
-	public static final String VER = "DPCServer 1.0";
+	public static final String VER = 
+			"UFTPD "+DPCServer.class.getPackage().getImplementationVersion()
+			+ ", https://www.unicore.eu";
 
 	private final ServerSocket serverSocket;
 
@@ -101,7 +103,7 @@ public class DPCServer {
 		this.portManager = pm!=null ? pm : new PortManager();
 		this.checkClientIP = checkClientIP;
 		try {
-			so_buffer_size = Integer.parseInt(System.getenv().getOrDefault("UFTP_SO_BUFSIZE", "-1"));
+			so_buffer_size = Integer.parseInt(Utils.getProperty("UFTP_SO_BUFSIZE", "-1"));
 		}catch(Exception ex) {
 			so_buffer_size = -1;
 		}
@@ -214,8 +216,6 @@ public class DPCServer {
 
 		private final Collection<String> features = new HashSet<>();
 
-		private int protocolVersion = 1;
-		
 		private boolean checkClientIP = true;
 		
 		private Connection(Socket controlSocket, final String[] features, boolean checkClientIP) throws IOException {
@@ -242,7 +242,6 @@ public class DPCServer {
 			ServerProtocol sp = new ServerProtocol();
 			UFTPBaseRequest job = sp.establish(this);
 			established = job!=null;
-			this.protocolVersion = sp.getProtocolVersion();
 			return job;
 		}
 		
@@ -361,7 +360,7 @@ public class DPCServer {
 		 */
 		public void sendControl(String message) throws IOException {
 			if (logger.isDebugEnabled()) {
-				logger.debug("--> " + message.trim());
+				logger.debug("--> " + message);
 			}
 			controlWriter.write(message+UFTPCommands.NEWLINE);
 			controlWriter.flush();
@@ -391,14 +390,14 @@ public class DPCServer {
 
 		/**
 		 * read a line from the control connection
-		 *
+		 * 
 		 * @return the line or null if end-of-stream
 		 * @throws IOException
 		 */
 		public String readControl() throws IOException {
 			String res = controlReader.readLine();
 			if (logger.isDebugEnabled() && res != null) {
-				logger.debug("<-- " + res.trim());
+				logger.debug("<-- " + res);
 			}
 			return res;
 		}
@@ -520,10 +519,6 @@ public class DPCServer {
 			return r;
 		}
 
-		public int getProtocolVersion(){
-			return protocolVersion;
-		}
-		
 		public List<UFTPBaseRequest> getJobsForClientAddress(InetAddress clientAddress){
 			return jobMap.getJobs(clientAddress);
 		}

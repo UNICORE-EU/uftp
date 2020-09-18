@@ -118,7 +118,7 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 
 	@Override
 	public void close() throws IOException {
-		client.sendControl("BYE");
+		client.sendControl("QUIT");
 		super.close();
 	}
 	
@@ -236,7 +236,7 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 	 */
 	public List<String> getFileList(String baseDir) throws IOException {
 		checkConnected();
-		return sendListFilesCommand("N", baseDir);
+		return sendListFilesCommand(baseDir, true);
 	}
 
 	/**
@@ -248,14 +248,17 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 	 * @throws IOException
 	 */
 	public List<FileInfo> getFileInfoList(String baseDir) throws IOException {
+		checkConnected();
 		List<FileInfo> res = new ArrayList<FileInfo>();
-		for (String ls : getFileList(baseDir)) {
+		for (String ls : sendListFilesCommand(baseDir, true)) {
 			res.add(new FileInfo(ls));
 		}
 		return res;
 	}
 	
 	/**
+	 * TODO should use MLST
+	 * 
 	 * get file information for the given file/dir (which is relative to the
 	 * current dir)
 	 *
@@ -265,9 +268,8 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 	 */
 	public FileInfo stat(String path) throws IOException {
 		checkConnected();
-		String r = sendListFilesCommand("F", path).get(0);
-		FileInfo res = new FileInfo(r);
-		return res;
+		String r = sendListFilesCommand(path, false).get(0);
+		return new FileInfo(r);
 	}
 
 	public long getFileSize(String pathName) throws IOException {
@@ -278,7 +280,8 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 	/**
 	 * change to the given remote directory
 	 *
-	 * @param dir - the dir to change to, relative to the current one
+	 * @param dir - the dir to change to. Can be absolute (starting with a "/") 
+	 *              or relative to the current one
 	 *
 	 * @throws IOException
 	 */
@@ -366,7 +369,7 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 		if(TYPE_ARCHIVE.equalsIgnoreCase(type)) {
 			assertFeature(TYPE_ARCHIVE);
 		}
-		client.sendControl("TYPE "+type+"\r\n");
+		client.sendControl("TYPE "+type);
 		Reply reply = Reply.read(client);
 		if (reply.isError()) {
 			throw new IOException("Error: server reply " + reply);
@@ -507,7 +510,7 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 	// http://tools.ietf.org/html/draft-bryan-ftp-range-05
 	//
 	private void sendRangeCommand(long offset, long length) throws IOException {
-		String message = "RANG " + offset + " " + (offset+length) + "\r\n";
+		String message = "RANG " + offset + " " + (offset+length);
 		client.sendControl(message);
 		Reply reply = Reply.read(client);
 		if (reply.getCode() != 350) {
@@ -516,7 +519,7 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 	}
 
 	private long sendRetrieveCommand(String remoteFile) throws IOException {
-		String message = "RETR " + remoteFile + "\r\n";
+		String message = "RETR " + remoteFile;
 		client.sendControl(message);
 		Reply reply = Reply.read(client);
 		if (reply.isError()) {
@@ -527,16 +530,16 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 		long size = Long.parseLong(reply.getStatusLine().split(" ")[2]);
 		return size;
 	}
-
+	
 	/**
 	 * @param options - option string : 'N' for normal mode (list a directory)
 	 * @param baseDir
 	 */
-	private List<String> sendListFilesCommand(String options, String baseDir) throws IOException {
+	private List<String> sendListFilesCommand(String baseDir, boolean dir) throws IOException {
 		if (baseDir == null) {
 			baseDir = ".";
 		}
-		String message = "STAT " + options + " " + baseDir + "\r\n";
+		String message = "STAT "+(dir? "N ": "F ")+ baseDir;
 		client.sendControl(message);
 		Reply reply = Reply.read(client);
 		if (reply.isError()) {
@@ -546,7 +549,7 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 	}
 
 	private void sendCD(String dir) throws IOException {
-		String message = "CWD " + dir + "\r\n";
+		String message = "CWD " + dir;
 		client.sendControl(message);
 		Reply reply = Reply.read(client);
 		if (reply.isError()) {
@@ -576,7 +579,7 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 	}
 
 	private void sendMKD(String pathname) throws IOException {
-		String message = "MKD " + pathname + "\r\n";
+		String message = "MKD " + pathname;
 		client.sendControl(message);
 		Reply reply = Reply.read(client);
 		if (reply.isError()) {
@@ -585,7 +588,7 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 	}
 
 	private void sendRM(String pathname) throws IOException {
-		String message = "DELE " + pathname + "\r\n";
+		String message = "DELE " + pathname;
 		client.sendControl(message);
 		Reply reply = Reply.read(client);
 		if (reply.isError()) {
@@ -594,7 +597,7 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 	}
 
 	private String sendPWD() throws IOException {
-		String message = "PWD\r\n";
+		String message = "PWD";
 		client.sendControl(message);
 		Reply reply = Reply.read(client);
 		if (reply.isError()) {
@@ -612,14 +615,14 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 				throw new IOException("Error setting range: server reply " + reply);
 			}
 		}
-		String message = "ALLO " + size + "\r\n";
+		String message = "ALLO " + size;
 		client.sendControl(message);
 		reply = Reply.read(client);
 		if (reply.isError()) {
 			throw new IOException("Error: server reply " + reply);
 		}
 
-		message = "STOR " + remoteFile + "\r\n";
+		message = "STOR " + remoteFile;
 		client.sendControl(message);
 		reply = Reply.read(client);
 		if (reply.isError()) {
@@ -629,7 +632,7 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 	
 	private void sendStoreCommand(String remoteFile) throws IOException {
 		Reply reply = null;
-		String message = "STOR " + remoteFile + "\r\n";
+		String message = "STOR " + remoteFile;
 		client.sendControl(message);
 		reply = Reply.read(client);
 		if (reply.isError()) {
@@ -641,14 +644,14 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 		Reply reply = null;
 		String message;
 		if(size>-1) {
-			message = "ALLO " + size + "\r\n";
+			message = "ALLO " + size;
 			client.sendControl(message);
 			reply = Reply.read(client);
 			if (reply.isError()) {
 				throw new IOException("Error: server reply " + reply);
 			}
 		}
-		message = "APPE " + remoteFile + "\r\n";
+		message = "APPE " + remoteFile;
 		client.sendControl(message);
 		reply = Reply.read(client);
 		if (reply.isError()) {
@@ -658,7 +661,7 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 
 	private void sendSYNCMaster(String pathname) throws IOException {
 		// server is master
-		String message = "SYNC-MASTER " + pathname + "\r\n";
+		String message = "SYNC-MASTER " + pathname;
 		client.sendControl(message);
 		Reply reply = Reply.read(client);
 		if (reply.isError()) {
@@ -668,7 +671,7 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 
 	private void sendSYNCSlave(String pathname) throws IOException {
 		// server is slave
-		String message = "SYNC-SLAVE " + pathname + "\r\n";
+		String message = "SYNC-SLAVE " + pathname;
 		client.sendControl(message);
 		Reply reply = Reply.read(client);
 		if (reply.isError()) {
@@ -678,13 +681,13 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 
 	private void sendRename(String from, String to) throws IOException {
 		Reply reply = null;
-		String message = "RNFR " + from+ "\r\n";
+		String message = "RNFR " + from;
 		client.sendControl(message);
 		reply = Reply.read(client);
 		if (reply.isError()) {
 			throw new IOException("Error: server reply " + reply);
 		}
-		message = "RNTO " + to + "\r\n";
+		message = "RNTO " + to ;
 		client.sendControl(message);
 		reply = Reply.read(client);
 		if (reply.isError()) {
@@ -695,7 +698,7 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 	private void sendChangeModificationTime(String path, Calendar to) throws IOException {
 		Reply reply = null;
 		String time = FileInfo.toTimeVal(to.getTime().getTime());
-		String message = UFTPCommands.MFMT+" "+ time+" "+ path+ "\r\n";
+		String message = UFTPCommands.MFMT+" "+ time+" "+ path;
 		client.sendControl(message);
 		reply = Reply.read(client);
 		if (reply.isError()) {
@@ -704,11 +707,11 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 	}
 	
 	private void enableKeepAlive() throws IOException {
-		if(Boolean.parseBoolean(System.getenv().get("UFTP_DISABLE_KEEPALIVE"))) {
+		if(Boolean.parseBoolean(Utils.getProperty("UFTP_DISABLE_KEEPALIVE", "false"))) {
 			logger.debug("KEEP-ALIVE disabled via environment");
 			return;
 		};
-		String message = UFTPCommands.KEEP_ALIVE+" true\r\n";
+		String message = UFTPCommands.KEEP_ALIVE+" true";
 		client.sendControl(message);
 		Reply reply = Reply.read(client);
 		keepAlive = reply.isOK();

@@ -400,4 +400,13 @@ public class Utils {
 		return sb.toString();
 	}
 
+	
+	public static String getProperty(String key, String def) {
+		String p = System.getProperty(key);
+		if(p==null) {
+			p = System.getenv().getOrDefault(key, def);
+		}
+		return p;
+	}
+
 }
