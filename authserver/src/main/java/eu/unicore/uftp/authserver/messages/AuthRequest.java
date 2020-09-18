@@ -13,4 +13,5 @@ public class AuthRequest {
 	public String group = null;
 	public String client = null;
 	public boolean sessionMode = false;
+	public boolean persistent = true;
 }

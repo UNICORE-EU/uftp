@@ -74,7 +74,13 @@ public class AuthServiceProperties extends PropertiesHelper {
 	}
 	
 	protected void configure() throws ConfigurationException {
-		String[] servers = getValue(PROP_SERVERS).split(" +");
+		String serversProp = getValue(PROP_SERVERS);
+		if(serversProp==null) {
+			// don't really want to fail startup here
+			propsLogger.warn("No UFTPD servers defined (property '"+PREFIX+PROP_SERVERS+"')");
+			return;
+		}
+		String[] servers = serversProp.split(" +");
 		propsLogger.info("Will configure servers: "+Arrays.asList(servers));
 		for(String s: servers){
 			LogicalUFTPServer server = configure(s);

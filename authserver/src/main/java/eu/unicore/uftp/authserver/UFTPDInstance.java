@@ -8,7 +8,6 @@ import java.util.concurrent.Callable;
 
 import javax.net.ssl.SSLSocketFactory;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 
 import de.fzj.unicore.wsrflite.ExternalSystemConnector;
@@ -177,7 +176,7 @@ public class UFTPDInstance implements ExternalSystemConnector {
 
 	private String doSendRequest(final UFTPBaseRequest request)throws IOException{
 
-		final int timeout = 10 * 1000;
+		final int timeout = 20 * 1000;
 
 		Callable<String>task=new Callable<String>(){
 			@Override
@@ -200,7 +199,9 @@ public class UFTPDInstance implements ExternalSystemConnector {
 				try {
 					return request.sendTo(socket);
 				} finally {
-					IOUtils.closeQuietly(socket);
+					try{
+						socket.close();
+					}catch(IOException ex) {}
 				}
 			}
 		};

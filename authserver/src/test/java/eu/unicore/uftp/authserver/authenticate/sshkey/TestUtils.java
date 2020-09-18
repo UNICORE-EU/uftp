@@ -47,10 +47,19 @@ public class TestUtils {
 	}
 
 	@Test
-	public void testECDSAKey() throws Exception {
+	public void testED25519Key() throws Exception {
 		String orig = new Date().toString();
 		File key = new File("src/test/resources/ssh/id_ed25519");
 		String pubkey = FileUtils.readFileToString(new File("src/test/resources/ssh/id_ed25519.pub"), "UTF-8");
+		SSHKey sshAuth = SSHUtils.createAuthData(key, "test123".toCharArray(), orig);
+		Assert.assertTrue(SSHUtils.validateAuthData(sshAuth,pubkey));
+	}
+	
+	@Test
+	public void testECDSAKey() throws Exception {
+		String orig = new Date().toString();
+		File key = new File("src/test/resources/ssh/id_ecdsa");
+		String pubkey = FileUtils.readFileToString(new File("src/test/resources/ssh/id_ecdsa.pub"), "UTF-8");
 		SSHKey sshAuth = SSHUtils.createAuthData(key, "test123".toCharArray(), orig);
 		Assert.assertTrue(SSHUtils.validateAuthData(sshAuth,pubkey));
 	}

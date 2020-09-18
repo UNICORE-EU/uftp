@@ -2,6 +2,7 @@ package eu.unicore.uftp.authserver.authenticate.sshkey;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.security.PrivateKey;
@@ -125,6 +126,9 @@ public class SSHUtils {
 		signature.initSign(pk);
 		signature.update(hashedToken);
 		byte[]signed = signature.sign();
+		if(kt.toLowerCase().contains("ecdsa")) {
+			signed = encodeECDSA(signed);
+		}
 		authData.signature = new String(Base64.encodeBase64(signed)); 
 		return authData;
 	}
@@ -161,9 +165,8 @@ public class SSHUtils {
 			return sigOK; // TODO also, check that token is OK
 		}
 		catch(Exception ex){
-			if(logger.isDebugEnabled()){
-				logger.debug("Error verifying signature",ex);
-			}
+			logger.info("Error verifying signature",ex);
+			
 			return false;
 		}
 	}
@@ -172,6 +175,27 @@ public class SSHUtils {
 		MessageDigest md = MessageDigest.getInstance("SHA1");
 		md.update(data);
 		return md.digest();
+	}
+
+	private static byte[] encodeECDSA(byte[] sig) {
+		int rIndex = 3;
+		int rLen = sig[rIndex++] & 0xff;
+		byte[] r = new byte[rLen];
+		System.arraycopy(sig, rIndex, r, 0, r.length);
+
+		int sIndex = rIndex + rLen + 1;
+		int sLen = sig[sIndex++] & 0xff;
+		byte[] s = new byte[sLen];
+		System.arraycopy(sig, sIndex, s, 0, s.length);
+
+		System.arraycopy(sig, 4, r, 0, rLen);
+		System.arraycopy(sig, 6 + rLen, s, 0, sLen);
+
+		Buffer.PlainBuffer buf = new Buffer.PlainBuffer();
+		buf.putMPInt(new BigInteger(r));
+		buf.putMPInt(new BigInteger(s));
+
+		return buf.getCompactData();
 	}
 
 }

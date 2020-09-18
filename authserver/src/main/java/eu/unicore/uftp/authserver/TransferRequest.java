@@ -39,6 +39,7 @@ public final class TransferRequest extends UFTPTransferRequest {
         setIncludes(authData.includes);
         setExcludes(authData.excludes);
         setRateLimit(authData.rateLimit);
+        setPersistent(authRequest.persistent);
     }
 
 }

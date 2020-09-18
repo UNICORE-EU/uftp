@@ -7,6 +7,16 @@ https://sourceforge.net/p/unicore/uftp-issues
 ***  see README-UPGRADE.txt for how to update from 1.x
 ***
 
+Auth Server 2.3.0 (released Sep DD, 2020)
+-----------------------------------------
+ - fix: less harsh timeouts when checking connection
+   and sending requests to uftpd
+ - fix: typo in log4j setup in default conf/startup.properties
+ - new feature: support creating "persistent" UFTP sessions
+   that allow re-using the login secret multiple times
+ - fix: support ECDSA keys
+ - update to UNICORE 8.0.4 base libs
+ 
 Auth Server 2.2.1 (released Jul 07, 2020)
 -----------------------------------------
  - fix: correctly parse user's access keys (ssh pubkeys)
