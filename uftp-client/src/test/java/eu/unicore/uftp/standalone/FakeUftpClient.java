@@ -80,6 +80,16 @@ public class FakeUftpClient extends UFTPSessionClient {
 		return ret;
 	}
 
+	@Override
+	public List<FileInfo>getFileInfoList(String baseDir)throws IOException {
+		List<String> files = getFileList(baseDir);
+		List<FileInfo>fileInfos = new ArrayList<>();
+		for(String f: files) {
+			fileInfos.add(new FileInfo(f));
+		}
+		return fileInfos;
+	}
+	
 	public FileInfo stat(String path) throws IOException {
 		for (Map.Entry<String, String> entry : remoteFiles.entrySet()) {
 			String string = entry.getKey();
