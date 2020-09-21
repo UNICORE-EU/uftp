@@ -7,7 +7,7 @@ https://sourceforge.net/p/unicore/uftp-issues
 ***  see README-UPGRADE.txt for how to update from 1.x
 ***
 
-Auth Server 2.3.0 (released Sep DD, 2020)
+Auth Server 2.3.0 (released Sep 21, 2020)
 -----------------------------------------
  - fix: less harsh timeouts when checking connection
    and sending requests to uftpd

@@ -4,7 +4,7 @@ The UFTP issue tracker is at
 https://sourceforge.net/p/unicore/uftp-issues
 
 
-UFTP 2.9.0 (released Sep dd 2020)
+UFTP 2.9.0 (released Sep 21 2020)
 ---------------------------------
  - new feature: support for FTP proxies (DeleGate and Frox)
  - new feature: "persistent" sessions to allow mounting via
