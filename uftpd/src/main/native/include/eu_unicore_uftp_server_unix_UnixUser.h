@@ -37,6 +37,14 @@ JNIEXPORT jboolean JNICALL Java_eu_unicore_uftp_server_unix_UnixUser_lookupByUid
 
 /*
  * Class:     eu_unicore_uftp_server_unix_UnixUser
+ * Method:    initGroups
+ * Signature: (Ljava/lang/String;I)I
+ */
+JNIEXPORT jint JNICALL Java_eu_unicore_uftp_server_unix_UnixUser_initGroups
+  (JNIEnv *, jclass, jstring, jint);
+
+/*
+ * Class:     eu_unicore_uftp_server_unix_UnixUser
  * Method:    setUid
  * Signature: (I)I
  */
@@ -82,14 +90,6 @@ JNIEXPORT jint JNICALL Java_eu_unicore_uftp_server_unix_UnixUser_setEGid
  */
 JNIEXPORT jint JNICALL Java_eu_unicore_uftp_server_unix_UnixUser_setReGid
   (JNIEnv *, jclass, jint, jint);
-
-/*
- * Class:     eu_unicore_uftp_server_unix_UnixUser
- * Method:    initGroups
- * Signature: (Ljava/lang/String;I)I
- */
-JNIEXPORT jint JNICALL Java_eu_unicore_uftp_server_unix_UnixUser_initGroups
-  (JNIEnv *, jclass, jstring, jint);
 
 #ifdef __cplusplus
 }

@@ -48,9 +48,11 @@ public class SetUIDFileAccess implements FileAccess {
 	}
 	
 	private void reset(){
-		UnixUser.setEUid(uftpdUser.getUid());
-		UnixUser.setEGid(uftpdUser.getGid());
-		if(logger.isDebugEnabled())logger.debug("Reset to userID="+uftpdUser.getLoginName());
+		int err = UnixUser.changeIdentity(uftpdUser.getUid(), uftpdUser.getUid());
+		if(err!=0)logger.warn("Could not re-set UID!");
+		err = UnixUser.setEGid(uftpdUser.getGid());
+		if(err!=0)logger.warn("Could not re-set GID!");
+		if(logger.isDebugEnabled())logger.debug("Reset to "+UnixUser.whoami());
 	}
 
 	private void switchTo(UnixUser user, String group){
@@ -59,7 +61,7 @@ public class SetUIDFileAccess implements FileAccess {
 			throw new IllegalArgumentException("Attempting to access file as root.");
 		}
 		if(logger.isDebugEnabled()) {
-			logger.debug("Switching to user="+user);
+			logger.debug("Switching to "+user);
 		}
 		//set egid first, because privileges required to set egid
 		int gid = user.getGid();
@@ -71,10 +73,9 @@ public class SetUIDFileAccess implements FileAccess {
 		if(err!=0){
 			logger.warn("initgroups() call returned: "+err);
 		}
-		UnixUser.setEUid(user.getUid());
-		UnixUser newUser=UnixUser.whoami();
+		UnixUser.changeIdentity(user.getUid(), uftpdUser.getUid());
 		if(logger.isDebugEnabled()) {
-			logger.debug("New effective user="+newUser.getEffective()+
+			logger.debug("New effective user "+UnixUser.whoami()+
 					" [time for switch: "+(System.currentTimeMillis()-start)+" ms]");
 		}
 
@@ -150,7 +151,7 @@ public class SetUIDFileAccess implements FileAccess {
 	}
 
 	@Override
-	public synchronized FileInfo stat(String path, String userID, String groupID) {
+	public FileInfo stat(String path, String userID, String groupID) {
 		UnixUser user=new UnixUser(userID);
 		try{
 			switchTo(user, groupID);
@@ -160,6 +161,19 @@ public class SetUIDFileAccess implements FileAccess {
 			reset();
 		}
 	}
+	
+	@Override
+	public synchronized File getFile(String path, String userID, String groupID) {
+		UnixUser user=new UnixUser(userID);
+		try{
+			switchTo(user, groupID);
+			return new File(path);
+		}
+		finally{
+			reset();
+		}
+	}
+	
 	@Override
 	public synchronized void mkdir(String path, String userID, String groupID) throws IOException {
 		UnixUser user=new UnixUser(userID);

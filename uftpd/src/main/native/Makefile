@@ -6,14 +6,11 @@
 # Configuration
 #
 SHELL=/bin/sh
-JAVA_HOME=/usr/lib64/jvm/java-6-openjdk
-UFTP_VERSION=1.2.1
+JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64/
+UFTP_VERSION=2.9.0
 
 # directory containing uftp-<version>.jar
 LIB=../lib
-
-# Java classpath 
-CP=${LIB}/uftp-${UFTP_VERSION}.jar
 
 # temporary build directory
 TARGET=target
@@ -22,35 +19,33 @@ TARGET=target
 # include files (see INCLUDE definition below)
 PLATFORM=linux
 
-INCLUDE=-I/usr/include -I${JAVA_HOME}/include -I${JAVA_HOME}/include/${PLATFORM} -I${TARGET}/include
+INCLUDE=-I/usr/include -I${JAVA_HOME}/include -I${JAVA_HOME}/include/${PLATFORM} -I./include
 
 # tools
 CC=cc
 LD=ld
-JAVAH=${JAVA_HOME}/bin/javah
+JAVAC=javac
 
-
-CLASSES=eu.unicore.uftp.server.unix.UnixUser eu.unicore.uftp.server.unix.UnixGroup
+# for header generation
+JAVASRC=.
+CLASSES=${JAVASRC}/eu/unicore/uftp/server/unix/UnixUser.java ${JAVASRC}/eu/unicore/uftp/server/unix/UnixGroup.java
 
 check:
 	@echo "JAVA_HOME = ${JAVA_HOME}"
 	@echo "LIB = ${LIB}"
 	@echo "TARGET = ${TARGET}"
-	@echo "Classpath: ${CP}"
+	@echo "Source files (if you need new header files) = ${JAVASRC}"
 
 init: check
 	mkdir -p ${TARGET}/include
 
 create-headers: init
-	@echo "Have libraries: ${CP}"
-	${JAVAH} -classpath ${CP} -jni -d ${TARGET}/include ${CLASSES}
+	@echo "Updating header files"
+	${JAVAC} -h ./include -sourcepath ${JAVASRC} ${CLASSES}
 
-clean-headers:
-	rm -f ${TARGET}include/*.h
-
-compile: create-headers
-	${CC} -fPIC -c ${INCLUDE} -o ${TARGET}/UnixGroup.o src/UnixGroup.c
-	${CC} -fPIC -c ${INCLUDE} -o ${TARGET}/UnixUser.o src/UnixUser.c
+compile: init
+	${CC} -fPIC -D_GNU_SOURCE -c ${INCLUDE} -o ${TARGET}/UnixGroup.o src/UnixGroup.c
+	${CC} -fPIC -D_GNU_SOURCE -c ${INCLUDE} -o ${TARGET}/UnixUser.o src/UnixUser.c
 
 build: compile
 	${LD} -G -o ${TARGET}/libuftp-unix.so ${TARGET}/UnixUser.o ${TARGET}/UnixGroup.o
@@ -60,6 +55,6 @@ ifneq "${TARGET}" "${LIB}"
 	cp ${TARGET}/libuftp-unix.so ${LIB}
 endif
 
-clean: init
+clean: 
 	rm -f ${TARGET}/*.o ${TARGET}/*.so
 

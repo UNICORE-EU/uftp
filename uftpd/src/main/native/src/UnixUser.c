@@ -123,6 +123,13 @@ Java_eu_unicore_uftp_server_unix_UnixUser_lookupByUid
 }
 
 
+JNIEXPORT jint JNICALL 
+Java_eu_unicore_uftp_server_unix_UnixUser_changeIdentity (JNIEnv * jnienv, 
+	     jclass j, jint uid, jint original) 
+{ 
+  return((jint)setresuid((uid_t)uid, (uid_t)uid, (uid_t)original)); 
+} 
+
   
 JNIEXPORT jint JNICALL 
 Java_eu_unicore_uftp_server_unix_UnixUser_setUid (JNIEnv * jnienv, 

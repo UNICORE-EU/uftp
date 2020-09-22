@@ -256,12 +256,13 @@ public class Session {
 		return ACTION_NONE;
 	}
 
-	private File getFile(String pathname) {
-		File f = new File(pathname);
-		if (!f.isAbsolute()) {
-			f = new File(currentDirectory, pathname);
+	private File getFile(String pathname) throws IOException {
+		if(pathname.startsWith("/")) {
+			return fileAccess.getFile(pathname);
 		}
-		return f;
+		else {
+			return fileAccess.getFile(new File(currentDirectory, pathname).getPath());
+		}
 	}
 
 	private boolean handleRetrieve(String cmd) throws IOException {

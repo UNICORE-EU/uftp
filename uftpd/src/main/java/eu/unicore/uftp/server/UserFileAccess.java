@@ -56,6 +56,16 @@ public class UserFileAccess {
 		return fileAccess.getRandomAccessFile(file, userID, groupID, mode);
 	}
 	
+	/**
+	 * create a {@link File}
+	 * 	 * 
+	 * @param canonicalPath - the canonical path to the file
+	 * @return a {@link File}
+	 * @throws Exception  
+	 */
+	public File getFile(String canonicalPath) throws IOException{
+		return fileAccess.getFile(canonicalPath, userID, groupID);
+	}
 
 	/**
 	 * lists files in the given directory

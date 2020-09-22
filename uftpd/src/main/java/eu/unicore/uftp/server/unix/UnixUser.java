@@ -13,12 +13,12 @@ public class UnixUser {
     
     private String loginName;
     //real user and group IDs
-    private int uid;
-    private int gid;
+    private int uid=-1;
+    private int gid=-1;
     
     //effective user and group IDs
-    private int euid;
-    private int egid;
+    private int euid=-1;
+    private int egid=-1;
     
     private String name;
     private String home;
@@ -86,6 +86,26 @@ public class UnixUser {
     private synchronized native boolean lookupByUid(int uid);
     
     
+    
+    /** assigns secondary groups */
+    public static native int initGroups(String name, int gid);
+    
+    public String toString() {
+        return "[name=" + getName() + " loginName=" + getLoginName()
+        + " uid=" + getUid() + " gid=" + getGid()
+        + " euid=" + getEUid() + " egid=" + getEGid()
+        +"]"; 
+    }
+    
+    public String getEffective(){
+    	return "[euid=" + getEUid() + " egid=" + getEGid()+"]"; 
+    }
+
+    
+
+    /** Sets the real&effective user ID and stores the original one */
+    public static native int changeIdentity(int uid, int originalUID);
+    
     /** Sets the real user ID */
     public static native int setUid(int uid);
     
@@ -104,16 +124,5 @@ public class UnixUser {
     /** Sets the real and effective group ID */
     public static native int setReGid(int rgid, int egid);
     
-    /** assigns secondary groups */
-    public static native int initGroups(String name, int gid);
-    
-    public String toString() {
-        return "[name=" + getName() + " loginName=" + getLoginName()
-        + " uid=" + getUid() + " gid=" + getGid()+"]"; 
-    }
-    
-    public String getEffective(){
-    	return "[euid=" + getEUid() + " egid=" + getEGid()+"]"; 
-    }
- 
 }
+

@@ -189,13 +189,15 @@ Linux system. The folder LIB/native contains the required headers and
 C source files, as well as an exemplary makefile. Please edit the
 makefile, the following information is required:
  
- * the base directory of our Java installation (JAVA_HOME)
+ * the base directory of your Java installation (JAVA_HOME)
  * the location of platform-specific include files
  * the location of the +uftp-<version>.jar+ file (LIB)
 
 Then, run "make install" to build the library, which will compile the code 
-and install the library into the LIB folder. If any problems occur 
-during this procedure, please consult UNICORE support.
+and install the library into the LIB folder.
+
+If any problems occur during this procedure, please contact UNICORE
+support or open a ticket.
 
 Starting and stopping the UFTPD server
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

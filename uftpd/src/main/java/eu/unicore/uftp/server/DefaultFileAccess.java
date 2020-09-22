@@ -53,6 +53,11 @@ public class DefaultFileAccess implements FileAccess {
 	}
 
 	@Override
+	public File getFile(String path, String userID, String groupID) {
+		return new File(path);
+	}
+	
+	@Override
 	public RandomAccessFile getRandomAccessFile(File file, String userID,
 			String groupID, String mode) throws IOException {
 		return new RandomAccessFile(file, mode);

@@ -17,7 +17,9 @@ UFTP 2.9.0 (released Sep 21 2020)
  - fix: client sent extra empty lines over the control
    channel
  - fix: less harsh timeouts for control socket communications
-
+ - fix: use setresuid() for UID switching to fix problems
+   with root-squash mouted file systems
+ 
 UFTP 2.8.0 (released Jul 06 2020)
 ---------------------------------
  - new feature: session features can be limited 

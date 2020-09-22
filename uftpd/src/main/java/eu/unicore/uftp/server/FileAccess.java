@@ -57,6 +57,15 @@ public interface FileAccess {
 	public FileInfo[] listFiles(File directory,String userID, String groupID);
 
 	/**
+	 * create a file as the given user/group
+	 * 
+	 * @param path - the file
+	 * @param userID - the user id
+	 * @param groupID - the group id
+	 */
+	public File getFile(String path, String userID, String groupID) ;
+	
+	/**
 	 * get info on a single file
 	 * 
 	 * @param path - the file
