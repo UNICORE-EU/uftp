@@ -100,11 +100,14 @@ public class Session {
 		this.includes = parsePathlist(job.getIncludes());
 		this.excludes = parsePathlist(job.getExcludes());
 		this.defaultExcludes = parsePathlist(Utils.getProperty(UFTPConstants.ENV_UFTP_NO_WRITE, null));
-		
-		if (job.getFile().getParentFile() != null) {
-			baseDirectory = job.getFile().getParentFile();
-		} else {
-			baseDirectory = new File(fileAccess.getHome(job.getUser()));
+		baseDirectory = new File(fileAccess.getHome(job.getUser()));
+		File requested = job.getFile().getParentFile();
+		if (requested!= null) {
+			if(requested.isAbsolute()) {
+				baseDirectory = job.getFile().getParentFile();
+			}else {
+				baseDirectory = new File(baseDirectory, requested.getPath());
+			}
 		}
 		currentDirectory = baseDirectory;
 		this.maxParCons = maxParCons;

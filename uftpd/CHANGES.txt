@@ -3,6 +3,10 @@ Changelog
 The UFTP issue tracker is at
 https://sourceforge.net/p/unicore/uftp-issues
 
+UFTP 2.9.1 (released Oct 16 2020)
+---------------------------------
+ - fix: FTP session starting directory was not correct in
+   some cases
 
 UFTP 2.9.0 (released Sep 21 2020)
 ---------------------------------
