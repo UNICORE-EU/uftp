@@ -8,6 +8,5 @@ Homepage: http://www.unicore.eu
 
 Package: unicore-uftpd
 Architecture: all
-Depends: openjdk-@java-main-version@-jre
+Depends: default-jre-headless
 Description: UFTPD is a server component providing secure high performance filetransfer.
-

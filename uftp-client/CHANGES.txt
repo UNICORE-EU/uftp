@@ -2,6 +2,12 @@ Change log for the UFTP standalone client
 The issue tracker is at
 https://sourceforge.net/p/unicore/uftp-issues/
 
+
+UFTP Client 1.3.3 (released mmm dd, 2020)
+-----------------------------------------
+ - fix: debian package now depends on "default-jre-headless"
+
+ 
 UFTP Client 1.3.2 (released Sep 18, 2020)
 -----------------------------------------
  - new feature: support FTP proxies (DeleGate, Frox)

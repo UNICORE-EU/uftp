@@ -8,7 +8,7 @@ Homepage: http://www.unicore.eu
 
 Package: unicore-authserver
 Architecture: all
-Depends: openjdk-@java-main-version@-jre
+Depends: default-jre-headless
 Description: UNICORE (Uniform Interface to Computing Resources) offers a
  ready-to-run Grid system including client and server software.
  UNICORE makes distributed computing and data resources available

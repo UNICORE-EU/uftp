@@ -3,6 +3,12 @@ Changelog
 The UFTP issue tracker is at
 https://sourceforge.net/p/unicore/uftp-issues
 
+
+UFTP 2.9.2 (released mmm dd 2020)
+---------------------------------
+ - fix: debian package now depends on "default-jre-headless"
+
+
 UFTP 2.9.1 (released Oct 16 2020)
 ---------------------------------
  - fix: FTP session starting directory was not correct in
