@@ -1,15 +1,26 @@
 #!/bin/bash
+
 #
-# Send a job to the UNICORE UFTP server, i.e. announce that 
-# a client will connect
+# This testing utility sends a job to the UFTPD server,
+# i.e. announces that a client will connect.
+# Please refer to the UFTPD manual!
 #
-# this implementation  uses the netcat (nc) utility 
-#
- 
+
+CONF=/etc/unicore/uftpd/
+
+if [ -f ${CONF}/uftpd.conf] ; then
+   : # deb/rpm install
+else
+    # tgz install
+    dir=$(dirname $0)
+    CONF=$(dirname $dir)/conf
+fi
+
+
 #
 # source config file
 #
-. /etc/unicore/uftpd/uftpd.conf
+. $CONF/uftpd.conf
 
 
 #

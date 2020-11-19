@@ -1,6 +1,7 @@
 #!/bin/bash
 #
 # Client script for executing a UNICORE UFTP data transfer
+# (used by UNICORE/X for server-to-server transfers)
 #
 #  usage: uftp.sh [OPTIONS]
 #                  
@@ -15,11 +16,15 @@
 #   -E,--encryption-key <Key>         (Optional) Encryption key (12 characters)
 #   -b,--buffersize <size>            (Optional) File read/write buffer size(in kbytes)
 
+LIB=/usr/share/unicore/uftpd/lib
 
-#
-# Directory containing the UFTPD libraries
-#
-export UFTP_LIB=/usr/share/unicore/uftpd/lib
+if ls ${LIB}/uftp-core-* > /dev/null 2>&1 ; then
+   : # deb/rpm install
+else
+    # tgz install
+    dir=$(dirname $0)
+    LIB=$(dirname $dir)/lib
+fi
 
 #
 # Java command 
@@ -27,10 +32,6 @@ export UFTP_LIB=/usr/share/unicore/uftpd/lib
 JAVA=java
 
 # helper function to set an option if it is not already set
-#
-# arg1: option name (without leading "-", e.g "Ducc.extensions")
-# arg2: option value (e.g. =conf/extensions)
-#
 Options=( )
 set_option(){
 	if [[ "$UFTP_OPTS" != *$1* ]]
@@ -40,27 +41,15 @@ set_option(){
 	fi
 }
 
-
 #
-# Options to the Java VM
-#
-
-#
-# Memory for the VM
+# Memory for the Java VM
 #
 set_option "Xmx" "128m"
 
-
 #
-# log configuration
+# setup classpath
 #
-set_option "Dlog4j.configuration" "=file:///etc/unicore/uftpd/client.logging.properties"
-
-#
-# put all jars in lib/ on the classpath
-#
-
-CP=$(find "$UFTP_LIB" -name "*.jar" -exec printf ":{}" \; )
+CP=$(find "$LIB" -name "*.jar" -exec printf ":{}" \; )
 CP=."$CP"
 
 CLASSPATH=$CP; export CLASSPATH
@@ -69,6 +58,3 @@ CLASSPATH=$CP; export CLASSPATH
 # go
 #
 $JAVA "${Options[@]}" eu.unicore.uftp.client.UFTPClient ${1+"$@"}
-
-
-

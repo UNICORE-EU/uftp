@@ -4,10 +4,10 @@ The UFTP issue tracker is at
 https://sourceforge.net/p/unicore/uftp-issues
 
 
-UFTP 2.9.2 (released mmm dd 2020)
+UFTP 2.9.2 (released Nov 16 2020)
 ---------------------------------
  - fix: debian package now depends on "default-jre-headless"
-
+ - fix: tgz bundle was was missing uftp.sh script
 
 UFTP 2.9.1 (released Oct 16 2020)
 ---------------------------------
