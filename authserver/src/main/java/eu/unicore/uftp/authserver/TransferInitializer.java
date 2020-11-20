@@ -3,10 +3,11 @@ package eu.unicore.uftp.authserver;
 import java.io.IOException;
 import java.net.UnknownHostException;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import eu.unicore.uftp.authserver.messages.AuthResponse;
 import eu.unicore.uftp.server.requests.UFTPBaseRequest;
+import eu.unicore.util.Log;
 
 /**
  * Sends transfer request to UFTPD and handles response
@@ -16,7 +17,7 @@ import eu.unicore.uftp.server.requests.UFTPBaseRequest;
  */
 public class TransferInitializer {
 
-    private static final Logger logger = Logger.getLogger(TransferInitializer.class);
+    private static final Logger logger = Log.getLogger("authservice", TransferInitializer.class);
     
     /**
      * Method for initializing UFTP transfer on command port.

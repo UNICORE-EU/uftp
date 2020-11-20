@@ -6,9 +6,10 @@ import jline.console.ConsoleReader;
 
 import java.io.Closeable;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import eu.unicore.uftp.client.UFTPProgressListener2;
+import eu.unicore.util.Log;
 
 /**
  * console progress bar using jline
@@ -17,7 +18,7 @@ import eu.unicore.uftp.client.UFTPProgressListener2;
  */
 public class ProgressBar implements UFTPProgressListener2, Closeable {
 
-	private static final Logger logger = Logger.getLogger(ProgressBar.class.getName());
+	private static final Logger logger = Log.getLogger(Log.CLIENT, ProgressBar.class);
 
 	private Terminal terminal=null;	
 	private ConsoleReader reader=null;

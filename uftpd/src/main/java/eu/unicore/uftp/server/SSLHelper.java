@@ -14,7 +14,7 @@ import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLSocket;
 import javax.security.auth.x500.X500Principal;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import eu.unicore.security.canl.AuthnAndTrustProperties;
 import eu.unicore.security.canl.SSLContextCreator;

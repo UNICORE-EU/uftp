@@ -7,9 +7,10 @@ import java.net.URISyntaxException;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import eu.unicore.uftp.client.UFTPSessionClient;
+import eu.unicore.util.Log;
 
 /**
  *
@@ -17,7 +18,7 @@ import eu.unicore.uftp.client.UFTPSessionClient;
  */
 public class LocalFileCrawler extends FileCrawler {
 
-	private static final Logger logger = Logger.getLogger(LocalFileCrawler.class.getName());
+	private static final Logger logger = Log.getLogger(Log.CLIENT, LocalFileCrawler.class);
 
 	private String path;
     

@@ -11,8 +11,9 @@ import java.util.StringTokenizer;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
+import eu.unicore.util.Log;
 import net.schmizz.sshj.ConfigImpl;
 import net.schmizz.sshj.DefaultConfig;
 import net.schmizz.sshj.common.Buffer;
@@ -27,7 +28,7 @@ import net.schmizz.sshj.userauth.password.Resource;
 
 public class SSHUtils {
 
-	private static final Logger logger = Logger.getLogger(SSHUtils.class);
+	private static final Logger logger = Log.getLogger(Log.SECURITY, SSHUtils.class);
 	
 	private static final ConfigImpl sshConfig = new DefaultConfig();
 	

@@ -19,15 +19,16 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import eu.unicore.uftp.client.FileInfo;
 import eu.unicore.uftp.client.UFTPSessionClient;
 import eu.unicore.uftp.standalone.ClientFacade;
+import eu.unicore.util.Log;
 
 public class ClientPool implements Closeable {
 
-	private static final Logger logger = Logger.getLogger(ClientPool.class.getName());
+	private static final Logger logger = Log.getLogger(Log.CLIENT, ClientPool.class);
 
 	private final AtomicInteger num = new AtomicInteger(1);
 	

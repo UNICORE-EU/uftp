@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import de.fzj.unicore.persist.PersistenceException;
 import eu.unicore.uftp.authserver.share.IdentityExtractor.IdentityType;

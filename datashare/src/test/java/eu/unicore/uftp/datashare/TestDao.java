@@ -2,13 +2,13 @@ package eu.unicore.uftp.datashare;
 
 import java.util.Collection;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 import de.fzj.unicore.persist.Persist;
 import de.fzj.unicore.persist.PersistenceProperties;
 import de.fzj.unicore.persist.impl.H2Persist;
 import eu.unicore.uftp.datashare.db.ShareDAO;
-import junit.framework.Assert;
 
 
 public class TestDao {

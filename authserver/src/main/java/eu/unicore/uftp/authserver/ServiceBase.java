@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -16,6 +16,7 @@ import eu.unicore.security.Client;
 import eu.unicore.security.XACMLAttribute;
 import eu.unicore.services.rest.impl.ApplicationBaseResource;
 import eu.unicore.uftp.authserver.authenticate.UserAttributes;
+import eu.unicore.util.Log;
 
 /**
  * some common stuff for the auth and sharing services
@@ -24,7 +25,7 @@ import eu.unicore.uftp.authserver.authenticate.UserAttributes;
  */
 public abstract class ServiceBase extends ApplicationBaseResource implements KernelInjectable {
 
-	private static final Logger logger = Logger.getLogger(ServiceBase.class);
+	private static final Logger logger = Log.getLogger("authservice", ServiceBase.class);
 
 	protected static final Gson gson = new GsonBuilder().create();
 	

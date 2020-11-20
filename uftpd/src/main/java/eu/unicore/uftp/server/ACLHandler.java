@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.security.auth.x500.X500Principal;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import eu.unicore.uftp.dpc.AuthorizationFailureException;
 import eu.unicore.uftp.dpc.Utils;

@@ -31,11 +31,12 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.apache.commons.codec.binary.Base64;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import eu.unicore.uftp.server.DefaultFileAccess;
 import eu.unicore.uftp.server.FileAccess;
 import eu.unicore.uftp.server.SetUIDFileAccess;
+import eu.unicore.util.Log;
 
 public class Utils {
 
@@ -63,12 +64,8 @@ public class Utils {
 		}
 	}
 
-	private static String getLoggerName(String prefix, Class<?>clazz){
-		return prefix+"."+clazz.getSimpleName();
-	}
-
 	public static Logger getLogger(String prefix, Class<?>clazz){
-		return Logger.getLogger(getLoggerName(prefix, clazz));
+		return Log.getLogger(prefix, clazz);
 	}
 
 	/**

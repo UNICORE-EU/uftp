@@ -12,7 +12,7 @@ import java.net.UnknownHostException;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import eu.unicore.uftp.dpc.Utils;
 

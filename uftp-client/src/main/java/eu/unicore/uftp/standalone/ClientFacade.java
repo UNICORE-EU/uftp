@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.FilenameUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import eu.unicore.uftp.authserver.messages.AuthResponse;
 import eu.unicore.uftp.client.FileInfo;
@@ -42,7 +42,7 @@ import eu.unicore.util.Log;
  */
 public class ClientFacade {
 
-	private static final Logger logger = Logger.getLogger(ClientFacade.class.getName());
+	private static final Logger logger = Log.getLogger(Log.CLIENT, ClientFacade.class);
 
 	volatile boolean connected = false;
 	

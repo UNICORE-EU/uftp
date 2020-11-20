@@ -3,11 +3,11 @@ package eu.unicore.uftp.datashare;
 import java.util.Collection;
 import java.util.Properties;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 import eu.unicore.uftp.datashare.db.ACLStorage;
 import eu.unicore.uftp.datashare.db.ShareDAO;
-import junit.framework.Assert;
 
 public class TestACLStorage {
 	

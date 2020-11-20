@@ -17,7 +17,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import eu.unicore.uftp.server.JobStore;
 import eu.unicore.uftp.server.PortManager;

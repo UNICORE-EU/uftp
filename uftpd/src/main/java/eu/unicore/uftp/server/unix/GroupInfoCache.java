@@ -3,7 +3,7 @@ package eu.unicore.uftp.server.unix;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import eu.unicore.uftp.dpc.Utils;
 

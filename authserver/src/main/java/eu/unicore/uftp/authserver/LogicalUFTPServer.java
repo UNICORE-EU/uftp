@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import de.fzj.unicore.wsrflite.ExternalSystemConnector;
 import de.fzj.unicore.wsrflite.Kernel;

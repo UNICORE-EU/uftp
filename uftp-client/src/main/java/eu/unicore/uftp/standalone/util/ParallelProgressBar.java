@@ -3,9 +3,10 @@ package eu.unicore.uftp.standalone.util;
 import java.io.Closeable;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import eu.unicore.uftp.client.UFTPProgressListener2;
+import eu.unicore.util.Log;
 import jline.Terminal;
 import jline.TerminalFactory;
 import jline.console.ConsoleReader;
@@ -17,7 +18,7 @@ import jline.console.ConsoleReader;
  */
 public class ParallelProgressBar implements UFTPProgressListener2, Closeable {
 
-	private static final Logger logger = Logger.getLogger(ParallelProgressBar.class.getName());
+	private static final Logger logger = Log.getLogger(Log.CLIENT, ParallelProgressBar.class);
 
 	private Terminal terminal=null;	
 	private ConsoleReader reader=null;

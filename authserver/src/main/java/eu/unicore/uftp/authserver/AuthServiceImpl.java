@@ -15,7 +15,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -28,6 +28,7 @@ import eu.unicore.uftp.authserver.messages.AuthRequest;
 import eu.unicore.uftp.authserver.messages.AuthResponse;
 import eu.unicore.uftp.authserver.messages.CreateTunnelRequest;
 import eu.unicore.uftp.authserver.share.ShareServiceProperties;
+import eu.unicore.util.Log;
 
 /**
  * @author mgolik
@@ -36,7 +37,7 @@ import eu.unicore.uftp.authserver.share.ShareServiceProperties;
 @Path("/")
 public class AuthServiceImpl extends ServiceBase {
 
-	private static final Logger logger = Logger.getLogger(AuthServiceImpl.class);
+	private static final Logger logger = Log.getLogger("authservice", AuthServiceImpl.class);
 
 	@POST
 	@Produces("application/json;charset=UTF-8")

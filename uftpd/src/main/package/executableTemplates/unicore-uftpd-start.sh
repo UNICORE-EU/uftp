@@ -58,7 +58,7 @@ set_option "Xmx" "${UFTPD_MEM}m"
 #
 # log configuration
 #
-set_option "Dlog4j.configuration" "=@filePrefix@@etc@/logging.properties"
+set_option "Dlog4j.configurationFile" "=@filePrefix@@etc@/logging.properties"
 
 #
 # SSL config file

@@ -6,8 +6,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
 
-import org.apache.log4j.Logger;
-
 import de.fzj.unicore.persist.Persist;
 import de.fzj.unicore.persist.PersistenceException;
 import de.fzj.unicore.persist.PersistenceFactory;
@@ -24,8 +22,6 @@ import eu.unicore.uftp.datashare.Target;
  */
 public class ACLStorage {
 
-	private static final Logger LOGGER = Logger.getLogger(ACLStorage.class);
-
 	// this is shared by all the users!
 	private static Persist<ShareDAO> storage;
 
@@ -35,7 +31,6 @@ public class ACLStorage {
 
 	private synchronized void init(String name, Properties p) throws PersistenceException{
 		if(storage!=null)return;
-		LOGGER.info("Connecting to ACL storage for server <"+name+">");
 		PersistenceProperties pp = new PersistenceProperties(p);
 		PersistenceFactory pf = PersistenceFactory.get(pp);
 		PersistenceDescriptor pd = PersistenceDescriptor.get(ShareDAO.class);

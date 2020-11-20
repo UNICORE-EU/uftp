@@ -12,7 +12,7 @@ import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import eu.unicore.uftp.client.FileInfo;
 import eu.unicore.uftp.dpc.Utils;

@@ -2,9 +2,10 @@ package eu.unicore.uftp.standalone.util;
 
 import java.io.Closeable;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import eu.unicore.uftp.client.UFTPProgressListener2;
+import eu.unicore.util.Log;
 import jline.Terminal;
 import jline.TerminalFactory;
 import jline.console.ConsoleReader;
@@ -16,7 +17,7 @@ import jline.console.ConsoleReader;
  */
 public class MultiProgressBar implements UFTPProgressListener2, Closeable {
 
-	private static final Logger logger = Logger.getLogger(MultiProgressBar.class.getName());
+	private static final Logger logger = Log.getLogger(Log.CLIENT, MultiProgressBar.class);
 
 	private Terminal terminal=null;	
 	private ConsoleReader reader=null;

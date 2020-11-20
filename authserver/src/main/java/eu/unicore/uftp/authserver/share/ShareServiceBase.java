@@ -11,7 +11,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -43,8 +43,6 @@ import eu.unicore.util.Log;
 public abstract class ShareServiceBase extends ServiceBase {
 
 	protected static final Logger logger = Log.getLogger(Log.SERVICES, ShareService.class);
-
-	protected static final Logger usage = Logger.getLogger(Log.SERVICES+".USAGE");
 
 	protected String getNormalizedCurrentUserName() throws Exception {
 		ShareServiceProperties ssp = kernel.getAttribute(ShareServiceProperties.class);
@@ -211,16 +209,15 @@ public abstract class ShareServiceBase extends ServiceBase {
 	
 	
 	protected void logUsage(boolean write, String path, ShareDAO share){
-		if(! (logger.isDebugEnabled() || usage.isInfoEnabled() ))return;
+		if(!logger.isInfoEnabled())return;
 		String uid = share.getUid();
 		String gid = share.getGid()!=null?share.getGid():"NONE";
 		String clientDN = AuthZAttributeStore.getClient().getDistinguishedName();
 		String clientIP = AuthZAttributeStore.getTokens().getClientIP();
 		String access = write? "WRITE" : "READ";
-		String msg = String.format("[%s][%s][%s:%s][%s] %s", 
+		String msg = String.format("USAGE [%s][%s][%s:%s][%s] %s", 
 				clientDN, clientIP, uid, gid, access, path);
-		logger.debug(msg);
-		usage.info(msg);
+		logger.info(msg);
 	}
 
 	public static class Range {

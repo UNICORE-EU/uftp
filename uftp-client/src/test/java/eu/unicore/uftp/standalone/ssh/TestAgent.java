@@ -5,8 +5,6 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
 
 import eu.unicore.uftp.authserver.authenticate.sshkey.SSHKey;
 import eu.unicore.uftp.authserver.authenticate.sshkey.SSHUtils;
@@ -30,7 +28,6 @@ public class TestAgent {
 
 	//@Test
 	public void testSigningUsingAgentEd25519() throws Exception {
-		Logger.getLogger(SSHUtils.class).setLevel(Level.DEBUG);
 		String token = "test123";
 		String user = "demouser";
 		File privKey = new File(System.getProperty("user.home")+"/.ssh/id_ed25519");

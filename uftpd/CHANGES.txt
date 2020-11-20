@@ -3,6 +3,9 @@ Changelog
 The UFTP issue tracker is at
 https://sourceforge.net/p/unicore/uftp-issues
 
+UFTP 2.10.0 (released MMM dd yyyy)
+----------------------------------
+ - update to securityLibrary 5.1, log4j2, etc
 
 UFTP 2.9.2 (released Nov 16 2020)
 ---------------------------------

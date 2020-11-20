@@ -14,7 +14,7 @@ import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.ArchiveException;
 import org.apache.commons.compress.archivers.ArchiveInputStream;
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import eu.unicore.uftp.dpc.DPCServer.Connection;
 import eu.unicore.uftp.dpc.Session;
@@ -40,8 +40,6 @@ import eu.unicore.uftp.server.requests.UFTPTransferRequest;
 public class UFTPWorker extends Thread implements UFTPConstants {
 
 	private static final Logger logger = Utils.getLogger(Utils.LOG_SERVER, UFTPWorker.class);
-
-	private static final Logger usage = Logger.getLogger(Utils.LOG_SERVER+".USAGE");
 
 	protected final ServerThread server;
 	
@@ -533,7 +531,6 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 		List<Socket>dataCons = connection.getDataSockets();
 		if (n > 1) {
 			logger.info("Creating parallel socket with " + n + " streams.");
-			@SuppressWarnings("resource")
 			PSocket parallelSocket = new PSocket(job.getKey(), job.isCompress());
 			parallelSocket.init(1, dataCons.size());
 			for (Socket dataCon : dataCons) {
@@ -573,13 +570,13 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 	 * </p>
 	 */
 	protected void logUsage(boolean send, long dataSize, long consumedMillis, InetAddress clientIP, long numFiles){
-		if(! (logger.isDebugEnabled() || usage.isInfoEnabled() ))return;
+		if(!logger.isInfoEnabled())return;
 		String group=job.getGroup();
 		String what = send? "Sent" : "Received";
 		float r=(float)dataSize/(float)consumedMillis;
 
 		StringBuilder sb = new StringBuilder();
-		sb.append("[").append(what).append("] ");
+		sb.append("USAGE [").append(what).append("] ");
 		sb.append("[").append(clientIP).append("] ");
 		sb.append("[").append(job.getUser()).append(":");
 		sb.append(group!=null?group:"n/a").append("] ");
@@ -596,8 +593,7 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 		sb.append("]");
 		String msg = sb.toString();
 
-		logger.debug(msg);
-		usage.info(msg);
+		logger.info(msg);
 	}
 
 }

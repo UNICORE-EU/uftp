@@ -16,7 +16,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -24,6 +24,7 @@ import eu.unicore.uftp.authserver.authenticate.AuthData;
 import eu.unicore.uftp.authserver.messages.AuthResponse;
 import eu.unicore.uftp.dpc.Utils;
 import eu.unicore.uftp.standalone.ClientFacade;
+import eu.unicore.util.Log;
 
 /**
  * create a session using the UNICORE Storage API
@@ -38,7 +39,7 @@ public class UNICOREStorageAuthClient implements AuthClient {
 
 	private final ClientFacade client;
 
-	private static final Logger LOG = Logger.getLogger(UNICOREStorageAuthClient.class.getName());
+	private static final Logger LOG = Log.getLogger(Log.CLIENT, UNICOREStorageAuthClient.class);
 
 	public UNICOREStorageAuthClient(String authUrl, AuthData authData, ClientFacade client) {
 		uri = authUrl;

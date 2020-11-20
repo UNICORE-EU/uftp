@@ -1,9 +1,9 @@
 package eu.unicore.uftp.datashare;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 import eu.unicore.uftp.datashare.db.ACLStorage;
-import junit.framework.Assert;
 
 public class TestACLEntry {
 

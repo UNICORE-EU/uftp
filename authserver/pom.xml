@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>eu.unicore.uftp</groupId>
   <artifactId>uftp-authserver</artifactId>
-  <version>2.3.0</version>
+  <version>2.4.0</version>
   <packaging>jar</packaging>
   <name>UFTP Authentication Server</name>
   <url>http://www.unicore.eu</url>
@@ -11,14 +11,13 @@
   <parent>
     <groupId>eu.unicore.uftp</groupId>
     <artifactId>uftp-parent</artifactId>
-    <version>2.7.0</version>
+    <version>2.10.0</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
   <properties>
-    <use.version>4.0.4</use.version>
-    <uftp.version>2.9.0</uftp.version>
-    <datashare.version>0.3.0</datashare.version>
+    <uftp.version>2.10.0</uftp.version>
+    <datashare.version>0.4.0</datashare.version>
     
     <package.version>${project.version}</package.version>
     <package.release>1</package.release>
@@ -49,10 +48,6 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>log4j</groupId>
-      <artifactId>log4j</artifactId>
     </dependency>
     <dependency>
       <groupId>eu.unicore.uftp</groupId>

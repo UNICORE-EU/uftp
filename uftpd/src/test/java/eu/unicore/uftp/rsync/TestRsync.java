@@ -6,10 +6,9 @@ import java.io.RandomAccessFile;
 import java.util.Random;
 import java.util.concurrent.Future;
 
-import junit.framework.Assert;
-
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
