@@ -5,9 +5,11 @@ https://sourceforge.net/p/unicore/uftp-issues/
 
 UFTP Client 1.4.0 (released mmm dd, 2020)
 -----------------------------------------
+ - new feature: "autheticate" command for only authenticating
+   and printing connect info
  - update to log4j2
+ - commands can be abbreviated, e.g. "i" for "info"
  - fix: debian package now depends on "default-jre-headless"
-
  
 UFTP Client 1.3.2 (released Sep 18, 2020)
 -----------------------------------------

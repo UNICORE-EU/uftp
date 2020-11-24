@@ -57,9 +57,13 @@ public final class ClientDispatcher {
 			printVersion();
 			return 0;
 		}
-		
+		ICommand cmd = null;
 		cmdName = cmdName.toLowerCase();
-		ICommand cmd = cmds.get(cmdName); 
+		for(String name: cmds.keySet()) {
+			if(name.startsWith(cmdName)) {
+				cmd = cmds.get(name);
+			}
+		}
 		if(cmd==null){
 			System.err.println("Unknown command: "+cmdName);
 			return 1;
@@ -87,7 +91,6 @@ public final class ClientDispatcher {
 		Collections.sort(c, new Comparator<ICommand>() {
 			@Override
 			public int compare(ICommand o1, ICommand o2) {
-				// TODO Auto-generated method stub
 				return o1.getName().compareTo(o2.getName());
 			}
 		});
