@@ -457,8 +457,8 @@ public class DPCServer {
 				tmp.setReuseAddress(true);
 				int localPort = tmp.getLocalPort();
 				// use advertiseAddress if set
-				final String ip = advertiseAddress != null ? advertiseAddress
-						: controlSocket.getLocalAddress().getHostAddress()
+				final String ip = (advertiseAddress != null ? advertiseAddress
+						: controlSocket.getLocalAddress().getHostAddress())
 						.replace('.', ',');
 				String outputLine = "227 Entering Passive Mode (" + ip + "," + (localPort / 256) + "," + (localPort % 256) + ")";
 				sendControl(outputLine);
