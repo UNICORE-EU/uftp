@@ -24,10 +24,10 @@ public class ConnectionInfoManagerTest {
     final String host = "example.server.com";
     String path = "/foo/bar/file.dat";
     final int port = 666;
-    final String uriFormatingString = "%s://%s:%s@%s:%d%s";
+    final String uriFormatingString = "%s://%s:%s@%s:%d/UFTP:%s";
     String mainUri = String.format(uriFormatingString, scheme, userName, password, host, port, path);
 
-    private static final String remoteUri = "uftp://localhost/path";
+    private static final String remoteUri = "uftp://localhost/UFTP:/path";
     private static final String localUri = "/home/jj/path";
     private static final String notUri = "fda:/aa@d";
 
@@ -40,13 +40,12 @@ public class ConnectionInfoManagerTest {
     public void testGetAuthURL() {
         System.out.println("getAuthURL");
         String result = instance.getAuthURL();
-        assertEquals("https://"+host+":"+port, result);
+        assertEquals("https://"+host+":"+port+"/UFTP", result);
     }
     
     @Test
     public void testGetAuthURL2() throws Exception {
         System.out.println("getAuthURL2");
-        path = "/UFTP:/foo/bar/file.dat";
         mainUri = String.format(uriFormatingString, scheme, userName, password, host, port, path);
         System.out.println(mainUri);
         instance = new ConnectionInfoManager(new UsernamePassword(userName, password));

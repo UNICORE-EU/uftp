@@ -109,7 +109,7 @@ public class ClientFacadeTest {
     @Test
     public void testSingleUpload() throws Exception {
         System.out.println("Tesing cp");
-        instance.cp(files[0], "uftp://jj:pass@exxx/some/path/", RecursivePolicy.NONRECURSIVE);
+        instance.cp(files[0], "uftp://jj:pass@exxx/UFTP:/some/path/", RecursivePolicy.NONRECURSIVE);
         assertTrue(fakeClient.fileExist("/some/path/file1.dat"));
         System.out.println("Content of the uploaded file is: "+fakeClient.getFileContent("/some/path/file1.dat"));
         //content has name of the file (see init)
@@ -119,14 +119,14 @@ public class ClientFacadeTest {
     @Test
     public void testSingleUploadWithRename() throws Exception {
         System.out.println("Testing upload with rename");
-        instance.cp(files[0], "uftp://jj:pass@exxx/some/path/blahblah.txt", RecursivePolicy.NONRECURSIVE);
+        instance.cp(files[0], "uftp://jj:pass@exxx/UFTP:/some/path/blahblah.txt", RecursivePolicy.NONRECURSIVE);
         assertTrue(fakeClient.fileExist("/some/path/blahblah.txt"));
     }
 
     @Test
     public void testMultipleUploads() throws Exception {
         System.out.println("Testing multiple uploads");
-        instance.cp(path+"*.dat", "uftp://xxxx/some/path/", RecursivePolicy.NONRECURSIVE);
+        instance.cp(path+"*.dat", "uftp://xxxx/UFTP:/some/path/", RecursivePolicy.NONRECURSIVE);
         for (String string : files) {
         	String msg = "Checking if " + string + " was " + (string.endsWith(".dat") ? "" : "not") + " uploaded";
         	System.out.println(msg);
@@ -151,7 +151,7 @@ public class ClientFacadeTest {
         System.out.println("Testing download");
         String nonExistingFile = "/some/path/file1.dat";
         assertFalse(fakeClient.fileExist(nonExistingFile));
-        instance.cp("uftp://jj:pass@xxxx"+nonExistingFile, "/tmp/filexxx.dat", RecursivePolicy.NONRECURSIVE);
+        instance.cp("uftp://jj:pass@xxxx/UFTP:"+nonExistingFile, "/tmp/filexxx.dat", RecursivePolicy.NONRECURSIVE);
     }
 
     @Test
@@ -159,7 +159,7 @@ public class ClientFacadeTest {
         System.out.println("Testing download with rename");
         //upload first to download
         String destination="/path/to/file.dat";
-        String server = "uftp://jj:pass@xxxx";
+        String server = "uftp://jj:pass@xxxx/UFTP:";
         instance.cp(files[0], server+destination, RecursivePolicy.NONRECURSIVE);
         assertTrue(fakeClient.fileExist(destination));
         
@@ -176,7 +176,7 @@ public class ClientFacadeTest {
         System.out.println("Testing single download");
         
         String destination="/path/to/file.dat";
-        String server = "uftp://jj:pass@xxxx";
+        String server = "uftp://jj:pass@xxxx/UFTP:";
         instance.cp(files[0], server+destination, RecursivePolicy.NONRECURSIVE);
         assertTrue(fakeClient.fileExist(destination));
         
@@ -193,7 +193,7 @@ public class ClientFacadeTest {
     public void testMultipleDownload() throws Exception {
         System.out.println("Multiple download");
         String destinaitonPath = "/some/path/";
-        String destinationServer = "uftp://jj:pass@xxxx";
+        String destinationServer = "uftp://jj:pass@xxxx/UFTP:";
         for (String string : files) {
             instance.cp(string, destinationServer+destinaitonPath, RecursivePolicy.NONRECURSIVE);
         }
@@ -247,7 +247,7 @@ public class ClientFacadeTest {
         }
         String remotePath = "/some/path/";
         for (String string : files) {
-            instance.cp(string, "uftp://jj:pass@xxxx"+remotePath, RecursivePolicy.RECURSIVE);            
+            instance.cp(string, "uftp://jj:pass@xxxx/UFTP:"+remotePath, RecursivePolicy.RECURSIVE);            
         }
         
         List<FileInfo> ls2 = instance.ls(remotePath);
