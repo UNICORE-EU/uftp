@@ -74,9 +74,13 @@ public class UNICOREStorageAuthClient implements AuthClient {
 	}
 
 	@Override
-	public AuthResponse createSession() throws IOException {
-		LOG.debug("Initalizing session");
-		return connect(sessionModeTag, true, true);
+	public AuthResponse createSession(String baseDir) throws IOException {
+		if(baseDir!=null && !baseDir.endsWith("/")) {
+			baseDir = baseDir+"/";
+		}
+		if(baseDir==null)baseDir="";
+		LOG.debug("Initalizing session in <"+baseDir+">");
+		return connect(baseDir+sessionModeTag, true, true);
 	}
 
 	public HttpResponse getInfo() throws IOException {

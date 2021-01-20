@@ -7,10 +7,6 @@ import static org.junit.Assert.assertTrue;
 import java.net.URISyntaxException;
 import java.util.Map;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import eu.unicore.uftp.authserver.authenticate.UsernamePassword;
@@ -40,23 +36,6 @@ public class ConnectionInfoManagerTest {
         instance.init(mainUri);
     }
 
-    @BeforeClass
-    public static void setUpClass() {
-    	
-    }
-
-    @AfterClass
-    public static void tearDownClass() {
-    }
-
-    @Before
-    public void setUp() {
-    }
-
-    @After
-    public void tearDown() {
-    }
-
     @Test
     public void testGetAuthURL() {
         System.out.println("getAuthURL");
@@ -83,6 +62,19 @@ public class ConnectionInfoManagerTest {
         assertEquals(path, result);
     }
 
+    @Test
+    public void testEmptyPath() throws Exception {
+    	ConnectionInfoManager cim = new ConnectionInfoManager(new UsernamePassword(userName, password));
+    	String authUrl = "https://host:1234/SITE/rest/auth/SERVER";
+    	cim = new ConnectionInfoManager(new UsernamePassword(userName, password));
+    	cim.init(authUrl+":");
+    	assertEquals("", cim.getPath());
+    	assertEquals(authUrl, cim.getAuthURL());
+    	cim.init(authUrl);
+    	assertEquals("", cim.getPath());
+    	assertEquals(authUrl, cim.getAuthURL());
+    }
+    
     @Test
     public void testGetPort() {
         System.out.println("getPort");

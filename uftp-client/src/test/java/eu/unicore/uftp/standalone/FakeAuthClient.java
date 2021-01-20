@@ -21,7 +21,7 @@ public class FakeAuthClient implements AuthClient {
     }
 
     @Override
-    public AuthResponse createSession() throws IOException {
+    public AuthResponse createSession(String baseDir) throws IOException {
         System.out.printf("Creating session\n");
         return new AuthResponse(true, "", "remoteUftp", 666, "secret");
     }

@@ -116,8 +116,11 @@ public class ConnectionInfoManager {
         String auth = "https://"+localUri.getHost()+":"+port;
         if(paths.length>1){
         	path=paths[1];
-        	auth = auth + paths[0];
         }
+        else {
+            path = "";
+        }
+        auth = auth + paths[0];
         parameters.put("path", path);
         parameters.put("auth", auth);
     }

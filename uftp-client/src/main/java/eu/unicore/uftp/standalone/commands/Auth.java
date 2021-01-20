@@ -24,7 +24,7 @@ public class Auth extends BaseUFTPCommand {
 		String uri = fileArgs[0];
 		mgr.init(uri);
 		AuthClient auth = mgr.getAuthClient(client);
-		AuthResponse res = auth.createSession();
+		AuthResponse res = auth.createSession(mgr.getPath());
 		if(!res.success){
 			System.out.println("Error: "+res.reason);
 		}
@@ -35,11 +35,11 @@ public class Auth extends BaseUFTPCommand {
 
 	@Override
 	public String getArgumentDescription() {
-		return "<Server-URL>";
+		return "<Server-URL>[:/path/to/initial/directory]";
 	}
 	@Override
 	public String getSynopsis() {
-		return "Authenticates the user and prints out connect info.";
+		return "Authenticates the user and prints out connect info. Optionally specify the initial directory for the FTP session.";
 	}
 
 }

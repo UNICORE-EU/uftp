@@ -3,7 +3,7 @@ The issue tracker is at
 https://sourceforge.net/p/unicore/uftp-issues/
 
 
-UFTP Client 1.4.0 (released mmm dd, 2020)
+UFTP Client 1.4.0 (released mmm dd, 2021)
 -----------------------------------------
  - new feature: "autheticate" command for only authenticating
    and printing connect info

@@ -77,9 +77,13 @@ public class AuthserverClient implements AuthClient {
 	}
 
 	@Override
-	public AuthResponse createSession() throws IOException {
-		LOG.debug("Initalizing session");
-		return this.connect(sessionModeTag, true, true);
+	public AuthResponse createSession(String baseDir) throws IOException {
+		if(baseDir!=null && !baseDir.endsWith("/")) {
+			baseDir = baseDir+"/";
+		}
+		if(baseDir==null)baseDir="";
+		LOG.debug("Initalizing session in <"+baseDir+">");
+		return this.connect(baseDir+sessionModeTag, true, true);
 	}
 
 	String infoURL;

@@ -17,7 +17,13 @@ public interface AuthClient {
 
     AuthResponse connect(String path, boolean send, boolean append) throws IOException;
 
-    AuthResponse createSession() throws IOException;
+    /** create session in default base directory **/
+    default AuthResponse createSession() throws IOException {
+        return createSession(null);
+    }
+
+    /** create session in the given base directory **/
+    AuthResponse createSession(String baseDir) throws IOException;
     
     HttpResponse getInfo() throws IOException;
     
