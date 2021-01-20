@@ -15,6 +15,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import org.apache.commons.io.FilenameUtils;
+
 import eu.unicore.uftp.client.FileInfo;
 import eu.unicore.uftp.client.UFTPSessionClient;
 import eu.unicore.uftp.dpc.DPCServer.Connection;
@@ -260,12 +262,10 @@ public class Session {
 	}
 
 	private File getFile(String pathname) throws IOException {
-		if(pathname.startsWith("/")) {
-			return fileAccess.getFile(pathname);
-		}
-		else {
-			return fileAccess.getFile(new File(currentDirectory, pathname).getPath());
-		}
+		String path = pathname.startsWith("/") ? 
+			          FilenameUtils.normalize(pathname) :
+			          FilenameUtils.normalize(new File(currentDirectory, pathname).getPath());
+		return fileAccess.getFile(path);
 	}
 
 	private boolean handleRetrieve(String cmd) throws IOException {
