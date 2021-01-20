@@ -337,7 +337,7 @@ public class Session {
 			response = "350 Resetting range";
 			resetRange();
 		} else {
-			response = "350 Restarting at " + localOffset + ". End byte range at " + lastByte + "";
+			response = "350 Restarting at " + localOffset + ". End byte range at " + lastByte;
 			setRange(localOffset, lastByte - localOffset);
 		}
 		connection.sendControl(response);

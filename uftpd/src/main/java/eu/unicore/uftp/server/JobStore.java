@@ -89,7 +89,7 @@ public class JobStore {
 				// persistent requests don't expire as long as there is a active session
 				remove = remove && job.getActiveSessions()==0;
 			}
-			if (age > maxJobAge) {
+			if (remove) {
 				logger.info("Removing expired job from " + job.getUser()
 				+ " @ " + Utils.encodeInetAddresses(job.getClient()));
 				toRemove.add(job);
