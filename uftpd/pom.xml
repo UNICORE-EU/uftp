@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>eu.unicore.uftp</groupId>
   <artifactId>uftp-core</artifactId>
-  <version>2.9.2</version>
+  <version>2.9.3</version>
   <packaging>jar</packaging>
   <name>UNICORE UFTPD server and core library</name>
 
