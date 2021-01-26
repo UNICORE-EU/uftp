@@ -160,14 +160,14 @@ public class UFTPTransferRequest extends UFTPBaseRequest {
 
     @Override
     public String toString() {
-        return "UFTPRequest for client=" + Arrays.asList(getClient())
-        		+ " persistent=" + isPersistent
-                + " send=" + send
-                + " file=" + file.getPath()
-                + " user=" + getUser() + " group=" + group
-                + " streams=" + streams
-                + " compress=" + compress
-                + " encrypted=" + (key != null);
+        return "UFTPTransferRequest <" + getJobID()
+	    + "> user=" + getUser() + " group=" + group
+	    +" clientIP(s)=" + Arrays.asList(getClient())
+	    + ( isSession()?" session / persistent=" + isPersistent
+		: (" file=" + file.getPath() + " send=" + send) )
+	    + " streams=" + streams
+	    + " compress=" + compress
+	    + " encrypted=" + (key != null);
     }
 
     @Override

@@ -30,6 +30,10 @@ public abstract class UFTPBaseRequest {
      */
 	private final long createdTime;
 
+	private static final AtomicInteger job_id_generator = new AtomicInteger();
+
+	private final Integer jobID = job_id_generator.incrementAndGet();
+
 	/**
 	 * @param user 
 	 * @param secret 
@@ -181,6 +185,10 @@ public abstract class UFTPBaseRequest {
 	
 	public int endActiveSession() {
 		return activeSessions.decrementAndGet();
+	}
+
+	public int getJobID() {
+		return jobID;
 	}
 
 }

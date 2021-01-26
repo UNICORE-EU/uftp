@@ -252,10 +252,13 @@ public class ServerThread extends Thread {
     private final void setupExpiryCheck() {
         Runnable r = new Runnable() {
             public void run() {
-                jobStore.checkForExpiredJobs();
+                try{
+		    jobStore.checkForExpiredJobs();
+                }catch(Exception ex) {}
             }
         };
-        Utils.getExecutor().scheduleWithFixedDelay(r, 3000, 10000, TimeUnit.MILLISECONDS);
+        long delay = Math.max(jobStore.getJobLifetime()/3, 60);
+        Utils.getExecutor().scheduleWithFixedDelay(r, delay, 60, TimeUnit.SECONDS);
     }
 
     public void cleanConnectionCounters() {

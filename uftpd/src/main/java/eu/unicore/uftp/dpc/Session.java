@@ -71,9 +71,11 @@ public class Session {
 
 	public static final int ACTION_CLOSE_DATA = 7;
 
-	private File baseDirectory;
+	private final File baseDirectory;
 
 	private File currentDirectory;
+
+	private final boolean allowAbsolutePaths;
 
 	// allowed file patterns
 	private String[]includes = {};
@@ -102,14 +104,18 @@ public class Session {
 		this.includes = parsePathlist(job.getIncludes());
 		this.excludes = parsePathlist(job.getExcludes());
 		this.defaultExcludes = parsePathlist(Utils.getProperty(UFTPConstants.ENV_UFTP_NO_WRITE, null));
-		baseDirectory = new File(fileAccess.getHome(job.getUser()));
 		File requested = job.getFile().getParentFile();
 		if (requested!= null) {
+			allowAbsolutePaths = false;
 			if(requested.isAbsolute()) {
 				baseDirectory = job.getFile().getParentFile();
 			}else {
-				baseDirectory = new File(baseDirectory, requested.getPath());
+				baseDirectory = new File(new File(fileAccess.getHome(job.getUser())), requested.getPath());
 			}
+		}
+		else {
+			baseDirectory = new File(fileAccess.getHome(job.getUser()));
+			allowAbsolutePaths = true;
 		}
 		currentDirectory = baseDirectory;
 		this.maxParCons = maxParCons;
@@ -137,6 +143,10 @@ public class Session {
 
 		else if (chk.startsWith("RANG ")) {
 			handleRange(cmd);
+		}
+
+		else if (chk.startsWith("REST ")) {
+			handleRestart(cmd);
 		}
 
 		else if (chk.startsWith("RETR ")) {
@@ -262,7 +272,7 @@ public class Session {
 	}
 
 	private File getFile(String pathname) throws IOException {
-		String path = pathname.startsWith("/") ? 
+		String path = (pathname.startsWith("/") && allowAbsolutePaths)?
 			          FilenameUtils.normalize(pathname) :
 			          FilenameUtils.normalize(new File(currentDirectory, pathname).getPath());
 		return fileAccess.getFile(path);
@@ -288,9 +298,9 @@ public class Session {
 		}
 		else {
 			size = stat(localFile).getSize();
-			numberOfBytes = size;
+			numberOfBytes = size - offset;
 		}
-		connection.sendControl( UFTPCommands.RETR_OK+" " + size + " bytes available for reading.");
+		connection.sendControl( UFTPCommands.RETR_OK+" " + numberOfBytes + " bytes available for reading.");
 		return true;
 	}
 	
@@ -341,6 +351,21 @@ public class Session {
 			setRange(localOffset, lastByte - localOffset);
 		}
 		connection.sendControl(response);
+	}
+
+	private void handleRestart(String cmd) throws IOException {
+		assertMode(Mode.READ);
+		String[] tok = cmd.trim().split(" ");
+		long localOffset;
+		try {
+			localOffset = Long.parseLong(tok[1]);
+		} catch (Exception ex) {
+			connection.sendError("REST argument syntax error.");
+			return;
+		}
+		this.offset = localOffset;
+		haveRange = false;
+		connection.sendControl("350 Restarting at " + localOffset + ".");
 	}
 
 	private void handleStat(String cmd) throws IOException {
@@ -481,6 +506,9 @@ public class Session {
 			return false;
 		}
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		FileInfo cwd = new FileInfo(file);
+		cwd.setPath(".");
+		bos.write((cwd.toMListEntry()+"\r\n").getBytes());
 		for (FileInfo f : files) {
 			bos.write((f.toMListEntry()+"\r\n").getBytes());
 		}
@@ -492,11 +520,15 @@ public class Session {
 
 	private void handleCDUP() throws IOException {
 		assertMode(Mode.FULL);
-		if (!currentDirectory.getAbsolutePath().equals(baseDirectory.getAbsolutePath())) {
-			currentDirectory = currentDirectory.getParentFile();
-			connection.sendControl(UFTPCommands.OK);
-		} else {
+		if (!allowAbsolutePaths && currentDirectory.getAbsolutePath().equals(baseDirectory.getAbsolutePath())){
 			connection.sendError("Can't cd up, already at base directory");
+		}
+		else {
+			currentDirectory = currentDirectory.getParentFile();
+			if (currentDirectory==null) {
+				currentDirectory = new File("/");
+			}
+			connection.sendControl(UFTPCommands.OK);
 		}
 	}
 
@@ -504,8 +536,8 @@ public class Session {
 		assertMode(Mode.FULL);
 		String dir = cmd.split(" ", 2)[1];
 		File newDir = new File(dir);
-		File newWD = newDir.isAbsolute()?
-				newDir : new File(currentDirectory, dir);
+		File newWD = allowAbsolutePaths && newDir.isAbsolute() ? newDir :
+					new File(baseDirectory, dir);
 		if (!(newWD.exists() && newWD.isDirectory())) {
 			connection.sendError("Can't cd to " + newWD.getAbsolutePath());
 		} else {
@@ -539,11 +571,8 @@ public class Session {
 
 	private void handleRM(String cmd) throws IOException {
 		assertMode(Mode.FULL);
-		String dir = cmd.split(" ", 2)[1];
-		File toRemove = new File(dir);
-		if (!toRemove.isAbsolute()) {
-			toRemove = new File(currentDirectory, dir);
-		}
+		String path = cmd.split(" ", 2)[1];
+		File toRemove = getFile(path);
 		try {
 			assertACL(toRemove, Mode.WRITE);
 			fileAccess.rm(toRemove.getAbsolutePath());
@@ -960,6 +989,7 @@ public class Session {
 		StringBuilder sb = new StringBuilder();
 		sb.append("Session for ").append(getClientDescription());
 		sb.append(" base_directory=\"").append(getBaseDirectory()).append("\"");
+		sb.append(" allow_abspaths=").append(allowAbsolutePaths);
 		sb.append(" access_level=").append(String.valueOf(accessLevel));
 		if(includes!=null)sb.append(" include=").append(Arrays.asList(includes));
 		if(excludes!=null)sb.append(" exclude=").append(Arrays.asList(excludes));

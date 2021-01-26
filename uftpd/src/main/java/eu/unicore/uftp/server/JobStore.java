@@ -23,7 +23,7 @@ public class JobStore {
 	private static final Logger logger = Utils.getLogger(Utils.LOG_SERVER, JobStore.class);
 
 	// default maximum job age is 10 minutes
-	public static final long MAX_JOB_AGE_DEFAULT = 10 * 60 * 1000;
+	public static final long MAX_JOB_AGE_DEFAULT = 10 * 60;
 
 	public final long maxJobAge;
 
@@ -31,7 +31,7 @@ public class JobStore {
 
 	public JobStore(){
 		maxJobAge = Integer.parseInt(System.getProperty("uftpd.maxJobAge", "" + MAX_JOB_AGE_DEFAULT));
-		logger.info("Limiting request lifetime to " + maxJobAge + " ms.");
+		logger.info("Limiting request lifetime to " + maxJobAge + " seconds.");
 	}
 
 	public void addJob(UFTPBaseRequest job){
@@ -82,14 +82,14 @@ public class JobStore {
 		while (iterator.hasNext()) {
 			Map.Entry<String, UFTPBaseRequest> entry = iterator.next();
 			UFTPBaseRequest job = entry.getValue();
-			
 			long age = System.currentTimeMillis() - job.getCreatedTime();
-			boolean remove = age > maxJobAge;
+			boolean expired = age > 1000*maxJobAge;
+			logger.debug("Checking job {} for {} active-sessions={} expired={}",
+					job.getJobID(), job.getUser(), job.getActiveSessions(), expired);
 			if(job.isPersistent()) {
-				// persistent requests don't expire as long as there is a active session
-				remove = remove && job.getActiveSessions()==0;
+				expired = expired && job.getActiveSessions()==0;
 			}
-			if (remove) {
+			if (expired) {
 				logger.info("Removing expired job from " + job.getUser()
 				+ " @ " + Utils.encodeInetAddresses(job.getClient()));
 				toRemove.add(job);
@@ -98,6 +98,13 @@ public class JobStore {
 		for(UFTPBaseRequest j: toRemove){
 			remove(j);
 		}
+	}
+
+	/**
+	 * job lifetime in seconds
+	 */
+	public long getJobLifetime() {
+		return maxJobAge;
 	}
 
 }
