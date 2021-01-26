@@ -23,7 +23,12 @@ public interface AuthClient {
     }
 
     /** create session in the given base directory **/
-    AuthResponse createSession(String baseDir) throws IOException;
+    default AuthResponse createSession(String baseDir) throws IOException {
+    	return createSession(baseDir, false);
+    }
+    
+    /** create session in the given base directory **/
+    AuthResponse createSession(String baseDir, boolean persistent) throws IOException;
     
     HttpResponse getInfo() throws IOException;
     

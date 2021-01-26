@@ -26,6 +26,10 @@ public class FakeAuthClient implements AuthClient {
         return new AuthResponse(true, "", "remoteUftp", 666, "secret");
     }
     
+    public AuthResponse createSession(String baseDir, boolean persistent) throws IOException {
+        return createSession(baseDir);
+    }
+    
     public HttpResponse getInfo() throws IOException{
     	return null;
     }

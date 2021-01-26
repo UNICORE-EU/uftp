@@ -43,7 +43,8 @@ public class AuthClientTest extends TestCase {
         String password = "pass";
         AuthData auth = new UsernamePassword(username, password);
         AuthserverClient instance = new AuthserverClient("https://server:9991", auth, null);
-        AuthRequest result = instance.createRequestObject(destinationPath, send, append, streamCount, encryptionKey, compress, null, clientIP);
+        AuthRequest result = instance.createRequestObject(destinationPath, send, append, streamCount, 
+        		encryptionKey, compress, null, clientIP, true);
         
         assertNotNull(result);
         assertEquals(append, result.append);
@@ -55,6 +56,7 @@ public class AuthClientTest extends TestCase {
         assertEquals(username, up.username);
         assertEquals(password, up.password);
         assertEquals(clientIP, result.client);
+        assertTrue(result.persistent);
     }
     
     @Test

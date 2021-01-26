@@ -24,7 +24,7 @@ public class Auth extends BaseUFTPCommand {
 		String uri = fileArgs[0];
 		mgr.init(uri);
 		AuthClient auth = mgr.getAuthClient(client);
-		AuthResponse res = auth.createSession(mgr.getPath());
+		AuthResponse res = auth.createSession(mgr.getPath(), true);
 		if(!res.success){
 			System.out.println("Error: "+res.reason);
 		}

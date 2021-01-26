@@ -49,6 +49,10 @@ public class UNICOREStorageAuthClient implements AuthClient {
 
 	@Override
 	public AuthResponse connect(String path, boolean send, boolean append) throws IOException {
+		return do_connect(path, send, append, false);
+	}
+
+	private AuthResponse do_connect(String path, boolean send, boolean append, boolean persistent) throws IOException {
 		HttpClient httpClient = HttpClientFactory.getClient(uri);
 
 		HttpPost postRequest = new HttpPost(uri);
@@ -57,7 +61,7 @@ public class UNICOREStorageAuthClient implements AuthClient {
 		}
 		postRequest.addHeader("Accept", "application/json");
 		String base64Key = client.getEncryptionKey()!=null? Utils.encodeBase64(client.getEncryptionKey()) : null;
-		JSONObject request = createRequestObject(path, base64Key, client.isCompress(), client.getClientIP());
+		JSONObject request = createRequestObject(path, base64Key, client.isCompress(), client.getClientIP(), persistent);
 		StringEntity input = new StringEntity(request.toString(),
 				ContentType.create("application/json", "UTF-8"));
 		postRequest.setEntity(input);
@@ -72,15 +76,15 @@ public class UNICOREStorageAuthClient implements AuthClient {
 		}
 		return response;
 	}
-
+	
 	@Override
-	public AuthResponse createSession(String baseDir) throws IOException {
+	public AuthResponse createSession(String baseDir, boolean persistent) throws IOException {
 		if(baseDir!=null && !baseDir.endsWith("/")) {
 			baseDir = baseDir+"/";
 		}
 		if(baseDir==null)baseDir="";
 		LOG.debug("Initalizing session in <"+baseDir+">");
-		return connect(baseDir+sessionModeTag, true, true);
+		return do_connect(baseDir+sessionModeTag, true, true, persistent);
 	}
 
 	public HttpResponse getInfo() throws IOException {
@@ -138,7 +142,7 @@ public class UNICOREStorageAuthClient implements AuthClient {
 		return url.split("/rest/core")[0]+"/rest/core";
 	}
 	
-	private JSONObject createRequestObject(String path, String encryptionKey, boolean compress, String clientIP) throws IOException {
+	private JSONObject createRequestObject(String path, String encryptionKey, boolean compress, String clientIP, boolean persistent) throws IOException {
 		try {
 			JSONObject ret = new JSONObject();
 			ret.put("file", path);
@@ -154,6 +158,7 @@ public class UNICOREStorageAuthClient implements AuthClient {
 				params.put("uftp.encryption", "true");
 			}
 			params.put("uftp.compression", compress);
+			params.put("uftp.persistent", persistent);
 			
 			return ret;
 		} catch(JSONException e) {

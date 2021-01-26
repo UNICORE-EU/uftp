@@ -55,6 +55,10 @@ public class AuthserverClient implements AuthClient {
 
 	@Override
 	public AuthResponse connect(String path, boolean send, boolean append) throws IOException {
+		return do_connect(path, send, append, false);
+	}
+
+	private AuthResponse do_connect(String path, boolean send, boolean append, boolean persistent) throws IOException {
 		HttpClient httpClient = HttpClientFactory.getClient(uri);
 
 		HttpPost postRequest = new HttpPost(uri);
@@ -64,7 +68,7 @@ public class AuthserverClient implements AuthClient {
 		postRequest.addHeader("Accept", "application/json");
 		String base64Key = client.getEncryptionKey()!=null? Utils.encodeBase64(client.getEncryptionKey()) : null;
 		AuthRequest request = createRequestObject(path, send, append, 
-				client.getStreams(), base64Key, client.isCompress(), client.getGroup(), client.getClientIP());
+				client.getStreams(), base64Key, client.isCompress(), client.getGroup(), client.getClientIP(), persistent);
 		StringEntity input = new StringEntity(gson.toJson(request),
 				ContentType.create("application/json", "UTF-8"));
 		postRequest.setEntity(input);
@@ -75,15 +79,15 @@ public class AuthserverClient implements AuthClient {
 		}
 		return response;
 	}
-
+	
 	@Override
-	public AuthResponse createSession(String baseDir) throws IOException {
+	public AuthResponse createSession(String baseDir, boolean persistent) throws IOException {
 		if(baseDir!=null && !baseDir.endsWith("/")) {
 			baseDir = baseDir+"/";
 		}
 		if(baseDir==null)baseDir="";
 		LOG.debug("Initalizing session in <"+baseDir+">");
-		return this.connect(baseDir+sessionModeTag, true, true);
+		return do_connect(baseDir+sessionModeTag, true, true, persistent);
 	}
 
 	String infoURL;
@@ -156,7 +160,7 @@ public class AuthserverClient implements AuthClient {
 	}
 	
 	AuthRequest createRequestObject(String destinationPath,	boolean send, boolean append, 
-			int streamCount, String encryptionKey, boolean compress, String group, String clientIP) {
+			int streamCount, String encryptionKey, boolean compress, String group, String clientIP, boolean persistent) {
 		AuthRequest ret = new AuthRequest();
 		ret.serverPath = destinationPath;
 		ret.send = send;
@@ -166,6 +170,7 @@ public class AuthserverClient implements AuthClient {
 		ret.compress = compress;
 		ret.group = group;
 		ret.client = clientIP;
+		ret.persistent = persistent;
 		return ret;
 	}
 
