@@ -90,7 +90,7 @@ public abstract class ShareServiceBase extends ServiceBase {
 			PipedInputStream pin = new PipedInputStream(src);
 
 			final Range range = new Range(rangeHeader);
-			final String remoteFile = share.getPath();
+			final String remoteFile = new File(share.getPath()).getName();
 			final Runnable task = new Runnable() {
 				public void run() {
 					try(final UFTPSessionClient uc = new UFTPSessionClient(server, response.serverPort)){

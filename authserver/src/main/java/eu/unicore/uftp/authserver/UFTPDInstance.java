@@ -12,11 +12,13 @@ import org.apache.logging.log4j.Logger;
 
 import de.fzj.unicore.wsrflite.ExternalSystemConnector;
 import de.fzj.unicore.wsrflite.Kernel;
-import eu.emi.security.authn.x509.impl.SocketFactoryCreator;
+import eu.emi.security.authn.x509.impl.SocketFactoryCreator2;
 import eu.unicore.uftp.server.requests.UFTPBaseRequest;
 import eu.unicore.uftp.server.requests.UFTPPingRequest;
 import eu.unicore.util.Log;
+import eu.unicore.util.httpclient.HostnameMismatchCallbackImpl;
 import eu.unicore.util.httpclient.IClientConfiguration;
+import eu.unicore.util.httpclient.ServerHostnameCheckingMode;
 
 /**
  * Holds properties and parameters for a single UFTPD server,
@@ -174,6 +176,19 @@ public class UFTPDInstance implements ExternalSystemConnector {
 		return doSendRequest(request);
 	}
 
+	private SSLSocketFactory socketfactory = null;
+	
+	private synchronized SSLSocketFactory getSSSSocketFactory() {
+		if(socketfactory==null) {
+			IClientConfiguration cfg = kernel.getClientConfiguration();
+			socketfactory = new SocketFactoryCreator2(cfg.getCredential(), cfg.getValidator(), 
+					new HostnameMismatchCallbackImpl(ServerHostnameCheckingMode.NONE),
+					getRandom(), "TLS").getSocketFactory();
+		}
+		return socketfactory;
+	}
+	
+	
 	private String doSendRequest(final UFTPBaseRequest request)throws IOException{
 
 		final int timeout = 20 * 1000;
@@ -187,9 +202,7 @@ public class UFTPDInstance implements ExternalSystemConnector {
 					socket.setSoTimeout(timeout);
 				}
 				else{
-					IClientConfiguration cfg = kernel.getClientConfiguration();
-					SSLSocketFactory f=SocketFactoryCreator.getSocketFactory(cfg.getCredential(), cfg.getValidator(), getRandom());
-					socket=f.createSocket(commandHost, commandPort);
+					socket = getSSSSocketFactory().createSocket(commandHost, commandPort);
 					socket.setSoTimeout(timeout);
 				}
 				if(log.isDebugEnabled()){

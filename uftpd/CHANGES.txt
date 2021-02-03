@@ -5,9 +5,13 @@ https://sourceforge.net/p/unicore/uftp-issues
 
 UFTP 2.10.0 (released 2021 dd yyyy)
 ----------------------------------
- - update to securityLibrary 5.1, log4j2, etc
+ - update to log4j/2, logging config update recommended
+ - update to securityLibrary 5.2.0
+ - new feature: implement restart command ("REST")
  - fix: persistent sessions were removed even
    when still active
+ - fix: handling of absolute vs relative directories, allow 
+   creating sessions with a fixed base directory
 
 UFTP 2.9.2 (released Nov 16 2020)
 ---------------------------------

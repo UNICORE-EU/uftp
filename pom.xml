@@ -19,7 +19,7 @@
     <compiler.fork>false</compiler.fork>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <use.version>4.1.0</use.version>
-    <seclib.version>5.1.0</seclib.version>
+    <seclib.version>5.2.0</seclib.version>
   </properties>
 
   <scm>
@@ -65,11 +65,6 @@
 	<groupId>commons-codec</groupId>
 	<artifactId>commons-codec</artifactId>
 	<version>1.12</version>
-      </dependency>
-      <dependency>
-	<groupId>eu.eu-emi.security</groupId>
-	<artifactId>canl</artifactId>
-	<version>2.6.0</version>
       </dependency>
       <dependency>
 	<groupId>com.hierynomus</groupId>

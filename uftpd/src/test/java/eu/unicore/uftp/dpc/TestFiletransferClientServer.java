@@ -117,7 +117,7 @@ public class TestFiletransferClientServer extends ClientServerTestBase {
 			client.run();
 			fail("Expected an error");
 		}catch(Exception ex){
-			//OK
+			// OK
 		}
 		client.close();
 	}

@@ -39,10 +39,9 @@ public class ServerProtocol {
 				handleLogin(cmd);
 				authZresult = connection.getJob(secret);
 				boolean ipCheck = true;
-				if(connection.isCheckClientIP()){
+				if(authZresult!=null && connection.isCheckClientIP()){
 					ipCheck = establishWithClientIPCheck(authZresult);
 				}
-				
 				if(authZresult!=null && ipCheck) {
 					connection.sendControl("230 Login successful");
 				}

@@ -9,8 +9,9 @@ import java.util.StringTokenizer;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.FileUtils;
+import org.bouncycastle.asn1.ASN1Encoding;
 import org.bouncycastle.asn1.ASN1Integer;
-import org.bouncycastle.asn1.DEROutputStream;
+import org.bouncycastle.asn1.ASN1OutputStream;
 import org.bouncycastle.asn1.DERSequence;
 import org.bouncycastle.util.Arrays;
 
@@ -154,10 +155,10 @@ public class SSHAgent {
 		System.arraycopy(rawSignature, 20, val, 0, 20);
 		BigInteger s = new BigInteger(val);
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
-		DEROutputStream dos = new DEROutputStream(bos);
+		ASN1OutputStream os = ASN1OutputStream.create(bos, ASN1Encoding.DER);
 		DERSequence seq = new DERSequence(new ASN1Integer[]{new ASN1Integer(r),new ASN1Integer(s)});
-		dos.writeObject(seq);
-		dos.close();
+		os.writeObject(seq);
+		os.close();
 		return bos.toByteArray();
 	}
 

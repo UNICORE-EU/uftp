@@ -21,6 +21,7 @@ import eu.unicore.security.canl.SSLContextCreator;
 import eu.unicore.uftp.dpc.AuthorizationFailureException;
 import eu.unicore.uftp.dpc.Utils;
 import eu.unicore.util.configuration.ConfigurationException;
+import eu.unicore.util.httpclient.ServerHostnameCheckingMode;
 
 /**
  * Deals with reading the SSL config file and setting up the UFTPD command socket.
@@ -91,7 +92,8 @@ public class SSLHelper {
 		try{
 			SSLContext ctx = SSLContextCreator.createSSLContext(securityProperties.getCredential(), 
 					securityProperties.getValidator(), 
-					"TLS", "UFTPD command socket", logger);
+					"TLS", "UFTPD command socket", logger,
+					ServerHostnameCheckingMode.WARN);
 			SSLServerSocket s = (SSLServerSocket)ctx.getServerSocketFactory().createServerSocket(port, backlog, cmdip);
 			s.setNeedClientAuth(true);
 			return s;
