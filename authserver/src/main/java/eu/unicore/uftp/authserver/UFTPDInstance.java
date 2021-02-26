@@ -176,7 +176,7 @@ public class UFTPDInstance implements ExternalSystemConnector {
 		return doSendRequest(request);
 	}
 
-	private SSLSocketFactory socketfactory = null;
+	private static SSLSocketFactory socketfactory = null;
 	
 	private synchronized SSLSocketFactory getSSSSocketFactory() {
 		if(socketfactory==null) {
