@@ -73,7 +73,7 @@ def setup_cmd_server_socket(configuration, LOG: Log):
                     pass
         update_acl(configuration, LOG)
     
-    LOG.info("Command socket listening on %s:%s" % (host, port))
+    LOG.info("UFTPD Command server socket started on %s:%s" % (host, port))
     LOG.info("SSL enabled: %s" % ssl_mode)
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -130,14 +130,14 @@ def setup_ftp_server_socket(configuration, LOG: Log):
     host = configuration['SERVER_HOST']
     port = configuration['SERVER_PORT']
 
-    LOG.info("FTP socket listening on %s:%s" % (host, port))
+    LOG.info("UFTPD Listener server socket started on %s:%s" % (host, port))
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     server.bind((host, port))
     return server
 
 
-def accept_ftp(server, configuration, LOG: Log):
+def accept_ftp(server, LOG: Log):
     """ Waits for a connection to the FTP socket
     """
     server.listen(2)

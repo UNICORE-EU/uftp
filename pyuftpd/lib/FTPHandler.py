@@ -18,7 +18,7 @@ def create_session(connector: Connector, config, LOG: Log):
         return
     limit = config['MAX_CONNECTIONS']
     if len(job['_PIDS'])==limit:
-        connector.write_message("")
+        connector.write_message("500 Too many open FTP sessions!")
         connector.close()
         return
     
@@ -42,6 +42,7 @@ def create_session(connector: Connector, config, LOG: Log):
             connector.write_message("530 Not logged in: %s" % user_switch_status)
             raise Exception("Cannot switch UID/GID: %s" % user_switch_status)
         connector.write_message("230 Login successful")
+        job['UFTP_NOWRITE'] = config["UFTP_NOWRITE"]
         session = Session.Session(connector, job, LOG)
         session.run()
         LOG.info("Finished processing FTP session for '%s'" % user)
@@ -54,7 +55,7 @@ def ftp_listener(ftp_server, config, LOG: Log):
     LOG.info("Started FTP listener thread.")
     while True:
         try:
-            connector = Server.accept_ftp(ftp_server, config, LOG)
+            connector = Server.accept_ftp(ftp_server, LOG)
             worker_thread = threading.Thread(target=create_session,
                                   args=(connector, config, LOG))
             worker_thread.start()

@@ -14,7 +14,7 @@ import BecomeUser, FTPHandler, Log, Server
 #
 # the UFTPD version
 #
-MY_VERSION = "__VERSION__"
+MY_VERSION = "3.0.0-DEV"
 
 # supported Python version
 REQUIRED_VERSION = (3, 4, 0)
@@ -36,7 +36,7 @@ def setup_config(config):
     config['SSL_CONF'] = os.getenv("SSL_CONF", None)
     config['ACL'] = os.getenv("ACL", "conf/uftpd.acl")
     config['uftpd.acl'] = []
-    config['MAX_STREAMS'] = int(os.getenv("MAX_STREAMS", "1"))
+    config['MAX_STREAMS'] = int(os.getenv("MAX_STREAMS", "1")) # no-op
     config['MAX_CONNECTIONS'] = int(os.getenv("MAX_CONNECTIONS", "8"))
     config['UFTP_KEYFILES'] = os.getenv("UFTP_KEYFILES", ".ssh/authorized_keys:.uftp/authorized_keys").split(":")
     config['UFTP_NOWRITE'] = os.getenv("UFTP_NOWRITE", ".ssh/authorized_keys").split(":")
@@ -201,7 +201,6 @@ def main(argv=None):
     config['job_map'] = job_map
 
     cmd_server = Server.setup_cmd_server_socket(config, LOG)
-    LOG.info("Command listener started.")
 
     housekeeping_thread = threading.Thread(target=cleanup,
                                   name="Cleanup",
@@ -214,6 +213,10 @@ def main(argv=None):
                                   args=(ftp_server, config, LOG))
     ftp_thread.start()
 
+    LOG.debug("Reading user keys from: %s" % config['UFTP_KEYFILES'])
+    LOG.debug("Write protected files : %s" % config['UFTP_NOWRITE'])
+    LOG.debug("Max. sessions per job : %s" % config['MAX_CONNECTIONS'])
+    
     process(cmd_server, config, LOG)
     return 0
 

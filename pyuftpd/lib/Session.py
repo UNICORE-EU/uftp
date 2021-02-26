@@ -3,6 +3,7 @@ from time import time
 from sys import maxsize
 from FileInfo import FileInfo
 import Protocol, Server
+from pickle import TRUE
 
 class Session(object):
     """ FTP session """
@@ -30,6 +31,7 @@ class Session(object):
         if not os.path.isdir(_dirname):
             raise IOError("No such directory: %s" % _dirname)
         self.basedir = _dirname
+        self.allow_absolute_paths = True
         self.access_level = self.MODE_FULL
         self.data = None
         self.portrange = job.get("_PORTRANGE", (0, -1, -1))
@@ -37,7 +39,10 @@ class Session(object):
         self.reset_range()
         self.BUFFER_SIZE = 65536
         self.KEEP_ALIVE = False
-
+        self.excludes = []
+        for f in job['UFTP_NOWRITE']:
+            self.excludes.append(os.environ['HOME'] + "/" + f)
+        
     def init_functions(self):
         self.functions = {
             "BYE": self.shutdown,
@@ -62,18 +67,20 @@ class Session(object):
             "TYPE": self.switch_type,
         }
 
-    def assertPermission(self, requested):
+    def assert_permission(self, requested):
         if self.access_level < requested:
             raise Exception("Access denied")
 
-    def assertAccess(self, path):
-        pass
+    def assert_access(self, path):
+        for excl in self.excludes:
+            if excl==path:
+                raise Exception("Forbidden")
 
     def makeabs(self, path):
-        if os.path.isabs(path):
-            return path
+        if self.allow_absolute_paths and os.path.isabs(path):
+            return os.path.normpath(path)
         else:
-            return self.basedir+"/"+path
+            return os.path.normpath(self.basedir+"/"+path)
 
     def shutdown(self, params):
         if self.data:
@@ -93,6 +100,7 @@ class Session(object):
         return Session.ACTION_CONTINUE
 
     def cwd(self, params):
+        self.assert_permission(Session.MODE_INFO);
         _dir = self.makeabs(params.strip())
         os.chdir(_dir)
         self.basedir = _dir
@@ -106,6 +114,7 @@ class Session(object):
         return Session.ACTION_CONTINUE
 
     def pwd(self, params):
+        self.assert_permission(Session.MODE_INFO);
         self.connector.write_message("257 \""+os.getcwd()+"\"")
         return Session.ACTION_CONTINUE
 
@@ -134,6 +143,7 @@ class Session(object):
         self.connector.write_message("226 File transfer successful")
 
     def do_list(self, params):
+        self.assert_permission(Session.MODE_INFO);
         path = "."
         if params:
             path = params
@@ -157,6 +167,7 @@ class Session(object):
         return Session.ACTION_CLOSE_DATA
 
     def stat(self, params):
+        self.assert_permission(Session.MODE_INFO);
         tokens = params.split(" ", 1)
         asFile = tokens[0]!="N"
         if len(tokens)>1:
@@ -183,6 +194,7 @@ class Session(object):
         return Session.ACTION_CONTINUE
 
     def mlst(self,params):
+        self.assert_permission(Session.MODE_INFO);
         path = self.makeabs(params)
         fi = FileInfo(path)
         if not fi.exists():
@@ -194,6 +206,7 @@ class Session(object):
         return Session.ACTION_CONTINUE
 
     def size(self, params):
+        self.assert_permission(Session.MODE_INFO);
         path = self.makeabs(params)
         fi = FileInfo(path)
         if not fi.exists():
@@ -242,6 +255,7 @@ class Session(object):
         return Session.ACTION_CONTINUE
 
     def retr(self, params):
+        self.assert_permission(Session.MODE_READ);
         path = self.makeabs(params)
         fi = FileInfo(path)
         if not fi.exists():
@@ -257,12 +271,16 @@ class Session(object):
         return Session.ACTION_RETRIEVE
 
     def allo(self, params):
+        self.assert_permission(Session.MODE_WRITE);
         self.number_of_bytes = int(params)
         self.connector.write_message("200 OK Will read up to %s bytes from data connection." % self.number_of_bytes)
         return Session.ACTION_CONTINUE
 
     def stor(self, params):
+        self.assert_permission(Session.MODE_WRITE);
         path = self.makeabs(params)
+        self.assert_access(path);
+        
         if self.number_of_bytes is None:
             self.number_of_bytes = maxsize
         self.file_path = path
