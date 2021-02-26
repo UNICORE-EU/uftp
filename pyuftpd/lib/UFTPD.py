@@ -40,6 +40,7 @@ def setup_config(config):
     config['MAX_CONNECTIONS'] = int(os.getenv("MAX_CONNECTIONS", "8"))
     config['UFTP_KEYFILES'] = os.getenv("UFTP_KEYFILES", ".ssh/authorized_keys:.uftp/authorized_keys").split(":")
     config['UFTP_NOWRITE'] = os.getenv("UFTP_NOWRITE", ".ssh/authorized_keys").split(":")
+    config['uftpd.enforce_os_gids'] =  os.getenv("UFTP_ENFORCE_OS_GIDS", "true").lower() in [ "true", "yes", "1" ]
     config['VERBOSE'] = os.getenv("VERBOSE", "false").lower() in [ "true", "yes", "1" ]
     
 def parse_request(message):

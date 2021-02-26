@@ -7,6 +7,6 @@ release.properties
 .classpath
 .settings/
 .project
+.pydevproject
 *.pyc
 *~
-

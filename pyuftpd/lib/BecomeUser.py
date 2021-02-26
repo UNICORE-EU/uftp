@@ -7,16 +7,11 @@ import UserCache
 
 
 def initialize(config, LOG: Log):
-    """ Store initial values for UID/GID, and setup the user cache."""
+    """ Setup the user cache."""
     (_x, euid, _y) = os.getresuid()
-    (_x, egid, _y) = os.getresgid()
-    # store effective uid/gid, we'll switch back to these after every action
     config['uftpd.effective_uid'] = euid
-    config['uftpd.effective_gid'] = egid
-
     if euid == 0:
-        LOG.info("Running privileged [%s : %s], will execute "
-                 "commands as the Xlogin" % (euid, egid))
+        LOG.info("Running privileged, will launch sessions as the current user.")
         config['uftpd.switch_uid'] = True
     else:
         LOG.info("Running unprivileged")
@@ -42,7 +37,7 @@ def initialize(config, LOG: Log):
 # if requested group is the primary group or if checking is disabled return OK
 # otherwise check that this user is a member of the requested group
 def check_membership(group, group_gid, user, config):
-    enforce_os_gids = config['uftpd.enforce_os_gids']
+    enforce_os_gids = config.get('uftpd.enforce_os_gids', True)
     user_cache = config['uftpd.user_cache']
     if enforce_os_gids and group_gid != user_cache.get_gid_4user(user):
         mem_list = user_cache.get_members_4group(group)
@@ -181,7 +176,7 @@ def become_user(user, requested_groups, config, LOG: Log):
         except RuntimeError as err:
             return str(err)
 
-    # Change identity
+    # Change identity/ drop privileges
     #
     # Impl note: yes, the primary gid will appear twice in the list, however
     # when there is no supplementary groups and only one gid (the primary gid)
@@ -191,7 +186,7 @@ def become_user(user, requested_groups, config, LOG: Log):
     os.setgid(new_gid)
     os.setgroups(new_gids)
     os.setegid(new_gid)
-    os.setresuid(new_uid, new_uid, euid)
+    os.setresuid(new_uid, new_uid, new_uid)
 
     # TODO: potential refactoring here
     if os.getuid() != new_uid:
@@ -224,23 +219,3 @@ def become_user(user, requested_groups, config, LOG: Log):
     os.environ['LOGNAME'] = user
 
     return True
-
-
-def restore_id(config, LOG: Log):
-    """
-    Restore the process' UID and GID to the stored values (usually root)
-    """
-
-    euid, egid = (config['uftpd.effective_uid'], config['uftpd.effective_gid'])
-    LOG.debug("Resetting ID to (%s %s)" % (euid, egid))
-    setting_uids = config['uftpd.switch_uid']
-
-    if setting_uids:
-        os.setresuid(euid, euid, euid)
-        os.setgid(egid)
-        os.setgroups([egid])
-        os.setegid(egid)
-        # re-set environment to something harmless
-        os.environ['HOME'] = "/tmp"
-        os.environ['USER'] = "nobody"
-        os.environ['LOGNAME'] = "nobody"
