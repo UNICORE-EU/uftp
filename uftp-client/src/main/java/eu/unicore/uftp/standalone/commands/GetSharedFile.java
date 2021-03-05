@@ -8,7 +8,7 @@ import java.io.OutputStream;
 import org.apache.commons.cli.ParseException;
 
 import eu.unicore.uftp.authserver.messages.AuthResponse;
-import eu.unicore.uftp.client.UFTPClient;
+import eu.unicore.uftp.client.UFTPSessionClient;
 import eu.unicore.uftp.standalone.ClientFacade;
 import eu.unicore.uftp.standalone.ConnectionInfoManager;
 import eu.unicore.uftp.standalone.UFTPClientFactory;
@@ -63,10 +63,11 @@ public class GetSharedFile extends BaseUFTPCommand {
 		AuthResponse response = authClient.connect(path,true,false);
 		File targetFile = makeTarget(source);
 		try(OutputStream targetStream = new FileOutputStream(targetFile)){
-			UFTPClient uftp = new UFTPClientFactory().getClient(response, targetStream);
+			UFTPSessionClient uftp = new UFTPClientFactory().getUFTPClient(response);
 			ProgressBar pb = new ProgressBar(targetFile.getName(), -1);
 			uftp.setProgressListener(pb);
-			uftp.run();
+			uftp.connect();
+			uftp.get(new File(source).getName(), targetStream);
 			pb.close();
 		}
 	}

@@ -886,7 +886,7 @@ public class Session {
 
 
 	/**
-	 * checks whether the session's node allows the current operation
+	 * checks whether the session's mode allows the current operation
 	 */
 	public void assertMode(Mode requestedAccess) throws AuthorizationFailureException {
 		if(accessLevel.compareTo(requestedAccess)>0) {

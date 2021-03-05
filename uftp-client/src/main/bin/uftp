@@ -31,10 +31,10 @@ set_option(){
 }
 
 # Memory for the JVM
-set_option "Xmx" "128m"                                                       
+set_option "Xmx" "256m"                                                       
 
 # Logging
-set_option "Dlog4j.configuration" "=file://${CONF}/logging.properties"
+set_option "Dlog4j.configurationFile" "=file://${CONF}/logging.properties"
 
 # setup Java classpath
 CP=$(find "$INST/lib" -name "*.jar" -exec printf ":{}" \;)

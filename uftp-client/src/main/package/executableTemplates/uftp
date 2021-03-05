@@ -57,7 +57,7 @@ set_option "Xmx" "256m"
 #
 # log configuration
 #
-set_option "Dlog4j.configuration" "=file://${HOME}/.uftp/logging.properties"
+set_option "Dlog4j.configurationFile" "=file://${HOME}/.uftp/logging.properties"
 
 
 #
