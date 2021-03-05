@@ -1,5 +1,6 @@
 package eu.unicore.uftp.authserver.share;
 
+import java.io.File;
 import java.net.InetAddress;
 import java.net.URI;
 import java.util.Collection;
@@ -40,6 +41,7 @@ import eu.unicore.uftp.datashare.Target;
 import eu.unicore.uftp.datashare.db.ACLStorage;
 import eu.unicore.uftp.datashare.db.ShareDAO;
 import eu.unicore.uftp.dpc.Session.Mode;
+import eu.unicore.uftp.dpc.UFTPConstants;
 import eu.unicore.uftp.server.workers.UFTPWorker;
 import eu.unicore.util.Log;
 
@@ -92,10 +94,14 @@ public class ShareServiceImpl extends ShareServiceBase {
 				if(write && access.compareTo(AccessType.WRITE)<0){
 					return handleError(401, "Not allowed to write to '"+path+"'", null, logger);
 				}
+				File requested = new File(path);
+				String parent = requested.getParent();
+				String file = requested.getName();
+				authRequest.serverPath = parent + "/"+UFTPConstants.sessionModeTag;
 				ua.uid = share.getUid();
 				ua.gid = share.getGid();
 				ua.excludes = null;
-				ua.includes = path;
+				ua.includes = file;
 				TransferRequest transferRequest = new TransferRequest(authRequest, ua, clientIP);
 				// limit UFTP session to read/write the specified path
 				transferRequest.setAccessPermissions(write ? Mode.WRITE : Mode.READ);

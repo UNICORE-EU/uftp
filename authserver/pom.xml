@@ -74,6 +74,12 @@
     <dependency>
       <groupId>eu.unicore.services</groupId>
       <artifactId>use-pdp</artifactId>
+      <exclusions>
+	<exclusion>
+	  <groupId>eu.unicore.services</groupId>
+	  <artifactId>use-wsrfclient</artifactId>	  
+	</exclusion>
+      </exclusions>	
     </dependency>
     <dependency>
       <groupId>com.hierynomus</groupId>

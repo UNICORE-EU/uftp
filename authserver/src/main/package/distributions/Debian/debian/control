@@ -9,9 +9,8 @@ Homepage: http://www.unicore.eu
 Package: unicore-authserver
 Architecture: all
 Depends: default-jre-headless
-Description: UNICORE (Uniform Interface to Computing Resources) offers a
- ready-to-run Grid system including client and server software.
- UNICORE makes distributed computing and data resources available
+Description: UNICORE (UNiform Interface to COmputing REsources)
+ makes distributed computing and data resources available
  in a seamless and secure way in intranets and the internet.
  .
  This package contains the UNICORE UFTP Authentication Server,

@@ -14,9 +14,8 @@ Packager: Bernd Schuller unicore-support@lists.sourceforge.net
 @preamble@
 
 %description
-UNICORE (Uniform Interface to Computing Resources) offers a
-ready-to-run Grid system including client and server software.
-UNICORE makes distributed computing and data resources available
+UNICORE (UNiform Interface to COmputing REsources)
+makes distributed computing and data resources available
 in a seamless and secure way in intranets and the internet.
 
 This package contains the UNICORE UFTP Authentication Server,
@@ -43,7 +42,6 @@ RESTful APIs.
 %config %attr(0600 unicore unicore) "/etc/unicore/authserver/container.properties"
 %config %attr(0600 unicore unicore) "/etc/unicore/authserver/startup.properties"
 %config %attr(0600 unicore unicore) "/etc/unicore/authserver/auth.p12"
-%config %attr(0600 unicore unicore) "/etc/unicore/authserver/truststore.jks"
 %config %attr(0600 unicore unicore) "/etc/unicore/authserver/trusted-certs/cacert.pem"
 %config %attr(0600 unicore unicore) "/etc/unicore/authserver/simpleuudb"
 %config %attr(0600 unicore unicore) "/etc/unicore/authserver/userdb.txt"

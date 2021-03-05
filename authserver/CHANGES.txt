@@ -7,9 +7,9 @@ https://sourceforge.net/p/unicore/uftp-issues
 ***  see README-UPGRADE.txt for how to update from 1.x
 ***
 
-Auth Server 2.4.0 (released mmm dd, 2020)
+Auth Server 2.4.0 (released Mar 5, 2021)
 -----------------------------------------
- - update to latest base libs
+ - update to UNICORE 8.1 base libs
  - update to log4j2
  - fix: debian package now depends on "default-jre-headless"
 
