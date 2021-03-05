@@ -12,18 +12,18 @@ This is a commandline client for UFTP. It allows to
  * make remote directories
  * delete remote files or directories
  * manage shares and access shared data
+ * perform authentication to help integrate
+   UFTP with other tools
 
 The 'uftp' client will connect to an authentication server (either a
-UNICORE/X server or the UFTP Auth server) to authenticate and
-then to the 'uftpd' server for transferring data or making a file
-operation.
+UNICORE/X server or the UFTP Auth server) to authenticate and then to
+the 'uftpd' server for transferring data or making a file operation.
 
 The 'uftp' client supports username/password authentication, OIDC
 token authentication and (on UNIX) ssh-key authentication.
 
 The 'uftp' client supports multiple concurrent FTP connections for
-highly efficient data transfers in high-performance environments and
-multiple TCP streams per connection for networks with high delay.
+highly efficient data transfers in high-performance environments.
 
 Prerequisites
 -------------
@@ -39,14 +39,14 @@ Prerequisites
 Installation
 ------------
 
-If you use the rpm or deb package, install it using the package manager of
-your Linux distribution.
-
 If using the zip or tar archive, unpack it in a location of your
 choice. Add the 'bin' directory to your path. (Alternatively, you can
 link or copy the 'bin/uftp' script to a directory that is already on
 your path, in this case edit the script and setup the required
 directories.)
+
+If you use the rpm or deb package, install it using the package
+manager of your Linux distribution.
 
 Basic Usage
 -----------
@@ -271,31 +271,43 @@ $> uftp cp -t 2 -T 1M https://localhost:9000/rest/auth/TEST:/home/demo/* .
 Byte ranges
 +++++++++++
 
-To copy just part of a file, a byte range can be given with the "-R"
+To copy just part of a file, a byte range can be given with the "-B"
 option. Counting starts at "zero". For example to download only the
-first 1024 bytes of file (i.e. the range 0 - 1023), you would do
+first 1024 bytes of file (i.e. the byte range 0 - 1023), you would do
 
 ---------------
-$> uftp cp -R 0-1023 https://localhost:9000/rest/auth/TEST:/home/demo/test.data .
+$> uftp cp -B 0-1023 https://localhost:9000/rest/auth/TEST:/home/demo/test.data .
 ---------------
 
 As an additional feature, you can use the additional "-p" flag, which
 will write also only the given range. For example
 ---------------
-$> uftp cp -R 1024-2047-p https://localhost:9000/rest/auth/TEST:/home/demo/test.data .
+$> uftp cp -B 1024-2047-p https://localhost:9000/rest/auth/TEST:/home/demo/test.data .
 ---------------
 will write bytes 1024-2047 of the remote file to the local file,
 starting at offset 1024. The local file will have length 2048.
 
 The same thing works for remote files!
 
+Number of bytes to transfer
++++++++++++++++++++++++++++
+
+A simplified version of the byte range specification is to just give
+the amount of data to transfer (implying the start of the range is at
+byte 0)
+
+This is handy for quick performance tests:
+
+---------------
+$> uftp cp -B 10G https://localhost:9000/rest/auth/TEST:/dev/zero /dev/null
+---------------
+
 
 Encryption and compression
 ++++++++++++++++++++++++++
 
 The cp command supports the "-E" and "-C" options, which enable data
-encryption and compression (during transfer) respectively. These work only 
-if a single data stream is used.
+encryption and compression (during transfer) respectively. 
 
 Data encryption uses a symmetric algorithm, which nonetheless
 drastically lowers the performance.

@@ -14,16 +14,16 @@ public class UCP extends BaseUFTPCommand {
 
 	//index of first byte to process
 	protected Long startByte;
-	
+
 	//index of last byte to process
 	protected Long endByte;
-	
+
 	protected RangeMode mode = RangeMode.READ;
-	
+
 	protected boolean resume = false;
 
 	protected boolean isUpload = false;
-	
+
 	protected String target;
 
 	// whether multiple files are to be transferred
@@ -34,26 +34,26 @@ public class UCP extends BaseUFTPCommand {
 	protected boolean preserve = false;
 
 	protected int numClients = 1;
-	
+
 	protected long splitThreshold = ClientFacade.DEFAULT_THRESHOLD;
-	
+
 	protected boolean archiveMode = false;
-	
+
 	@Override
 	public String getName() {
 		return "cp";
 	}
-	
+
 	@Override
 	public String getArgumentDescription() {
 		return "<source> [<source> ...] <target>";
 	}
-	
+
 	@Override
 	public String getSynopsis(){
 		return "Copy file(s). Wildcards '*' are supported.";
 	}
-	
+
 	@SuppressWarnings("static-access")
 	protected Options getOptions() {
 		Options options = super.getOptions();
@@ -105,7 +105,7 @@ public class UCP extends BaseUFTPCommand {
 				);
 		return options;
 	}
-	
+
 	@Override
 	public void parseOptions(String[] args) throws ParseException {
 		super.parseOptions(args);
@@ -122,7 +122,7 @@ public class UCP extends BaseUFTPCommand {
 		}
 		recurse = line.hasOption('r');
 		preserve = line.hasOption('p');
-		
+
 		if (line.hasOption('t')) {
 			numClients = Integer.parseInt(line.getOptionValue('t'));
 			if(numClients<1){
@@ -147,12 +147,12 @@ public class UCP extends BaseUFTPCommand {
 		if(resume && line.hasOption('B')){
 			throw new ParseException("Resume mode is not supported in combination with a byte range!");
 		}
-		
+
 		archiveMode = line.hasOption('a');
 		if(verbose && archiveMode){
 			System.err.println("Archive mode ENABLED");
 		}
-		
+
 		if(resume && numClients>1){
 			throw new ParseException("Resume mode is not supported in combination with multiple threads!");
 		}
@@ -171,7 +171,7 @@ public class UCP extends BaseUFTPCommand {
 		client.setBandwithLimit(bandwithLimit);
 		client.setArchiveMode(archiveMode);
 	}
-	
+
 	@Override
 	protected void run(ClientFacade client) throws Exception {
 		client.setVerbose(verbose);
@@ -188,24 +188,31 @@ public class UCP extends BaseUFTPCommand {
 	protected void initRange(String bytes){
 		String[]tokens=bytes.split("-");
 		try{
-			String start=tokens[0];
-			String end=tokens[1];
-			if(start.length()>0){
-				startByte = (long)(UnitParser.getCapacitiesParser(0).getDoubleValue(start));
-				endByte=Long.MAX_VALUE;
+			if(tokens.length>1) {
+				String start=tokens[0];
+				String end=tokens[1];
+				if(start.length()>0){
+					startByte = (long)(UnitParser.getCapacitiesParser(0).getDoubleValue(start));
+					endByte=Long.MAX_VALUE;
+				}
+				if(end.length()>0){
+					endByte=(long)(UnitParser.getCapacitiesParser(0).getDoubleValue(end));
+					if(startByte==null){
+						startByte=Long.valueOf(0l);
+					}
+				}
+				// optional mode
+				if(tokens.length>2){
+					String m = tokens[2];
+					if("p".equalsIgnoreCase(m)){
+						mode = RangeMode.READ_WRITE;
+					}
+				}
 			}
-			if(end.length()>0){
+			else {
+				String end=tokens[0];
 				endByte=(long)(UnitParser.getCapacitiesParser(0).getDoubleValue(end));
-				if(startByte==null){
-					startByte=Long.valueOf(0l);
-				}
-			}
-			// optional mode
-			if(tokens.length>2){
-				String m = tokens[2];
-				if("p".equalsIgnoreCase(m)){
-					mode = RangeMode.READ_WRITE;
-				}
+				startByte=Long.valueOf(0l);
 			}
 		}catch(Exception e){
 			throw new IllegalArgumentException("Could not parse byte range "+bytes);
