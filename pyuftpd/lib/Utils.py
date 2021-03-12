@@ -2,10 +2,7 @@
  helper functions
 """
 
-import re
 import os
-import os.path
-import sys
 import subprocess
 
 def expand_variables(message):

@@ -65,7 +65,7 @@ class Connector(object):
             self._output.write(message)
             self._output.flush()
 
-    def write_data(self, data):
+    def write(self, data):
         """ Write all the data to remote channel """
         to_write = len(data)
         write_offset = 0
@@ -77,7 +77,7 @@ class Connector(object):
             to_write -= written
         self._output.flush()
 
-    def read_data(self, length):
+    def read(self, length):
         """ Read data from remote channel """
         return self._input.read(length)
 

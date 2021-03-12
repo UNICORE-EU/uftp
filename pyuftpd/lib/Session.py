@@ -1,12 +1,15 @@
 import os.path
 from time import time
 from sys import maxsize
+
+from Connector import Connector
 from FileInfo import FileInfo
+from Log import Logger
+
 import Protocol, Server
-from pickle import TRUE
 
 class Session(object):
-    """ FTP session """
+    """ UFTP session """
     
     ACTION_CONTINUE = 0
     ACTION_RETRIEVE = 1
@@ -21,28 +24,42 @@ class Session(object):
     MODE_WRITE = 3
     MODE_FULL = 4
     
-    def __init__(self, connector, job, LOG):
+    def __init__(self, connector: Connector, job, LOG: Logger):
         self.job = job
         self.connector = connector
         self.LOG = LOG
         _dirname = os.path.dirname(job['file'])
-        if not os.path.isabs(_dirname):
-            _dirname = os.environ['HOME']+"/"+_dirname
+        if _dirname=='':
+            # no base dir set - default to HOME and
+            # allow client to use absolute paths
+            self.allow_absolute_paths = True
+            _dirname = os.environ['HOME']
+        else:
+            # explicit base directory is set - make sure
+            # session does not allow to "escape" it
+            self.allow_absolute_paths = False
+            if not os.path.isabs(_dirname):
+                _dirname = os.environ['HOME']+"/"+_dirname
         if not os.path.isdir(_dirname):
             raise IOError("No such directory: %s" % _dirname)
-        self.basedir = _dirname
-        self.allow_absolute_paths = True
+        self.basedir = os.path.normpath(_dirname)
+        self.current_dir = self.basedir
+        os.chdir(self.basedir)
         self.access_level = self.MODE_FULL
         self.data = None
         self.portrange = job.get("_PORTRANGE", (0, -1, -1))
-        os.chdir(_dirname)
         self.reset_range()
         self.BUFFER_SIZE = 65536
         self.KEEP_ALIVE = False
         self.excludes = []
         for f in job['UFTP_NOWRITE']:
             self.excludes.append(os.environ['HOME'] + "/" + f)
-        
+        self.key = job.get("key", None)
+        if(self.key is not None):
+            from base64 import b64decode
+            self.key = b64decode(self.key)
+            self.LOG.info("Data encryption enabled.")
+
     def init_functions(self):
         self.functions = {
             "BYE": self.shutdown,
@@ -53,6 +70,9 @@ class Session(object):
             "PWD": self.pwd,
             "CWD": self.cwd,
             "CDUP": self.cdup,
+            "MKD": self.mkdir,
+            "DELE": self.rm,
+            "RMD": self.rmdir,
             "PASV": self.pasv,
             "EPSV": self.epsv,
             "LIST": self.do_list,
@@ -80,7 +100,7 @@ class Session(object):
         if self.allow_absolute_paths and os.path.isabs(path):
             return os.path.normpath(path)
         else:
-            return os.path.normpath(self.basedir+"/"+path)
+            return os.path.normpath(self.current_dir+"/"+path)
 
     def shutdown(self, params):
         if self.data:
@@ -96,26 +116,73 @@ class Session(object):
         return Session.ACTION_CONTINUE
 
     def noop(self, params):
-        self.connector.write_message("200 OK")
+        try:
+            # be compatible with the Java client that may want
+            # multiple parallel TCP streams which we don't support
+            num_streams = int(params)
+            if num_streams>1:
+                self.connector.write_message("223 Opening 1 data connections")
+            else:
+                self.connector.write_message("222 Opening 1 data connections")
+        except:
+            self.connector.write_message("200 OK")
         return Session.ACTION_CONTINUE
 
     def cwd(self, params):
-        self.assert_permission(Session.MODE_INFO);
-        _dir = self.makeabs(params.strip())
-        os.chdir(_dir)
-        self.basedir = _dir
-        self.connector.write_message("200 OK")
+        self.assert_permission(Session.MODE_INFO)
+        path = self.makeabs(params.strip())
+        if len(path)<len(self.current_dir) and not self.allow_absolute_paths:
+            self.connector.write_message("500 Not allowed")
+        else:
+            os.chdir(path)
+            self.current_dir = path
+            self.connector.write_message("200 OK")
         return Session.ACTION_CONTINUE
 
     def cdup(self, params):
-        os.chdir("..")
-        self.basedir = os.getcwd()
-        self.connector.write_message("200 OK")
+        if self.current_dir==self.basedir:
+            self.connector.write_message("500 Can't cd up, already at base directory")
+        else:
+            os.chdir("..")
+            self.current_dir = os.getcwd()
+            self.connector.write_message("200 OK")
         return Session.ACTION_CONTINUE
 
     def pwd(self, params):
-        self.assert_permission(Session.MODE_INFO);
+        self.assert_permission(Session.MODE_INFO)
         self.connector.write_message("257 \""+os.getcwd()+"\"")
+        return Session.ACTION_CONTINUE
+
+    def mkdir(self, params):
+        self.assert_permission(Session.MODE_FULL)
+        path = self.makeabs(params.strip())
+        try:
+            os.mkdir(path)
+            self.connector.write_message("257 \"%s\" directory created" % path)
+        except Exception as e:
+            self.connector.write_message("500 Can't create directory: %s" % str(e))
+        return Session.ACTION_CONTINUE
+
+    def rm(self, params):
+        self.assert_permission(Session.MODE_FULL)
+        _path = self.makeabs(params.strip())
+        try:
+            self.assert_access(_path)
+            os.unlink(_path)
+            self.connector.write_message("200 OK")
+        except Exception as e:
+            self.connector.write_message("500 Can't remove path: %s" % str(e))
+        return Session.ACTION_CONTINUE
+
+    def rmdir(self, params):
+        self.assert_permission(Session.MODE_FULL)
+        _path = self.makeabs(params.strip())
+        try:
+            self.assert_access(_path)
+            os.rmdir(_path)
+            self.connector.write_message("200 OK")
+        except Exception as e:
+            self.connector.write_message("500 Can't remove path: %s" % str(e))
         return Session.ACTION_CONTINUE
 
     def pasv(self, params):
@@ -143,7 +210,7 @@ class Session(object):
         self.connector.write_message("226 File transfer successful")
 
     def do_list(self, params):
-        self.assert_permission(Session.MODE_INFO);
+        self.assert_permission(Session.MODE_INFO)
         path = "."
         if params:
             path = params
@@ -167,7 +234,7 @@ class Session(object):
         return Session.ACTION_CLOSE_DATA
 
     def stat(self, params):
-        self.assert_permission(Session.MODE_INFO);
+        self.assert_permission(Session.MODE_INFO)
         tokens = params.split(" ", 1)
         asFile = tokens[0]!="N"
         if len(tokens)>1:
@@ -194,7 +261,7 @@ class Session(object):
         return Session.ACTION_CONTINUE
 
     def mlst(self,params):
-        self.assert_permission(Session.MODE_INFO);
+        self.assert_permission(Session.MODE_INFO)
         path = self.makeabs(params)
         fi = FileInfo(path)
         if not fi.exists():
@@ -206,7 +273,7 @@ class Session(object):
         return Session.ACTION_CONTINUE
 
     def size(self, params):
-        self.assert_permission(Session.MODE_INFO);
+        self.assert_permission(Session.MODE_INFO)
         path = self.makeabs(params)
         fi = FileInfo(path)
         if not fi.exists():
@@ -255,7 +322,7 @@ class Session(object):
         return Session.ACTION_CONTINUE
 
     def retr(self, params):
-        self.assert_permission(Session.MODE_READ);
+        self.assert_permission(Session.MODE_READ)
         path = self.makeabs(params)
         fi = FileInfo(path)
         if not fi.exists():
@@ -271,15 +338,15 @@ class Session(object):
         return Session.ACTION_RETRIEVE
 
     def allo(self, params):
-        self.assert_permission(Session.MODE_WRITE);
+        self.assert_permission(Session.MODE_WRITE)
         self.number_of_bytes = int(params)
         self.connector.write_message("200 OK Will read up to %s bytes from data connection." % self.number_of_bytes)
         return Session.ACTION_CONTINUE
 
     def stor(self, params):
-        self.assert_permission(Session.MODE_WRITE);
+        self.assert_permission(Session.MODE_WRITE)
         path = self.makeabs(params)
-        self.assert_access(path);
+        self.assert_access(path)
         
         if self.number_of_bytes is None:
             self.number_of_bytes = maxsize
@@ -298,14 +365,23 @@ class Session(object):
             to_send = self.number_of_bytes
             total = 0
             start_time = int(time())
+            encrypt = self.key is not None
+            if encrypt:
+                import CryptUtil
+                writer = CryptUtil.CryptedWriter(self.data, self.key)
             while total<to_send:
                 length = min(self.BUFFER_SIZE, to_send-total)
                 data = f.read(length)
                 if len(data)==0:
                     break
-                self.data.write_data(data)
                 total = total + len(data)
+                if encrypt:
+                    writer.write(data)
+                else:
+                    self.data.write(data)
                 # tbd control rate
+            if encrypt:
+                writer.close()
             # post send
             self.reset()
             if not self.KEEP_ALIVE:
@@ -318,10 +394,16 @@ class Session(object):
             f.seek(self.offset)
             to_recv = self.number_of_bytes
             total = 0
+            crypted = self.key is not None
+            if crypted:
+                import CryptUtil
+                reader = CryptUtil.Decrypt(self.data, self.key)
+            else:
+                reader = self.data
             start_time = int(time())
             while total<to_recv:
                 length = min(self.BUFFER_SIZE, to_recv-total)
-                data = self.data.read_data(length)
+                data = reader.read(length)
                 if len(data)==0:
                     break
                 to_write = len(data)
@@ -339,7 +421,7 @@ class Session(object):
             if not self.KEEP_ALIVE:
                 self.data.close()
             duration = int(time()) - start_time
-            self.log_usage(True, total, duration)
+            self.log_usage(False, total, duration)
 
     def log_usage(self, send, size, duration, num_files = 1):
         if send:
@@ -359,10 +441,10 @@ class Session(object):
 
     def run(self):
         self.init_functions()
-        self.LOG.info("Proccessing UFTP session for <%s : %s : %s>, basedir=%s" % (
+        self.LOG.info("Processing UFTP session for <%s : %s : %s>, basedir=%s, allow_absolute_paths=%s" % (
             self.job['user'], self.job['group'],
             self.connector.client_ip(),
-            self.basedir
+            self.basedir, self.allow_absolute_paths
         ))
         while True:
             msg = self.connector.read_line()
