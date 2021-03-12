@@ -369,16 +369,15 @@ class Session(object):
             if encrypt:
                 import CryptUtil
                 writer = CryptUtil.CryptedWriter(self.data, self.key)
+            else:
+                writer = self.data
             while total<to_send:
                 length = min(self.BUFFER_SIZE, to_send-total)
                 data = f.read(length)
                 if len(data)==0:
                     break
                 total = total + len(data)
-                if encrypt:
-                    writer.write(data)
-                else:
-                    self.data.write(data)
+                writer.write(data)
                 # tbd control rate
             if encrypt:
                 writer.close()

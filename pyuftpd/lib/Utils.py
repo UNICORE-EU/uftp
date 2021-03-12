@@ -2,26 +2,7 @@
  helper functions
 """
 
-import os
 import subprocess
-
-def expand_variables(message):
-    """
-    Expands $HOME and $USER into the values from the current environment
-    """
-    message = message.replace("$HOME", os.environ['HOME'])
-    message = message.replace("$LOGNAME", os.environ['LOGNAME'])
-    return message.replace("$USER", os.environ['USER'])
-
-
-def addperms(path, mode):
-    """
-    Adds the mode permissions to those which are already set for the file.
-    """
-    curmode = os.stat(path)[0]
-    mode = curmode | mode
-    os.chmod(path, mode)
-
 
 def run_command(cmd, discard=False, children=None):
     """
@@ -52,14 +33,3 @@ def run_command(cmd, discard=False, children=None):
         success = False
 
     return success, output
-
-
-def run_and_report(cmd, connector):
-    """
-    Runs the command and report success/failure with output
-    """
-    (success, output) = run_command(cmd)
-    if not success:
-        connector.failed(output)
-    else:
-        connector.ok(output)

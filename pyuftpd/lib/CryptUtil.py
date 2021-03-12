@@ -20,13 +20,11 @@ class CryptedWriter(object):
         extra = divmod(len(data),8)[1];
         if extra>0:
             crypted = self.cipher.encrypt(data[:-extra])
-        else:
-            crypted = self.cipher.encrypt(data)
-        self.target.write(crypted)
-        if extra>0:
             self.stored = data[-extra:]
         else:
+            crypted = self.cipher.encrypt(data)
             self.stored = b""
+        self.target.write(crypted)
     
     def close(self):
         length = 8-len(self.stored)
@@ -48,12 +46,10 @@ class Decrypt(object):
         extra = divmod(len(data),8)[1];
         if extra>0:
             decrypted = self.cipher.decrypt(data[:-extra])
-        else:
-            decrypted = self.cipher.decrypt(data)
-        if extra>0:
             self.stored = data[-extra:]
             finish = False
         else:
+            decrypted = self.cipher.decrypt(data)
             self.stored = b""
         if finish:
             padlength = decrypted[-1]
