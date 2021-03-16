@@ -1,12 +1,12 @@
 import os.path
-from time import time
 from sys import maxsize
+from time import time
 
 from Connector import Connector
 from FileInfo import FileInfo
 from Log import Logger
-
 import Protocol, Server
+
 
 class Session(object):
     """ UFTP session """
@@ -51,9 +51,18 @@ class Session(object):
         self.reset_range()
         self.BUFFER_SIZE = 65536
         self.KEEP_ALIVE = False
+        self.archive_mode = False
         self.excludes = []
         for f in job['UFTP_NOWRITE']:
-            self.excludes.append(os.environ['HOME'] + "/" + f)
+            if len(f)>0:
+                self.excludes.append(os.environ['HOME'] + "/" + f)
+        for f in job.get("excludes", "").split(":"):
+            if len(f)>0:
+                self.excludes.append(f)
+        self.includes= []
+        for f in job.get("includes", "").split(":"):
+            if len(f)>0:
+                self.includes.append(f)
         self.key = job.get("key", None)
         if(self.key is not None):
             from base64 import b64decode
@@ -85,6 +94,7 @@ class Session(object):
             "ALLO": self.allo,
             "STOR": self.stor,
             "TYPE": self.switch_type,
+            "KEEP-ALIVE": self.set_keep_alive,
         }
 
     def assert_permission(self, requested):
@@ -354,11 +364,18 @@ class Session(object):
         self.connector.write_message("150 OK")
         return Session.ACTION_STORE
     
-    # TODO: archive mode
     def switch_type(self, params):
+        if "ARCHIVE"==params.strip():
+            self.archive_mode = True
+        elif "NORMAL"==params.strip():
+            self.archive_mode = False
         self.connector.write_message("200 OK")
         return Session.ACTION_CONTINUE        
-                    
+
+    def set_keep_alive(self, params):
+        self.KEEP_ALIVE = params.lower() in [ "true", "yes", "1" ]
+        return Session.ACTION_CONTINUE
+
     def send_data(self):
         with open(self.file_path, "rb") as f:
             f.seek(self.offset)
@@ -389,38 +406,88 @@ class Session(object):
             self.log_usage(True, total, duration)
 
     def recv_data(self):
+        if self.archive_mode:
+            self.recv_archive_data()
+        else:
+            self.recv_normal_data()
+
+    def recv_normal_data(self):
         with open(self.file_path, "wb") as f:
             f.seek(self.offset)
-            to_recv = self.number_of_bytes
-            total = 0
-            crypted = self.key is not None
-            if crypted:
-                import CryptUtil
-                reader = CryptUtil.Decrypt(self.data, self.key)
-            else:
-                reader = self.data
+            reader = self.get_reader()
             start_time = int(time())
-            while total<to_recv:
-                length = min(self.BUFFER_SIZE, to_recv-total)
-                data = reader.read(length)
-                if len(data)==0:
-                    break
-                to_write = len(data)
-                write_offset = 0
-                while(to_write>0):
-                    written = f.write(data[write_offset:])
-                    if written is None:
-                        written = 0
-                    write_offset += written
-                    to_write -= written                
-                total = total + len(data)
-                # tbd control rate
+            total = self.copy_data(reader, f, self.number_of_bytes)
             # post send
             self.reset()
             if not self.KEEP_ALIVE:
                 self.data.close()
             duration = int(time()) - start_time
             self.log_usage(False, total, duration)
+
+
+    def recv_archive_data(self):
+        import tarfile
+        reader = self.get_reader()
+        start_time = int(time())
+        tar = tarfile.TarFile.open(mode="r|", fileobj=reader)
+        counter = 0
+        total = 0
+        while True:
+            entry = tar.next()
+            if entry is None:
+                break
+            self.LOG.debug("Processing tar entry: %s length=%s" % (entry.name, entry.size))
+            pathname = self.makeabs(os.path.join(self.file_path , entry.name))
+            _d = os.path.dirname(pathname)
+            try:
+                if not os.path.exists(_d):
+                    os.mkdir(_d)
+            except Exception as e:
+                self.LOG.debug("Error creating directory %s: %s"%(_d, str(e)))
+            with open(pathname, "wb") as f:
+                entry_reader = tar.extractfile(entry)
+                if entry_reader is None:
+                    # TBD handle links and such?
+                    self.LOG.debug("No file returned for %s" % entry.name)
+                else:
+                    total += self.copy_data(entry_reader, f, maxsize)
+            counter+=1
+        # post send
+        self.reset()
+        if not self.KEEP_ALIVE:
+            self.data.close()
+        duration = int(time()) - start_time
+        self.log_usage(False, total, duration, num_files=counter)
+
+    def get_reader(self):
+        crypted = self.key is not None
+        if crypted:
+            import CryptUtil
+            reader = CryptUtil.Decrypt(self.data, self.key)
+            # crypted data is longer that net data size
+            self.number_of_bytes = maxsize
+        else:
+            reader = self.data
+        return reader
+
+    def copy_data(self, reader, target, num_bytes):
+        total = 0
+        while total<num_bytes:
+            length = min(self.BUFFER_SIZE, num_bytes-total)
+            data = reader.read(length)
+            if len(data)==0:
+                break
+            to_write = len(data)
+            write_offset = 0
+            while(to_write>0):
+                written = target.write(data[write_offset:])
+                if written is None:
+                    written = 0
+                write_offset += written
+                to_write -= written
+            total = total + len(data)
+            # tbd control rate
+        return total
 
     def log_usage(self, send, size, duration, num_files = 1):
         if send:

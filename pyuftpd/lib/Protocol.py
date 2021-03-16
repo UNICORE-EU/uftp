@@ -9,7 +9,8 @@ _SYSTEM_REPLY = "215 Unix Type: L8"
 _FEATURES = [ "PASV", "EPSV",
               "RANG STREAM",
               "MFMT", "MLSD", "APPE",
-            #  "KEEP-ALIVE", "ARCHIVE",
+              #"KEEP-ALIVE",
+              "ARCHIVE",
               "RESTRICTED_SESSION", "DPC2_LOGIN_OK"
 ]
 
