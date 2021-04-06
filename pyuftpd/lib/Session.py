@@ -1,6 +1,6 @@
 import os.path
 from sys import maxsize
-from time import time
+from time import sleep, time
 
 from Connector import Connector
 from FileInfo import FileInfo
@@ -14,7 +14,6 @@ class Session(object):
     ACTION_CONTINUE = 0
     ACTION_RETRIEVE = 1
     ACTION_STORE = 2
-    ACTION_SEND_STREAM_DATA = 6
     ACTION_CLOSE_DATA = 7
     ACTION_END = 99
 
@@ -68,6 +67,14 @@ class Session(object):
             from base64 import b64decode
             self.key = b64decode(self.key)
             self.LOG.info("Data encryption enabled.")
+        try:
+            self.rate_limit = 0
+            self.sleep_time = 0
+            self.rate_limit = int(job.get("rateLimit", "0"))
+            if self.rate_limit>0:
+                self.LOG.info("Rate limit: %s MB/second." % int(self.rate_limit/(1024*1024)))
+        except:
+            pass
 
     def init_functions(self):
         self.functions = {
@@ -378,6 +385,7 @@ class Session(object):
 
     def send_data(self):
         with open(self.file_path, "rb") as f:
+            limit_rate = self.rate_limit > 0
             f.seek(self.offset)
             to_send = self.number_of_bytes
             total = 0
@@ -395,7 +403,8 @@ class Session(object):
                     break
                 total = total + len(data)
                 writer.write(data)
-                # tbd control rate
+                if limit_rate:
+                    self.control_rate(total, start_time*1000)
             if encrypt:
                 writer.close()
             # post send
@@ -472,6 +481,9 @@ class Session(object):
 
     def copy_data(self, reader, target, num_bytes):
         total = 0
+        limit_rate = self.rate_limit > 0
+        start_time = int(time()*1000)
+        
         while total<num_bytes:
             length = min(self.BUFFER_SIZE, num_bytes-total)
             data = reader.read(length)
@@ -486,8 +498,18 @@ class Session(object):
                 write_offset += written
                 to_write -= written
             total = total + len(data)
-            # tbd control rate
+            if limit_rate:
+                self.control_rate(total, start_time)
         return total
+
+    def control_rate(self, total, start_time):
+        interval = int(time()*1000 - start_time) + 1
+        current_rate = 1000 * total / interval
+        if current_rate < self.rate_limit:
+            self.sleep_time = int(0.5 * self.sleep_time)
+        else:
+            self.sleep_time = self.sleep_time + 5
+            sleep(0.001*self.sleep_time)
 
     def log_usage(self, send, size, duration, num_files = 1):
         if send:
