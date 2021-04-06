@@ -38,7 +38,7 @@ public abstract class ServiceBase extends ApplicationBaseResource implements Ker
 		long rateLimit = 0;
 		String includes = null;
 		String excludes = null;
-		String base = "uftpd."+server.getServerName();
+		String base = "uftpd."+server.getName();
 		// allow to override these with uftpd specific values
 		List<XACMLAttribute> attr = client.getSubjectAttributes().getXacmlAttributes();
 		for(XACMLAttribute a: attr){

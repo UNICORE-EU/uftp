@@ -60,6 +60,7 @@ public class LogicalUFTPServer implements ExternalSystemConnector {
 					break;
 				}
 				UFTPDInstance server = createUFTPD(name+"-"+num, prefix, properties);
+				server.setLogicalName(name);
 				instances.add(server);
 				num++;
 			}

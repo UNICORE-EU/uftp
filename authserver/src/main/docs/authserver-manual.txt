@@ -431,24 +431,24 @@ The following map file entry gives a full example.
      
       <!-- UFTP specific attributes -->
 
-      <attribute name="uftp.CLUSTER.xlogin">
+      <attribute name="uftpd.CLUSTER.xlogin">
          <value>user1</value>
       </attribute>
-      <attribute name="uftp.CLUSTER.group">
+      <attribute name="uftpd.CLUSTER.group">
          <value>hpc</value>
       </attribute>     
 
       <!-- optional rate limit (bytes per second) -->
-      <attribute name="uftp.CLUSTER.rateLimit">
+      <attribute name="uftpd.CLUSTER.rateLimit">
          <value>10M</value>
       </attribute>     
 
       <!-- optional includes -->
-      <attribute name="uftp.CLUSTER.includes">
+      <attribute name="uftpd.CLUSTER.includes">
          <value>/tmp/*:/work/*</value>
       </attribute>     
       <!-- optional excludes -->
-      <attribute name="uftp.CLUSTER.excludes">
+      <attribute name="uftpd.CLUSTER.excludes">
          <value>/home/*:/etc/*</value>
       </attribute>     
      

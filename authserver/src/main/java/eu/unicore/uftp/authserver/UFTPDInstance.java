@@ -44,6 +44,8 @@ public class UFTPDInstance implements ExternalSystemConnector {
 
 	private final String serverName;
 	
+	private String logicalName;
+	
 	private String statusMessage = "N/A";
 
 	private Status status = Status.UNKNOWN;
@@ -54,9 +56,13 @@ public class UFTPDInstance implements ExternalSystemConnector {
 	
 	public UFTPDInstance(String serverName, Kernel kernel){
 		this.serverName = serverName;
+		this.logicalName = serverName;
 		this.kernel = kernel;
 	}
 
+	public void setLogicalName(String name) {
+		this.logicalName = name;
+	}
 	
 	/**
 	 * the address of the FTP socket
@@ -104,6 +110,10 @@ public class UFTPDInstance implements ExternalSystemConnector {
 		this.ssl = ssl;
 	}
 
+	public String getName(){
+		return logicalName;
+	}
+	
 	public String getServerName(){
 		return serverName;
 	}
