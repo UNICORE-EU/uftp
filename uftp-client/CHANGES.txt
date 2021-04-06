@@ -2,6 +2,10 @@ Change log for the UFTP standalone client
 The issue tracker is at
 https://sourceforge.net/p/unicore/uftp-issues/
 
+UFTP Client 1.4.1 (released Apr 6 , 2021)
+----------------------------------------
+ - fix: upload in "resume" mode (cp -R) fails when target file
+   doesn't exist
 
 UFTP Client 1.4.0 (released Mar 5, 2021)
 ----------------------------------------

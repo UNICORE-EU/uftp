@@ -388,15 +388,17 @@ public class ClientFacade {
 					if(resume){
 						try{
 							offset = sc.getFileSize(dest);
-							size = file.length() - offset;
-							if(size>0){
-								logger.debug("Resuming transfer, already have <"+offset+"> bytes");
-								pool.put(file, dest, size, offset, preserveAttributes);
-							}
-							else{
-								logger.debug("Nothing to do for <"+dest+">");
-							}
-						}catch(IOException e){/* file does not exist!? */}
+						}catch(IOException ioe) {
+							// does not exist
+						}
+						size = file.length() - offset;
+						if(size>0){
+							logger.debug("Resuming transfer, already have <"+offset+"> bytes");
+							pool.put(file, dest, size, offset, preserveAttributes);
+						}
+						else{
+							logger.debug("Nothing to do for <"+dest+">");
+						}
 					}
 					else{
 						if(size<largeFileThreshold || numClients<2){
