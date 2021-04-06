@@ -566,7 +566,7 @@ public class Session {
 			connection.sendError(msg);
 			return;
 		}
-		connection.sendControl(UFTPCommands.OK);
+		connection.sendControl("257 \""+newDir.getAbsolutePath()+"\" directory created.");
 	}
 
 	private void handleRM(String cmd) throws IOException {
