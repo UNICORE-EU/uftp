@@ -237,8 +237,14 @@ class Session(object):
             linux_mode = True
         self.LOG.debug("Listing %s" % path)
         path = self.makeabs(path)
+        try:
+            file_list = os.listdir(path)
+        except Exception as e:
+            self.connector.write_message("500 Error listing <%s>: %s"% (path, str(e)))
+            return Session.ACTION_CLOSE_DATA
+        
         self.connector.write_message("150 OK")
-        for f in os.listdir(path):
+        for f in file_list:
             try:
                 fi = FileInfo(os.path.join(path,f))
                 if linux_mode:

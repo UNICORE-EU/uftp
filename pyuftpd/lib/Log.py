@@ -2,6 +2,7 @@
 # simplistic logger - write everything to console
 # and let systemd worry about it
 #
+from sys import stdout
 
 class Logger(object):
 
@@ -9,13 +10,14 @@ class Logger(object):
         self.verbose = verbose
 
     def error(self, message):
-        print(message)
+        self.info("ERROR %s" % str(message))
 
     def info(self, message):
         print(message)
+        stdout.flush()
 
     def debug(self, message):
         if self.verbose:
-            print(message)
+            self.info("[DEBUG] %s" % str(message))
 
     

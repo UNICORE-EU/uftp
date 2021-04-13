@@ -14,7 +14,7 @@ import BecomeUser, FTPHandler, Log, Server
 #
 # the UFTPD version
 #
-MY_VERSION = "3.0.0-DEV"
+MY_VERSION = "DEV"
 
 # supported Python version
 REQUIRED_VERSION = (3, 4, 0)

@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>eu.unicore</groupId>
+  <artifactId>pyuftpd</artifactId>
+  <packaging>pom</packaging>
+  <description>Helper for building UNICORE UFTPD Linux packages</description>
+  <inceptionYear>2021</inceptionYear>
+  <url>https://www.unicore.eu</url>
+  <name>Distribution of the UNICORE UFTPD server</name>
+
+  <version>VERSION</version>
+
+  <parent>
+    <groupId>eu.unicore</groupId>
+    <artifactId>unicore-parent</artifactId>
+    <version>1.21</version>
+  </parent>
+
+  <repositories>
+    <repository>
+      <id>unicore.eu</id>
+      <name>UNICORE repository</name>
+      <url>https://unicore-dev.zam.kfa-juelich.de/maven</url>
+    </repository>
+  </repositories>
+
+</project>

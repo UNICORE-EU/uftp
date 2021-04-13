@@ -1,0 +1,10 @@
+Changelog
+---------
+The UFTP issue tracker is at
+https://sourceforge.net/p/unicore/uftp-issues
+
+UFTPD 3.0.0 (released 2021 dd yyyy)
+----------------------------------
+ - first release of the Python implementation
+
+

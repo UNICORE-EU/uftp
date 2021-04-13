@@ -65,63 +65,39 @@ doc: doc-generate doc-deploy
 #
 # packaging
 #
-define prepare-specific
-mkdir -p target
-rm -rf build/*
-mkdir -p build/lib
-cp -R docs build-tools/* build/
-cp lib/* build/lib
-cp CHANGES LICENCE build/docs/
-cp build-tools/conf.properties.bssspecific build/src/main/package/conf.properties
-#sed -i "s/name=tsi/name=$1/" build/src/main/package/conf.properties
-sed -i "s/VERSION/${VERSION}/" build/pom.xml
-sed -i "s/__VERSION__/${VERSION}/" build/lib/TSI.py
-find build | grep .svn | xargs rm -rf
-endef
+prepare:
+	mkdir -p target
+	rm -rf build/*
+	mkdir -p build/lib
+	cp -R docs build-tools/* build/
+	cp lib/* build/lib
+	cp CHANGES.txt LICENSE build/docs/
+	sed -i "s/VERSION/${VERSION}/" build/pom.xml
+	sed -i "s/MY_VERSION = \"DEV\"/MY_VERSION = \"${VERSION}\"/" build/lib/UFTPD.py
+	find build | grep .svn | xargs rm -rf
 
 #
 # generic rules for building deb and prm
 #
 
-%-deb: %-prepare
+deb: prepare
 	cd build && ${MVN} package -Ppackman -Dpackage.type=deb -Ddistribution=Debian -Dpackage.version=${VERSION} -Dpackage.release=${RELEASE}
 	cp build/target/*.deb target/
 
-%-rpm: %-prepare
+rpm: prepare
 	cd build && ${MVN} package -Ppackman -Dpackage.type=rpm -Ddistribution=RedHat -Dpackage.version=${VERSION} -Dpackage.release=${RELEASE}
 	cp build/target/*.rpm target/
 
-%-tgz: %-prepare
+tgz: prepare
 	cd build && ${MVN} package -Ppackman -Dpackage.type=bin.tar.gz -Dpackage.version=${VERSION} -Dpackage.release=${RELEASE}
 	cp build/target/*.tar.gz target/
 
 
 #
-# attempts to build all packages (even if they are the "wrong" kind on the current OS)
+# attempts to build all packages
 #
-%-all: %-deb %-rpm %-tgz
+all: tgz deb rpm
 	echo "Done."
-
-#
-# builds the correct package for the current OS
-#
-%-package: %-prepare
-	cd build && ${MVN} package -Ppackman -Dpackage.version=${VERSION} -Dpackage.release=${RELEASE}
-	cp build/target/unicore* target/
-	echo "Done."
-
-#
-# Generic binary tgz containing everything required to install the TSI
-# using the Install.sh script
-#
-tgz:
-	@mkdir -p target
-	@mkdir -p build
-	@rm -rf build/*
-	@cp -R build-tools docs lib build/
-	@cp README CHANGES LICENCE Install.sh build/
-	@sed -i "s/__VERSION__/${VERSION}/" build/lib/UFTPD.py
-	@tar czf target/uftpd-${VERSION}.tgz --xform="s%^build/%unicore-tsi-${VERSION}/%" --exclude-vcs build/*
 
 #
 # clean
