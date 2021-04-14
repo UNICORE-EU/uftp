@@ -162,6 +162,7 @@ public class UFTPServer implements Runnable {
 				try {
 					logger.debug("New control connection from " + jobSocket.getInetAddress());
 					jobSocket.setSoTimeout(jobReadTimeout);
+					jobSocket.setKeepAlive(true);
 					sslHelper.checkAccess(jobSocket);
 
 					JobConnectionWorker jcw = new JobConnectionWorker(jobSocket, svrThread);

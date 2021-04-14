@@ -173,6 +173,7 @@ public class DPCClient implements Closeable{
 							logger.debug("Attempt to connect to "+s.getHostAddress());
 						}
 						controlSocket.connect(new InetSocketAddress(s, port), currentTimeoutValue);
+						controlSocket.setKeepAlive(true);
 						selectedServer = s;
 						break outer;
 					} catch (SocketTimeoutException ste) {
