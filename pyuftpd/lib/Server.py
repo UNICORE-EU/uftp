@@ -179,7 +179,7 @@ def accept_data(server, LOG: Log, expected_client=None):
         try:
             (client, (client_host, _x)) = server.accept()
             LOG.debug("Data connection from %s" % client_host)
-            return Connector.Connector(client,LOG,conntype="DATA",binary_mode=True)
+            return Connector.Connector(client, LOG, conntype="DATA", binary_mode=True)
         except EnvironmentError as e:
             LOG.error(e)
             attempts+=1

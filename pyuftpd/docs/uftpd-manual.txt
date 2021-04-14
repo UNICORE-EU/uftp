@@ -8,7 +8,7 @@ This is the UFTPD user manual providing information on running and
 using the UNICORE UFTP server 'uftpd'. Please note also the 
 following places for getting more information:
 
-UNICORE Website: http://www.unicore.eu
+UNICORE Website: https://www.unicore.eu
 
 Support list: unicore-support@lists.sf.net
 
@@ -73,8 +73,6 @@ UFTP features
 
  - data upload/download with 'curl' or 'ftp' possible in conjunction with
    the auth server
- 
- - written in Java
 
 How does UFTP work
 ~~~~~~~~~~~~~~~~~~
@@ -132,7 +130,7 @@ Installation and use
 Prerequisites
 ~~~~~~~~~~~~~
 
-  - Java 8 (or later) runtime is required
+  - Python 3.4.0 or later
 
   - the server "listen" port needs to be accessible through your firewalls, 
     declaring it an "FTP" port (FTP connection tracking). Alternatively a fixed
@@ -160,54 +158,34 @@ are different. If installing using distribution-specific package
 the following paths are used:
 
   CONF=/etc/unicore/uftpd
-  SBIN=/usr/sbin
-  BIN=/usr/bin
-  LOG=/var/log/unicore/uftpd
+  BIN=/usr/share/unicore/uftpd/bin
   LIB=/usr/share/unicore/uftpd/lib
-  
+
 If installing using the portable bundle, all UFTPD files are installed
 under a single directory. Path prefixes are as follows, where INST 
 is the directory where UFTPD was installed:
 
   CONF=INST/conf
-  SBIN=INST/bin
   BIN=INST/bin
-  LOG=INST/log
   LIB=INST/lib
 
-These variables (CONF, SBIN, BIN and LOG) are used throughout the rest of 
+These variables (CONF, BIN and LOG) are used throughout the rest of 
 this manual.
 =========================================================
 
-C library for switching user ID
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-It may be required to re-compile the libuftp-unix.so library on your
-system.  This library uses the Java Native Interface (JNI). The
-version supplied with the distribution has been compiled on a 64bit
-Linux system. The folder LIB/native contains the required headers and
-C source files, as well as an exemplary makefile. Please edit the
-makefile, the following information is required:
- 
- * the base directory of your Java installation (JAVA_HOME)
- * the location of platform-specific include files
- * the location of the +uftp-<version>.jar+ file (LIB)
-
-Then, run "make install" to build the library, which will compile the code 
-and install the library into the LIB folder.
-
-If any problems occur during this procedure, please contact UNICORE
-support or open a ticket.
-
 Starting and stopping the UFTPD server
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ 
+If using the Linux packages, uftpd is integrated as a service via systemd, and
+you can stop/start it via 'systemctl'. Also, logging is done via systemd, and
+you can look at the logs via 'journalctl'
 
-In the SBIN directory, start/stop and status scripts are provided:
+To do things manually, you can use the start/stop and status scripts that are
+provided in the BIN directory.
 
  - +unicore-uftpd-start.sh+ starts the server
  - +unicore-uftpd-stop.sh+ stops the server
  - +unicore-uftpd-status.sh+ checks the server status
- 
 
 The parameters such as server host/port, control host/port, and others are
 configured in the +CONF/uftpd.conf+ file
@@ -242,8 +220,6 @@ The following variables can be defined in the configuration file (uftpd.conf):
   ACL             : File containing the list of server DNs that are allowed 
                     access to the command port 
 
-  UFTPD_MEM       : the maximum memory (Java heap size) allocated to the UFTPD server
-
   MAX_CONNECTIONS : the maximum number of concurrent control connections per client IP
 
   MAX_STREAMS     : the maximum number of parallel TCP streams per connection
@@ -253,7 +229,7 @@ The following variables can be defined in the configuration file (uftpd.conf):
   PORT_RANGE      : (optional) server-side port range in the form 'lower:upper' that will be 
                     used for data connections. By default, any free ports will be used.
                     Example: set to '50000:50500' to limit the port range. 
-		    NOTE ports in this range *must not* be used by other services!
+		            NOTE ports in this range *must not* be used by other services!
 
   DISABLE_IP_CHECK : (optional) in some situations, the client IP can be different from
                      the one that was sent to the UFTPD server. This will lead to rejected
@@ -266,6 +242,8 @@ The following variables can be defined in the configuration file (uftpd.conf):
 
   UFTP_NO_WRITE     : (optional) ":"-separated list of file name patters that uftpd should
                       not write to
+
+  VERBOSE           : set to 'true' to get more detailed (protocol-level) logging
 
 As usual if you set the SERVER_HOST to be "0.0.0.0", the server will bind to all the available 
 network interfaces.
@@ -297,27 +275,25 @@ user privileges (except 'root').
 SSL setup
 ^^^^^^^^^
 
-To setup SSL, you need a keystore containing the UFTPD server's
-credential, and a truststore containing certificate authorities that
-should be trusted.  Keystore and truststore can be the same file.
-
+To setup SSL, you need a PEM file containing the UFTPD server's
+credential, and a PEM file containing certificate authorities that
+should be trusted.
 
 The following properties can be set in the +CONF/uftpd-ssl.conf+ file.
 
-.Credential properties
-include::credProperties.txt[]
+---------------
+credential.path=path/to/keyfile.pem
+credential.password=...
 
-.Truststore properties
-include::trustProperties.txt[]
-
+truststore=path/to/ca-cert-file.pem
+---------------
 
 If the +credential.path+ property is NOT set, SSL will be disabled.
 
 
-[NOTE] .Backwards compatibility to previous versions
+[NOTE] .Backwards (in)compatibility to previous versions
 ========================================================= 
-Existing configuration files with the +javax.net.ssl.*+
-properties used in UFTPD < 2.6 are still supported
+UFTPD 2.x SSL config is NOT supported
 =========================================================
 
 
@@ -379,77 +355,12 @@ modprobe nf_conntrack_ftp ports=$SERVER_PORT
 Logging
 ~~~~~~~
 
-UFTPD uses log4j, the same logging system as other UNICORE components.
-Logging is configured in the +CONF/logging.properties+ file.
+UFTPD writes to the console.
 
-[NOTE]
-===========
-You can change the logging configuration at runtime by editing the logging.properties file.
-The new configuration will take effect a few seconds after the file has been modified.
-===========
+If running via systemd, UFTPD's log messages will go to the system journal, and
+you can use 'journalctl' to read log messages.
 
-By default, log files are written to the the +LOG+ directory. 
-
-
-For more info on controlling the logging we refer to the log4j documentation:
-  
-  - http://logging.apache.org/log4j/1.2/apidocs/org/apache/log4j/PatternLayout.html[PatternLayout]
-  
-  - http://logging.apache.org/log4j/1.2/apidocs/org/apache/log4j/RollingFileAppender.html[RollingFileAppender]
-  
-  - http://logging.apache.org/log4j/1.2/apidocs/org/apache/log4j/DailyRollingFileAppender.html[DailyRollingFileAppender]
-  
- 
-Log4j supports a very wide range of logging options, such as date
-based or size based file rollover, logging different things to
-different files and much more. For full information on Log4j we refer
-to the publicly available documentation, for example the
-http://logging.apache.org/log4j/1.2/manual.html[Log4j manual].
- 
-
-==== Logger categories, names and levels
-
-Logger names are hierarchical. Prefixes are used (e.g. "uftp.server")
-to which the Java class name is appended.
-
-The logging output produced can be controlled in a fine-grained
-manner.  Log levels in Log4j are (in increasing level of severity)
-TRACE, DEBUG, INFO, WARN, ERROR, amd FATAL.
-
-For example, to track the UFTPD server's communication with clients in
-detail, you can set
-  
-------
-log4j.logger.uftp.server=DEBUG
-------
-
-Here is a table of logger categories
-
-[options="header"]
-|===============================
-|Log category      | Description
-|uftp              | All UFTP logging
-|uftp.security     | Security
-|uftp.server       | Server code
-|uftp.client       | Client code
-|====================================================================
-
-[NOTE]
-===========
-Please take care to not set the global level to TRACE or DEBUG for long times, 
-as this may produce a lot of output.
-===========
-
-==== Usage logging
-
-Often it is desirable to keep track of the usage of your UFTPD server.
-The server has a special logger category which logs information about finished 
-jobs at INFO level. If you wish to enable this, set the level to INFO or higher:
-
-------
-log4j.logger.uftp.server.USAGE=INFO
-------
-
+If running 'manually', output will be written to a file in the +LOG+ directory. 
 
 
 UNICORE Integration
@@ -585,45 +496,7 @@ coreServices.uftp.client.local=true
 Testing the UFTPD server
 ------------------------
 
-Testing as described in this section works only if SSL is not enabled.
-Therefore, you should run these tests as a non-root user. Enable SSL
-and restart the UFTPD server with root privileges once you are
-finished with these tests.
-
-The UFTPD distribution contains two scripts that allow you to test the
-UFP functionality without using any external servers or
-clients. Making a data transfer involves two steps:
-
- - invoke +uftp-job.sh+ to "announce" an upcoming transfer to the UFTPD server
- - invoke +uftp.sh+ to initiate the actual transfer
-
-Note, in case you installed from an RPM or DEB package, these files are located in +/usr/bin+.
-
-The following shell commands "transfer" the file +.bashrc+ to the /tmp directory.
-
-Assuming you installed from RPM/DEB:
-
-------------
-. /etc/unicore/uftpd/uftpd.conf
-uftp-job.sh -c localhost -f ~/.bashrc -s true -x my_secret -n 2 -u unicore -g unicore
-uftp.sh -r -f /tmp/test -L $SERVER_PORT -l $SERVER_HOST -x my_secret -n 2
-------------
-
-This should create a file +/tmp/test+ identical to +~/.bashrc+. Check the console output and
-the UFTPD log file +LOG/uftpd.log+ in case of errors.
-
-After the transfer finished, check that indeed 
-
------
-md5sum /tmp/test ~/.bashrc
------
-
-gives the correct checksum for the newly created file.
-
-It is also possible to enable encryption "manually", by appending "-E <key>"
-to the commands above, where "key" is a sequence of 12
-characters (really a base64-encoded 64 bit key).
- 
+TBD 
 
 Performance measurement hints
 -----------------------------

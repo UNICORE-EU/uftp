@@ -36,7 +36,7 @@ def setup_config(config):
     config['SSL_CONF'] = os.getenv("SSL_CONF", None)
     config['ACL'] = os.getenv("ACL", "conf/uftpd.acl")
     config['uftpd.acl'] = []
-    config['MAX_STREAMS'] = int(os.getenv("MAX_STREAMS", "1")) # no-op
+    config['MAX_STREAMS'] = int(os.getenv("MAX_STREAMS", "2"))
     config['MAX_CONNECTIONS'] = int(os.getenv("MAX_CONNECTIONS", "8"))
     config['UFTP_KEYFILES'] = os.getenv("UFTP_KEYFILES", ".ssh/authorized_keys:.uftp/authorized_keys").split(":")
     config['UFTP_NOWRITE'] = os.getenv("UFTP_NOWRITE", ".ssh/authorized_keys").split(":")
@@ -216,6 +216,7 @@ def main(argv=None):
     LOG.debug("Reading user keys from: %s" % config['UFTP_KEYFILES'])
     LOG.debug("Write protected files : %s" % config['UFTP_NOWRITE'])
     LOG.debug("Max. sessions per job : %s" % config['MAX_CONNECTIONS'])
+    LOG.debug("Max. parallel streams : %s" % config['MAX_STREAMS'])
     
     process(cmd_server, config, LOG)
     return 0

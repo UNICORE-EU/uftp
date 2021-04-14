@@ -14,6 +14,7 @@ class Session(object):
     ACTION_CONTINUE = 0
     ACTION_RETRIEVE = 1
     ACTION_STORE = 2
+    ACTION_OPEN_SOCKET = 5
     ACTION_CLOSE_DATA = 7
     ACTION_END = 99
 
@@ -45,12 +46,15 @@ class Session(object):
         self.current_dir = self.basedir
         os.chdir(self.basedir)
         self.access_level = self.MODE_FULL
+        self.data_connections = []
         self.data = None
         self.portrange = job.get("_PORTRANGE", (0, -1, -1))
         self.reset_range()
         self.BUFFER_SIZE = 65536
         self.KEEP_ALIVE = False
         self.archive_mode = False
+        self.num_streams = 1
+        self.max_streams = job.get('MAX_STREAMS', 1)
         self.excludes = []
         for f in job['UFTP_NOWRITE']:
             if len(f)>0:
@@ -67,9 +71,9 @@ class Session(object):
             from base64 import b64decode
             self.key = b64decode(self.key)
             self.LOG.info("Data encryption enabled.")
+        self.rate_limit = 0
+        self.sleep_time = 0
         try:
-            self.rate_limit = 0
-            self.sleep_time = 0
             self.rate_limit = int(job.get("rateLimit", "0"))
             if self.rate_limit>0:
                 self.LOG.info("Rate limit: %s MB/second." % int(self.rate_limit/(1024*1024)))
@@ -136,11 +140,12 @@ class Session(object):
         try:
             # be compatible with the Java client that may want
             # multiple parallel TCP streams which we don't support
-            num_streams = int(params)
-            if num_streams>1:
-                self.connector.write_message("223 Opening 1 data connections")
+            self.num_streams = int(params)
+            if self.num_streams<=self.max_streams:
+                self.connector.write_message("223 Opening %d data connections" % self.num_streams)
             else:
-                self.connector.write_message("222 Opening 1 data connections")
+                self.num_streams = self.max_streams
+                self.connector.write_message("222 Opening %d data connections" % self.max_streams)
         except:
             self.connector.write_message("200 OK")
         return Session.ACTION_CONTINUE
@@ -203,24 +208,27 @@ class Session(object):
         return Session.ACTION_CONTINUE
 
     def pasv(self, params):
-        my_host = self.connector.my_ip()
-        server_socket = Server.setup_data_server_socket(my_host, self.portrange)
-        my_port = server_socket.getsockname()[1]
-        msg = "227 Entering Passive Mode (%s,%d,%d)" % ( my_host.replace(".",","), (my_port / 256), (my_port % 256))
-        self.connector.write_message(msg)
-        self.data = Server.accept_data(server_socket, self.LOG)
-        self.LOG.info("Accepted data connection from %s" % self.data.client_ip())
-        return Session.ACTION_CONTINUE
+        return self.add_data_connection(False)
 
     def epsv(self, params):
+        return self.add_data_connection(True)
+
+    def add_data_connection(self, epsv=True):
         my_host = self.connector.my_ip()
         server_socket = Server.setup_data_server_socket(my_host, self.portrange)
         my_port = server_socket.getsockname()[1]
-        msg = "229 Entering Extended Passive Mode (|||%s|)" % my_port
+        if epsv:
+            msg = "229 Entering Extended Passive Mode (|||%s|)" % my_port
+        else:
+            msg = "227 Entering Passive Mode (%s,%d,%d)" % ( my_host.replace(".",","), (my_port / 256), (my_port % 256))
         self.connector.write_message(msg)
-        self.data = Server.accept_data(server_socket, self.LOG)
-        self.LOG.info("Accepted data connection from %s" % self.data.client_ip())
-        return Session.ACTION_CONTINUE
+        _socket = Server.accept_data(server_socket, self.LOG)
+        self.LOG.info("Accepted data connection from %s" % _socket.client_ip())
+        self.data_connections.append(_socket)
+        if len(self.data_connections) == self.num_streams:
+            return Session.ACTION_OPEN_SOCKET
+        else:
+            return Session.ACTION_CONTINUE
 
     def reset(self):
         self.reset_range()        
@@ -389,6 +397,14 @@ class Session(object):
         self.KEEP_ALIVE = params.lower() in [ "true", "yes", "1" ]
         return Session.ACTION_CONTINUE
 
+    def open_data_socket(self):
+        if self.num_streams == 1:
+            self.LOG.debug("Opening normal data socket")
+            self.data = self.data_connections[0]
+        else:
+            self.LOG.debug("Opening parallel data socket with <%d> streams" % self.num_streams)
+            raise Exception("Multiple streams not yet implemented.")
+
     def send_data(self):
         with open(self.file_path, "rb") as f:
             limit_rate = self.rate_limit > 0
@@ -416,7 +432,7 @@ class Session(object):
             # post send
             self.reset()
             if not self.KEEP_ALIVE:
-                self.data.close()
+                self.close_data()
             duration = int(time()) - start_time
             self.log_usage(True, total, duration)
 
@@ -435,7 +451,7 @@ class Session(object):
             # post send
             self.reset()
             if not self.KEEP_ALIVE:
-                self.data.close()
+                self.close_data()
             duration = int(time()) - start_time
             self.log_usage(False, total, duration)
 
@@ -470,9 +486,14 @@ class Session(object):
         # post send
         self.reset()
         if not self.KEEP_ALIVE:
-            self.data.close()
+            self.close_data()
         duration = int(time()) - start_time
         self.log_usage(False, total, duration, num_files=counter)
+
+    def close_data(self):
+        self.num_streams = 1
+        self.data.close()
+        self.data_connections = []
 
     def get_reader(self):
         crypted = self.key is not None
@@ -554,11 +575,22 @@ class Session(object):
                 try:
                     mode = func(params)
                     if mode==Session.ACTION_RETRIEVE:
-                        self.send_data()
+                        try:
+                            self.send_data()
+                        except Exception as e:
+                            self.close_data()
+                            raise e
                     elif mode==Session.ACTION_STORE:
-                        self.recv_data()
+                        try:
+                            self.recv_data()
+                        except Exception as e:
+                            self.close_data()
+                            raise e
+                    elif mode==Session.ACTION_OPEN_SOCKET:
+                        self.open_data_socket()
                     elif mode==Session.ACTION_CLOSE_DATA:
                         self.data.close()
+                        self.num_streams = 1
                         self.data = None
                     elif mode==Session.ACTION_END:
                         break

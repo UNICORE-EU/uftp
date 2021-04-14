@@ -12,6 +12,10 @@ def create_session(connector: Connector, config, LOG: Log):
             connector.close()
             return
         LOG.info("Established connection for '%s'" % job['user'])
+        # check supported features
+        if job.get('compress', "false").lower() == "true":
+            connector.write_message("500 Feature 'compress' not supported!")
+            raise Exception("Unsupported feature 'compress' requested.")
     except Exception as e:
         LOG.error(e)
         connector.close()
@@ -43,6 +47,7 @@ def create_session(connector: Connector, config, LOG: Log):
             raise Exception("Cannot switch UID/GID: %s" % user_switch_status)
         connector.write_message("230 Login successful")
         job['UFTP_NOWRITE'] = config["UFTP_NOWRITE"]
+        job['MAX_STREAMS'] = config['MAX_STREAMS']
         session = Session.Session(connector, job, LOG)
         session.run()
         LOG.info("Finished processing FTP session for '%s'" % user)
