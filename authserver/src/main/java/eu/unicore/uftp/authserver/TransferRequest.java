@@ -36,6 +36,7 @@ public final class TransferRequest extends UFTPTransferRequest {
         setGroup(authData.gid);
         setAppend(authRequest.append);
         setKey(Utils.decodeBase64(authRequest.encryptionKey));
+        setCompress(authRequest.compress);
         setIncludes(authData.includes);
         setExcludes(authData.excludes);
         setRateLimit(authData.rateLimit);
