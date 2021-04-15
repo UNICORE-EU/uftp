@@ -65,16 +65,16 @@ public class TestFiletransferEncrypted extends ClientServerTestBase{
 	public void testEncryptedMultiStream() throws Exception {
 		int numCon=2;
 		//key=null;
-		boolean compress = true;
+		boolean compress = false;
 		
 		File sourceFile = new File(dataDir,"testsourcefile-"+System.currentTimeMillis());
-		makeTestFile2(sourceFile, 1024);
+		makeTestFile2(sourceFile, 1024*500);
 		String target = "target/testdata/testfile-" + System.currentTimeMillis();
 
 		// send job to server...
 		UFTPTransferRequest job = new UFTPTransferRequest(host, "nobody", "secretCode", sourceFile, true);
 		job.setKey(key);
-		job.setCompress(true);
+		job.setCompress(compress);
 		job.setStreams(numCon);
 		job.sendTo(host[0], jobPort);
 		Thread.sleep(1000);
@@ -107,7 +107,6 @@ public class TestFiletransferEncrypted extends ClientServerTestBase{
 		} finally {
 			fos.close();
 		}
-
 	}
 
 }

@@ -715,4 +715,54 @@ public class TestSessionMode extends ClientServerTestBase{
 			System.out.println(client.stat("."));
 		}
 	}
+	
+	@Test
+	public void testMultiStreamEncrypted() throws Exception {
+		int numCon = 2;
+		byte[] key = Utils.createKey();
+		boolean compress = true;
+		
+		File sourceFile = new File(dataDir,"testsourcefile-"+System.currentTimeMillis());
+		makeTestFile2(sourceFile, 1024*500);
+		String target = "target/testdata/testfile-" + System.currentTimeMillis();
+
+		// send job to server...
+		UFTPTransferRequest job = new UFTPTransferRequest(host, "nobody", "secretCode", 
+				new File(sourceFile.getParentFile().getAbsoluteFile(),UFTPWorker.sessionModeTag), true);
+		job.setKey(key);
+		job.setCompress(compress);
+		job.setStreams(numCon);
+		job.sendTo(host[0], jobPort);
+		Thread.sleep(1000);
+		try(UFTPSessionClient client = new UFTPSessionClient(host, srvPort); 
+				FileOutputStream fos = new FileOutputStream(target)){
+			client.setSecret("secretCode");
+			client.setNumConnections(numCon);
+			client.setKey(key);
+			client.setCompress(compress);
+			client.connect();
+			client.get(sourceFile.getName(),fos);
+		}
+		System.out.println("Finished client.");
+		// check that file exists and has correct content
+		File targetFile = new File(target);
+		assertTrue(targetFile.exists());
+		String expected = Utils.md5(sourceFile);
+		String actual = Utils.md5(targetFile);
+		System.out.println("Source file "+sourceFile.getAbsolutePath()+" "+expected);
+		System.out.println("Target file "+targetFile.getAbsolutePath()+" "+actual);
+		assertEquals("File contents do not match", expected, actual);
+	}
+
+	private void makeTestFile2(File file, int lines) throws IOException {
+		FileOutputStream fos = new FileOutputStream(file);
+		try {
+			for (int i = 0; i < lines; i++) {
+				fos.write( (i+": test1 test2 test3\n").getBytes());
+			}
+		} finally {
+			fos.close();
+		}
+	}
+	
 }

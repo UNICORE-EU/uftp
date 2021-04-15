@@ -65,6 +65,15 @@ public class PConfig {
 	 */
 	public static boolean usethreads = true;
 
+	static {
+		try{
+			usethreads = Boolean.parseBoolean(System.getenv().getOrDefault("UFTP_jparss_usethreads", "true"));
+		}catch(Exception e) {}
+		try{
+			debug = Boolean.parseBoolean(System.getenv().getOrDefault("UFTP_jparss_debug", "false"));
+		}catch(Exception e) {}
+	}
+
 	/**
 	 * Default server socket read timeout during handshakes.
 	 */

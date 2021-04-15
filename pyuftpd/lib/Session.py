@@ -5,7 +5,7 @@ from time import sleep, time
 from Connector import Connector
 from FileInfo import FileInfo
 from Log import Logger
-import Protocol, Server
+import PConnector, Protocol, Server
 
 
 class Session(object):
@@ -400,10 +400,12 @@ class Session(object):
     def open_data_socket(self):
         if self.num_streams == 1:
             self.LOG.debug("Opening normal data socket")
+            self.BUFFER_SIZE = 65536
             self.data = self.data_connections[0]
         else:
             self.LOG.debug("Opening parallel data socket with <%d> streams" % self.num_streams)
-            raise Exception("Multiple streams not yet implemented.")
+            self.BUFFER_SIZE = 16384 # Java version compatibility
+            self.data = PConnector.PConnector(self.data_connections, self.LOG)
 
     def send_data(self):
         with open(self.file_path, "rb") as f:

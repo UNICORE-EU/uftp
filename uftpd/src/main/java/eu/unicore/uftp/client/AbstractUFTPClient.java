@@ -146,16 +146,16 @@ public abstract class AbstractUFTPClient implements Runnable, Closeable {
 		return createSocket(numConnections, client, key, false);
 	}
 
-	protected Socket createSocket(int numConnections, DPCClient client, byte[] key, boolean compress)
+	protected Socket createSocket(final int numConnections, DPCClient client, byte[] key, boolean compress)
 			throws IOException {
 		Socket localSocket;
 		List<Socket> dataCons = client.openDataConnections(numConnections);
 		// server may have given us less connections than we requested
-		numConnections = dataCons.size();
-		if (numConnections > 1) {
+		numcons = dataCons.size();
+		if (numcons > 1) {
 			localSocket = new PSocket(key, compress);
 			PSocket parallelSocket = (PSocket) localSocket;
-			parallelSocket.init(1, numConnections);
+			parallelSocket.init(1, numcons);
 			for (Socket dataCon : dataCons) {
 				parallelSocket.addSocketStream(dataCon);
 			}

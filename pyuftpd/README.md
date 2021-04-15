@@ -12,4 +12,3 @@ Goals:
  * every FTP session gets its own Python process
  * fully drop permissions to the current user
  * better Unix integration (profile, variable resolving etc)
- * remove some legacy features like the multi-TCP-stream code

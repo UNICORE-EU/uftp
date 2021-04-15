@@ -488,13 +488,12 @@ public class ClientFacade {
 						fos = Channels.newOutputStream(raf.getChannel());
 						
 						if(length>0){
-							raf.seek(start);
 							logger.debug("Resuming transfer, already have <"+start+"> bytes");
 							if(verbose){
 								pb = new ProgressBar(local,length);
 								sc.setProgressListener(pb);
 							}
-							sc.get(remotePath, start, length, fos);
+							pool.get(remotePath, dest, fi, start, length, preserveAttributes);
 						}
 						else{
 							logger.debug("Nothing to do for "+remotePath);

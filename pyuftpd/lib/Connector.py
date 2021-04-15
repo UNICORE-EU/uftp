@@ -69,7 +69,7 @@ class Connector(object):
         """ Write all the data to remote channel """
         to_write = len(data)
         write_offset = 0
-        while(to_write>0):
+        while to_write > 0:
             written = self._output.write(data[write_offset:])
             if written is None:
                 written = 0

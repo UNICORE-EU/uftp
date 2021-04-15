@@ -711,6 +711,10 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 			logger.debug("KEEP-ALIVE disabled via environment");
 			return;
 		};
+		if(numcons>1 || key!=null) {
+			logger.debug("KEEP-ALIVE disabled (numstreams/encryption)");
+			return;
+		}
 		String message = UFTPCommands.KEEP_ALIVE+" true";
 		client.sendControl(message);
 		Reply reply = Reply.read(client);

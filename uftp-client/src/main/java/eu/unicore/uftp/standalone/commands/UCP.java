@@ -122,7 +122,9 @@ public class UCP extends BaseUFTPCommand {
 		}
 		recurse = line.hasOption('r');
 		preserve = line.hasOption('p');
-
+		resume = line.hasOption('R');
+		archiveMode = line.hasOption('a');
+		
 		if (line.hasOption('t')) {
 			numClients = Integer.parseInt(line.getOptionValue('t'));
 			if(numClients<1){
@@ -134,7 +136,7 @@ public class UCP extends BaseUFTPCommand {
 				String thresh = line.getOptionValue('T');
 				splitThreshold = (long)UnitParser.getCapacitiesParser(2).getDoubleValue(thresh);
 			}
-			if(verbose){
+			if(verbose && !archiveMode){
 				System.err.println("Using up to <"+numClients+"> client threads, file split threshold = "
 						+UnitParser.getCapacitiesParser(0).getHumanReadable(splitThreshold));
 			}
@@ -143,18 +145,13 @@ public class UCP extends BaseUFTPCommand {
 			String bytes = line.getOptionValue('B');
 			if(bytes!=null)initRange(bytes);
 		}
-		resume = line.hasOption('R');
+		
 		if(resume && line.hasOption('B')){
 			throw new ParseException("Resume mode is not supported in combination with a byte range!");
 		}
 
-		archiveMode = line.hasOption('a');
 		if(verbose && archiveMode){
 			System.err.println("Archive mode ENABLED");
-		}
-
-		if(resume && numClients>1){
-			throw new ParseException("Resume mode is not supported in combination with multiple threads!");
 		}
 	}
 
@@ -169,6 +166,7 @@ public class UCP extends BaseUFTPCommand {
 		client.setResume(resume);
 		client.setPreserveAttributes(preserve);
 		client.setBandwithLimit(bandwithLimit);
+		client.setCompress(compress);
 		client.setArchiveMode(archiveMode);
 	}
 

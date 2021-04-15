@@ -103,6 +103,10 @@ public class ClientPool implements Closeable {
 	}
 	
 	public void get(final String remotePath, final String localName, final FileInfo fi, final boolean preserveAttributes){
+		get(remotePath, localName, fi, fi.getSize(), 0, preserveAttributes);
+	}
+	
+	public void get(final String remotePath, final String localName, final FileInfo fi,  final long size, final long offset, final boolean preserveAttributes){
 		Callable<Boolean> r = new Callable<Boolean>(){
 			public Boolean call() throws Exception {
 				File file = new File(localName);
@@ -110,14 +114,15 @@ public class ClientPool implements Closeable {
 				try(RandomAccessFile raf = new RandomAccessFile(file, "rw");
 					OutputStream fos = Channels.newOutputStream(raf.getChannel());)
 				{
+					raf.seek(offset);
 					UFTPClientThread t =(UFTPClientThread)Thread.currentThread();
 					UFTPSessionClient sc = t.getClient();
 					logger.info("Downloading <"+remotePath+">");
 					if(verbose){
-						progressBar.registerNew(localName, fi.getSize());
+						progressBar.registerNew(localName, size);
 						sc.setProgressListener(progressBar);
 					}
-					sc.get(remotePath, fos);
+					sc.get(remotePath, offset, size, fos);
 					if(preserveAttributes && !isDevNull(localName)){
 						Files.setLastModifiedTime(file.toPath(),FileTime.fromMillis(fi.getLastModified()));
 					}
