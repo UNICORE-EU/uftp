@@ -7,21 +7,28 @@ class PConnector(object):
         Multi-stream connector that writes/reads multiple TCP (data)streams
     """
 
-    _magic = 0xcebf
-
-    def __init__(self, connectors: Connector, LOG: Log):
+    def __init__(self, connectors: Connector, LOG: Log, key=None):
         self._connectors = connectors
         self._inputs = []
         self._outputs = []
-        for conn in connectors:
-            self._inputs.append(conn.client.makefile("rb"))
-            self._outputs.append(conn.client.makefile("wb"))
         self.LOG = LOG
+        self.encrypt = key is not None
+        if self.encrypt:
+            import CryptUtil
+        for conn in connectors:
+            if self.encrypt:
+                self._outputs.append(CryptUtil.CryptedWriter(conn, key))
+                self._inputs.append(CryptUtil.Decrypt(conn, key))
+            else:
+                self._outputs.append(conn.client.makefile("wb"))
+                self._inputs.append(conn.client.makefile("rb"))
         self.seq = 0
         self.num_streams = len(self._connectors)
 
     def write(self, data):
         """ Write all the data to remote channel """
+        
+        _magic = 0xcebf
         size = len(data)
         chunk = int(len(data) / self.num_streams)
         i = 0
@@ -31,7 +38,7 @@ class PConnector(object):
                 chunk_len = int(size - i * chunk);
             else:
                 chunk_len = chunk;
-            out.write(pack(">HHIII", PConnector._magic, i, self.seq, size, chunk_len))
+            out.write(pack(">HHIII", _magic, i, self.seq, size, chunk_len))
             self.write_block(data[offset:offset+chunk_len], out)
             i += 1
         self.seq += 1
@@ -52,12 +59,13 @@ class PConnector(object):
         """ Read data from remote channel """
         buffer = bytearray(length)
         i = 0
+        _magic = 0xcebf
         for src in self._inputs:
             header = src.read(16)
             if len(header)==0:
                 break
             (magic, pos, seq, size, chunk_len) = unpack(">HHIII", header)
-            if magic!=PConnector._magic:
+            if magic!=_magic:
                 raise Exception("I/O error (magic number)")
             if seq!=self.seq:
                 raise Exception("I/O error (sequence number)")
@@ -71,9 +79,13 @@ class PConnector(object):
         return buffer
 
     def close(self):
-        for s in self._connectors:
+        for i in range(0, len(self._connectors)):
             try:
-                self.LOG.debug("Closing data connection to %s", str(s.getpeername()))
-                s.close()
+                self._outputs[i].close()
+                self._inputs[i].close()
+            except Exception as e:
+                self.LOG.error(e)
+            try:
+                self._connectors[i].close()
             except:
                 pass

@@ -5,13 +5,13 @@ import BecomeUser, Connector, Log, Protocol, Server, Session
 
 def create_session(connector: Connector, config, LOG: Log):
     try:
-        LOG.info("Processing %s" % connector.info())
+        LOG.debug("Processing %s" % connector.info())
         job = Protocol.establish_connection(connector, config)
         if job is None:
             connector.write_message("530 Not logged in: no matching transfer request found")
             connector.close()
             return
-        LOG.info("Established connection for '%s'" % job['user'])
+        LOG.info("Established connection %s for '%s'" % (connector.info(), job['user']))
         # check supported features
         if job.get('compress', "false").lower() == "true":
             connector.write_message("500 Feature 'compress' not supported!")
@@ -24,13 +24,14 @@ def create_session(connector: Connector, config, LOG: Log):
     if len(job['_PIDS'])==limit:
         connector.write_message("500 Too many open FTP sessions!")
         connector.close()
+        LOG.debug("Rejected: too many open sessions for this transfer")
         return
     
     pid = os.fork()
     if pid:
         # parent, store relevant data
         # and continue with accept loop
-        LOG.info("Created new UFTP session, child process <%s>" % pid)
+        LOG.debug("Created new UFTP session, child process <%s>" % pid)
         with job['_LOCK']:
             job['_PIDS'].append(pid)
         return

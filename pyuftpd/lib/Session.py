@@ -26,7 +26,7 @@ class Session(object):
     
     def __init__(self, connector: Connector, job, LOG: Logger):
         self.job = job
-        self.connector = connector
+        self.control = connector
         self.LOG = LOG
         _dirname = os.path.dirname(job['file'])
         if _dirname=='':
@@ -46,7 +46,7 @@ class Session(object):
         self.current_dir = self.basedir
         os.chdir(self.basedir)
         self.access_level = self.MODE_FULL
-        self.data_connections = []
+        self.data_connectors = []
         self.data = None
         self.portrange = job.get("_PORTRANGE", (0, -1, -1))
         self.reset_range()
@@ -70,13 +70,10 @@ class Session(object):
         if(self.key is not None):
             from base64 import b64decode
             self.key = b64decode(self.key)
-            self.LOG.info("Data encryption enabled.")
         self.rate_limit = 0
         self.sleep_time = 0
         try:
             self.rate_limit = int(job.get("rateLimit", "0"))
-            if self.rate_limit>0:
-                self.LOG.info("Rate limit: %s MB/second." % int(self.rate_limit/(1024*1024)))
         except:
             pass
 
@@ -129,11 +126,11 @@ class Session(object):
         return Session.ACTION_END
 
     def syst(self, params):
-        self.connector.write_message(Protocol._SYSTEM_REPLY)
+        self.control.write_message(Protocol._SYSTEM_REPLY)
         return Session.ACTION_CONTINUE
 
     def feat(self, params):
-        Protocol.send_features(self.connector)
+        Protocol.send_features(self.control)
         return Session.ACTION_CONTINUE
 
     def noop(self, params):
@@ -142,37 +139,39 @@ class Session(object):
             # multiple parallel TCP streams which we don't support
             self.num_streams = int(params)
             if self.num_streams<=self.max_streams:
-                self.connector.write_message("223 Opening %d data connections" % self.num_streams)
+                # accepted
+                self.control.write_message("222 Opening %d data connections" % self.num_streams)
             else:
+                # limited
                 self.num_streams = self.max_streams
-                self.connector.write_message("222 Opening %d data connections" % self.max_streams)
+                self.control.write_message("223 Opening %d data connections" % self.max_streams)
         except:
-            self.connector.write_message("200 OK")
+            self.control.write_message("200 OK")
         return Session.ACTION_CONTINUE
 
     def cwd(self, params):
         self.assert_permission(Session.MODE_INFO)
         path = self.makeabs(params.strip())
         if len(path)<len(self.current_dir) and not self.allow_absolute_paths:
-            self.connector.write_message("500 Not allowed")
+            self.control.write_message("500 Not allowed")
         else:
             os.chdir(path)
             self.current_dir = path
-            self.connector.write_message("200 OK")
+            self.control.write_message("200 OK")
         return Session.ACTION_CONTINUE
 
     def cdup(self, params):
         if self.current_dir==self.basedir:
-            self.connector.write_message("500 Can't cd up, already at base directory")
+            self.control.write_message("500 Can't cd up, already at base directory")
         else:
             os.chdir("..")
             self.current_dir = os.getcwd()
-            self.connector.write_message("200 OK")
+            self.control.write_message("200 OK")
         return Session.ACTION_CONTINUE
 
     def pwd(self, params):
         self.assert_permission(Session.MODE_INFO)
-        self.connector.write_message("257 \""+os.getcwd()+"\"")
+        self.control.write_message("257 \""+os.getcwd()+"\"")
         return Session.ACTION_CONTINUE
 
     def mkdir(self, params):
@@ -180,9 +179,9 @@ class Session(object):
         path = self.makeabs(params.strip())
         try:
             os.mkdir(path)
-            self.connector.write_message("257 \"%s\" directory created" % path)
+            self.control.write_message("257 \"%s\" directory created" % path)
         except Exception as e:
-            self.connector.write_message("500 Can't create directory: %s" % str(e))
+            self.control.write_message("500 Can't create directory: %s" % str(e))
         return Session.ACTION_CONTINUE
 
     def rm(self, params):
@@ -191,9 +190,9 @@ class Session(object):
         try:
             self.assert_access(_path)
             os.unlink(_path)
-            self.connector.write_message("200 OK")
+            self.control.write_message("200 OK")
         except Exception as e:
-            self.connector.write_message("500 Can't remove path: %s" % str(e))
+            self.control.write_message("500 Can't remove path: %s" % str(e))
         return Session.ACTION_CONTINUE
 
     def rmdir(self, params):
@@ -202,9 +201,9 @@ class Session(object):
         try:
             self.assert_access(_path)
             os.rmdir(_path)
-            self.connector.write_message("200 OK")
+            self.control.write_message("200 OK")
         except Exception as e:
-            self.connector.write_message("500 Can't remove path: %s" % str(e))
+            self.control.write_message("500 Can't remove path: %s" % str(e))
         return Session.ACTION_CONTINUE
 
     def pasv(self, params):
@@ -214,25 +213,25 @@ class Session(object):
         return self.add_data_connection(True)
 
     def add_data_connection(self, epsv=True):
-        my_host = self.connector.my_ip()
+        my_host = self.control.my_ip()
         server_socket = Server.setup_data_server_socket(my_host, self.portrange)
         my_port = server_socket.getsockname()[1]
         if epsv:
             msg = "229 Entering Extended Passive Mode (|||%s|)" % my_port
         else:
             msg = "227 Entering Passive Mode (%s,%d,%d)" % ( my_host.replace(".",","), (my_port / 256), (my_port % 256))
-        self.connector.write_message(msg)
-        _socket = Server.accept_data(server_socket, self.LOG)
-        self.LOG.info("Accepted data connection from %s" % _socket.client_ip())
-        self.data_connections.append(_socket)
-        if len(self.data_connections) == self.num_streams:
+        self.control.write_message(msg)
+        _data_connector = Server.accept_data(server_socket, self.LOG)
+        self.LOG.debug("Accepted data connection from %s" % _data_connector.client_ip())
+        self.data_connectors.append(_data_connector)
+        if len(self.data_connectors) == self.num_streams:
             return Session.ACTION_OPEN_SOCKET
         else:
             return Session.ACTION_CONTINUE
 
     def reset(self):
         self.reset_range()        
-        self.connector.write_message("226 File transfer successful")
+        self.control.write_message("226 File transfer successful")
 
     def do_list(self, params):
         self.assert_permission(Session.MODE_INFO)
@@ -248,10 +247,10 @@ class Session(object):
         try:
             file_list = os.listdir(path)
         except Exception as e:
-            self.connector.write_message("500 Error listing <%s>: %s"% (path, str(e)))
+            self.control.write_message("500 Error listing <%s>: %s"% (path, str(e)))
             return Session.ACTION_CLOSE_DATA
         
-        self.connector.write_message("150 OK")
+        self.control.write_message("150 OK")
         for f in file_list:
             try:
                 fi = FileInfo(os.path.join(path,f))
@@ -275,20 +274,20 @@ class Session(object):
         path = self.makeabs(path)
         fi = FileInfo(path)
         if not fi.exists():
-            self.connector.write_message("500 Directory/file does not exist or cannot be accessed!")
+            self.control.write_message("500 Directory/file does not exist or cannot be accessed!")
             return Session.ACTION_CONTINUE
         if asFile or not fi.is_dir():
             file_list = [ fi ]
         else:
             file_list = [ FileInfo(os.path.normpath(os.path.join(path,p))) for p in os.listdir(path)]
-        self.connector.write_message("211- Sending file list")
+        self.control.write_message("211- Sending file list")
         for f in file_list:
             try:
-                self.connector.write_message(" %s" % f.simple_list())
+                self.control.write_message(" %s" % f.simple_list())
             except:
                 # don't want to fail here
                 pass
-        self.connector.write_message("211 End of file list")
+        self.control.write_message("211 End of file list")
         return Session.ACTION_CONTINUE
 
     def mlst(self,params):
@@ -296,11 +295,11 @@ class Session(object):
         path = self.makeabs(params)
         fi = FileInfo(path)
         if not fi.exists():
-            self.connector.write_message("500 Directory/file does not exist or cannot be accessed!")
+            self.control.write_message("500 Directory/file does not exist or cannot be accessed!")
             return Session.ACTION_CONTINUE
-        self.connector.write_message("250- Listing %s" % path)
-        self.connector.write_message(" %s" % fi.as_mlist())
-        self.connector.write_message("250 End")
+        self.control.write_message("250- Listing %s" % path)
+        self.control.write_message(" %s" % fi.as_mlist())
+        self.control.write_message("250 End")
         return Session.ACTION_CONTINUE
 
     def size(self, params):
@@ -311,7 +310,7 @@ class Session(object):
             msg = "500 Directory/file does not exist or cannot be accessed!"
         else:
             msg = "213 %s" % fi.size()
-        self.connector.write_message(msg)
+        self.control.write_message(msg)
         return Session.ACTION_CONTINUE
         
     def set_range(self, offset, number_of_bytes):
@@ -330,7 +329,7 @@ class Session(object):
             local_offset = int(tokens[0])
             last_byte = int(tokens[1])
         except:
-            self.connector.write_message("500 RANG argument syntax error")
+            self.control.write_message("500 RANG argument syntax error")
             return Session.ACTION_CONTINUE
         if local_offset==1 and last_byte==0:
             response = "350 Resetting range"
@@ -338,18 +337,18 @@ class Session(object):
         else:
             response = "350 Restarting at %s. End byte range at %s" % (local_offset, last_byte)
             self.set_range(local_offset, last_byte - local_offset)
-        self.connector.write_message(response)
+        self.control.write_message(response)
         return Session.ACTION_CONTINUE
 
     def rest(self, params):
         try:
             local_offset = int(params)
         except:
-            self.connector.write_message("500 REST argument syntax error")
+            self.control.write_message("500 REST argument syntax error")
             return Session.ACTION_CONTINUE
         self.have_range = False
         self.offset = local_offset
-        self.connector.write_message("350 Restarting at %s." % local_offset)
+        self.control.write_message("350 Restarting at %s." % local_offset)
         return Session.ACTION_CONTINUE
 
     def retr(self, params):
@@ -357,7 +356,7 @@ class Session(object):
         path = self.makeabs(params)
         fi = FileInfo(path)
         if not fi.exists():
-            self.connector.write_message("500 Directory/file does not exist or cannot be accessed!")
+            self.control.write_message("500 Directory/file does not exist or cannot be accessed!")
             return Session.ACTION_CONTINUE
         if self.have_range:
             size = self.number_of_bytes
@@ -365,13 +364,13 @@ class Session(object):
             size = fi.size()
             self.number_of_bytes = size - self.offset
         self.file_path = path
-        self.connector.write_message("150 OK %s bytes available for reading." % size)
+        self.control.write_message("150 OK %s bytes available for reading." % size)
         return Session.ACTION_RETRIEVE
 
     def allo(self, params):
         self.assert_permission(Session.MODE_WRITE)
         self.number_of_bytes = int(params)
-        self.connector.write_message("200 OK Will read up to %s bytes from data connection." % self.number_of_bytes)
+        self.control.write_message("200 OK Will read up to %s bytes from data connection." % self.number_of_bytes)
         return Session.ACTION_CONTINUE
 
     def stor(self, params):
@@ -382,7 +381,7 @@ class Session(object):
         if self.number_of_bytes is None:
             self.number_of_bytes = maxsize
         self.file_path = path
-        self.connector.write_message("150 OK")
+        self.control.write_message("150 OK")
         return Session.ACTION_STORE
     
     def switch_type(self, params):
@@ -390,7 +389,7 @@ class Session(object):
             self.archive_mode = True
         elif "NORMAL"==params.strip():
             self.archive_mode = False
-        self.connector.write_message("200 OK")
+        self.control.write_message("200 OK")
         return Session.ACTION_CONTINUE        
 
     def set_keep_alive(self, params):
@@ -401,11 +400,15 @@ class Session(object):
         if self.num_streams == 1:
             self.LOG.debug("Opening normal data socket")
             self.BUFFER_SIZE = 65536
-            self.data = self.data_connections[0]
+            if self.key is not None:
+                import CryptUtil
+                self.data = CryptUtil.CryptedWriter(self.data_connectors[0], self.key)
+            else:
+                self.data = self.data_connectors[0]
         else:
             self.LOG.debug("Opening parallel data socket with <%d> streams" % self.num_streams)
             self.BUFFER_SIZE = 16384 # Java version compatibility
-            self.data = PConnector.PConnector(self.data_connections, self.LOG)
+            self.data = PConnector.PConnector(self.data_connectors, self.LOG, self.key)
 
     def send_data(self):
         with open(self.file_path, "rb") as f:
@@ -415,22 +418,17 @@ class Session(object):
             total = 0
             start_time = int(time())
             encrypt = self.key is not None
-            if encrypt:
-                import CryptUtil
-                writer = CryptUtil.CryptedWriter(self.data, self.key)
-            else:
-                writer = self.data
             while total<to_send:
                 length = min(self.BUFFER_SIZE, to_send-total)
                 data = f.read(length)
                 if len(data)==0:
                     break
                 total = total + len(data)
-                writer.write(data)
+                self.data.write(data)
                 if limit_rate:
                     self.control_rate(total, start_time*1000)
             if encrypt:
-                writer.close()
+                self.data.close()
             # post send
             self.reset()
             if not self.KEEP_ALIVE:
@@ -495,18 +493,18 @@ class Session(object):
     def close_data(self):
         self.num_streams = 1
         self.data.close()
-        self.data_connections = []
+        self.data_connectors = []
 
     def get_reader(self):
-        crypted = self.key is not None
-        if crypted:
-            import CryptUtil
-            reader = CryptUtil.Decrypt(self.data, self.key)
+        if self.key is not None:
+            # import CryptUtil
+            # reader = CryptUtil.Decrypt(self.data, self.key)
             # crypted data is longer that net data size
             self.number_of_bytes = maxsize
-        else:
-            reader = self.data
-        return reader
+        # else:
+            # reader = self.data
+        #return reader
+        return self.data
 
     def copy_data(self, reader, target, num_bytes):
         total = 0
@@ -558,13 +556,18 @@ class Session(object):
 
     def run(self):
         self.init_functions()
-        self.LOG.info("Processing UFTP session for <%s : %s : %s>, basedir=%s, allow_absolute_paths=%s" % (
+        if self.rate_limit>0:
+            _lim = "%s MB/sec" % int(self.rate_limit/(1024*1024))
+        else:
+            _lim = "no"
+        self.LOG.info("Processing UFTP session for <%s : %s : %s>, basedir=%s, allow_absolute_paths=%s, encrypted=%s, ratelimit=%s" % (
             self.job['user'], self.job['group'],
-            self.connector.client_ip(),
-            self.basedir, self.allow_absolute_paths
+            self.control.client_ip(),
+            self.basedir, self.allow_absolute_paths,
+            self.key is not None, _lim
         ))
         while True:
-            msg = self.connector.read_line()
+            msg = self.control.read_line()
             if msg.startswith("BYE") or msg.startswith("QUIT"):
                 break
             params = None
@@ -597,6 +600,6 @@ class Session(object):
                     elif mode==Session.ACTION_END:
                         break
                 except Exception as e:
-                    self.connector.write_message("500 Error processing command: %s" % str(e))
+                    self.control.write_message("500 Error processing command: %s" % str(e))
             else:
-                self.connector.write_message("500 Command not implemented.")
+                self.control.write_message("500 Command not implemented.")

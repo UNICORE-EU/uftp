@@ -13,6 +13,7 @@ class CryptedWriter(object):
         self.target = target
         self.cipher = Blowfish.new(key, mode = Blowfish.MODE_ECB)
         self.stored = b""
+        self._closed = False
 
     def write(self, data):
         if len(self.stored)>0:
@@ -25,11 +26,19 @@ class CryptedWriter(object):
             crypted = self.cipher.encrypt(data)
             self.stored = b""
         self.target.write(crypted)
+        return len(data)
+
+    def flush(self):
+        pass
     
     def close(self):
+        if self._closed:
+            return
+        self._closed = True
         length = 8-len(self.stored)
         padding = [length]*length
         self.target.write(self.cipher.encrypt(self.stored + pack('b'*length, *padding)))
+        self.target.close()
     
 class Decrypt(object):
     
@@ -57,4 +66,7 @@ class Decrypt(object):
         else:
             return decrypted
     
+    def close(self):
+        self.source.close()
+
     
