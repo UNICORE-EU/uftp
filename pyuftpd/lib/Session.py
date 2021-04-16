@@ -222,7 +222,7 @@ class Session(object):
             msg = "227 Entering Passive Mode (%s,%d,%d)" % ( my_host.replace(".",","), (my_port / 256), (my_port % 256))
         self.control.write_message(msg)
         _data_connector = Server.accept_data(server_socket, self.LOG)
-        self.LOG.debug("Accepted data connection from %s" % _data_connector.client_ip())
+        self.LOG.debug("Accepted %s"% _data_connector.info())
         self.data_connectors.append(_data_connector)
         if len(self.data_connectors) == self.num_streams:
             return Session.ACTION_OPEN_SOCKET
@@ -494,6 +494,7 @@ class Session(object):
         self.num_streams = 1
         self.data.close()
         self.data_connectors = []
+        self.data = None
 
     def get_reader(self):
         if self.key is not None:
@@ -594,9 +595,7 @@ class Session(object):
                     elif mode==Session.ACTION_OPEN_SOCKET:
                         self.open_data_socket()
                     elif mode==Session.ACTION_CLOSE_DATA:
-                        self.data.close()
-                        self.num_streams = 1
-                        self.data = None
+                        self.close_data()
                     elif mode==Session.ACTION_END:
                         break
                 except Exception as e:

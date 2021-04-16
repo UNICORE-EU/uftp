@@ -35,11 +35,11 @@ class PConnector(object):
         for out in self._outputs:
             offset = i * chunk
             if i == self.num_streams - 1:
-                chunk_len = int(size - i * chunk);
+                chunk_len = size - i * chunk;
             else:
                 chunk_len = chunk;
-            out.write(pack(">HHIII", _magic, i, self.seq, size, chunk_len))
-            self.write_block(data[offset:offset+chunk_len], out)
+            self.write_block(pack(">HHIII", _magic, i, self.seq, size, chunk_len)
+                             +data[offset:offset+chunk_len], out)
             i += 1
         self.seq += 1
 
@@ -72,7 +72,7 @@ class PConnector(object):
             if size != len(buffer):
                 raise Exception("I/O error (total size)")
             chunk = int(size / self.num_streams)
-            offset = int(pos * chunk)
+            offset = pos * chunk
             buffer[offset:offset+chunk_len] = src.read(chunk_len)
             i += 1
         self.seq += 1

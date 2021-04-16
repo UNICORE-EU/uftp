@@ -15,7 +15,6 @@ class Connector(object):
             self._input = client.makefile("r")
             self._output = client.makefile("w")
         self.LOG = LOG
-        self.buf_size = 65536
         self.conntype = conntype;
 
     def client_ip(self):
@@ -58,7 +57,10 @@ class Connector(object):
     def write_message(self, message):
         """ Write message to remote channel and add newline """
         if message is not None:
-            self.LOG.debug("<-- %s" % message)
+            try:
+                self.LOG.debug("<-- %s" % message.__repr__())
+            except:
+                pass
             message = message + "\n"
             if self.binary_mode:
                 message = message.encode('utf-8')
@@ -81,11 +83,18 @@ class Connector(object):
         """ Read data from remote channel """
         return self._input.read(length)
 
+    def cleanup(self):
+        try:
+            self._input.close()
+            self._output.close()
+            self.client.close()
+        except Exception as e:
+            self.LOG.error(e)
+
     def close(self):
         try:
             try:
-                self.LOG.debug("Closing %s connection to %s",
-                              self.conntype, str(self.client.getpeername()))
+                self.LOG.debug("Closing %s" % self.info())
             except:
                 pass
             self.client.shutdown(socket.SHUT_RDWR)

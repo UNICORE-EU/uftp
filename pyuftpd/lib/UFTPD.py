@@ -66,7 +66,7 @@ def init_functions():
         "uftp-transfer-request": add_job,
     }
 
-def ping(request, connector, config, LOG):
+def ping(request, config, LOG):
     response = """Version: %s
 ListenPort: %s
 ListenAddress: %s
@@ -77,7 +77,7 @@ ListenAddress: %s
     )
     return response
 
-def get_user_info(request, connector, config, LOG):
+def get_user_info(request, config, LOG):
     user = request['user'].strip()
     if user=="root":
         return "500 Not allowed"
@@ -105,7 +105,7 @@ User: %s
                 pass
     return response
 
-def add_job(request, connector, config, LOG):
+def add_job(request, config, LOG):
     secret = request['secret']
     job_map = config['job_map']
     if job_map.get(secret, None) is not None:
@@ -141,7 +141,7 @@ def cleanup(config, LOG):
                             if _pid!=0:
                                 pids.remove(pid)
                         if len(pids)==0:
-                            LOG.info("Processing request for <%s> finished." % job['user'])
+                            LOG.info("Processing request for '%s' finished." % job['user'])
                             del job_map[key]
             except Exception as e:
                 LOG.error(e)
@@ -149,12 +149,11 @@ def cleanup(config, LOG):
 
 def process(cmd_server, config, LOG):
     """
-    Command processing loop. Reads commands from control_in and invokes the
+    Command processing loop. Reads commands from cmd socket and invokes the
     appropriate command.
 
         Arguments:
           connector: connection to the auth server
-          job_map: map ccontaining transfer requests, keyed by one-time password
           config: configuration (dictionary)
           LOG: logger object
     """
@@ -170,7 +169,7 @@ def process(cmd_server, config, LOG):
             if not func:
                 raise Exception("Unsupported request type '%s'" % request_type)
             try:
-                response = func(request, connector, config, LOG)
+                response = func(request, config, LOG)
             except Exception as e:
                 LOG.error(e)
                 response = "500::Request rejected. Reason: %s" % str(e)
@@ -180,7 +179,7 @@ def process(cmd_server, config, LOG):
             LOG.error("Error in command loop: %s" % e)
             connector.close()
 
-def main(argv=None):
+def main():
     """
     Start UFTPD
     """
@@ -210,7 +209,7 @@ def main(argv=None):
     ftp_server = Server.setup_ftp_server_socket(config, LOG)
     ftp_thread = threading.Thread(target=FTPHandler.ftp_listener,
                                   name="FTPListener",
-                                  args=(ftp_server, config, LOG))
+                                  args=(ftp_server, config, LOG, cmd_server))
     ftp_thread.start()
 
     LOG.debug("Reading user keys from: %s" % config['UFTP_KEYFILES'])

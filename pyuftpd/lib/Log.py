@@ -2,7 +2,7 @@
 # simplistic logger writing to syslog (or console)
 #
 from sys import stdout
-from syslog import openlog, syslog
+from syslog import closelog, openlog, syslog, LOG_DEBUG, LOG_ERR, LOG_INFO
 
 class Logger(object):
 
@@ -12,16 +12,28 @@ class Logger(object):
         if use_syslog:
             openlog("UFTPD")
 
+    def reinit(self):
+        if self.use_syslog:
+            closelog()
+            openlog("UFTPD-worker")
+
     def error(self, message):
-        self.info("[ERROR] %s" % str(message))
+        if self.use_syslog:
+            syslog(LOG_ERR, str(message))
+        else:
+            self.info("[ERROR] %s" % str(message))
 
     def info(self, message):
         if self.use_syslog:
-            syslog(message)
+            syslog(LOG_INFO, str(message))
         else:
             print(message)
             stdout.flush()
 
     def debug(self, message):
-        if self.verbose:
+        if not self.verbose:
+            return
+        if self.use_syslog:
+            syslog(LOG_DEBUG, str(message))
+        else:
             self.info("[DEBUG] %s" % str(message))

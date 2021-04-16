@@ -56,7 +56,7 @@ def get_primary_group(primary, user, user_cache, fail_on_invalid_gids, config, L
                 raise RuntimeError("Attempt to run a task with an unknown "
                                    "primary group: %s" % primary)
             else:
-                LOG.warning("Requested primary group is %s, but it "
+                LOG.debug("Requested primary group is %s, but it "
                           "is not available on the OS. Using default "
                           "for the user %s" % (primary, user))
                 new_gid = user_cache.get_gid_4user(user)
@@ -67,7 +67,7 @@ def get_primary_group(primary, user, user_cache, fail_on_invalid_gids, config, L
                     "The user %s is not a member of the group %s" % (
                         user, primary))
             else:
-                LOG.warning("The user %s is not a member of the "
+                LOG.debug("The user %s is not a member of the "
                           "group %s, default group will be used." % (
                               user, primary))
                 new_gid = user_cache.get_gid_4user(user)
@@ -99,7 +99,7 @@ def get_supplementary_groups(requested_groups, primary, user, config, LOG):
                     raise RuntimeError("Attempt to run a task with an unknown "
                                        "supplementary group %s" % g)
                 else:
-                    LOG.warning("XNJS requested supplementary "
+                    LOG.debug("XNJS requested supplementary "
                               "group %s, but it is not available on the OS. "
                               "Ignoring." % g)
                     continue
@@ -108,7 +108,7 @@ def get_supplementary_groups(requested_groups, primary, user, config, LOG):
                     raise RuntimeError("The user %s is not a member of the "
                                        "group %s" % (user, g))
                 else:
-                    LOG.warning("The user %s is not a member of the "
+                    LOG.debug("The user %s is not a member of the "
                               "group %s, skipping it." % (user, g))
 
             # alright, so add the supplementary group!
@@ -155,10 +155,10 @@ def become_user(user, requested_groups, config, LOG: Log):
     new_uid = user_cache.get_uid_4user(user)
 
     if new_uid == -1:
-        return "Attempted to run a task for an unknown user %s" % user
+        return "Attempted to select unknown user '%s'" % user
 
     if new_uid == 0:
-        return "Attempted to run a command as root %s" % user
+        return "Attempted to select 'root'"
 
     # Do project (group) mapping, new_gid stores a new primary gid,
     # new_gids stores the new_gid and all supplementary gids (numbers)

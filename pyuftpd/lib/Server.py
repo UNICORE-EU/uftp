@@ -103,21 +103,22 @@ def accept_command(server, configuration, LOG: Log):
             (auth, (auth_host, _x)) = server.accept()
         except EnvironmentError as e:
             if e.errno != errno.EINTR:
-                LOG.info("Error waiting for new connection: " + str(e))
+                LOG.error("Error waiting for new connection: " + str(e))
             continue
 
         if ssl_mode:
             try:
                 verify_peer(configuration, auth, LOG)
             except EnvironmentError as e:
-                LOG.info("Error verifying connection from %s : %s" % (
+                LOG.error("Error verifying connection from %s : %s" % (
                     auth_host, str(e)))
                 close_quietly(auth)
                 continue
 
         configure_socket(auth)
-        LOG.debug("Accepted control connection from %s" % auth_host)
-        return Connector.Connector(auth,LOG,conntype="COMMAND")
+        connector = Connector.Connector(auth,LOG,conntype="COMMAND")
+        LOG.debug("Accepted %s" % connector.info())
+        return connector
 
     
 def setup_ftp_server_socket(configuration, LOG: Log):
@@ -144,14 +145,13 @@ def accept_ftp(server, LOG: Log):
 
     while True:
         try:
-            (client, (client_host, _x)) = server.accept()
+            (client, (_x, _y)) = server.accept()
         except EnvironmentError as e:
             if e.errno != errno.EINTR:
-                LOG.info("Error waiting for new connection: " + str(e))
+                LOG.error("Error waiting for new connection: " + str(e))
             continue
 
         configure_socket(client)
-        LOG.debug("Accepted client connection from %s" % client_host)
         return Connector.Connector(client,LOG)
 
 
@@ -173,12 +173,13 @@ def accept_data(server, LOG: Log, expected_client=None):
     """ Waits for a data connection
     """
     server.listen(2)
-    client_host = None
     attempts = 0
     while attempts < 3:
         try:
             (client, (client_host, _x)) = server.accept()
-            LOG.debug("Data connection from %s" % client_host)
+            if expected_client is not None:
+                if client_host!=expected_client:
+                    raise Exception("Connection from unexpected host %s" % client_host)
             return Connector.Connector(client, LOG, conntype="DATA", binary_mode=True)
         except EnvironmentError as e:
             LOG.error(e)

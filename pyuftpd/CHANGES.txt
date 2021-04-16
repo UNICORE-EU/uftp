@@ -6,5 +6,8 @@ https://sourceforge.net/p/unicore/uftp-issues
 UFTPD 3.0.0 (released 2021 dd yyyy)
 ----------------------------------
  - first release of the Python implementation
-
-
+ - simpler execution model based on fork, every FTP session 
+   runs as a separate process
+ - cleaner security (users/groups) and better control 
+   over file permissions
+ - logs to syslog
