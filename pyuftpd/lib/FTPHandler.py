@@ -12,10 +12,6 @@ def create_session(connector: Connector, config, LOG: Log, ftp_server, cmd_serve
             connector.close()
             return
         LOG.info("Established %s for '%s'" % (connector.info(), job['user']))
-        # check supported features
-        if job.get('compress', "false").lower() == "true":
-            connector.write_message("500 Feature 'compress' not supported!")
-            raise Exception("Unsupported feature 'compress' requested.")
     except Exception as e:
         LOG.error(e)
         connector.close()
@@ -52,6 +48,7 @@ def create_session(connector: Connector, config, LOG: Log, ftp_server, cmd_serve
         connector.write_message("230 Login successful")
         job['UFTP_NOWRITE'] = config["UFTP_NOWRITE"]
         job['MAX_STREAMS'] = config['MAX_STREAMS']
+        job['compress'] = job.get("compress", "false").lower()=="true"
         session = Session.Session(connector, job, LOG)
         session.run()
         connector.close()

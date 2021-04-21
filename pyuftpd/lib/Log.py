@@ -12,6 +12,10 @@ class Logger(object):
         if use_syslog:
             openlog("UFTPD")
 
+    def out(self, message):
+        print(message)
+        stdout.flush()
+
     def reinit(self):
         if self.use_syslog:
             closelog()
@@ -21,14 +25,13 @@ class Logger(object):
         if self.use_syslog:
             syslog(LOG_ERR, str(message))
         else:
-            self.info("[ERROR] %s" % str(message))
+            self.out("[ERROR] %s" % str(message))
 
     def info(self, message):
         if self.use_syslog:
             syslog(LOG_INFO, str(message))
         else:
-            print(message)
-            stdout.flush()
+            self.out("[INFO] %s" % str(message))
 
     def debug(self, message):
         if not self.verbose:
@@ -36,4 +39,4 @@ class Logger(object):
         if self.use_syslog:
             syslog(LOG_DEBUG, str(message))
         else:
-            self.info("[DEBUG] %s" % str(message))
+            self.out("[DEBUG] %s" % str(message))

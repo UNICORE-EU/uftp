@@ -41,7 +41,8 @@ def setup_config(config):
     config['UFTP_KEYFILES'] = os.getenv("UFTP_KEYFILES", ".ssh/authorized_keys:.uftp/authorized_keys").split(":")
     config['UFTP_NOWRITE'] = os.getenv("UFTP_NOWRITE", ".ssh/authorized_keys").split(":")
     config['uftpd.enforce_os_gids'] =  os.getenv("UFTP_ENFORCE_OS_GIDS", "true").lower() in [ "true", "yes", "1" ]
-    config['VERBOSE'] = os.getenv("VERBOSE", "false").lower() in [ "true", "yes", "1" ]
+    config['LOG_VERBOSE'] = os.getenv("LOG_VERBOSE", "false").lower() in [ "true", "yes", "1" ]
+    config['LOG_SYSLOG'] = os.getenv("LOG_SYSLOG", "true").lower() in [ "true", "yes", "1" ]
     
 def parse_request(message):
     request = {}
@@ -189,8 +190,9 @@ def main():
 
     config = {}
     setup_config(config)
-    verbose = config["VERBOSE"]
-    LOG = Log.Logger(verbose)
+    verbose = config["LOG_VERBOSE"]
+    use_syslog = config['LOG_SYSLOG']
+    LOG = Log.Logger(verbose=verbose, use_syslog=use_syslog)
 
     LOG.info("**** UFTPD Version %s starting" % MY_VERSION)
 

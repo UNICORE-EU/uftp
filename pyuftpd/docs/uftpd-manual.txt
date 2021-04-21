@@ -43,10 +43,11 @@ This manual covers the UFTP file server "uftpd".
 UFTP features
 ~~~~~~~~~~~~~
 
- - dynamic firewall port opening using a pseudo FTP connection.
-   UFTPD requires only a single open port.
+ - dynamic firewall port opening using passive FTP. UFTPD requires only 
+   a single open port
 
- - parallel input/output streams based on code from the JPARSS library, 
+ - optional multiple TCP streams per data connaction  
+     Based on code from the JPARSS library, 
      Copyright (c) 2001 Southeastern Universities Research Association,
      Thomas Jefferson National Accelerator Facility
 
@@ -61,18 +62,15 @@ UFTP features
    multiple UFTP processes can thus read/write a file in parallel
    (striping)
 
- - supports efficient synchronization of single local and remote files
-   using the rsync algorithm
+ - standalone command line client available
+
+ - supports third-party FTP clients such as 'curl' or 'ftp', 
+   after getting a one-time password via the Auth server (RESTful API)
 
  - integrated into UNICORE clients for fast file upload and download
 
  - integrated with UNICORE servers for fast data staging and
    server-to-server file transfers
-
- - standalone (non-UNICORE) client available
-
- - data upload/download with 'curl' or 'ftp' possible in conjunction with
-   the auth server
 
 How does UFTP work
 ~~~~~~~~~~~~~~~~~~
@@ -93,7 +91,10 @@ be accessible from external machines. Firewalls have to treat the
 
 A UFTP file transfer works as follows:
 
- * the UNICORE/X server sends a request to the command port. 
+ * the client (which can be an end-user client, or a service such as a UNICORE/X server)
+   sends an authentication request to the Auth server (or another UNICORE/X server)
+   
+ * the Auth server sends a request to the command port of UFTPD.
    This request notifies the UFTPD server about the upcoming transfer and
    contains the following information 
   
@@ -103,18 +104,18 @@ A UFTP file transfer works as follows:
     - an optional key to encrypt/decrypt the data
     - the client's IP address
     
- * the UFTPD server will now  accept an incoming connection from the announced IP
-   address, provided the supplied "secret" matches the expectation.
+ * the UFTPD server will now  accept an incoming client connection, provided the 
+   supplied "secret" (one-time password) matches the expectation.
  
  * if everything is OK, an FTP session is created, and the client can use the FTP
    protocol to open data connections, list files, transfer data etc.
-   Firewall transversal will be automatic using passive FTP (see below for
-   alternatives like using a fixed port range).
+   Data connections are opened via "passive FTP", which allows the firewall to dynamically
+   open the requested ports (which can by any port, see below if you want to a 
+   fixed port range).
 
- * to access requested files, uftpd attempts to switch its user id to 
-   the requested one prior to reading/writing the file. This uses a C library which
-   is accessed from Java via the Java native interface (JNI). See also the 
-   installation section below.
+ * for each UFTP session, UFTPD will fork a process which runs as the requested user (with the
+   requested primary group)
+
 
 [NOTE] .IMPORTANT SECURITY NOTE
 ========================================================= 
@@ -132,9 +133,11 @@ Prerequisites
 
   - Python 3.4.0 or later
 
-  - the server "listen" port needs to be accessible through your firewalls, 
+  - the server's "listen" port needs to be accessible through your firewalls, 
     declaring it an "FTP" port (FTP connection tracking). Alternatively a fixed
     range of open ports can be configured and used
+    
+  - the server's command port needs to be accessible from the Auth server(s)
 
   - the UFTPD server needs access to the target file systems
 
@@ -142,8 +145,8 @@ Prerequisites
     production use (see the section on SSL below)
 
 
-A functional UFTP installation requires either a full UNICORE/X server or the
-'auth server'.
+A functional UFTP installation requires either an Auth server or a 
+full UNICORE/X server.
 
 
 [NOTE]
@@ -177,8 +180,8 @@ Starting and stopping the UFTPD server
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  
 If using the Linux packages, uftpd is integrated as a service via systemd, and
-you can stop/start it via 'systemctl'. Also, logging is done via systemd, and
-you can look at the logs via 'journalctl'
+you can stop/start it via 'systemctl'. Also, logging is (by default) done via 
+systemd, and you can look at the logs via 'journalctl'
 
 To do things manually, you can use the start/stop and status scripts that are
 provided in the BIN directory.
@@ -192,7 +195,7 @@ configured in the +CONF/uftpd.conf+ file
 
 In a production scenario with multiple users, the uftpd server
 needs to be started as root. This is necessary to be able to
-set the correct file permissions.
+access files as the correct user/group and set correct file permissions.
 
 
 Configuration parameters
@@ -233,17 +236,19 @@ The following variables can be defined in the configuration file (uftpd.conf):
 
   DISABLE_IP_CHECK : (optional) in some situations, the client IP can be different from
                      the one that was sent to the UFTPD server. This will lead to rejected
-		     transfers. Setting this variable to a non-zero value will disable the
-		     IP check. Only the one-time password will be checked.
+		             transfers. Setting this variable to a non-zero value will disable the
+		             IP check. Only the one-time password will be checked.
 
-  UFTP_KEYFILES     : (optional) list of files (relative to current user's $HOME) where uftpd will
-                      read public keys for authentication. List is separated by ":". This defaults
-		      to ".ssh/authorized_keys"
+  UFTP_KEYFILES    : (optional) list of files (relative to current user's $HOME) where uftpd will
+                     read public keys for authentication. List is separated by ":". This defaults
+		             to ".ssh/authorized_keys"
 
-  UFTP_NO_WRITE     : (optional) ":"-separated list of file name patters that uftpd should
-                      not write to
+  UFTP_NO_WRITE    : (optional) ":"-separated list of file name patters that uftpd should
+                     not write to
 
-  VERBOSE           : set to 'true' to get more detailed (protocol-level) logging
+  LOG_VERBOSE      : set to 'true' to get (much) more detailed logging
+
+  LOG_SYSLOG       : set to 'false' to print logging output to stdout
 
 As usual if you set the SERVER_HOST to be "0.0.0.0", the server will bind to all the available 
 network interfaces.
@@ -258,8 +263,8 @@ Protecting the Command socket
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Using SSL for the Command port ensures that only trusted parties
-(i.e. trusted UNICORE servers) can issue commands to the UFTPD
-server.  To further limit the set of trusted users, an access control
+(i.e. trusted Auth and/or UNICORE/X servers) can issue commands to the 
+UFTPD server. To further limit the set of trusted users, an access control
 list (ACL) file is used.
 
 In production settings where users can log in to the UFTPD server
@@ -355,151 +360,20 @@ modprobe nf_conntrack_ftp ports=$SERVER_PORT
 Logging
 ~~~~~~~
 
-UFTPD writes to the console.
+By default, UFTPD writes to syslog, and you can use 'journalctl' to read log messages.
 
-If running via systemd, UFTPD's log messages will go to the system journal, and
-you can use 'journalctl' to read log messages.
-
-If running 'manually', output will be written to a file in the +LOG+ directory. 
+To print logging output to stdout, set "export LOG_SYSLOG=false" in the +uftpd.conf+ file.
 
 
 UNICORE Integration
 -------------------
 
-In UNICORE, UFTP can be used for uploading/downloading data from a server,
-as well as server-to-server transfers, where one UNICORE/X instance
-acts as UFTP client.
-
-To enable a UNICORE/X server for the UFTP filetransfer the following settings
-have to be made.
-
-Configuring the UFTP service
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The UNICORE/X server needs to know the UFTPD server settings
-(i.e. host and port of both the command and the main listener
-socket). If the +coreServices.uftp.server.host+ property is set, UFTP
-will be enabled and advertised to clients.
-
-In the +uas.config+ file, the following properties are mandatory for
-UFTP:
-
--------
-
-#
-# REQUIRED parameters
-#
-
-# Listener (pseudo-FTP) socket
-coreServices.uftp.server.host=...
-coreServices.uftp.server.port=...
-
-# Command socket
-coreServices.uftp.command.host=...
-coreServices.uftp.command.port=...
-
-#
-# Full path to the 'uftp.sh' client executable
-# on the TSI login node
-#
-coreServices.uftp.client.executable=...
-
---------
-
-
-There are further configuration options to tune how UFTP behaves
-
---------
-#
-# Optional parameters
-#
-
-# How many parallel streams to use per file transfer
-coreServices.uftp.streams=1
-
-# Limit the maximum number of streams per file transfer
-coreServices.uftp.streamsLimit=4
-
--------
-
-UFTPD servers with multiple interfaces
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-If your UFTPD server is on a machine with multiple network interfaces, you can
-give a comma-separated list of host names, like so:
-
------
-coreServices.uftp.server.host=net1.domain.org,net2.domain.org
--------
-
-The UFTP client in this case will try to connect to the hosts in the
-specified order, and will use the first "working" one.
-
-
-Enabling data encryption
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-If you wish to encrypt the data sent/received by UFTPD (in data
-staging or server-to-server transfers), the following property can be
-used:
-
--------
-# enable data encryption
-coreServices.uftp.encryption=true
--------
-
-This will by default encrypt data with a symmetric key using the
-Blowfish algorithm. This costs some performance due to the additional
-CPU load. Encryption only works in single-stream mode.  Users can
-override this setting.
-
-Limiting bandwidth per transfer
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-It is possible to limit the bandwidth that is consumed by a single
-UFTP transfer.  It is given in bytes per second.
-
--------
-# limit transfer rate (bytes/second)
-coreServices.uftp.rateLimit=10000000000
--------
-
-
-Disabling SSL on the command port
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-While not recommended, it may be sometimes useful to disable SSL for
-communicating with the UFTPD, e.g. while setting up and testing. To do
-this add a property in +uas.config+ (no UNICORE/X restart is required)
-
---------------
-coreServices.uftp.command.sslDisable=true
---------------
-
-Enabling "local" UFTP mode on the UNICORE/X server
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-In case the UNICORE/X server has direct access to the target file
-system, and you're not using the UNICORE TSI, it can be an interesting
-option to run the UFTP filetransfer client code directly in the
-UNICORE/X server instead of passing it to the TSI. This means more
-load in the UNICORE/X process.  It is also a way to use UFTP to/from a
-UNICORE/X server running on Windows. To enable local mode, edit
-+uas.config+ and set
-
--------
-# enable local client mode
-coreServices.uftp.client.local=true
--------
+Please refer to the UNICORE/X manual for detailed information on how to configure 
+UFTP based data access and data transfer.
 
 
 Testing the UFTPD server
 ------------------------
-
-TBD 
-
-Performance measurement hints
------------------------------
 
 You should use the 'uftp' client to run performance tests, which contains
 many options such as the number of concurrent FTP connections, and can

@@ -5,7 +5,7 @@ from time import sleep, time
 from Connector import Connector
 from FileInfo import FileInfo
 from Log import Logger
-import PConnector, Protocol, Server
+import GzipConnector, PConnector, Protocol, Server
 
 
 class Session(object):
@@ -70,6 +70,7 @@ class Session(object):
         if(self.key is not None):
             from base64 import b64decode
             self.key = b64decode(self.key)
+        self.compress = job.get("compress", False)
         self.rate_limit = 0
         self.sleep_time = 0
         try:
@@ -398,15 +399,18 @@ class Session(object):
 
     def open_data_socket(self):
         if self.num_streams == 1:
-            self.LOG.debug("Opening normal data socket")
+            self.LOG.debug("Opening normal data connector")
             self.BUFFER_SIZE = 65536
             if self.key is not None:
                 import CryptUtil
-                self.data = CryptUtil.CryptedWriter(self.data_connectors[0], self.key)
+                self.data = CryptUtil.CryptedConnector(self.data_connectors[0], self.key)
             else:
                 self.data = self.data_connectors[0]
+            if self.compress:
+                self.LOG.debug("Enabling compression")
+                self.data = GzipConnector.GzipConnector(self.data)
         else:
-            self.LOG.debug("Opening parallel data socket with <%d> streams" % self.num_streams)
+            self.LOG.debug("Opening parallel data connector with <%d> streams" % self.num_streams)
             self.BUFFER_SIZE = 16384 # Java version compatibility
             self.data = PConnector.PConnector(self.data_connectors, self.LOG, self.key)
 
@@ -427,7 +431,7 @@ class Session(object):
                 self.data.write(data)
                 if limit_rate:
                     self.control_rate(total, start_time*1000)
-            if encrypt:
+            if encrypt or self.compress:
                 self.data.close()
             # post send
             self.reset()
@@ -448,7 +452,6 @@ class Session(object):
             reader = self.get_reader()
             start_time = int(time())
             total = self.copy_data(reader, f, self.number_of_bytes)
-            # post send
             self.reset()
             if not self.KEEP_ALIVE:
                 self.close_data()
@@ -498,13 +501,7 @@ class Session(object):
 
     def get_reader(self):
         if self.key is not None:
-            # import CryptUtil
-            # reader = CryptUtil.Decrypt(self.data, self.key)
-            # crypted data is longer that net data size
             self.number_of_bytes = maxsize
-        # else:
-            # reader = self.data
-        #return reader
         return self.data
 
     def copy_data(self, reader, target, num_bytes):
@@ -561,11 +558,11 @@ class Session(object):
             _lim = "%s MB/sec" % int(self.rate_limit/(1024*1024))
         else:
             _lim = "no"
-        self.LOG.info("Processing UFTP session for <%s : %s : %s>, basedir=%s, allow_absolute_paths=%s, encrypted=%s, ratelimit=%s" % (
+        self.LOG.info("Processing UFTP session for <%s : %s : %s>, basedir=%s, allow_absolute_paths=%s, encrypted=%s, compress=%s, ratelimit=%s" % (
             self.job['user'], self.job['group'],
             self.control.client_ip(),
             self.basedir, self.allow_absolute_paths,
-            self.key is not None, _lim
+            self.key is not None, self.compress, _lim
         ))
         while True:
             msg = self.control.read_line()
