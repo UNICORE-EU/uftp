@@ -49,6 +49,7 @@ def create_session(connector: Connector, config, LOG: Log, ftp_server, cmd_serve
         job['UFTP_NOWRITE'] = config["UFTP_NOWRITE"]
         job['MAX_STREAMS'] = config['MAX_STREAMS']
         job['compress'] = job.get("compress", "false").lower()=="true"
+        job['PORTRANGE'] = config.get("PORTRANGE", (0, -1, -1))
         session = Session.Session(connector, job, LOG)
         session.run()
         connector.close()

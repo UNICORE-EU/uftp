@@ -43,7 +43,25 @@ def setup_config(config):
     config['uftpd.enforce_os_gids'] =  os.getenv("UFTP_ENFORCE_OS_GIDS", "true").lower() in [ "true", "yes", "1" ]
     config['LOG_VERBOSE'] = os.getenv("LOG_VERBOSE", "false").lower() in [ "true", "yes", "1" ]
     config['LOG_SYSLOG'] = os.getenv("LOG_SYSLOG", "true").lower() in [ "true", "yes", "1" ]
-    
+    config['PORTRANGE'] = configure_portrange()
+
+def configure_portrange():
+    rangespec = os.getenv("PORT_RANGE", None)
+    first = 0
+    lower = -1
+    upper = -1
+    if rangespec is not None:
+        try:
+            lower,upper = rangespec.strip().split(":")
+            lower = int(lower)
+            upper = int(upper)
+            if upper<=lower:
+                raise Exception()
+            first = lower
+        except:
+            raise Exception("Invalid PORT_RANGE specified, must be 'lower:upper'")
+    return (first, lower, upper)
+
 def parse_request(message):
     request = {}
     for line in message:
@@ -218,7 +236,9 @@ def main():
     LOG.debug("Write protected files : %s" % config['UFTP_NOWRITE'])
     LOG.debug("Max. sessions per job : %s" % config['MAX_CONNECTIONS'])
     LOG.debug("Max. parallel streams : %s" % config['MAX_STREAMS'])
-    
+    pr = config['PORTRANGE']
+    if pr[0]>0:
+        LOG.debug("Data port range   : %s:%s" % (pr[1], pr[2]))
     process(cmd_server, config, LOG)
     return 0
 

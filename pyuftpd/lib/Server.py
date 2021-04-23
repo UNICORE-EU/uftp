@@ -163,11 +163,27 @@ def setup_data_server_socket(host="0.0.0.0", port_range=(0,-1,-1)):
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     port = port_range[0]
-    if port>0:
-        raise Exception("Port range not yet implemented")
-    server.bind((host, port))
-    return server
-
+    use_port_range = port > 0
+    if use_port_range:
+        _lower = port_range[1]
+        _upper = port_range[2]
+        max_attempts = _upper-_lower+1
+    else:
+        max_attempts = 1
+    attempts = 0
+    while attempts<max_attempts:
+        try:
+            server.bind((host, port))
+            return server
+        except Exception as e:
+            attempts+=1
+            if use_port_range:
+                port+=1
+                if port>_upper:
+                    port = _lower
+            else:
+                raise e
+    raise Exception("Cannot set up data connection - no free ports in range %s:%s"% (_lower, _upper))
 
 def accept_data(server, LOG: Log, expected_client=None):
     """ Waits for a data connection

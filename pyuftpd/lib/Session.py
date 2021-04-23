@@ -48,7 +48,7 @@ class Session(object):
         self.access_level = self.MODE_FULL
         self.data_connectors = []
         self.data = None
-        self.portrange = job.get("_PORTRANGE", (0, -1, -1))
+        self.portrange = job.get("PORTRANGE", (0, -1, -1))
         self.reset_range()
         self.BUFFER_SIZE = 65536
         self.KEEP_ALIVE = False
@@ -215,20 +215,20 @@ class Session(object):
 
     def add_data_connection(self, epsv=True):
         my_host = self.control.my_ip()
-        server_socket = Server.setup_data_server_socket(my_host, self.portrange)
-        my_port = server_socket.getsockname()[1]
-        if epsv:
-            msg = "229 Entering Extended Passive Mode (|||%s|)" % my_port
-        else:
-            msg = "227 Entering Passive Mode (%s,%d,%d)" % ( my_host.replace(".",","), (my_port / 256), (my_port % 256))
-        self.control.write_message(msg)
-        _data_connector = Server.accept_data(server_socket, self.LOG)
-        self.LOG.debug("Accepted %s"% _data_connector.info())
-        self.data_connectors.append(_data_connector)
-        if len(self.data_connectors) == self.num_streams:
-            return Session.ACTION_OPEN_SOCKET
-        else:
-            return Session.ACTION_CONTINUE
+        with Server.setup_data_server_socket(my_host, self.portrange) as server_socket:
+            my_port = server_socket.getsockname()[1]
+            if epsv:
+                msg = "229 Entering Extended Passive Mode (|||%s|)" % my_port
+            else:
+                msg = "227 Entering Passive Mode (%s,%d,%d)" % ( my_host.replace(".",","), (my_port / 256), (my_port % 256))
+            self.control.write_message(msg)
+            _data_connector = Server.accept_data(server_socket, self.LOG, self.control.client_ip())
+            self.LOG.debug("Accepted %s"% _data_connector.info())
+            self.data_connectors.append(_data_connector)
+            if len(self.data_connectors) == self.num_streams:
+                return Session.ACTION_OPEN_SOCKET
+            else:
+                return Session.ACTION_CONTINUE
 
     def post_transfer(self):
         self.reset_range()        

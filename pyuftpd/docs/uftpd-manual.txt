@@ -46,22 +46,6 @@ UFTP features
  - dynamic firewall port opening using passive FTP. UFTPD requires only 
    a single open port
 
- - optional multiple TCP streams per data connaction  
-     Based on code from the JPARSS library, 
-     Copyright (c) 2001 Southeastern Universities Research Association,
-     Thomas Jefferson National Accelerator Facility
-
- - optional encryption of the data streams using a symmetric key
-   algorithm
-
- - optional compression of the data streams (using gzip)
-
- - command port protected by SSL
-
- - partial reads/writes to a file. If supported by the filesystem,
-   multiple UFTP processes can thus read/write a file in parallel
-   (striping)
-
  - standalone command line client available
 
  - supports third-party FTP clients such as 'curl' or 'ftp', 
@@ -71,6 +55,23 @@ UFTP features
 
  - integrated with UNICORE servers for fast data staging and
    server-to-server file transfers
+
+ - optional encryption of the data streams using a  symmetric 
+   key algorithm
+
+ - optional compression of the data streams (using gzip)
+
+ - optional multiple TCP streams per data connaction  
+     Based on code from the JPARSS library, 
+     Copyright (c) 2001 Southeastern Universities Research Association,
+     Thomas Jefferson National Accelerator Facility
+
+ - partial reads/writes to a file. If supported by the filesystem,
+   multiple UFTP processes can thus read/write a file in parallel
+   (striping)
+
+ - command port protected by SSL
+
 
 How does UFTP work
 ~~~~~~~~~~~~~~~~~~
@@ -230,9 +231,8 @@ The following variables can be defined in the configuration file (uftpd.conf):
   BUFFER_SIZE     : the size of the buffer (in kilobytes) for reading/writing local files
 
   PORT_RANGE      : (optional) server-side port range in the form 'lower:upper' that will be 
-                    used for data connections. By default, any free ports will be used.
-                    Example: set to '50000:50500' to limit the port range. 
-		            NOTE ports in this range *must not* be used by other services!
+                    used to accept data connections. By default, any free ports will be used.
+                    Example: set to '50000:50050' to limit the port range.
 
   DISABLE_IP_CHECK : (optional) in some situations, the client IP can be different from
                      the one that was sent to the UFTPD server. This will lead to rejected
@@ -331,6 +331,13 @@ The ACL file can be updated at runtime.
 Firewall configuration
 ~~~~~~~~~~~~~~~~~~~~~~
 
+UFTPD requires
+ * an open TCP port for accepting FTP connections
+ * additional open TCP ports for accepting data connections
+ 
+The data connections can either be openend dynamically using "FTP connection tracking", or
+you can use a dedicated port range and permanently open those in the firewall.
+
 [NOTE]
 ====================================
 Please consult the firewall documentation on how to 
@@ -356,6 +363,25 @@ modprobe nf_conntrack_ipv4
 modprobe nf_conntrack_ftp ports=$SERVER_PORT
 ------------
 
+
+If you cannot use connection tracking, you will need to open a port range, and configure
+UFTPD accordingly.
+
+For example, in +uftpd.conf+ :
+
+------------
+export PORT_RANGE=21000:21050
+-------------
+
+and the iptables rule
+
+-------------
+iptables -A INPUT -p tcp -m tcp --dport 21000:21050 -j ACCEPT
+-------------
+
+would allow incoming data connections on ports 21000 to 21050. 
+
+A fairly small range is usually enough, since these are server ports.
 
 Logging
 ~~~~~~~
