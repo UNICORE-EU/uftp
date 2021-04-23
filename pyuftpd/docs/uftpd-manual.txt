@@ -235,9 +235,9 @@ The following variables can be defined in the configuration file (uftpd.conf):
                     Example: set to '50000:50050' to limit the port range.
 
   DISABLE_IP_CHECK : (optional) in some situations, the client IP can be different from
-                     the one that was sent to the UFTPD server. This will lead to rejected
-		             transfers. Setting this variable to a non-zero value will disable the
-		             IP check. Only the one-time password will be checked.
+                     the one that was sent to the UFTPD server by the Auth server. 
+                     This will lead to rejected transfers. Setting this variable to "true" 
+                     will disable the IP check. Only the one-time password will be checked.
 
   UFTP_KEYFILES    : (optional) list of files (relative to current user's $HOME) where uftpd will
                      read public keys for authentication. List is separated by ":". This defaults

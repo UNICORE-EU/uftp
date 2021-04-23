@@ -42,7 +42,8 @@ def setup_config(config):
     config['UFTP_NOWRITE'] = os.getenv("UFTP_NOWRITE", ".ssh/authorized_keys").split(":")
     config['uftpd.enforce_os_gids'] =  os.getenv("UFTP_ENFORCE_OS_GIDS", "true").lower() in [ "true", "yes", "1" ]
     config['LOG_VERBOSE'] = os.getenv("LOG_VERBOSE", "false").lower() in [ "true", "yes", "1" ]
-    config['LOG_SYSLOG'] = os.getenv("LOG_SYSLOG", "true").lower() in [ "true", "yes", "1" ]
+    config['LOG_SYSLOG'] = os.getenv("LOG_SYSLOG", "true").lower() in [ "false", "no", "0" ]
+    config['DISABLE_IP_CHECK'] = os.getenv("DISABLE_IP_CHECK", "false").lower() in [ "true", "yes", "1" ]
     config['PORTRANGE'] = configure_portrange()
 
 def configure_portrange():
@@ -238,7 +239,8 @@ def main():
     LOG.debug("Max. parallel streams : %s" % config['MAX_STREAMS'])
     pr = config['PORTRANGE']
     if pr[0]>0:
-        LOG.debug("Data port range   : %s:%s" % (pr[1], pr[2]))
+        LOG.debug("Data port range       : %s:%s" % (pr[1], pr[2]))
+    LOG.debug("Validating client IPs : %s" % str(not config['DISABLE_IP_CHECK']))
     process(cmd_server, config, LOG)
     return 0
 

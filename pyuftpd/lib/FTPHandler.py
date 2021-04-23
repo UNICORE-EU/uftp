@@ -11,9 +11,20 @@ def create_session(connector: Connector, config, LOG: Log, ftp_server, cmd_serve
             connector.write_message("530 Not logged in: no matching transfer request found")
             connector.close()
             return
+        if not config['DISABLE_IP_CHECK']:
+            client_ips = job['client-ip'].split(",")
+            peer = connector.client_ip()
+            verified = False
+            for client_ip in client_ips:
+                if client_ip==peer:
+                    verified=True
+                    break
+            if not verified:
+                raise Exception("Rejecting connection for '%s' from %s, allowed: %s" % (job['user'], peer, str(client_ips)))
         LOG.info("Established %s for '%s'" % (connector.info(), job['user']))
     except Exception as e:
-        LOG.error(e)
+        LOG.debug(e)
+        connector.write_message("500 Error establishing connection: %s" % str(e))
         connector.close()
         return
     limit = config['MAX_CONNECTIONS']
