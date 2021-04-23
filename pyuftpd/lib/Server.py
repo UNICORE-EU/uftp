@@ -195,7 +195,7 @@ def accept_data(server, LOG: Log, expected_client=None):
             (client, (client_host, _x)) = server.accept()
             if expected_client is not None:
                 if client_host!=expected_client:
-                    raise Exception("Connection from unexpected host %s" % client_host)
+                    raise Exception("Rejecting connection from unexpected host %s - expected %s" % (client_host, expected_client))
             return Connector.Connector(client, LOG, conntype="DATA", binary_mode=True)
         except EnvironmentError as e:
             LOG.error(e)
