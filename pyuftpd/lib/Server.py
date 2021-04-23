@@ -3,13 +3,14 @@
 #
 
 import errno
+from os import stat
+from time import time
 import socket
 import sys
 
 import Connector
 import Log
 from SSL import setup_ssl, verify_peer, convert_dn
-
 
 def configure_socket(sock):
     """
@@ -37,9 +38,23 @@ def close_quietly(closeable):
         pass
 
 def update_acl(configuration, LOG):
+    last_checked = configuration.get("_last_acl_file_check", 0)
+    now = int(time())
+    if now < last_checked + 10:
+        return
+    acl_file = configuration.get('ACL')
+    mtime = int(stat(acl_file).st_mtime)
+    if last_checked >= mtime:
+        return
+    if last_checked > 0:
+        LOG.info("ACL file '%s' modified - reloading entries." % acl_file)
+    else:
+        LOG.info("ACL file '%s'" % acl_file)
+    configuration["_last_acl_file_check"] = now
     with open(configuration.get('ACL'), "r") as f:
         lines = f.readlines()
-        acl = configuration.get('uftpd.acl')
+        acl = []
+        configuration['uftpd.acl'] = acl
         for line in lines:
             try:
                 line = line.strip()
@@ -108,6 +123,7 @@ def accept_command(server, configuration, LOG: Log):
 
         if ssl_mode:
             try:
+                update_acl(configuration, LOG)
                 verify_peer(configuration, auth, LOG)
             except EnvironmentError as e:
                 LOG.error("Error verifying connection from %s : %s" % (

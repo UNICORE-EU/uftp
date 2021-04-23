@@ -64,7 +64,6 @@ class FileInfo(object):
             udate = strftime("%b %d %Y", localtime(st.st_mtime))
         else:
             udate = strftime("%b %d %H:%M", localtime(st.st_mtime))
-        
         return "%s%s------   %s dummy dummy %s %s %s\r" % (d, self._perm("-"),
                                                            l,
                                                            st.st_size,
