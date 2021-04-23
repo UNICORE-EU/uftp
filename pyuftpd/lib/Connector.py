@@ -101,3 +101,6 @@ class Connector(object):
             self.client.close()
         except Exception as e:
             self.LOG.error(e)
+            
+    def flush(self):
+        pass

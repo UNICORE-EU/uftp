@@ -7,7 +7,7 @@ class PConnector(object):
         Multi-stream connector that writes/reads multiple TCP (data)streams
     """
 
-    def __init__(self, connectors: Connector, LOG: Log, key=None):
+    def __init__(self, connectors: Connector, LOG: Log, key=None, compress=False):
         self._connectors = connectors
         self._inputs = []
         self._outputs = []
@@ -24,6 +24,12 @@ class PConnector(object):
                 self._inputs.append(conn.client.makefile("rb"))
         self.seq = 0
         self.num_streams = len(self._connectors)
+        if compress:
+            import GzipConnector
+            self.LOG.debug("Enabling compression")
+            for i in range(0, self.num_streams):
+                self._inputs[i] = GzipConnector.GzipReader(self._inputs[i])
+                self._outputs[i] = GzipConnector.GzipWriter(self._outputs[i])
 
     def write(self, data):
         """ Write all the data to remote channel """
@@ -58,25 +64,26 @@ class PConnector(object):
     def read(self, length):
         """ Read data from remote channel """
         buffer = bytearray(length)
-        i = 0
         _magic = 0xcebf
-        for src in self._inputs:
+        for i in range(0, len(self._inputs)):
+            src = self._inputs[i]
             header = src.read(16)
             if len(header)==0:
                 break
             (magic, pos, seq, size, chunk_len) = unpack(">HHIII", header)
+            if pos!=i:
+                raise Exception("I/O error reader %s (unexpected stream position: )" % (i,pos))
             if magic!=_magic:
-                raise Exception("I/O error (magic number)")
+                raise Exception("I/O error reader %s (magic number)" % i)
             if seq!=self.seq:
-                raise Exception("I/O error (sequence number)")
+                raise Exception("I/O error reader %s (sequence number)" % i)
             if size != len(buffer):
-                raise Exception("I/O error (total size)")
+                raise Exception("I/O error reader %s (total size: expected %s got %s)" % (i, size, len(buffer)))
             chunk = int(size / self.num_streams)
             offset = pos * chunk
             buffer[offset:offset+chunk_len] = src.read(chunk_len)
-            i += 1
         self.seq += 1
-        return buffer
+        return buffer[0:size]
 
     def close(self):
         for i in range(0, len(self._connectors)):

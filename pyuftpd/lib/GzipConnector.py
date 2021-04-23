@@ -40,30 +40,50 @@ class GzipWriter(object):
         self.target.write(compressed)
         return len(data)
 
-    def flush(self):
-        compressed = self.compressor.flush()
+    def flush(self, finish = False):
+        if self._closed:
+            return
+        if finish:
+            compressed = self.compressor.flush()
+        else:
+            compressed = self.compressor.flush(zlib.Z_SYNC_FLUSH)
         self.target.write(compressed)
         self.target.flush()
 
     def close(self):
         if self._closed:
             return
-        self._closed = True
-        self.flush()
+        self.flush(finish=True)
         self.target.close()
+        self._closed = True
     
 class GzipReader(object):
     
     def __init__(self, source):
         self.source = source
         self.decompressor = zlib.decompressobj(wbits=31)
+        self.stored = b""
 
     def read(self, length):
-        data = self.source.read(length)
-        decompressed = self.decompressor.decompress(data)
-        return decompressed
+        buf = bytearray(self.stored)
+        have = len(buf)
+        finish = False
+        while have<length and not finish:
+            data = self.source.read(length-have)
+            if len(data)==0:
+                finish = True
+                decompressed = self.decompressor.flush()
+            else:
+                decompressed = self.decompressor.decompress(data)
+            buf+=decompressed
+            have = len(buf)
+        if have>length:
+            result = buf[0:length]
+            self.stored = buf[length:]
+        else:
+            result = buf
+            self.stored = b""
+        return result
     
     def close(self):
         self.source.close()
-
-    

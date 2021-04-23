@@ -208,10 +208,10 @@ class Session(object):
         return Session.ACTION_CONTINUE
 
     def pasv(self, params):
-        return self.add_data_connection(False)
+        return self.add_data_connection(epsv=False)
 
     def epsv(self, params):
-        return self.add_data_connection(True)
+        return self.add_data_connection()
 
     def add_data_connection(self, epsv=True):
         my_host = self.control.my_ip()
@@ -230,7 +230,7 @@ class Session(object):
         else:
             return Session.ACTION_CONTINUE
 
-    def reset(self):
+    def post_transfer(self):
         self.reset_range()        
         self.control.write_message("226 File transfer successful")
 
@@ -261,7 +261,7 @@ class Session(object):
                     self.data.write_message(fi.simple_list())
             except Exception as e:
                 self.LOG.debug("Error listing %s : %s" % (f, str(e)) )
-        self.reset()
+        self.post_transfer()
         return Session.ACTION_CLOSE_DATA
 
     def stat(self, params):
@@ -412,7 +412,7 @@ class Session(object):
         else:
             self.LOG.debug("Opening parallel data connector with <%d> streams" % self.num_streams)
             self.BUFFER_SIZE = 16384 # Java version compatibility
-            self.data = PConnector.PConnector(self.data_connectors, self.LOG, self.key)
+            self.data = PConnector.PConnector(self.data_connectors, self.LOG, self.key, self.compress)
 
     def send_data(self):
         with open(self.file_path, "rb") as f:
@@ -433,8 +433,7 @@ class Session(object):
                     self.control_rate(total, start_time*1000)
             if encrypt or self.compress:
                 self.data.close()
-            # post send
-            self.reset()
+            self.post_transfer()
             if not self.KEEP_ALIVE:
                 self.close_data()
             duration = int(time()) - start_time
@@ -452,7 +451,7 @@ class Session(object):
             reader = self.get_reader()
             start_time = int(time())
             total = self.copy_data(reader, f, self.number_of_bytes)
-            self.reset()
+            self.post_transfer()
             if not self.KEEP_ALIVE:
                 self.close_data()
             duration = int(time()) - start_time
@@ -486,8 +485,7 @@ class Session(object):
                 else:
                     total += self.copy_data(entry_reader, f, maxsize)
             counter+=1
-        # post send
-        self.reset()
+        self.post_transfer()
         if not self.KEEP_ALIVE:
             self.close_data()
         duration = int(time()) - start_time
