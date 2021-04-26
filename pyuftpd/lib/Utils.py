@@ -3,6 +3,7 @@
 """
 
 import subprocess
+import threading
 
 def run_command(cmd, discard=False, children=None):
     """
@@ -33,3 +34,23 @@ def run_command(cmd, discard=False, children=None):
         success = False
 
     return success, output
+
+class Counter(object):
+    
+    def __init__(self):
+        self.lock = threading.Lock()
+        self.num = 0
+
+    def get(self):
+        return self.num
+
+    def increment(self):
+        with self.lock:
+            self.num+=1
+            return self.num
+
+    def decrement(self):
+        with self.lock:
+            self.num-=1
+            return self.num
+    

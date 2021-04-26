@@ -9,7 +9,7 @@ _SYSTEM_REPLY = "215 Unix Type: L8"
 _FEATURES = [ "PASV", "EPSV",
               "RANG STREAM",
               "MFMT", "MLSD", "APPE",
-              #"KEEP-ALIVE",
+              "KEEP-ALIVE",
               "ARCHIVE",
               "RESTRICTED_SESSION", "DPC2_LOGIN_OK"
 ]
@@ -42,7 +42,10 @@ def establish_connection(connector: Connector, config):
     cmds = ["USER","FEAT","SYST"]
     connector.write_message("220 UFTPD %s, https://www.unicore.eu" % MY_VERSION)
     while len(cmds)>0:
-        cmd = connector.read_line()
+        try:
+            cmd = connector.read_line()
+        except:
+            return False
         chk = cmd.upper()
         if chk.startswith("USER"):
             cmds.remove("USER")
@@ -55,10 +58,13 @@ def establish_connection(connector: Connector, config):
                 connector.write_message("530 Not logged in")
                 connector.close()
             return job
-        if chk.startswith("FEAT"):
+        elif chk.startswith("FEAT"):
             cmds.remove("FEAT")
             send_features(connector)
-        if chk.startswith("SYST"):
+        elif chk.startswith("SYST"):
             cmds.remove("SYST")
             connector.write_message("215 Unix Type: L8")
+        else:
+            connector.write_message("500 Protocol error")
+            return False
 

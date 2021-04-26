@@ -53,9 +53,9 @@ port opening.
 %config %attr(0600 root root) "/etc/unicore/uftpd/uftpd.acl"
 %config %attr(0644 root root) "/usr/lib/systemd/system/unicore-uftpd.service"
 
-%attr(0755 root root) "/usr/sbin/unicore-uftpd-start.sh"
-%attr(0755 root root) "/usr/sbin/unicore-uftpd-stop.sh"
-%attr(0755 root root) "/usr/sbin/unicore-uftpd-status.sh"
+%attr(0755 root root) "/usr/share/unicore/uftpd/bin/unicore-uftpd-start.sh"
+%attr(0755 root root) "/usr/share/unicore/uftpd/bin/unicore-uftpd-stop.sh"
+%attr(0755 root root) "/usr/share/unicore/uftpd/bin/unicore-uftpd-status.sh"
 
 %docdir "/usr/share/doc/unicore/uftpd/"
 "/usr/share/doc/unicore/uftpd/*"

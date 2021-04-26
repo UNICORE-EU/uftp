@@ -1,3 +1,4 @@
+from fnmatch import fnmatch
 import os.path
 from sys import maxsize
 from time import sleep, time
@@ -27,8 +28,11 @@ class Session(object):
     def __init__(self, connector: Connector, job, LOG: Logger):
         self.job = job
         self.control = connector
+        self.advertise_host = job.get("ADVERTISE_HOST", None)
         self.LOG = LOG
-        _dirname = os.path.dirname(job['file'])
+        self.includes= []
+        self.excludes= []
+        _dirname = os.path.dirname(job.get('file', ''))
         if _dirname=='':
             # no base dir set - default to HOME and
             # allow client to use absolute paths
@@ -55,14 +59,13 @@ class Session(object):
         self.archive_mode = False
         self.num_streams = 1
         self.max_streams = job.get('MAX_STREAMS', 1)
-        self.excludes = []
         for f in job['UFTP_NOWRITE']:
             if len(f)>0:
                 self.excludes.append(os.environ['HOME'] + "/" + f)
         for f in job.get("excludes", "").split(":"):
             if len(f)>0:
                 self.excludes.append(f)
-        self.includes= []
+        
         for f in job.get("includes", "").split(":"):
             if len(f)>0:
                 self.includes.append(f)
@@ -112,14 +115,26 @@ class Session(object):
 
     def assert_access(self, path):
         for excl in self.excludes:
-            if excl==path:
-                raise Exception("Forbidden")
+            if fnmatch(path, excl):
+                raise Exception("Forbidden: %s excluded via %s" % (path, str(self.excludes)))
+        if len(self.includes)==0:
+            return
+        for incl in self.includes:
+            if fnmatch(path, incl):
+                return
+        raise Exception("Forbidden: %s not included in  %s" % (path, str(self.includes)))
 
     def makeabs(self, path):
-        if self.allow_absolute_paths and os.path.isabs(path):
-            return os.path.normpath(path)
+        if os.path.isabs(path):
+            p = os.path.normpath(path)
+            while p.startswith("//"):
+                p = p[1:]
+            if not self.allow_absolute_paths:
+                if not p.startswith(self.basedir):
+                    raise Exception("Forbidden: %s not in %s"%(p, self.basedir))
         else:
-            return os.path.normpath(self.current_dir+"/"+path)
+            p = os.path.normpath(self.current_dir+"/"+path)
+        return p
 
     def shutdown(self, params):
         if self.data:
@@ -153,12 +168,10 @@ class Session(object):
     def cwd(self, params):
         self.assert_permission(Session.MODE_INFO)
         path = self.makeabs(params.strip())
-        if len(path)<len(self.current_dir) and not self.allow_absolute_paths:
-            self.control.write_message("500 Not allowed")
-        else:
-            os.chdir(path)
-            self.current_dir = path
-            self.control.write_message("200 OK")
+        self.assert_access(path)
+        os.chdir(path)
+        self.current_dir = path
+        self.control.write_message("200 OK")
         return Session.ACTION_CONTINUE
 
     def cdup(self, params):
@@ -214,13 +227,17 @@ class Session(object):
         return self.add_data_connection()
 
     def add_data_connection(self, epsv=True):
-        my_host = self.control.my_ip()
+        my_host = self.job['SERVER_HOST']
         with Server.setup_data_server_socket(my_host, self.portrange) as server_socket:
             my_port = server_socket.getsockname()[1]
             if epsv:
                 msg = "229 Entering Extended Passive Mode (|||%s|)" % my_port
             else:
-                msg = "227 Entering Passive Mode (%s,%d,%d)" % ( my_host.replace(".",","), (my_port / 256), (my_port % 256))
+                if self.advertise_host is None:
+                    adv = self.control.my_ip()
+                else:
+                    adv = self.advertise_host
+                msg = "227 Entering Passive Mode (%s,%d,%d)" % (adv.replace(".",","), (my_port / 256), (my_port % 256))
             self.control.write_message(msg)
             _data_connector = Server.accept_data(server_socket, self.LOG, self.control.client_ip())
             self.LOG.debug("Accepted %s"% _data_connector.info())
@@ -395,6 +412,7 @@ class Session(object):
 
     def set_keep_alive(self, params):
         self.KEEP_ALIVE = params.lower() in [ "true", "yes", "1" ]
+        self.control.write_message("200 OK")
         return Session.ACTION_CONTINUE
 
     def open_data_socket(self):

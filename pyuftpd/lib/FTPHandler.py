@@ -7,6 +7,9 @@ def create_session(connector: Connector, config, LOG: Log, ftp_server, cmd_serve
     try:
         LOG.debug("Processing %s" % connector.info())
         job = Protocol.establish_connection(connector, config)
+        if job is False:
+            connector.close()
+            return
         if job is None:
             connector.write_message("530 Not logged in: no matching transfer request found")
             connector.close()
@@ -23,22 +26,27 @@ def create_session(connector: Connector, config, LOG: Log, ftp_server, cmd_serve
                 raise Exception("Rejecting connection for '%s' from %s, allowed: %s" % (job['user'], peer, str(client_ips)))
         LOG.info("Established %s for '%s'" % (connector.info(), job['user']))
     except Exception as e:
-        LOG.debug(e)
         connector.write_message("500 Error establishing connection: %s" % str(e))
         connector.close()
         return
-    limit = config['MAX_CONNECTIONS']
-    if len(job['_PIDS'])==limit:
-        connector.write_message("500 Too many open UFTP sessions (limit: %s)!" % limit)
-        connector.close()
-        LOG.debug("Rejected: too many open sessions for this transfer")
-        return
     
+    limit = config['MAX_CONNECTIONS']
+    user = job['user']
+    user_job_counts = config['_JOB_COUNTER']
+    counter = user_job_counts.get(user)
+    with job['_LOCK']:
+        if len(job['_PIDS'])>0:
+            num = counter.increment()
+            if num>limit:
+                counter.decrement()
+                connector.write_message("500 Too many active transfer requests / sessions for '%s' - server limit is %s" % (user, limit))
+                connector.close()
+                return
     pid = os.fork()
     if pid:
         # parent
         connector.cleanup()
-        LOG.debug("Created new UFTP session, child process <%s>" % pid)
+        LOG.debug("Created new UFTP session for '%s', child process <%s>" % (user, pid))
         with job['_LOCK']:
             job['_PIDS'].append(pid)
         return
@@ -61,6 +69,8 @@ def create_session(connector: Connector, config, LOG: Log, ftp_server, cmd_serve
         job['MAX_STREAMS'] = config['MAX_STREAMS']
         job['compress'] = job.get("compress", "false").lower()=="true"
         job['PORTRANGE'] = config.get("PORTRANGE", (0, -1, -1))
+        job['SERVER_HOST'] = config['SERVER_HOST']
+        job['ADVERTISE_HOST'] = config.get("ADVERTISE_HOST", None)
         session = Session.Session(connector, job, LOG)
         session.run()
         connector.close()

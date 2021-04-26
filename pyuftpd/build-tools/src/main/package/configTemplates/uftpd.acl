@@ -2,16 +2,20 @@
 # ACL file for the UFTPD
 #
 # This file must contain the distinguished names of those servers that
-# want to initiate UFTP transfers, ie. usually your site's UNICORE/X servers  
-# 
-# The ACL entries are expected in RFC2253 format. To get the name 
-# from a certificate in the correct format using openssl, you can use the 
-# following OpenSSL command:
+# want to initiate UFTP transfers, ie. usually your site's Auth
+# and UNICORE/X servers  
+#
+
+
+
+# The ACL entries, one per line,  are expected in RFC2253 format.
+# To get the name from a certificate in the correct format
+# you can use the following OpenSSL command:
 #
 #   $> openssl x509 -in your_server.pem -noout -subject -nameopt RFC2253
 #
+# for example:
+# CN=Demo Auth,O=UNICORE,C=EU
+#
 
-#
-# example entry: UNICORE/X demo certificate
-#
 @acl@

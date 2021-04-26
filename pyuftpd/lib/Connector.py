@@ -31,7 +31,7 @@ class Connector(object):
         lines = []
         try:
             while True:
-                msg = self._input.readline()
+                msg = self._input.readline(8192)
                 if msg.startswith("END"):
                     break
                 msg = msg.strip()
@@ -47,7 +47,7 @@ class Connector(object):
         """Read line from remote
            Returns unicode
         """
-        line = self._input.readline()
+        line = self._input.readline(8192)
         if len(line) == 0:
             raise IOError("Socket closed")
         line = line.strip()

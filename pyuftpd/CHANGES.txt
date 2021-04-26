@@ -3,7 +3,7 @@ Changelog
 The UFTP issue tracker is at
 https://sourceforge.net/p/unicore/uftp-issues
 
-UFTPD 3.0.0 (released 2021 dd yyyy)
+UFTPD 3.0.0 (released Apr 27, 2021)
 ----------------------------------
  - first release of the Python implementation
  - simpler execution model based on fork, every FTP session 
@@ -11,3 +11,8 @@ UFTPD 3.0.0 (released 2021 dd yyyy)
  - cleaner security (users/groups) and better control 
    over file permissions
  - logs to syslog
+
+KNOWN ISSUES:
+ - removed SYNC command (for now)
+ - uploading using both multiple TCP streams and compression is
+   not working correctly
