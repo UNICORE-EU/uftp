@@ -24,7 +24,9 @@ class Session(object):
     MODE_READ = 2
     MODE_WRITE = 3
     MODE_FULL = 4
-    
+
+    _FILE_READ_BUFFERSIZE = 2*65536
+
     def __init__(self, connector: Connector, job, LOG: Logger):
         self.job = job
         self.control = connector
@@ -429,7 +431,7 @@ class Session(object):
             self.data = PConnector.PConnector(self.data_connectors, self.LOG, self.key, self.compress)
 
     def send_data(self):
-        with open(self.file_path, "rb") as f:
+        with open(self.file_path, "rb", buffering = Session._FILE_READ_BUFFERSIZE) as f:
             limit_rate = self.rate_limit > 0
             f.seek(self.offset)
             to_send = self.number_of_bytes
