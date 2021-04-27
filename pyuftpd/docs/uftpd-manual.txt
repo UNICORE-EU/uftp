@@ -16,6 +16,8 @@ Developer's list: unicore-devel@lists.sf.net
 
 UFTP issue tracker: https://sourceforge.net/p/unicore/uftp-issues
 
+Source code repo: https://github.com/UNICORE-EU/uftp
+
 UNICORE UFTP
 ------------
 
@@ -37,7 +39,8 @@ A full UFTP server installation consists of two parts
  - either a UNICORE/X server, or a standalone authentication 
    service.
 
-This manual covers the UFTP file server "uftpd".
+This manual covers the UFTP file server "uftpd" version 3.0 and higher, 
+written in Python.
 
 
 UFTP features
@@ -61,7 +64,7 @@ UFTP features
 
  - optional compression of the data streams (using gzip)
 
- - optional multiple TCP streams per data connaction  
+ - optional multiple TCP streams per data connection  
      Based on code from the JPARSS library, 
      Copyright (c) 2001 Southeastern Universities Research Association,
      Thomas Jefferson National Accelerator Facility
@@ -83,14 +86,14 @@ two different network interfaces):
 
  - the listen port accepts data connections from clients.
 
-The uftpd server is "controlled" (usually by UNICORE/X) via the
+The uftpd server is "controlled" (by a UNICORE/X or Auth server) via the
 command port, and receives/sends data directly from/to a client
 machine (which can be an actual user client machine or another
-server). Data connnections are made to the "listen" port, which has to
-be accessible from external machines. Firewalls have to treat the
-"listen" port as an FTP port.
+server). The client connnects to the "listen" port, which has to
+be accessible from external machines. The client opens additional data 
+commection(s) via the passive FTP protocol.
 
-A UFTP file transfer works as follows:
+The sequence for a UFTP file transfer is as follows:
 
  * the client (which can be an end-user client, or a service such as a UNICORE/X server)
    sends an authentication request to the Auth server (or another UNICORE/X server)
@@ -126,8 +129,8 @@ socket.  Otherwise, users logged on to the UFTPD machine can possibly
 read and write other user's files.
 =========================================================
 
-Installation and use
---------------------
+Installation and operation
+--------------------------
 
 Prerequisites
 ~~~~~~~~~~~~~
@@ -215,6 +218,11 @@ Configuration parameters
 
 The following variables can be defined in the configuration file (uftpd.conf):
 
+
+  CMD_HOST        : the interface where the server listens for control commands
+
+  CMD_PORT        : the port where the server listens for control commands
+
   SERVER_HOST     : the interface where the server listens for client data 
                     connections
 
@@ -227,18 +235,14 @@ The following variables can be defined in the configuration file (uftpd.conf):
                     a NAT firewall and the public address is different from
                     the address(es) the server has bound to
 
-  CMD_HOST        : the interface where the server listens for control commands
-
-  CMD_PORT        : the port where the server listens for control commands
-
   SSL_CONF        : File containing SSL settings for the command port
 
   ACL             : File containing the list of server DNs that are allowed 
                     access to the command port 
 
-  MAX_CONNECTIONS : the maximum number of concurrent control connections per client IP
+  MAX_CONNECTIONS : the maximum number of concurrent control connections per user (default: 16)
 
-  MAX_STREAMS     : the maximum number of parallel TCP streams per FTP session
+  MAX_STREAMS     : the maximum number of parallel TCP streams per FTP session (default: 4)
 
   PORT_RANGE      : (optional) server-side port range in the form 'lower:upper' that will be 
                     used to accept data connections. By default, any free ports will be used.
@@ -280,6 +284,7 @@ list (ACL) file is used.
 In production settings where users can log in to the UFTPD server
 machine, SSL MUST be enabled to prevent unauthorized data access!
 
+
 [NOTE] .IMPORTANT SECURITY NOTE
 ========================================================= 
 Without SSL enabled, users logged in to the UFTPD server can
@@ -306,7 +311,8 @@ truststore=path/to/ca-cert-file.pem
 If the +credential.path+ property is NOT set, SSL will be disabled.
 
 
-[NOTE] .Backwards (in)compatibility to previous versions
+[NOTE] 
+.Backwards (in)compatibility to previous versions
 ========================================================= 
 UFTPD 2.x SSL config is NOT supported
 
@@ -325,9 +331,7 @@ should be allowed access.
 The "ACL" setting in +CONF/uftpd.conf+ is used to specify the location of the ACL file
 
 ------------
-
 export ACL=conf/uftpd.acl
-
 -------------
 
 The default ACL contains the certificate DN of the UNICORE/X server from the UNICORE 
@@ -384,18 +388,18 @@ UFTPD accordingly.
 For example, in +uftpd.conf+ :
 
 ------------
-export PORT_RANGE=21000:21050
+export PORT_RANGE=21000:21010
 -------------
 
 and the iptables rule
 
 -------------
-iptables -A INPUT -p tcp -m tcp --dport 21000:21050 -j ACCEPT
+iptables -A INPUT -p tcp -m tcp --dport 21000:21010 -j ACCEPT
 -------------
 
-would allow incoming data connections on ports 21000 to 21050. 
+would allow incoming data connections on ports 21000 to 21010. 
 
-A fairly small range is usually enough, since these are server ports.
+A fairly small range (e.g. 10 ports) is usually enough, since these are server ports.
 
 Logging
 ~~~~~~~
@@ -405,7 +409,7 @@ By default, UFTPD writes to syslog, and you can use 'journalctl' to read log mes
 To print logging output to stdout, set "export LOG_SYSLOG=false" in the +uftpd.conf+ file.
 
 
-UNICORE Integration
+UNICORE integration
 -------------------
 
 Please refer to the UNICORE/X manual for detailed information on how to configure 
@@ -415,6 +419,6 @@ UFTP based data access and data transfer.
 Testing the UFTPD server
 ------------------------
 
-You should use the 'uftp' client to run performance tests, which contains
+You should use the 'uftp' client to run tests, which contains
 many options such as the number of concurrent FTP connections, and can
 use /dev/null and /dev/zero as data source/sink.

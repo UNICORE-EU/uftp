@@ -37,7 +37,7 @@ def setup_config(config):
     config['SSL_CONF'] = os.getenv("SSL_CONF", None)
     config['ACL'] = os.getenv("ACL", "conf/uftpd.acl")
     config['uftpd.acl'] = []
-    config['MAX_STREAMS'] = int(os.getenv("MAX_STREAMS", "2"))
+    config['MAX_STREAMS'] = int(os.getenv("MAX_STREAMS", "4"))
     config['MAX_CONNECTIONS'] = int(os.getenv("MAX_CONNECTIONS", "16"))
     config['UFTP_KEYFILES'] = os.getenv("UFTP_KEYFILES", ".ssh/authorized_keys:.uftp/authorized_keys").split(":")
     config['UFTP_NOWRITE'] = os.getenv("UFTP_NOWRITE", ".ssh/authorized_keys").split(":")
@@ -167,34 +167,24 @@ def cleanup(config, LOG):
                         if time.time() > expires:
                             LOG.info("Removing expired job from '%s'" % user)
                             del job_map[key]
-                            decrement_job_counter(config, user, LOG)
+                            config['_JOB_COUNTER'][user].decrement()
                     else:
                         for pid in pids[:]:
                             (_pid, _status) = os.waitpid(pid, os.WNOHANG)
                             if _pid!=0:
                                 pids.remove(pid)
-                                decrement_job_counter(config, user, LOG)
+                                config['_JOB_COUNTER'][user].decrement()
                         if len(pids)==0:
                             LOG.info("Processing request for '%s' finished." % user)
                             del job_map[key]
             except Exception as e:
                 LOG.error(e)
         time.sleep(5)
-
-def decrement_job_counter(config, user, LOG):
-    user_job_count = config['_JOB_COUNTER'][user]
-    num = user_job_count.decrement()
-    LOG.debug("Active sessions for '%s': %s" % (user, num))    
-                                    
+                             
 def process(cmd_server, config, LOG):
     """
     Command processing loop. Reads commands from cmd socket and invokes the
     appropriate command.
-
-        Arguments:
-          connector: connection to the auth server
-          config: configuration (dictionary)
-          LOG: logger object
     """
     functions = init_functions()
 

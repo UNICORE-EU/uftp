@@ -26,7 +26,7 @@ export SERVER_PORT := 54434
 export CMD_PORT := 54435
 
 # by default, test and build everything
-default: test packages
+default: test all
 
 test: init runtest
 
@@ -45,7 +45,7 @@ $(TESTS):
 #
 # documentation
 #
-DOCOPTS=-Ddocman.enabled -Ddoc.relversion=${DOCVERSION} -Ddoc.compversion=${DOCVERSION} -Ddoc.src=docs/manual.txt -Ddoc.target=pyuftpd-manual
+DOCOPTS=-Ddocman.enabled -Ddoc.relversion=${DOCVERSION} -Ddoc.compversion=${DOCVERSION} -Ddoc.src=docs/uftpd-manual.txt -Ddoc.target=uftpd-manual
 
 doc-generate:
 	mkdir -p target
@@ -53,11 +53,11 @@ doc-generate:
 	ant -f target/docman/doc-build.xml -lib target/package/tools ${DOCOPTS} doc-all
 
 doc-deploy:
-	ssh bschuller@unicore-dev.zam.kfa-juelich.de sudo rm -rf /var/www/documentation/pyuftpd-${DOCVERSION}
-	ssh bschuller@unicore-dev.zam.kfa-juelich.de sudo mkdir /var/www/documentation/pyuftpd-${DOCVERSION}
-	ssh bschuller@unicore-dev.zam.kfa-juelich.de mkdir -p pyuftpd-${DOCVERSION}
-	scp target/site/* bschuller@unicore-dev.zam.kfa-juelich.de:pyuftpd-${DOCVERSION}
-	ssh bschuller@unicore-dev.zam.kfa-juelich.de sudo mv pyuftpd-${DOCVERSION}/* /var/www/documentation/pyuftpd-${DOCVERSION}
+	ssh bschuller@unicore-dev.zam.kfa-juelich.de sudo rm -rf /var/www/documentation/uftpd-${DOCVERSION}
+	ssh bschuller@unicore-dev.zam.kfa-juelich.de sudo mkdir /var/www/documentation/uftpd-${DOCVERSION}
+	ssh bschuller@unicore-dev.zam.kfa-juelich.de mkdir -p uftpd-${DOCVERSION}
+	scp target/site/* bschuller@unicore-dev.zam.kfa-juelich.de:uftpd-${DOCVERSION}
+	ssh bschuller@unicore-dev.zam.kfa-juelich.de sudo mv uftpd-${DOCVERSION}/* /var/www/documentation/uftpd-${DOCVERSION}
 
 doc: doc-generate doc-deploy
 
@@ -76,10 +76,6 @@ prepare:
 	sed -i "s/MY_VERSION = \"DEV\"/MY_VERSION = \"${VERSION}\"/" build/lib/UFTPD.py
 	find build | grep .svn | xargs rm -rf
 
-#
-# generic rules for building deb and prm
-#
-
 deb: prepare
 	cd build && ${MVN} package -Ppackman -Dpackage.type=deb -Ddistribution=Debian -Dpackage.version=${VERSION} -Dpackage.release=${RELEASE}
 	cp build/target/*.deb target/
@@ -92,16 +88,8 @@ tgz: prepare
 	cd build && ${MVN} package -Ppackman -Dpackage.type=bin.tar.gz -Dpackage.version=${VERSION} -Dpackage.release=${RELEASE}
 	cp build/target/*.tar.gz target/
 
-
-#
-# attempts to build all packages
-#
 all: tgz deb rpm
 	echo "Done."
-
-#
-# clean
-#
 
 clean:
 	@find -name "*~" -delete

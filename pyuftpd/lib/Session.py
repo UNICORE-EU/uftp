@@ -65,7 +65,6 @@ class Session(object):
         for f in job.get("excludes", "").split(":"):
             if len(f)>0:
                 self.excludes.append(f)
-        
         for f in job.get("includes", "").split(":"):
             if len(f)>0:
                 self.includes.append(f)
@@ -137,8 +136,7 @@ class Session(object):
         return p
 
     def shutdown(self, params):
-        if self.data:
-            self.data.close()
+        self.close_data()
         return Session.ACTION_END
 
     def syst(self, params):
@@ -417,7 +415,6 @@ class Session(object):
 
     def open_data_socket(self):
         if self.num_streams == 1:
-            self.LOG.debug("Opening normal data connector")
             self.BUFFER_SIZE = 65536
             if self.key is not None:
                 import CryptUtil
@@ -425,7 +422,6 @@ class Session(object):
             else:
                 self.data = self.data_connectors[0]
             if self.compress:
-                self.LOG.debug("Enabling compression")
                 self.data = GzipConnector.GzipConnector(self.data)
         else:
             self.LOG.debug("Opening parallel data connector with <%d> streams" % self.num_streams)
@@ -511,7 +507,10 @@ class Session(object):
 
     def close_data(self):
         self.num_streams = 1
-        self.data.close()
+        try:
+            self.data.close()
+        except:
+            pass
         self.data_connectors = []
         self.data = None
 
@@ -564,7 +563,6 @@ class Session(object):
         else:
             unit = "MB/sec"
             rate = int(rate / 1000)
-
         msg = "USAGE [%s] [%s bytes] [%s %s] [%s]" % (what, size, rate, unit, self.job['user'])
         self.LOG.info(msg)
 
@@ -582,8 +580,6 @@ class Session(object):
         ))
         while True:
             msg = self.control.read_line()
-            if msg.startswith("BYE") or msg.startswith("QUIT"):
-                break
             params = None
             tokens = msg.split(" ", 1)
             cmd = tokens[0]

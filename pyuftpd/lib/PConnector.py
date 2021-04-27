@@ -5,6 +5,10 @@ import Connector, Log
 class PConnector(object):
     """
         Multi-stream connector that writes/reads multiple TCP (data)streams
+        
+        written to be compatible with the JPARSS library, 
+        Copyright (c) 2001 Southeastern Universities Research Association,
+        Thomas Jefferson National Accelerator Facility
     """
 
     def __init__(self, connectors: Connector, LOG: Log, key=None, compress=False):
@@ -26,7 +30,6 @@ class PConnector(object):
         self.num_streams = len(self._connectors)
         if compress:
             import GzipConnector
-            self.LOG.debug("Enabling compression")
             for i in range(0, self.num_streams):
                 self._inputs[i] = GzipConnector.GzipReader(self._inputs[i])
                 self._outputs[i] = GzipConnector.GzipWriter(self._outputs[i])
