@@ -1,7 +1,7 @@
 from fnmatch import fnmatch
 import os.path
 from sys import maxsize
-from time import sleep, time
+from time import mktime, sleep, strptime, time
 
 from Connector import Connector
 from FileInfo import FileInfo
@@ -106,6 +106,7 @@ class Session(object):
             "RETR": self.retr,
             "ALLO": self.allo,
             "STOR": self.stor,
+            "MFMT": self.set_file_mtime,
             "TYPE": self.switch_type,
             "KEEP-ALIVE": self.set_keep_alive,
         }
@@ -401,7 +402,17 @@ class Session(object):
         self.file_path = path
         self.control.write_message("150 OK")
         return Session.ACTION_STORE
-    
+
+    def set_file_mtime(self, params):
+        self.assert_permission(Session.MODE_WRITE)
+        mtime, target = params.split(" ", 2)
+        path = self.makeabs(target)
+        self.assert_access(path)
+        st_time = mktime(strptime(mtime, "%Y%m%d%H%M%S"))
+        os.utime(path, (st_time,st_time))
+        self.control.write_message("213 Modify=%s %s" % (mtime, target))
+        return Session.ACTION_CONTINUE
+
     def switch_type(self, params):
         if "ARCHIVE"==params.strip():
             self.archive_mode = True

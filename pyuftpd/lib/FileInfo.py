@@ -45,7 +45,7 @@ class FileInfo(object):
     def as_mlist(self):
         st = os.stat(self.path)
         return "size=%s;modify=%s;type=%s;perm=%s %s" % (st.st_size,
-           strftime("%Y%m%H%M%S", localtime(st.st_mtime)),
+           strftime("%Y%m%d%H%M%S", localtime(st.st_mtime)),
            self._type(),
            self._perm(),
            str(self.path)
