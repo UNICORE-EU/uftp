@@ -28,7 +28,7 @@ def initialize(config, LOG: Log):
     cache_ttl = config.get('uftpd.userCacheTtl', 600)
     use_id = config.get('uftpd.use_id_to_resolve_gids', False)
     if use_id:
-        LOG.info("Groups will be resolved via 'id -G <username>")
+        LOG.info("Groups will be resolved via 'id -G <username>'")
 
     user_cache = UserCache.UserCache(cache_ttl, LOG, use_id)
     config['uftpd.user_cache'] = user_cache
@@ -92,14 +92,13 @@ def get_supplementary_groups(requested_groups, primary, user, config, LOG):
                 for d in default_gids:
                     sup_gids[d] = True
         else:
-            LOG.debug("Checking group %s" % g)
             tmp = user_cache.get_gid_4group(g)
             if tmp == -1:
                 if fail_on_invalid_gids:
                     raise RuntimeError("Attempt to run a task with an unknown "
                                        "supplementary group %s" % g)
                 else:
-                    LOG.debug("XNJS requested supplementary "
+                    LOG.debug("Requested supplementary "
                               "group %s, but it is not available on the OS. "
                               "Ignoring." % g)
                     continue
@@ -182,7 +181,7 @@ def become_user(user, requested_groups, config, LOG: Log):
     # when there is no supplementary groups and only one gid (the primary gid)
     # was given then the function would result in leaving the current
     # process supplementary groups (i.e. root's). So don't change it!
-
+    LOG.debug("Groups: primary %s supplementary %s"%(new_gid, new_gids))
     os.setgid(new_gid)
     os.setgroups(new_gids)
     os.setegid(new_gid)

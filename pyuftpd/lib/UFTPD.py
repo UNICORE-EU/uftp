@@ -42,6 +42,7 @@ def setup_config(config):
     config['UFTP_KEYFILES'] = os.getenv("UFTP_KEYFILES", ".ssh/authorized_keys:.uftp/authorized_keys").split(":")
     config['UFTP_NOWRITE'] = os.getenv("UFTP_NOWRITE", ".ssh/authorized_keys").split(":")
     config['uftpd.enforce_os_gids'] =  os.getenv("UFTP_ENFORCE_OS_GIDS", "true").lower() in [ "true", "yes", "1" ]
+    config['uftpd.use_id_to_resolve_gids'] = True
     config['LOG_VERBOSE'] = os.getenv("LOG_VERBOSE", "false").lower() in [ "true", "yes", "1" ]
     config['LOG_SYSLOG'] = os.getenv("LOG_SYSLOG", "true").lower() in [ "true", "yes", "1" ]
     config['DISABLE_IP_CHECK'] = os.getenv("DISABLE_IP_CHECK", "false").lower() in [ "true", "yes", "1" ]
@@ -143,7 +144,12 @@ def add_job(request, config, LOG):
     if job_map.get(secret, None) is not None:
         raise Exception("Duplicate secret - this is not allowed.")
     group = request.get('group', "NONE")
-    request['group'] = group.split(":")
+    groups = group.split(":")
+    if len(groups)==1:
+        # only primary  group requested - make sure
+        # we add all the user's supplementary groups
+        groups.append("DEFAULT_GID")
+    request['group'] = groups
     request['_LOCK'] = threading.Lock()
     request['_EXPIRES'] = int(time.time())+_REQUEST_LIFETIME
     request['_PIDS'] = []
