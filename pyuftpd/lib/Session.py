@@ -593,6 +593,8 @@ class Session(object):
         ))
         while True:
             msg = self.control.read_line()
+            if len(msg.strip())==0:
+                continue
             params = None
             tokens = msg.split(" ", 1)
             cmd = tokens[0]
