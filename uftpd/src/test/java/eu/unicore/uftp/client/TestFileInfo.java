@@ -34,4 +34,5 @@ public class TestFileInfo {
 		assertFalse(fi.isDirectory());
 		System.out.println(fi);
 	}
+
 }

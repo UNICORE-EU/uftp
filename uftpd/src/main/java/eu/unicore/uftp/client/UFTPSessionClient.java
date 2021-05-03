@@ -41,10 +41,10 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 
 	private static final Logger logger = Utils.getLogger(Utils.LOG_CLIENT, UFTPSessionClient.class);
 	 
-	private final byte[] buffer = new byte[BUFFSIZE];
+	protected final byte[] buffer = new byte[BUFFSIZE];
 	private String commandFile;
 	private File baseDirectory;
-	private boolean keepAlive = false;
+	protected boolean keepAlive = false;
 
 	/**
 	 * create a new UFTP session client
@@ -131,14 +131,7 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 	 */
 	public void get(String remoteFile, OutputStream localTarget)
 			throws IOException {
-		checkConnected();
-		openDataConnection();
-		long size = sendRetrieveCommand(remoteFile);
-		if(progressListener!=null && progressListener instanceof UFTPProgressListener2){
-			((UFTPProgressListener2)progressListener).setTransferSize(size);
-		}
-		prepareGet(localTarget);
-		moveData(size);
+		get(remoteFile, -1, -1, localTarget);
 	}
 
 	/**
@@ -151,17 +144,17 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 	 * @return actual number of bytes read
 	 * @throws IOException
 	 */
-	public long get(String remoteFile, long offset, long length, OutputStream localTarget)
+	public void get(String remoteFile, long offset, long length, OutputStream localTarget)
 			throws IOException {
 		checkConnected();
 		openDataConnection();
-		sendRangeCommand(offset, length);
+		if(offset>=0 && length>0) sendRangeCommand(offset, length);
 		long size = sendRetrieveCommand(remoteFile);
 		if(progressListener!=null && progressListener instanceof UFTPProgressListener2){
 			((UFTPProgressListener2)progressListener).setTransferSize(size);
 		}
 		prepareGet(localTarget);
-		return moveData(size);
+		moveData(size);
 	}
 
 	/**
@@ -174,12 +167,12 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 	 * @return the actual number of bytes read
 	 * @throws IOException
 	 */
-	public long put(String remoteFile, long size, Long offset, InputStream localSource) throws IOException {
+	public void put(String remoteFile, long size, Long offset, InputStream localSource) throws IOException {
 		checkConnected();
 		openDataConnection();
 		sendStoreCommand(remoteFile, size, offset);
 		preparePut(localSource);
-		return moveData(size);
+		moveData(size);
 	}
 
 	/**
@@ -218,12 +211,12 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 	 * 
 	 * @throws IOException
 	 */
-	public long append(String remoteFile, long size, InputStream localSource) throws IOException {
+	public void append(String remoteFile, long size, InputStream localSource) throws IOException {
 		checkConnected();
 		openDataConnection();
 		sendAppendCommand(remoteFile, size);
 		preparePut(localSource);
-		return moveData(size);
+		moveData(size);
 	}
 	
 	/**
@@ -417,11 +410,11 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 		return baseDirectory;
 	}
 
-	private long moveData(long maxBytes) throws IOException {
-		return moveData(maxBytes, maxBytes<0);
+	protected void moveData(long maxBytes) throws IOException {
+		moveData(maxBytes, maxBytes<0);
 	}
 
-	private long moveData(long maxBytes, boolean forceCloseData) throws IOException {
+	protected void moveData(long maxBytes, boolean forceCloseData) throws IOException {
 		long time = System.currentTimeMillis();
 		boolean controlRate = bandwidthLimit>0;
 		int n;
@@ -473,8 +466,6 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 			closed = true;
 		}
 		if(closed || !streamingMode)client.readControl();
-		
-		return total;
 	}
 	
 
@@ -488,7 +479,7 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 	 * @param total - total bytes transferred
 	 * @param startTime - start time of the transfer
 	 */
-	private void controlRate(long total, long startTime) throws InterruptedException {
+	protected void controlRate(long total, long startTime) throws InterruptedException {
 		//all rates are bytes/second
 
 		// this is not intended to be high-precision

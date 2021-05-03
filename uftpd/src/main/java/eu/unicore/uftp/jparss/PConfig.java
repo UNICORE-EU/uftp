@@ -43,6 +43,7 @@
  */
 package eu.unicore.uftp.jparss;
 
+import eu.unicore.uftp.dpc.Utils;
 
 public class PConfig {
 	/**
@@ -67,10 +68,10 @@ public class PConfig {
 
 	static {
 		try{
-			usethreads = Boolean.parseBoolean(System.getenv().getOrDefault("UFTP_jparss_usethreads", "true"));
+			usethreads = Boolean.parseBoolean(Utils.getProperty("UFTP_jparss_usethreads", "true"));
 		}catch(Exception e) {}
 		try{
-			debug = Boolean.parseBoolean(System.getenv().getOrDefault("UFTP_jparss_debug", "false"));
+			debug = Boolean.parseBoolean(Utils.getProperty("UFTP_jparss_debug", "false"));
 		}catch(Exception e) {}
 	}
 

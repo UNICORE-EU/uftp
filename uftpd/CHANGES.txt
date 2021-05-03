@@ -12,6 +12,7 @@ UFTP 2.10.0 (released 2021 dd yyyy)
    when still active
  - fix: handling of absolute vs relative directories, allow 
    creating sessions with a fixed base directory
+ - fix: wrong format string for MFMT
 
 UFTP 2.9.2 (released Nov 16 2020)
 ---------------------------------

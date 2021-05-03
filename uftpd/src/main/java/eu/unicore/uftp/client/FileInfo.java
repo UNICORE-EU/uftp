@@ -216,11 +216,11 @@ public class FileInfo {
 	}
 
 	public static String toTimeVal(long time){
-		return new SimpleDateFormat("yyyyMMddhhmmss").format(new Date(time));
+		return new SimpleDateFormat("yyyyMMddHHmmss").format(new Date(time));
 	}
 
 	public static long toTime(String timeVal) throws ParseException {
-		return new SimpleDateFormat("yyyyMMddhhmmss").parse(timeVal).getTime();
+		return new SimpleDateFormat("yyyyMMddHHmmss").parse(timeVal).getTime();
 	}
 
 	/*
