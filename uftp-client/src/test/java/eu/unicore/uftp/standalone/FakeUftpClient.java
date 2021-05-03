@@ -118,9 +118,8 @@ public class FakeUftpClient extends UFTPSessionClient {
 	}
 
 	@Override
-	public long put(String remoteFile, long size, Long offset, InputStream localSource) throws IOException{
+	public void put(String remoteFile, long size, Long offset, InputStream localSource) throws IOException{
 		put(remoteFile, size, localSource);
-		return size;
 	}
 
 	@Override
@@ -132,11 +131,10 @@ public class FakeUftpClient extends UFTPSessionClient {
 	}
 
 	@Override
-	public long get(String remoteFile, long offset, long length, OutputStream localTarget) throws IOException {
+	public void get(String remoteFile, long offset, long length, OutputStream localTarget) throws IOException {
 		System.out.println("get from " + remoteFile + " offset, length");
 		if (!fileExist(remoteFile)) throw new IOException(remoteFile+" does not exist");
 		localTarget.write(remoteFiles.get(remoteFile).getBytes());
-		return length;
 	}
 
 	@Override
