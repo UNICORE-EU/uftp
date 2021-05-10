@@ -61,6 +61,7 @@ class Session(object):
         self.archive_mode = False
         self.num_streams = 1
         self.max_streams = job.get('MAX_STREAMS', 1)
+        self.mlsd_directory = None
         for f in job['UFTP_NOWRITE']:
             if len(f)>0:
                 self.excludes.append(os.environ['HOME'] + "/" + f)
@@ -97,9 +98,10 @@ class Session(object):
             "RMD": self.rmdir,
             "PASV": self.pasv,
             "EPSV": self.epsv,
-            "LIST": self.do_list,
+            "LIST": self.list,
             "STAT": self.stat,
             "MLST": self.mlst,
+            "MLSD": self.mlsd,
             "SIZE": self.size,
             "RANG": self.rang,
             "REST": self.rest,
@@ -228,6 +230,9 @@ class Session(object):
         return self.add_data_connection()
 
     def add_data_connection(self, epsv=True):
+        if len(self.data_connectors) == self.num_streams:
+            self.LOG.debug("Closing (forgotten?) data connection(s)")
+            self.close_data()
         my_host = self.job['SERVER_HOST']
         with Server.setup_data_server_socket(my_host, self.portrange) as server_socket:
             my_port = server_socket.getsockname()[1]
@@ -252,7 +257,7 @@ class Session(object):
         self.reset_range()        
         self.control.write_message("226 File transfer successful")
 
-    def do_list(self, params):
+    def list(self, params):
         self.assert_permission(Session.MODE_INFO)
         path = "."
         if params:
@@ -261,29 +266,47 @@ class Session(object):
         if path=="-a":
             path = "."
             linux_mode = True
-        self.LOG.debug("Listing %s" % path)
         path = self.makeabs(path)
+        return self.send_directory_listing(path, False, linux_mode)
+
+    def mlsd(self, params):
+        self.assert_permission(Session.MODE_INFO)
+        if params:
+            path = params
+        else:
+            path = "."
+        path = self.makeabs(path)
+        return self.send_directory_listing(path, mlsd=True)
+
+    def send_directory_listing(self, path, mlsd=False, linux_mode=False):
+        fi = FileInfo(path)
+        if not fi.exists() or not fi.is_dir():
+            self.control.write_message("500 Directory does not exist.")
+            return Session.ACTION_CLOSE_DATA
         try:
             file_list = os.listdir(path)
         except Exception as e:
             self.control.write_message("500 Error listing <%s>: %s"% (path, str(e)))
             return Session.ACTION_CLOSE_DATA
-        
         self.control.write_message("150 OK")
-        for f in file_list:
+        for p in file_list:
             try:
-                fi = FileInfo(os.path.join(path,f))
-                if linux_mode:
+                fi = FileInfo(os.path.normpath(os.path.join(path,p)))
+                if mlsd:
+                    self.data.write_message(fi.as_mlist())
+                elif linux_mode:
                     self.data.write_message(fi.list())
                 else:
                     self.data.write_message(fi.simple_list())
             except Exception as e:
-                self.LOG.debug("Error listing %s : %s" % (f, str(e)) )
+                self.LOG.debug("Error listing %s : %s" % (p, str(e)) )
         self.post_transfer()
         return Session.ACTION_CLOSE_DATA
 
     def stat(self, params):
         self.assert_permission(Session.MODE_INFO)
+        if params is None:
+            params = ""
         tokens = params.split(" ", 1)
         asFile = tokens[0]!="N"
         if len(tokens)>1:
@@ -311,6 +334,8 @@ class Session(object):
 
     def mlst(self,params):
         self.assert_permission(Session.MODE_INFO)
+        if params is None:
+            params = ""
         path = self.makeabs(params)
         fi = FileInfo(path)
         if not fi.exists():
@@ -478,12 +503,11 @@ class Session(object):
             reader = self.get_reader()
             start_time = int(time())
             total = self.copy_data(reader, f, self.number_of_bytes)
-            self.post_transfer()
-            if not self.KEEP_ALIVE:
-                self.close_data()
-            duration = int(time()) - start_time
-            self.log_usage(False, total, duration)
-
+        if not self.KEEP_ALIVE:
+            self.close_data()
+        duration = int(time()) - start_time
+        self.post_transfer()
+        self.log_usage(False, total, duration)
 
     def recv_archive_data(self):
         import tarfile

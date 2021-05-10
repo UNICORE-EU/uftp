@@ -3,6 +3,14 @@ Changelog
 The UFTP issue tracker is at
 https://sourceforge.net/p/unicore/uftp-issues
 
+UFTPD 3.0.1 (released May 10, 2021)
+----------------------------------
+ - fix: accept and ignore empty lines on command channel
+ - fix: implement MLSD command
+ - fix: close existing / "forgotten" data connection when
+   client opens a new one
+ - fix: date format in MLST and MLSD replies
+
 UFTPD 3.0.0 (released Apr 27, 2021)
 ----------------------------------
  - first release of the Python implementation

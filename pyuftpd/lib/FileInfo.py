@@ -44,11 +44,15 @@ class FileInfo(object):
 
     def as_mlist(self):
         st = os.stat(self.path)
+        if self.path=="/":
+            p = self.path
+        else:
+            p = basename(self.path)
         return "size=%s;modify=%s;type=%s;perm=%s %s" % (st.st_size,
            strftime("%Y%m%d%H%M%S", localtime(st.st_mtime)),
            self._type(),
            self._perm(),
-           str(self.path)
+           p
         )
 
     def list(self):
