@@ -55,6 +55,16 @@
       <artifactId>junit</artifactId>
     </dependency>
     <dependency>
+      <groupId>eu.unicore.services</groupId>
+      <artifactId>use-rest</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>eu.unicore.services</groupId>
+      <artifactId>use-aip</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>org.json</groupId>
       <artifactId>json</artifactId>
       <version>20090211</version>

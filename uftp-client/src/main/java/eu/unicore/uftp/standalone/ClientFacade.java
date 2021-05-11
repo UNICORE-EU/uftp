@@ -114,7 +114,7 @@ public class ClientFacade {
 	 * @throws Exception
 	 */
 	public UFTPSessionClient doConnect(String uri) throws Exception {
-		logger.debug("Connecting to " + uri);
+		logger.debug("Connecting to {}", uri);
 		AuthResponse response = authenticate(uri);
 		UFTPSessionClient sc = factory.getUFTPClient(response);
 		sc.setNumConnections(streams);
@@ -192,7 +192,7 @@ public class ClientFacade {
 			}
 		}
 
-		if(logger.isDebugEnabled())logger.debug("cp " + source + " " + destination);
+		logger.debug("cp {} -> {}", source, destination);
 		if (ConnectionInfoManager.isLocal(source) && connectionManager.isSameServer(destination)) {
 			startUpload(source, destination, policy);
 			return;
@@ -315,7 +315,7 @@ public class ClientFacade {
 	}
 
 	public RsyncStats sync(String master, String slave) throws Exception{
-		logger.debug("sync " + master+ "(MASTER) -> " + slave + "(SLAVE)");
+		logger.debug("sync {} (MASTER) -> {} (SLAVE)", master, slave);
 		RsyncStats stats = null;
 		if (!connected) {
 			if (ConnectionInfoManager.isRemote(master) && ConnectionInfoManager.isLocal(slave)) {
@@ -334,7 +334,7 @@ public class ClientFacade {
 				throw new IOException("Need one remote and one local file for sync.");
 			}
 		}
-		logger.info("Statistics : "+stats);
+		logger.info("Statistics : {}", stats);
 		return stats;
 	}
 
@@ -351,7 +351,7 @@ public class ClientFacade {
 	
 
 	private void uploadFile(String local, String remotePath, ClientPool pool) throws FileNotFoundException, URISyntaxException, IOException {
-		logger.debug("Uploading file " + local + " to " + remotePath);
+		logger.debug("Uploading file {} -> {}", local, remotePath);
 		ProgressBar pb = null;
 		String dest = getFullRemoteDestination(local, remotePath);
 		if(archiveMode) {
@@ -393,11 +393,11 @@ public class ClientFacade {
 						}
 						size = file.length() - offset;
 						if(size>0){
-							logger.debug("Resuming transfer, already have <"+offset+"> bytes");
+							logger.debug("Resuming transfer, already have <{}> bytes", offset);
 							pool.put(file, dest, size, offset, preserveAttributes);
 						}
 						else{
-							logger.debug("Nothing to do for <"+dest+">");
+							logger.debug("Nothing to do for <{]>", dest);
 						}
 					}
 					else{
@@ -452,7 +452,7 @@ public class ClientFacade {
 	private void downloadFile(String remotePath, String local, ClientPool pool) 
 			throws FileNotFoundException, URISyntaxException, IOException {
 		String dest = getFullLocalDestination(remotePath, local);
-		logger.debug("Downloading file " + remotePath + " to " + dest);
+		logger.debug("Downloading file {} -> {}", remotePath, dest);
 
 		File file = new File(dest);
 		OutputStream fos = null;
@@ -488,7 +488,7 @@ public class ClientFacade {
 						fos = Channels.newOutputStream(raf.getChannel());
 						
 						if(length>0){
-							logger.debug("Resuming transfer, already have <"+start+"> bytes");
+							logger.debug("Resuming transfer, already have <{}> bytes", start);
 							if(verbose){
 								pb = new ProgressBar(local,length);
 								sc.setProgressListener(pb);
@@ -496,7 +496,7 @@ public class ClientFacade {
 							pool.get(remotePath, dest, fi, start, length, preserveAttributes);
 						}
 						else{
-							logger.debug("Nothing to do for "+remotePath);
+							logger.debug("Nothing to do for {}",remotePath);
 						}
 					}
 					else{
@@ -531,7 +531,7 @@ public class ClientFacade {
 	public void downloadFileChunk(String remotePath, String dest, long start, long end, UFTPSessionClient sc, FileInfo fi)
 			throws FileNotFoundException, URISyntaxException, IOException{
 		if(logger.isDebugEnabled()){
-			logger.debug("Downloading ["+start+":"+end+"] from " + remotePath + " to " + dest);
+			logger.debug("Downloading [{}:{}] from {} to {}", start, end, remotePath, dest);
 		}
 		File file = new File(dest);
 		OutputStream fos = null;

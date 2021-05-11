@@ -107,13 +107,14 @@ public class ConnectionInfoManager {
 
     
     void setCommonParameters(URI localUri, Map<String, String> parameters) {
-        parameters.put("scheme", localUri.getScheme());
+        String scheme = localUri.getScheme();
+    	parameters.put("scheme", scheme);
         parameters.put("host", localUri.getHost());
         int port = localUri.getPort() != -1 ? localUri.getPort() : defaultPort;
         parameters.put("port", String.valueOf(port));
         String path = localUri.getPath();
         String[]paths=(localUri.getPath().split("\\:",2));
-        String auth = "https://"+localUri.getHost()+":"+port;
+        String auth = scheme+"://"+localUri.getHost()+":"+port;
         if(paths.length>1){
         	path=paths[1];
         }

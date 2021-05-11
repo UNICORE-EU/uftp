@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+
+If matching mode is set in attribute source configuration to 'regexp' 
+then you can use Java regular expressions as <entry>'s 'key' values.  
+
+You can use the following attributes: 
+
+xlogin, role, group, supplementaryGroups, addOsGroups and queue.
+
+Attributes with those names (case insensitive) are handled as special UNICORE attributes 
+(e.g. xlogin is used to provide available local OS user names for the client). 
+Other attributes are treated as authorization attributes and are presented to XACML 
+authorization stack. All such authorization attributes are assumed to be subject attributes
+of XACML type String.
+-->
+
+
+<fileAttributeSource>
+
+   <entry key="CN=Demo User,O=UNICORE,C=EU">
+      <attribute name="role">
+         <value>user</value>
+      </attribute>
+      <attribute name="xlogin">
+         <value>nobody</value>
+      </attribute>
+      <attribute name="group">
+         <value>users</value>
+         <value>project1</value>	
+         <value>hpc1</value>
+      </attribute>
+      <!-- 
+      additional (optional) attributes 
+      can be added for each UFTPD server
+      -->
+      <attribute name="uftpd.TEST.xlogin">
+         <value>user1</value>
+      </attribute>
+      <attribute name="uftpd.TEST.group">
+         <value>hpc1</value>
+      </attribute>
+      <!-- rate limit is bytes per second -->
+      <attribute name="uftpd.TEST.rateLimit">
+         <value>200M</value>
+      </attribute>
+   </entry>
+
+   <entry key="CN=Other User,O=Testing">
+      <attribute name="role">
+         <value>user</value>
+      </attribute>
+      <attribute name="xlogin">
+         <value>nobody</value>
+      </attribute>
+   </entry>
+
+
+</fileAttributeSource>

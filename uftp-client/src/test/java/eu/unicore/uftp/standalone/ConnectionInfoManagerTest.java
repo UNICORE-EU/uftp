@@ -18,7 +18,7 @@ import eu.unicore.uftp.authserver.authenticate.UsernamePassword;
 public class ConnectionInfoManagerTest {
 
     ConnectionInfoManager instance;
-    final String scheme = "uftp";
+    final String scheme = "http";
     final String userName = "user";
     final String password = "pass";
     final String host = "example.server.com";
@@ -27,7 +27,7 @@ public class ConnectionInfoManagerTest {
     final String uriFormatingString = "%s://%s:%s@%s:%d/UFTP:%s";
     String mainUri = String.format(uriFormatingString, scheme, userName, password, host, port, path);
 
-    private static final String remoteUri = "uftp://localhost/UFTP:/path";
+    private static final String remoteUri = "http://localhost/UFTP:/path";
     private static final String localUri = "/home/jj/path";
     private static final String notUri = "fda:/aa@d";
 
@@ -38,25 +38,21 @@ public class ConnectionInfoManagerTest {
 
     @Test
     public void testGetAuthURL() {
-        System.out.println("getAuthURL");
         String result = instance.getAuthURL();
-        assertEquals("https://"+host+":"+port+"/UFTP", result);
+        assertEquals(scheme+"://"+host+":"+port+"/UFTP", result);
     }
     
     @Test
     public void testGetAuthURL2() throws Exception {
-        System.out.println("getAuthURL2");
         mainUri = String.format(uriFormatingString, scheme, userName, password, host, port, path);
-        System.out.println(mainUri);
         instance = new ConnectionInfoManager(new UsernamePassword(userName, password));
         instance.init(mainUri);
         String result = instance.getAuthURL();
-        assertEquals("https://"+host+":"+port+"/UFTP", result);
+        assertEquals(scheme+"://"+host+":"+port+"/UFTP", result);
     }
 
     @Test
     public void testGetPath() {
-        System.out.println("getPath");
         String result = instance.getPath();
         assertEquals(path, result);
     }
@@ -76,21 +72,18 @@ public class ConnectionInfoManagerTest {
     
     @Test
     public void testGetPort() {
-        System.out.println("getPort");
         int result = instance.getPort();
         assertEquals(port, result);
     }
 
     @Test
     public void testGetScheme() {
-        System.out.println("getScheme");
         String result = instance.getScheme();
         assertEquals(scheme, result);
     }
 
     @Test
     public void testSameServer() {
-        System.out.println("sameUri");
         boolean result = instance.isSameServer(mainUri);
         assertTrue(result);
 
@@ -115,7 +108,6 @@ public class ConnectionInfoManagerTest {
 
     @Test
     public void testExtractConnectionParameters() throws URISyntaxException {
-        System.out.println("extractConnectionParameters");
         String uriString = remoteUri;
 
         Map<String, String> result = instance.extractConnectionParameters(uriString);
@@ -132,7 +124,6 @@ public class ConnectionInfoManagerTest {
 
     @Test
     public void testExtractDefaultPort() throws URISyntaxException {
-        System.out.println("Extract default port");
         Map<String, String> result = instance.extractConnectionParameters("uftp://localhost:666/path/to/file.dat");
         assertTrue(result.containsKey("host"));
         assertTrue(result.containsKey("path"));
@@ -143,7 +134,6 @@ public class ConnectionInfoManagerTest {
 
     @Test
     public void testIsLocal2() {
-        System.out.println("isLocal2");
         String argument = remoteUri;
 
         boolean result = ConnectionInfoManager.isLocal(argument);
@@ -156,7 +146,6 @@ public class ConnectionInfoManagerTest {
 
     @Test
     public void testWrongLocal() {
-        System.out.println("wrongLocal");
         assertFalse(ConnectionInfoManager.isLocal("http://some"));
         assertFalse(ConnectionInfoManager.isLocal("https://some"));
         assertFalse(ConnectionInfoManager.isLocal("uftp://some"));
@@ -164,7 +153,6 @@ public class ConnectionInfoManagerTest {
 
     @Test
     public void testIsRemot2e() {
-        System.out.println("isRemote");
         String argument = remoteUri;
         boolean expResult = true;
         boolean result = ConnectionInfoManager.isRemote(argument);
@@ -177,16 +165,14 @@ public class ConnectionInfoManagerTest {
     }
 
     @Test
-    public void testNonUftpRemote() {
-        System.out.println("nonUftp");
-        String argument = remoteUri.replace("uftp", "http");
+    public void testUftpRemote() {
+        String argument = remoteUri.replace("http", "uftp");
         boolean result = ConnectionInfoManager.isRemote(argument);
         assertTrue(result);
     }
 
     @Test
     public void testWrongRemote() {
-        System.out.println("wrongRemote");
         boolean result = ConnectionInfoManager.isRemote(notUri);
         assertFalse(result);
     }
