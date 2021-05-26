@@ -1,0 +1,3 @@
+# available admin actions in authserver
+
+eu.unicore.uftp.authserver.admin.ShowUserInfo

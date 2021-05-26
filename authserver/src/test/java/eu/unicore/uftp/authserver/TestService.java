@@ -2,8 +2,11 @@ package eu.unicore.uftp.authserver;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.net.InetAddress;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
@@ -13,15 +16,18 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.json.JSONObject;
-import org.junit.After;
-import org.junit.Before;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import de.fzj.unicore.wsrflite.Kernel;
+import de.fzj.unicore.wsrflite.admin.AdminAction;
+import de.fzj.unicore.wsrflite.admin.AdminActionResult;
 import de.fzj.unicore.wsrflite.server.JettyServer;
+import eu.unicore.uftp.authserver.admin.ShowUserInfo;
 import eu.unicore.uftp.authserver.authenticate.UsernamePassword;
 import eu.unicore.uftp.authserver.messages.AuthRequest;
 import eu.unicore.uftp.authserver.messages.CreateTunnelRequest;
@@ -32,10 +38,7 @@ public class TestService {
 
 	@Test
 	public void testAuthService() throws Exception {
-		Kernel k = new Kernel("src/test/resources/container.properties");
-		k.start();
-
-		//setup basic auth
+				//setup basic auth
 		String userName = "demouser";
 		String password = "test123";
 		// do a get to find the configured servers
@@ -93,25 +96,39 @@ public class TestService {
 		assertEquals("got "+response.getStatusLine(),200, status);
 		reply=IOUtils.toString(response.getEntity().getContent(), "UTF-8");
 		System.out.println("Service reply: "+reply);
-		k.shutdown();
-		stopUFTPD();
+	}
+	
+	
+	@Test
+	public void testAdminShowUserInfo() {
+		AdminAction a = new ShowUserInfo();
+		Map<String,String>params = new HashMap<>();
+		params.put("uid", System.getProperty("user.name"));
+		AdminActionResult res = a.invoke(params, k);
+		assertTrue(res.successful());
+		System.out.println(res.getMessage());
+		System.out.println(res.getResults());
 	}
 
 	protected static UFTPServer server;
 	static int cmdPort = 63321;
 	static int listenPort = 63320;
-
-	@Before
-	public void startUFTPD() throws Exception {
+	protected static Kernel k;
+	
+	@BeforeClass
+	public static void startUFTPD() throws Exception {
 		InetAddress host = InetAddress.getByName("localhost");
 		server = new UFTPServer(host, cmdPort, host, listenPort);
 		Thread serverThread = new Thread(server);
 		serverThread.start();
+		k = new Kernel("src/test/resources/container.properties");
+		k.start();
 	}
 
-	@After
-	public void stopUFTPD() throws Exception {
-		server.stop();
+	@AfterClass
+	public static void stopUFTPD() throws Exception {
+		if(server!=null)server.stop();
+		if(k!=null)k.shutdown();
 	}
 
 }

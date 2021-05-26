@@ -18,7 +18,7 @@
   <properties>
     <compiler.fork>false</compiler.fork>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <use.version>4.1.0</use.version>
+    <use.version>4.2.0-SNAPSHOT</use.version>
     <seclib.version>5.2.0</seclib.version>
   </properties>
 

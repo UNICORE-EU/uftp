@@ -10,6 +10,19 @@
 
   <Target/>
 
+    <Rule RuleId="Permit:Admin" Effect="Permit">
+      <Description> Role "admin" may do anything. </Description>
+      <Target/>
+      <Condition>
+        <Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
+          <Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:string-one-and-only">
+            <SubjectAttributeDesignator DataType="http://www.w3.org/2001/XMLSchema#string" AttributeId="role"/>
+          </Apply>
+          <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">admin</AttributeValue>
+        </Apply>
+      </Condition>
+    </Rule>
+
     <Rule RuleId="Permit:Service_read-access" Effect="Permit">
       <Description> Read access to the data access service is granted for anybody.
                     This allows anonymous shares.
