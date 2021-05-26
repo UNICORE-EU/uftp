@@ -95,6 +95,8 @@ class Session(object):
             "CDUP": self.cdup,
             "MKD": self.mkdir,
             "DELE": self.rm,
+            "RNFR": self.rename_from,
+            "RNTO": self.rename_to,
             "RMD": self.rmdir,
             "PASV": self.pasv,
             "EPSV": self.epsv,
@@ -108,6 +110,7 @@ class Session(object):
             "RETR": self.retr,
             "ALLO": self.allo,
             "STOR": self.stor,
+            "APPE": self.appe,
             "MFMT": self.set_file_mtime,
             "TYPE": self.switch_type,
             "KEEP-ALIVE": self.set_keep_alive,
@@ -221,6 +224,31 @@ class Session(object):
             self.control.write_message("200 OK")
         except Exception as e:
             self.control.write_message("500 Can't remove path: %s" % str(e))
+        return Session.ACTION_CONTINUE
+
+    def rename_from(self, params):
+        self.assert_permission(Session.MODE_WRITE)
+        _path = self.makeabs(params.strip())
+        try:
+            self.assert_access(_path)
+            self.rename_from_path = _path
+            self.control.write_message("350 File action OK Please send rename-to")
+        except Exception as e:
+            self.control.write_message("500 Can't rename from: %s" % str(e))
+        return Session.ACTION_CONTINUE
+
+    def rename_to(self, params):
+        self.assert_permission(Session.MODE_WRITE)
+        _path = self.makeabs(params.strip())
+        try:
+            if self.rename_from_path is None:
+                raise Exception("Illegal sequence of FTP commands - must send RNFR first")
+            self.assert_access(_path)
+            os.rename(self.rename_from_path, _path)
+            self.control.write_message("200 OK")
+            self.rename_from_path = None
+        except Exception as e:
+            self.control.write_message("500 Can't rename to: %s" % str(e))
         return Session.ACTION_CONTINUE
 
     def pasv(self, params):
@@ -428,6 +456,22 @@ class Session(object):
         self.control.write_message("150 OK")
         return Session.ACTION_STORE
 
+    def appe(self, params):
+        self.assert_permission(Session.MODE_WRITE)
+        path = self.makeabs(params)
+        self.assert_access(path)
+
+        if self.number_of_bytes is None:
+            self.number_of_bytes = maxsize
+        try:
+            self.offset = os.stat(path)['st_size']
+        except:
+            self.control.write_message("500 Target file does not exist / is not readable")
+            return Session.ACTION_CONTINUE
+        self.file_path = path
+        self.control.write_message("150 OK")
+        return Session.ACTION_STORE
+
     def set_file_mtime(self, params):
         self.assert_permission(Session.MODE_WRITE)
         mtime, target = params.split(" ", 2)
@@ -498,7 +542,11 @@ class Session(object):
             self.recv_normal_data()
 
     def recv_normal_data(self):
-        with open(self.file_path, "wb") as f:
+        if self.offset > 0:
+            _mode = "ab"
+        else:
+            _mode = "wb"
+        with open(self.file_path, _mode) as f:
             f.seek(self.offset)
             reader = self.get_reader()
             start_time = int(time())
