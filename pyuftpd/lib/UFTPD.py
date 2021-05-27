@@ -9,7 +9,7 @@ import os
 import sys
 import threading
 import time
-import BecomeUser, FTPHandler, Log, Server, Utils
+import BecomeUser, FTPHandler, Log, Server, UserInfoHandler, Utils
 
 #
 # the UFTPD version
@@ -88,7 +88,7 @@ def init_functions():
         "uftp-transfer-request": add_job,
     }
 
-def ping(request, config, LOG):
+def ping(request, connector, config, LOG):
     response = """Version: %s
 ListenPort: %s
 ListenAddress: %s
@@ -99,37 +99,25 @@ ListenAddress: %s
     )
     if config['ADVERTISE_HOST'] is not None:
         response += "AdvertiseAddress: %s" % config['ADVERTISE_HOST']
-    return response
+    connector.write_message(response)
+    connector.close()
 
-def get_user_info(request, config, LOG):
+def get_user_info(request, connector, config, LOG):
     user = request['user'].strip()
     if user=="root":
-        return "500 Not allowed"
+        connector.write_message("500 Not allowed")
+        connector.close()
+        return
     user_cache = config['uftpd.user_cache']
-    response = """Version: %s
-User: %s
-""" % (
-        MY_VERSION,
-        user
-    )
     home = user_cache.get_home_4user(user)
     if home:
-        response += "Status: OK\n"
-        response += "Home: %s\n" % home
-        i = 0   
-        for keyfile in config['UFTP_KEYFILES']:
-            try:
-                with open(os.path.join(home, keyfile), "r") as f:
-                    for line in f.readlines():
-                        if line.startswith("#"):
-                            continue
-                        response+="Accepted key %d: %s\n" % (i, line.strip())
-                        i+=1
-            except:
-                pass
-    return response
-
-def add_job(request, config, LOG):
+        UserInfoHandler.get_user_info(user, home, connector, config, LOG)
+        return
+    else:
+        connector.write_message("500 No such user or no home directory found")
+        connector.close()
+   
+def add_job(request, connector, config, LOG):
     user = request['user']
     limit = config['MAX_CONNECTIONS']
     
@@ -155,7 +143,8 @@ def add_job(request, config, LOG):
     request['_PIDS'] = []
     job_map[secret] = request
     LOG.info("New transfer request for '%s' groups: %s" % (user, str(group)))
-    return "OK::%s" % config['SERVER_PORT']
+    connector.write_message("OK::%s" % config['SERVER_PORT'])
+    connector.close()
 
 def cleanup(config, LOG):
     LOG.debug("Request cleanup thread started.")
@@ -203,12 +192,7 @@ def process(cmd_server, config, LOG):
             func = functions.get(request_type, None)
             if not func:
                 raise Exception("Unsupported request type '%s'" % request_type)
-            try:
-                response = func(request, config, LOG)
-            except Exception as e:
-                response = "500::Request rejected. Reason: %s" % str(e)
-            connector.write_message(response)
-            connector.close()
+            func(request, connector, config, LOG)
         except Exception as e:
             LOG.error("Error in command loop: %s" % e)
             connector.close()

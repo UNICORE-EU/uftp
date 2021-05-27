@@ -3,6 +3,14 @@ Changelog
 The UFTP issue tracker is at
 https://sourceforge.net/p/unicore/uftp-issues
 
+UFTPD 3.0.2 (released MMM, DD 2021)
+----------------------------------
+ - fix: read user keys after privilege drop to avoid
+   issues with root-squash filesystems
+ - fix: implement rename (RNFR, RNTO)
+ - fix: implement append (APPE) and writing to an
+   existing file with offset
+
 UFTPD 3.0.1 (released May 10, 2021)
 ----------------------------------
  - fix: accept and ignore empty lines on command channel
