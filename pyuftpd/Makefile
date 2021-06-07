@@ -5,7 +5,7 @@
 #  - creating and deploying documentation  
 #
 
-VERSION=3.0.1
+VERSION=3.0.2
 RELEASE=1
 DOCVERSION=3.0.0
 MVN=mvn
