@@ -1,5 +1,6 @@
 from fnmatch import fnmatch
 import os.path
+from pathlib import Path
 from sys import maxsize
 from time import mktime, sleep, strptime, time
 
@@ -453,6 +454,7 @@ class Session(object):
         if self.number_of_bytes is None:
             self.number_of_bytes = maxsize
         self.file_path = path
+        Path(path).touch()
         self.control.write_message("150 OK")
         return Session.ACTION_STORE
 
@@ -542,10 +544,7 @@ class Session(object):
             self.recv_normal_data()
 
     def recv_normal_data(self):
-        if self.offset > 0:
-            _mode = "ab"
-        else:
-            _mode = "wb"
+        _mode = "r+b"
         with open(self.file_path, _mode) as f:
             f.seek(self.offset)
             reader = self.get_reader()

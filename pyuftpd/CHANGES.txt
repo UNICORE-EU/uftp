@@ -3,6 +3,10 @@ Changelog
 The UFTP issue tracker is at
 https://sourceforge.net/p/unicore/uftp-issues
 
+UFTPD 3.0.3 (released July 2, 2021)
+-----------------------------------
+ - fix: writing file chunks was buggy
+ 
 UFTPD 3.0.2 (released May 27, 2021)
 -----------------------------------
  - fix: read user keys after privilege drop to avoid
