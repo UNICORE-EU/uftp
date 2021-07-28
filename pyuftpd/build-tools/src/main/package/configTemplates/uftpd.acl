@@ -15,7 +15,7 @@
 #   $> openssl x509 -in your_server.pem -noout -subject -nameopt RFC2253
 #
 # for example:
-# CN=Demo Auth,O=UNICORE,C=EU
+# CN=AUTH,O=UNICORE,C=EU
 #
 
 @acl@

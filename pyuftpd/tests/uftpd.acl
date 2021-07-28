@@ -11,6 +11,7 @@
 #   $> openssl x509 -in your_server.pem -noout -subject -nameopt RFC2253
 #
 
-CN=Demo UNICORE/X,O=UNICORE,C=EU
+CN=UNICOREX,O=UNICORE,C=EU
 
-CN=Demo Auth,O=UNICORE,C=EU
+CN=AUTH,O=UNICORE,C=EU
+
