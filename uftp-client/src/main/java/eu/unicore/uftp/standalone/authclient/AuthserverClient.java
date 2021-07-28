@@ -22,7 +22,6 @@ import org.json.JSONObject;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonSyntaxException;
 
 import eu.unicore.uftp.authserver.authenticate.AuthData;
 import eu.unicore.uftp.authserver.messages.AuthRequest;
@@ -74,8 +73,8 @@ public class AuthserverClient implements AuthClient {
 		postRequest.setEntity(input);
 		AuthResponse response = httpClient.execute(postRequest, new AuthResponseResponseHandler());
 
-		if (response != null && LOG.isDebugEnabled()) {
-			LOG.debug("Got AuthResponse: " + response.toString());
+		if (response != null) {
+			LOG.debug("Got AuthResponse: {}", response);
 		}
 		return response;
 	}
@@ -86,7 +85,7 @@ public class AuthserverClient implements AuthClient {
 			baseDir = baseDir+"/";
 		}
 		if(baseDir==null)baseDir="";
-		LOG.debug("Initalizing session in <"+baseDir+">");
+		LOG.debug("Initalizing session in <{}>", baseDir);
 		return do_connect(baseDir+sessionModeTag, true, true, persistent);
 	}
 
@@ -100,7 +99,6 @@ public class AuthserverClient implements AuthClient {
 			getRequest.addHeader(e.getKey(), e.getValue());
 		}
 		getRequest.addHeader("Accept", "application/json");
-		LOG.debug("GET on "+infoURL);
 		return client.execute(getRequest);
 	}
 	
@@ -192,21 +190,27 @@ public class AuthserverClient implements AuthClient {
 				ContentType contentType = ContentType.getOrDefault(entity);
 				Charset charset = contentType.getCharset();
 				reply = IOUtils.toString(entity.getContent(), charset);
-				try{
-					AuthResponse response = gson.fromJson(reply, AuthResponse.class);
-					return response;
-				}catch(JsonSyntaxException js){
-					LOG.error("Invalid reply: "+reply);
-					throw js;
-				}
+				return gson.fromJson(reply, AuthResponse.class);
 			}
-
-			if (statusLine.getStatusCode() == 401) {
-				LOG.info("Authorization failed. Check credentials!");
+			String msg = "Unable to authenticate (error code: "
+						+ statusLine.getStatusCode()+" "+statusLine.getReasonPhrase()+") ";
+			int code = statusLine.getStatusCode();
+			if (code == 401 || code==403) {
+				msg += "==> Please check your user name and/or credentials!";
 			}
-
-			LOG.error("Invalid server response " + statusLine.getStatusCode());
-			throw new IOException("Unable to authorize the transfer request (HTTP " + statusLine.getStatusCode() + ")");
+			else if (code == 404) {
+				msg += "==> Please check the server URL!";
+			}
+			else  {
+				try {
+					ContentType contentType = ContentType.getOrDefault(entity);
+					Charset charset = contentType.getCharset();
+					reply = IOUtils.toString(entity.getContent(), charset);
+					JSONObject err = new JSONObject(reply);
+					msg += err.optString("errorMessage", "");
+				}catch(Exception ex) {}
+			}
+			throw new IOException(msg);
 		}
 	}
 

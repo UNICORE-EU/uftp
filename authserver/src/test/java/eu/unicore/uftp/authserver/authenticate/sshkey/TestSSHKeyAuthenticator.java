@@ -1,6 +1,7 @@
 package eu.unicore.uftp.authserver.authenticate.sshkey;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Collection;
 import java.util.Map;

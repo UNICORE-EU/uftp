@@ -8,9 +8,9 @@ import java.util.Properties;
 
 import org.apache.logging.log4j.Logger;
 
-import de.fzj.unicore.wsrflite.ExternalSystemConnector;
-import de.fzj.unicore.wsrflite.Kernel;
-import de.fzj.unicore.wsrflite.utils.Utilities;
+import eu.unicore.services.ExternalSystemConnector;
+import eu.unicore.services.Kernel;
+import eu.unicore.services.utils.Utilities;
 import eu.unicore.util.Log;
 import eu.unicore.util.configuration.ConfigurationException;
 import eu.unicore.util.configuration.PropertyGroupHelper;

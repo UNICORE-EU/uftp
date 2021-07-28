@@ -28,11 +28,11 @@ import org.junit.Test;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import de.fzj.unicore.wsrflite.Kernel;
-import de.fzj.unicore.wsrflite.server.JettyServer;
 import eu.emi.security.authn.x509.impl.X500NameUtils;
+import eu.unicore.services.Kernel;
 import eu.unicore.services.rest.client.BaseClient;
 import eu.unicore.services.rest.client.IAuthCallback;
+import eu.unicore.services.server.JettyServer;
 import eu.unicore.uftp.authserver.authenticate.UsernamePassword;
 import eu.unicore.uftp.authserver.messages.AuthRequest;
 import eu.unicore.uftp.authserver.share.ShareServiceProperties;

@@ -195,7 +195,7 @@ public abstract class BaseCommand implements ICommand {
 				ex.printStackTrace();
 				System.err.println();
 			}
-			System.err.println(Log.createFaultMessage("Error: ", ex));
+			System.err.println(Log.createFaultMessage("ERROR", ex));
 			OK = false;
 		}
 		return OK;

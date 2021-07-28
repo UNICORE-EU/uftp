@@ -11,7 +11,6 @@ import java.net.URISyntaxException;
 import java.nio.channels.Channels;
 import java.nio.file.Files;
 import java.nio.file.attribute.FileTime;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
@@ -203,7 +202,6 @@ public class ClientFacade {
 		}
 		String error = String.format("Unable to handle [%s, %s] combination. "
 				+ "It is neither upload nor download", source, destination);
-		logger.error(error);
 		throw new IllegalArgumentException(error);
 	}
 
@@ -217,12 +215,7 @@ public class ClientFacade {
 	public List<FileInfo> ls(String directory) throws Exception {
 
 		if (!connected) {
-			try {
-				connect(directory);
-			} catch (Exception ex) {
-				logger.error("Unable to connect to server for listing", ex);
-				return new ArrayList<>();
-			}
+			connect(directory);
 		}
 		String listDir = directory;
 		if (ConnectionInfoManager.isRemote(directory)) {
@@ -530,9 +523,7 @@ public class ClientFacade {
 
 	public void downloadFileChunk(String remotePath, String dest, long start, long end, UFTPSessionClient sc, FileInfo fi)
 			throws FileNotFoundException, URISyntaxException, IOException{
-		if(logger.isDebugEnabled()){
-			logger.debug("Downloading [{}:{}] from {} to {}", start, end, remotePath, dest);
-		}
+		logger.debug("Downloading [{}:{}] from {} to {}", start, end, remotePath, dest);
 		File file = new File(dest);
 		OutputStream fos = null;
 		RandomAccessFile raf = null;
@@ -645,12 +636,8 @@ public class ClientFacade {
 		return FilenameUtils.concat(FilenameUtils.getFullPath(destination), destName);
 	}
 
-	private AuthResponse initSession(AuthClient authClient) throws ClientAuthenticationException {
-		try {
-			return authClient.createSession();
-		} catch (IOException ex) {
-			throw new ClientAuthenticationException("Authentication failure", ex);
-		}
+	private AuthResponse initSession(AuthClient authClient) throws Exception {
+		return authClient.createSession();
 	}
 
 	public void setRange(long startByte, long endByte, RangeMode mode){

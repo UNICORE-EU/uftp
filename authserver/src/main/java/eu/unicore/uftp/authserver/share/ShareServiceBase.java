@@ -16,9 +16,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import de.fzj.unicore.wsrflite.security.util.AuthZAttributeStore;
 import eu.emi.security.authn.x509.impl.X500NameUtils;
 import eu.unicore.security.Client;
+import eu.unicore.services.security.util.AuthZAttributeStore;
 import eu.unicore.uftp.authserver.ServiceBase;
 import eu.unicore.uftp.authserver.TransferInitializer;
 import eu.unicore.uftp.authserver.TransferRequest;

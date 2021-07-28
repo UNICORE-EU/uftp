@@ -10,9 +10,9 @@ import javax.net.ssl.SSLSocketFactory;
 
 import org.apache.logging.log4j.Logger;
 
-import de.fzj.unicore.wsrflite.ExternalSystemConnector;
-import de.fzj.unicore.wsrflite.Kernel;
 import eu.emi.security.authn.x509.impl.SocketFactoryCreator2;
+import eu.unicore.services.ExternalSystemConnector;
+import eu.unicore.services.Kernel;
 import eu.unicore.uftp.server.requests.UFTPBaseRequest;
 import eu.unicore.uftp.server.requests.UFTPPingRequest;
 import eu.unicore.util.Log;

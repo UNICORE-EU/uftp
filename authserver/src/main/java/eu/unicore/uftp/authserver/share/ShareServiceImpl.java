@@ -24,7 +24,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import de.fzj.unicore.wsrflite.security.util.AuthZAttributeStore;
+import eu.unicore.services.security.util.AuthZAttributeStore;
 import eu.unicore.uftp.authserver.LogicalUFTPServer;
 import eu.unicore.uftp.authserver.TransferInitializer;
 import eu.unicore.uftp.authserver.TransferRequest;

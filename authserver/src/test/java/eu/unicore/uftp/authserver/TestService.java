@@ -23,10 +23,10 @@ import org.junit.Test;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import de.fzj.unicore.wsrflite.Kernel;
-import de.fzj.unicore.wsrflite.admin.AdminAction;
-import de.fzj.unicore.wsrflite.admin.AdminActionResult;
-import de.fzj.unicore.wsrflite.server.JettyServer;
+import eu.unicore.services.Kernel;
+import eu.unicore.services.admin.AdminAction;
+import eu.unicore.services.admin.AdminActionResult;
+import eu.unicore.services.server.JettyServer;
 import eu.unicore.uftp.authserver.admin.ShowUserInfo;
 import eu.unicore.uftp.authserver.authenticate.UsernamePassword;
 import eu.unicore.uftp.authserver.messages.AuthRequest;
@@ -38,15 +38,14 @@ public class TestService {
 
 	@Test
 	public void testAuthService() throws Exception {
-				//setup basic auth
-		String userName = "demouser";
-		String password = "test123";
 		// do a get to find the configured servers
 		JettyServer server=k.getServer();
 		String url = server.getUrls()[0].toExternalForm()+"/rest";
 		HttpClient client = HttpUtils.createClient(url, k.getClientConfiguration());
 		String resource  = url+"/auth";
 		HttpGet get=new HttpGet(resource);
+		String userName = "demouser";
+		String password = "test123";
 		get.addHeader(UsernamePassword.getBasicAuthHeader(userName, password));
 		HttpResponse response=client.execute(get);
 		int status=response.getStatusLine().getStatusCode();

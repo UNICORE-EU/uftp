@@ -3,11 +3,11 @@ package eu.unicore.uftp.authserver;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.fzj.unicore.wsrflite.DeploymentDescriptor;
-import de.fzj.unicore.wsrflite.Kernel;
-import de.fzj.unicore.wsrflite.utils.deployment.DeploymentDescriptorImpl;
-import de.fzj.unicore.wsrflite.utils.deployment.FeatureImpl;
+import eu.unicore.services.DeploymentDescriptor;
+import eu.unicore.services.Kernel;
 import eu.unicore.services.rest.RestService;
+import eu.unicore.services.utils.deployment.DeploymentDescriptorImpl;
+import eu.unicore.services.utils.deployment.FeatureImpl;
 
 /**
  * job execution

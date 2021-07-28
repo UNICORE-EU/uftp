@@ -5,9 +5,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 
-import de.fzj.unicore.wsrflite.Kernel;
-import de.fzj.unicore.wsrflite.admin.AdminAction;
-import de.fzj.unicore.wsrflite.admin.AdminActionResult;
+import eu.unicore.services.Kernel;
+import eu.unicore.services.admin.AdminAction;
+import eu.unicore.services.admin.AdminActionResult;
 import eu.unicore.uftp.authserver.AuthServiceProperties;
 import eu.unicore.uftp.authserver.LogicalUFTPServer;
 import eu.unicore.uftp.authserver.UFTPDInstance;

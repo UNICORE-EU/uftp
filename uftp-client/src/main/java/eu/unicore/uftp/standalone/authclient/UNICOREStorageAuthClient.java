@@ -71,8 +71,8 @@ public class UNICOREStorageAuthClient implements AuthClient {
 		}catch(JSONException e) {
 			throw new IOException(e);
 		}
-		if (response != null && LOG.isDebugEnabled()) {
-			LOG.debug("Got AuthResponse: " + response.toString());
+		if (response != null) {
+			LOG.debug("Got AuthResponse: {}", response);
 		}
 		return response;
 	}
@@ -83,7 +83,7 @@ public class UNICOREStorageAuthClient implements AuthClient {
 			baseDir = baseDir+"/";
 		}
 		if(baseDir==null)baseDir="";
-		LOG.debug("Initalizing session in <"+baseDir+">");
+		LOG.debug("Initalizing session in <{}>", baseDir);
 		return do_connect(baseDir+sessionModeTag, true, true, persistent);
 	}
 
@@ -95,7 +95,6 @@ public class UNICOREStorageAuthClient implements AuthClient {
 			getRequest.addHeader(e.getKey(), e.getValue());
 		}
 		getRequest.addHeader("Accept", "application/json");
-		LOG.debug("GET on "+infoURL);
 		return client.execute(getRequest);
 	}
 	
@@ -194,15 +193,27 @@ public class UNICOREStorageAuthClient implements AuthClient {
 					throw new IOException("Invalid reply", js);
 				}
 			}
-
-			if (statusLine.getStatusCode() == 401) {
-				LOG.info("Authorization failed. Check credentials!");
+			String msg = "Unable to authenticate (error code: "
+					+ statusLine.getStatusCode()+" "+statusLine.getReasonPhrase()+") ";
+			int code = statusLine.getStatusCode();
+			if (code == 401 || code==403) {
+				msg += "==> Please check your user name and/or credentials!";
 			}
-
-			LOG.error("Invalid server response " + statusLine.getStatusCode());
-			throw new IOException("Unable to authorize the transfer request (HTTP " + statusLine.getStatusCode() + ")");
+			else if (code == 404) {
+				msg += "==> Please check the server URL!";
+			}
+			else  {
+				try {
+					ContentType contentType = ContentType.getOrDefault(entity);
+					Charset charset = contentType.getCharset();
+					reply = new JSONObject(IOUtils.toString(entity.getContent(), charset));
+					msg += reply.optString("errorMessage", "");
+				}catch(Exception ex) {}
+			}
+			throw new IOException(msg);
 		}
 	}
+		
 	private static final char[] chars = "abcdefghijklmnopqrstuvwxyz".toCharArray();
 
 	static String generateSecret() {

@@ -18,8 +18,8 @@
   <properties>
     <compiler.fork>false</compiler.fork>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <use.version>4.2.0-SNAPSHOT</use.version>
-    <seclib.version>5.2.0</seclib.version>
+    <use.version>4.2.0</use.version>
+    <seclib.version>5.3.1</seclib.version>
   </properties>
 
   <scm>
@@ -95,7 +95,7 @@
       <dependency>
 	<groupId>de.fzj.unicore</groupId>
 	<artifactId>persistence</artifactId>
-	<version>0.200</version>
+	<version>0.203</version>
       </dependency>
 
       <dependency>

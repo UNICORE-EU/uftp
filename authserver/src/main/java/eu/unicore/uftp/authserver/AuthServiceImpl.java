@@ -19,10 +19,10 @@ import org.apache.logging.log4j.Logger;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import de.fzj.unicore.wsrflite.security.util.AuthZAttributeStore;
 import eu.unicore.security.Client;
 import eu.unicore.security.Role;
 import eu.unicore.security.SecurityException;
+import eu.unicore.services.security.util.AuthZAttributeStore;
 import eu.unicore.uftp.authserver.authenticate.UserAttributes;
 import eu.unicore.uftp.authserver.messages.AuthRequest;
 import eu.unicore.uftp.authserver.messages.AuthResponse;

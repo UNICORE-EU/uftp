@@ -7,14 +7,14 @@
  */
 package eu.unicore.uftp.authserver;
 
-import de.fzj.unicore.wsrflite.ContainerProperties;
-import de.fzj.unicore.wsrflite.security.IContainerSecurityConfiguration;
-import de.fzj.unicore.wsrflite.security.pdp.ActionDescriptor;
-import de.fzj.unicore.wsrflite.security.pdp.PDPResult;
-import de.fzj.unicore.wsrflite.security.pdp.PDPResult.Decision;
-import de.fzj.unicore.wsrflite.security.pdp.UnicoreXPDP;
-import de.fzj.unicore.wsrflite.security.util.ResourceDescriptor;
 import eu.unicore.security.Client;
+import eu.unicore.services.ContainerProperties;
+import eu.unicore.services.security.IContainerSecurityConfiguration;
+import eu.unicore.services.security.pdp.ActionDescriptor;
+import eu.unicore.services.security.pdp.PDPResult;
+import eu.unicore.services.security.pdp.PDPResult.Decision;
+import eu.unicore.services.security.pdp.UnicoreXPDP;
+import eu.unicore.services.security.util.ResourceDescriptor;
 import eu.unicore.util.httpclient.IClientConfiguration;
 
 public class MockPDP implements UnicoreXPDP

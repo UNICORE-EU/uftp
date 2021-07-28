@@ -10,11 +10,11 @@ import org.apache.logging.log4j.Logger;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import de.fzj.unicore.wsrflite.KernelInjectable;
-import de.fzj.unicore.wsrflite.security.util.AuthZAttributeStore;
 import eu.unicore.security.Client;
 import eu.unicore.security.XACMLAttribute;
+import eu.unicore.services.KernelInjectable;
 import eu.unicore.services.rest.impl.ApplicationBaseResource;
+import eu.unicore.services.security.util.AuthZAttributeStore;
 import eu.unicore.uftp.authserver.authenticate.UserAttributes;
 import eu.unicore.util.Log;
 

@@ -6,7 +6,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 
-import de.fzj.unicore.wsrflite.Kernel;
+import eu.unicore.services.Kernel;
 import eu.unicore.uftp.server.UFTPServer;
 
 @Ignore
@@ -33,7 +33,7 @@ public abstract class BaseServiceTest {
 		Thread serverThread = new Thread(server);
 		serverThread.start();
 		authServer = new Kernel("src/test/resources/container.properties");
-		authServer.start();
+		authServer.startSynchronous();
 	}
 
 	@AfterClass

@@ -9,6 +9,9 @@ UFTP Client 1.4.2 (released mmm dd, 2021)
    filesystem writes
  - fix: set file modification time (MFMT) used wrong
    time of day
+ - improvement: try to extract authserver's error message
+   in case of auth failure
+ - update dependencies
 
 UFTP Client 1.4.1 (released Apr 8, 2021)
 ----------------------------------------

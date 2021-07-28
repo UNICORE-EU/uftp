@@ -19,11 +19,11 @@ import org.apache.commons.io.IOUtils;
 import org.apache.cxf.message.Message;
 import org.apache.logging.log4j.Logger;
 
-import de.fzj.unicore.wsrflite.Kernel;
-import de.fzj.unicore.wsrflite.KernelInjectable;
 import eu.unicore.security.HTTPAuthNTokens;
 import eu.unicore.security.SecurityTokens;
 import eu.unicore.security.wsutil.CXFUtils;
+import eu.unicore.services.Kernel;
+import eu.unicore.services.KernelInjectable;
 import eu.unicore.services.rest.security.IAuthenticator;
 import eu.unicore.services.rest.security.PAMAttributeSource;
 import eu.unicore.services.rest.security.PAMAttributeSource.PAMAttributes;
