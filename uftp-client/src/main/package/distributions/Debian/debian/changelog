@@ -1,5 +1,5 @@
 @component-prefix@@component-name@@component-suffix@ (@component-version@-@component-release@@component-disttag@) unstable; urgency=low
 
-  * Deb packaging
+  * Version 1.4.2
 
- -- Bernd Schuller <b.schuller@fz-juelich.de>  Fri, 5 Mar 2021 12:00:00 +0100
+ -- Bernd Schuller <b.schuller@fz-juelich.de>  Thu, 19 Aug 2021 12:00:00 +0100

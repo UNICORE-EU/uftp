@@ -20,7 +20,7 @@ UNICORE/X server or the UFTP Auth server) to authenticate and then to
 the 'uftpd' server for transferring data or making a file operation.
 
 The 'uftp' client supports username/password authentication, OIDC
-token authentication and (on UNIX) ssh-key authentication.
+token authentication and ssh-key authentication.
 
 The 'uftp' client supports multiple concurrent FTP connections for
 highly efficient data transfers in high-performance environments.
@@ -63,6 +63,12 @@ Invoking uftp without any arguments,
 $> uftp
 -----------
 will list the available commands.
+
+[NOTE]
+==================
+On Windows, the script is called "uftp.bat"
+==================
+
 
 Invoking 
 --------------
@@ -213,10 +219,9 @@ using uftp:
 $> tar cz dir/* | uftp cp - https://localhost:9000/rest/auth/TEST:/archive.tgz 
 --------------
 
-With recent servers (UFTPD 2.7.0 and later), the UFTPD server can also
-unpack tar and zip streams, this is very useful to efficiently
-transfer many small files. To enable this, add the '-a' option, and DO NOT compress
-the tar stream.
+The UFTPD server can also unpack tar and zip streams, this is very
+useful to efficiently transfer many small files. To enable this, add
+the '-a' option, and DO NOT compress the tar stream.
 
 --------------
 $> tar c dir/* | uftp cp -a - https://localhost:9000/rest/auth/TEST:/target_location/
@@ -570,8 +575,12 @@ Check the remote URL that you use. Maybe you have a typo in the
 Getting support
 ---------------
 
-UNICORE Website: http://www.unicore.eu
+UNICORE Website: https://www.unicore.eu
 
 Support list: unicore-support@lists.sf.net
 
 Developer's list: unicore-devel@lists.sf.net
+
+Issue Tracker: https://sourceforge.net/p/unicore/uftp-issues
+
+Source code: https://github.com/UNICORE-EU/uftp

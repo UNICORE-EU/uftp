@@ -3,12 +3,14 @@ The issue tracker is at
 https://sourceforge.net/p/unicore/uftp-issues/
 
 
-UFTP Client 1.4.2 (released mmm dd, 2021)
+UFTP Client 1.4.2 (released Aug 19, 2021)
 ----------------------------------------
  - improvmenent: add configurable write buffer size for
    filesystem writes
  - fix: set file modification time (MFMT) used wrong
    time of day
+ - fix: Windows: uftp.bat was not working, update docs,
+   handle more types of PuTTY keys
  - improvement: try to extract authserver's error message
    in case of auth failure
  - update dependencies

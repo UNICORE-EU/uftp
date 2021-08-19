@@ -12,14 +12,14 @@ set CLASSPATH=.
 for %%i in ("%UFTP_HOME%\lib\*.jar") do ( call :cpappend %%i )
 
 set VM_ARGS1="-Xmx128m"
-set VM_ARGS2="-Dlog4j.configuration=file:///%UFTP_HOME%\conf\logging.properties"
+set VM_ARGS2="-Dlog4j.configurationFile=file:///%UFTP_HOME%\conf\logging.properties"
 
 set CMD_LINE_ARGS=%*
 
 rem
 rem Go
 rem
-java %VM_ARGS1% %VM_ARGS2% de.fzj.unicore.ucc.UCC %CMD_LINE_ARGS%
+java %VM_ARGS1% %VM_ARGS2% eu.unicore.uftp.standalone.ClientDispatcher %CMD_LINE_ARGS%
 goto :eof
 
 
