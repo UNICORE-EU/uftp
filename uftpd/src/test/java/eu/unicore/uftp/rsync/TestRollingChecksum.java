@@ -1,21 +1,12 @@
 package eu.unicore.uftp.rsync;
 
 import java.io.ByteArrayInputStream;
-import java.math.BigInteger;
 import java.util.Random;
 
 import org.junit.Assert;
 import org.junit.Test;
 
 public class TestRollingChecksum {
-
-	@Test
-	public void foo(){
-		byte[]raw=Checksum.md5("test123".getBytes());
-		System.out.println(raw.length);
-		BigInteger b=new BigInteger(raw);
-		System.out.println(b+" as long " +b.longValue());
-	}
 	
 	@Test
 	public void testRolling()throws Exception{

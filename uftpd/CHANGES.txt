@@ -3,16 +3,21 @@ Changelog
 The UFTP issue tracker is at
 https://sourceforge.net/p/unicore/uftp-issues
 
-UFTP 2.10.0 (released 2021 dd yyyy)
+UFTP 2.11.0 (released 2021 dd yyyy)
 ----------------------------------
  - update to log4j/2, logging config update recommended
- - update to securityLibrary 5.2.0
+ - update to securityLibrary 5.3.1
  - new feature: implement restart command ("REST")
  - fix: persistent sessions were removed even
    when still active
  - fix: handling of absolute vs relative directories, allow 
    creating sessions with a fixed base directory
  - fix: wrong format string for MFMT
+
+Starting with UFTPD 3.0, we release the file server uftpd only in the
+Python implementation. This project is still used for
+providing the Java implementation of the base library used for
+clients and in the Java servers.
 
 UFTP 2.9.2 (released Nov 16 2020)
 ---------------------------------
