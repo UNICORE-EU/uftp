@@ -7,6 +7,11 @@ https://sourceforge.net/p/unicore/uftp-issues
 ***  see README-UPGRADE.txt for how to update from 1.x
 ***
 
+Auth Server 2.4.1 (released MMM DD, 2021)
+-----------------------------------------
+ - update to UNICORE 8.2 base libs
+ - updated ssh key handling with support for putty keys
+
 Auth Server 2.4.0 (released Mar 5, 2021)
 -----------------------------------------
  - update to UNICORE 8.1 base libs

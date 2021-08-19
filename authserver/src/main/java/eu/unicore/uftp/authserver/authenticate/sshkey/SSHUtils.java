@@ -13,6 +13,8 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.Logger;
 
+import com.hierynomus.sshj.key.KeyAlgorithm;
+
 import eu.unicore.util.Log;
 import net.schmizz.sshj.ConfigImpl;
 import net.schmizz.sshj.DefaultConfig;
@@ -96,7 +98,8 @@ public class SSHUtils {
 		PrivateKey pk = readPrivateKey(key, pf);
 		
 		final String kt = KeyType.fromKey(pk).toString();
-		Signature signature = Factory.Named.Util.create(sshConfig.getSignatureFactories(), kt);
+		KeyAlgorithm ka = Factory.Named.Util.create(sshConfig.getKeyAlgorithms(), kt);
+		Signature signature = ka.newSignature();
 		if (signature == null) {
 			throw new GeneralSecurityException("Could not create signature instance for " + kt + " key");
 		}
@@ -120,7 +123,8 @@ public class SSHUtils {
 		PrivateKey pk = readPrivateKey(key, password);
 		
 		final String kt = KeyType.fromKey(pk).toString();
-		Signature signature = Factory.Named.Util.create(sshConfig.getSignatureFactories(), kt);
+		KeyAlgorithm ka = Factory.Named.Util.create(sshConfig.getKeyAlgorithms(), kt);
+		Signature signature = ka.newSignature();
 		if (signature == null) {
 			throw new GeneralSecurityException("Could not create signature instance for " + kt + " key");
 		}
@@ -151,7 +155,8 @@ public class SSHUtils {
 			PublicKey pub = SSHUtils.readPubkey(pubkey);
 		
 			final String kt = KeyType.fromKey(pub).toString();
-			Signature signature = Factory.Named.Util.create(sshConfig.getSignatureFactories(), kt);
+			KeyAlgorithm ka = Factory.Named.Util.create(sshConfig.getKeyAlgorithms(), kt);
+			Signature signature = ka.newSignature();
 			if (signature == null) {
 				throw new GeneralSecurityException("Could not create signature instance for " + pub + " key");
 			}

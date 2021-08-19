@@ -65,6 +65,15 @@ public class TestUtils {
 	}
 
 	@Test
+	public void testPuttyKey() throws Exception {
+		String orig = new Date().toString();
+		File key = new File("src/test/resources/ssh/putty-key.ppk");
+		String pubkey = FileUtils.readFileToString(new File("src/test/resources/ssh/putty-key.pub"), "UTF-8");
+		SSHKey sshAuth = SSHUtils.createAuthData(key, (char[])null, orig);
+		Assert.assertTrue(SSHUtils.validateAuthData(sshAuth,pubkey));
+	}
+	
+	@Test
 	public void testAuthKeyParse() throws Exception {
 		String data = "from=\"w.x.y.z\" ssh-ed25519 "
 				+ "AAAAC3NzaC1lZDI1NTE5AAAAIDSrmN76orlz7Zf0oSXlum5uYfpMEjKpAxp2W0OQWaLl"

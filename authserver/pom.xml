@@ -6,7 +6,7 @@
   <version>2.4.1</version>
   <packaging>jar</packaging>
   <name>UFTP Authentication Server</name>
-  <url>http://www.unicore.eu</url>
+  <url>https://www.unicore.eu</url>
 
   <parent>
     <groupId>eu.unicore.uftp</groupId>
