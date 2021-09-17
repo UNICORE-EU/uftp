@@ -3,6 +3,11 @@ Changelog
 The UFTP issue tracker is at
 https://sourceforge.net/p/unicore/uftp-issues
 
+UFTPD 3.0.4 (released Sept 13, 2021)
+------------------------------------
+ - fix: ACL parsing for DNs with '/' (#66)
+ - fix: UFTPD fails when user's home does not exist
+
 UFTPD 3.0.3 (released July 2, 2021)
 -----------------------------------
  - fix: writing file chunks was buggy

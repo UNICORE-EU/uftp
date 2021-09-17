@@ -36,17 +36,20 @@ class Session(object):
         self.includes= []
         self.excludes= []
         _dirname = os.path.dirname(job.get('file', ''))
+        _home = os.environ['HOME']
+        if not os.path.isdir(_home):
+            _home = "/"
         if _dirname=='':
             # no base dir set - default to HOME and
             # allow client to use absolute paths
             self.allow_absolute_paths = True
-            _dirname = os.environ['HOME']
+            _dirname = _home
         else:
             # explicit base directory is set - make sure
             # session does not allow to "escape" it
             self.allow_absolute_paths = False
             if not os.path.isabs(_dirname):
-                _dirname = os.environ['HOME']+"/"+_dirname
+                _dirname = os.path.join(_home, _dirname)
         if not os.path.isdir(_dirname):
             raise IOError("No such directory: %s" % _dirname)
         self.basedir = os.path.normpath(_dirname)
