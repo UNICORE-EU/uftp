@@ -36,6 +36,9 @@ class FileInfo(object):
     def exists(self):
         return exists(self.path)
 
+    def can_read(self):
+        return exists(self.path) and os.access(self.path, os.R_OK)
+
     def is_dir(self):
         return isdir(self.path)
 

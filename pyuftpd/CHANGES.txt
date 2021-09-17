@@ -3,6 +3,11 @@ Changelog
 The UFTP issue tracker is at
 https://sourceforge.net/p/unicore/uftp-issues
 
+UFTPD 3.0.5 (released MMM dd, 2021)
+------------------------------------
+ - fix: getting a file that exists but is not readable does
+   not result in the right error message (#68)
+
 UFTPD 3.0.4 (released Sept 13, 2021)
 ------------------------------------
  - fix: ACL parsing for DNs with '/' (#66)

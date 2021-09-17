@@ -431,7 +431,7 @@ class Session(object):
         self.assert_permission(Session.MODE_READ)
         path = self.makeabs(params)
         fi = FileInfo(path)
-        if not fi.exists():
+        if not fi.can_read():
             self.control.write_message("500 Directory/file does not exist or cannot be accessed!")
             return Session.ACTION_CONTINUE
         if self.have_range:
