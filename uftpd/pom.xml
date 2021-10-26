@@ -3,14 +3,14 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>eu.unicore.uftp</groupId>
   <artifactId>uftp-core</artifactId>
-  <version>2.11.0</version>
+  <version>2.12.0</version>
   <packaging>jar</packaging>
   <name>UNICORE UFTPD server and core library</name>
 
   <parent>
     <groupId>eu.unicore.uftp</groupId>
     <artifactId>uftp-parent</artifactId>
-    <version>2.11.0</version>
+    <version>2.12.0</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
