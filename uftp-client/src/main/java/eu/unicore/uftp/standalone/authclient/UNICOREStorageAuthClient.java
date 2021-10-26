@@ -123,17 +123,18 @@ public class UNICOREStorageAuthClient implements AuthClient {
 		JSONObject client = info.getJSONObject("client");
 		StringBuilder sb = new StringBuilder();
 		String role = client.getJSONObject("role").getString("selected");
-		String uid = client.getJSONObject("xlogin").getString("UID");
+		String uid = client.getJSONObject("xlogin").optString("UID", "N/A");
 		String gid = client.getJSONObject("xlogin").optString("group","N/A");
 		sb.append("uid=").append(uid);
 		sb.append(";gid=").append(gid);
 		sb.append(";role=").append(role);
 		return sb.toString();
 	}
-	
+
+
 	private String getServerStatus(JSONObject info) throws JSONException {
 		JSONObject status = info.getJSONObject("server").getJSONObject("externalConnections");
-		return status.optString("UFTP Server", "N/A");
+		return status.optString("UFTPD Server", "N/A");
 	}
 	
 	

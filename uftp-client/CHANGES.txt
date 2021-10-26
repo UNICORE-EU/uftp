@@ -2,6 +2,11 @@ Change log for the UFTP standalone client
 The issue tracker is at
 https://sourceforge.net/p/unicore/uftp-issues/
 
+UFTP Client 1.4.3 (released Oct dd, 2021)
+----------------------------------------
+ - fix: info: handle anonymous user correctly for
+   UNICORE Storage endpoints
+ - fix: always show https access link for new shares
 
 UFTP Client 1.4.2 (released Aug 19, 2021)
 ----------------------------------------

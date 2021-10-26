@@ -98,7 +98,8 @@ public class Share extends BaseCommand {
 			throw new IllegalArgumentException("Cannot have both --write and --delete");
 		}
 		if(write && anonymous){
-			throw new IllegalArgumentException("Cannot have --write without specifying --access");
+			throw new IllegalArgumentException("Cannot have --write without specifying --access. "
+					+ "If you REALLY want anonymous write access, use: --access 'cn=anonymous,o=unknown,ou=unknown'");
 		}
 		
 		String accessType = write? "WRITE" : "READ" ;
@@ -119,14 +120,14 @@ public class Share extends BaseCommand {
 		if(!delete) {
 			String location = res.getFirstHeader("Location").getValue();
 			if(location!=null){
-				showNewShareInfo(bc.getJSON(location), anonymous);
+				showNewShareInfo(bc.getJSON(location));
 			}
 		}
 	}
 	
-	protected void showNewShareInfo(JSONObject info, boolean anonymous) throws Exception {
+	protected void showNewShareInfo(JSONObject info) throws Exception {
 		if(verbose)System.out.println(info.toString(2));
-		if(anonymous)System.out.println("Shared to: "+info.getJSONObject("share").getString("http"));
+		System.out.println("Shared to: "+info.getJSONObject("share").getString("http"));
 	}
 	
 	@Override

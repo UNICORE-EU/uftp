@@ -15,17 +15,18 @@ Packager: Bernd Schuller unicore-support@lists.sourceforge.net
 @preamble@
 
 %description
-UNICORE (Uniform Interface to Computing Resources) offers a
-ready-to-run Grid system including client and server software.
-UNICORE makes distributed computing and data resources available
-in a seamless and secure way in intranets and the internet.
+UNICORE (UNiform Interface to COmputing REsources) provides
+tools and services for building federated systems, making
+high-performance computing and data resources accessible in
+a seamless and secure way for a wide variety of applications
+in intranets and the internet.
 
 This package contains the standalone UFTP commandline client.
 
 
 %changelog
-* Mon Sep 30 2019 Bernd Schuller <unicore-support@lists.sourceforge.net> 1.0.0-1
--Initial rpm package
+* Tue Oct 26 2021 Bernd Schuller <unicore-support@lists.sourceforge.net> 1.0.0-1
+-updates for v1.4.3
 
 @install_command@
 
