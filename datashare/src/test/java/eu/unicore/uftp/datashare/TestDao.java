@@ -19,7 +19,7 @@ public class TestDao {
 		cf.setDatabaseDirectory("./target/test_data");
 
 		@SuppressWarnings("unchecked")
-		Persist<ShareDAO>p=(Persist<ShareDAO>)(H2Persist.class.newInstance());
+		Persist<ShareDAO>p=(Persist<ShareDAO>)(H2Persist.class.getConstructor().newInstance());
 		p.setDaoClass(ShareDAO.class);
 		p.setConfigSource(cf);
 		p.init();

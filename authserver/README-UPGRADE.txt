@@ -18,7 +18,7 @@ e.g. to /tmp/
 
 In the following, this location will be denoted as "$NEW":
 
-$> export NEW=/tmp/unicore-authserver-2.4.0
+$> export NEW=/tmp/unicore-authserver-2.5.0
 
  - stop the server. If not yet done, make a backup of the config files.
 
@@ -26,17 +26,6 @@ $> export NEW=/tmp/unicore-authserver-2.4.0
  
    $> rm -rf LIB/*
    $> cp $NEW/lib/*.jar LIB/
-
- - update the logging configuration file setting:
- 
-   $> sed -i "s/log4j.configuration=/log4j.configurationFile=/g" conf/startup.properties 
-
- - update the logging configuration itself
-
-   $> cp conf/logging.properties conf/logging.properties.old
-   $> cp $NEW/conf/logging.properties conf/logging.properties
-
-   and adapt as necessary
 
  - start the server
 

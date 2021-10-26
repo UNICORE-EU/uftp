@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>eu.unicore.uftp</groupId>
   <artifactId>uftp-authserver</artifactId>
-  <version>2.4.1</version>
+  <version>2.5.0</version>
   <packaging>jar</packaging>
   <name>UFTP Authentication Server</name>
   <url>https://www.unicore.eu</url>
@@ -11,13 +11,13 @@
   <parent>
     <groupId>eu.unicore.uftp</groupId>
     <artifactId>uftp-parent</artifactId>
-    <version>2.11.0</version>
+    <version>2.12.0</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
   <properties>
     <uftp.version>2.11.0</uftp.version>
-    <datashare.version>0.4.0</datashare.version>
+    <datashare.version>0.5.0</datashare.version>
     
     <package.version>${project.version}</package.version>
     <package.release>1</package.release>
@@ -59,9 +59,20 @@
       <artifactId>uftp-datashare</artifactId>
       <version>${datashare.version}</version>
     </dependency>
-    <dependency>
+        <dependency>
       <groupId>eu.unicore.security</groupId>
       <artifactId>securityLibrary</artifactId>
+      <version>${seclib.version}</version>
+      <exclusions>
+	<exclusion>
+          <groupId>org.apache.xmlbeans</groupId>
+          <artifactId>xmlbeans</artifactId>
+        </exclusion>
+	<exclusion>
+          <groupId>com.sun.xml.ws</groupId>
+          <artifactId>jaxws-ri</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>eu.unicore.services</groupId>

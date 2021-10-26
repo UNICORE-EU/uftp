@@ -26,7 +26,6 @@ import eu.unicore.uftp.authserver.UFTPDInstance;
 import eu.unicore.uftp.authserver.authenticate.UserAttributes;
 import eu.unicore.uftp.authserver.messages.AuthRequest;
 import eu.unicore.uftp.authserver.messages.AuthResponse;
-import eu.unicore.uftp.client.UFTPClient;
 import eu.unicore.uftp.client.UFTPSessionClient;
 import eu.unicore.uftp.datashare.AccessType;
 import eu.unicore.uftp.datashare.SharingUser;
@@ -131,14 +130,17 @@ public abstract class ShareServiceBase extends ServiceBase {
 		try{
 			AuthRequest authRequest = new AuthRequest();
 			authRequest.send = false;
-			authRequest.serverPath = share.getPath();
+			authRequest.serverPath = new File(new File(share.getPath()).getParentFile(), 
+					"/"+UFTPConstants.sessionModeTag).getPath();
+			String fileName = new File(share.getPath()).getName();
 			UserAttributes ua = new UserAttributes(share.getUid(), share.getGid(), null);
 			TransferRequest transferRequest = new TransferRequest(authRequest, ua, clientIP);
 			AuthResponse response = new TransferInitializer().initTransfer(transferRequest,uftp);            
 			InetAddress[] server = new InetAddress[]{InetAddress.getByName(response.serverHost)};
-			try (UFTPClient uc = new UFTPClient(server, response.serverPort, content)){
+			try (UFTPSessionClient uc = new UFTPSessionClient(server, response.serverPort)){
 				uc.setSecret(transferRequest.getSecret());
-				uc.run();
+				uc.connect();
+				uc.writeAll(fileName, content, true);
 				r = Response.ok().build();
 			}
 		}catch(Exception ex){

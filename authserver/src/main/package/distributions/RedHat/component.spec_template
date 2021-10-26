@@ -25,8 +25,8 @@ RESTful APIs.
 
 %changelog
 
-* Mon Nov 28 2016 Bernd Schuller <unicore-support@lists.sourceforge.net> 
--Initial rpm package
+* Tue Oct 26 2021 Bernd Schuller <unicore-support@lists.sourceforge.net> 
+-updates for v2.5.0
 
 @install_command@
 

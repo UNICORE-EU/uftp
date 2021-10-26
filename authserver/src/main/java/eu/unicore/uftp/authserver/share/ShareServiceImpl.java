@@ -137,21 +137,23 @@ public class ShareServiceImpl extends ShareServiceBase {
 		try{
 			UFTPDInstance uftp = getServer(serverName);
 			String clientIP = AuthZAttributeStore.getTokens().getClientIP();
-			if(logger.isDebugEnabled())logger.debug("Incoming request from: "+clientIP+" "+jsonString);
+			logger.debug("Incoming request from: {} {}", clientIP, jsonString);
 
 			JSONObject json = new JSONObject(jsonString);
 			String requestedGroup = json.optString("group", null);
 			UserAttributes ua = assembleAttributes(uftp, requestedGroup);
 			if("nobody".equalsIgnoreCase(ua.uid)){
 				// cannot share as nobody!
-				return handleError(401, "No sharing for '"+serverName+"', please check your URL", null, logger);
+				return handleError(401, "Your User ID cannot share, please check your access level", null, logger);
 			}
 			AccessType accessType = AccessType.valueOf(json.optString("access", "READ"));
 			if(AccessType.WRITE.equals(accessType)&&!getShareServiceProperties().isWriteAllowed()){
 				return handleError(401, "Writable shares not allowed", null, logger);
 			}
 			String path = json.getString("path");
-			path = validate(uftp, path, ua, accessType);
+			if(!accessType.equals(AccessType.NONE)){
+				path = validate(uftp, path, ua, accessType);
+			}
 			String user = json.getString("user");
 			Target target = new SharingUser(normalize(user));
 			Owner owner = new Owner(getNormalizedCurrentUserName(), ua.uid, ua.gid);

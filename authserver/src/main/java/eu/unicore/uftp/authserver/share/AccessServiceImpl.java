@@ -11,6 +11,8 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import org.apache.commons.io.FilenameUtils;
+
 import eu.unicore.security.Client;
 import eu.unicore.uftp.authserver.UFTPDInstance;
 import eu.unicore.uftp.datashare.db.ACLStorage;
@@ -79,7 +81,8 @@ public class AccessServiceImpl extends ShareServiceBase {
 	private void handlePath(String path, ShareDAO share) throws WebApplicationException{
 		if(path!=null){
 			if(share.isDirectory()){
-				share.setPath(share.getPath()+path);
+				String fullPath = FilenameUtils.normalize(share.getPath()+"/"+path, true);
+				share.setPath(fullPath);
 			}
 			else{
 				throw new WebApplicationException("Not a directory", 404);
