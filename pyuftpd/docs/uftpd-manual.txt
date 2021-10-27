@@ -123,8 +123,9 @@ The sequence for a UFTP file transfer is as follows:
 
 [NOTE] .IMPORTANT SECURITY NOTE
 ========================================================= 
-The UNICORE UFTPD server is running with root privileges. Make sure to
-read and understand the section below on protecting the command
+The UNICORE UFTPD server is running with elevated privileges, 
+it can set its UID and GID to that of any user except root. 
+Make sure to read and understand the section below on protecting the command
 socket.  Otherwise, users logged on to the UFTPD machine can possibly
 read and write other user's files.
 =========================================================

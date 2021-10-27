@@ -10,7 +10,8 @@ def initialize(config, LOG: Log):
     """ Setup the user cache."""
     (_x, euid, _y) = os.getresuid()
     config['uftpd.effective_uid'] = euid
-    if euid == 0:
+    switch_uid = config.get('uftpd.switch_uid', True)
+    if switch_uid or euid == 0:
         LOG.info("Running privileged, will launch sessions as the current user.")
         config['uftpd.switch_uid'] = True
     else:
@@ -185,27 +186,12 @@ def become_user(user, requested_groups, config, LOG: Log):
     os.setgid(new_gid)
     os.setgroups(new_gids)
     os.setegid(new_gid)
-    os.setresuid(new_uid, new_uid, new_uid)
+    os.setresuid(new_uid, new_uid, euid)
 
-    # TODO: potential refactoring here
-    if os.getuid() != new_uid:
-        return "Could not set UFTPD identity (real) to %s %s" % (user, new_uid)
-
-    if os.geteuid() != new_uid:
-        return "Could not set UFTPD identity (effective) to %s %s" % (
-            user, new_uid)
-
-    if os.getgid() != new_gid:
-        return "Could not set UFTPD identity (group real) to %s %s" % (
-            user, new_gid)
-
-    if os.getgid() != new_gid:
-        return "Could not set UFTPD identity (group real) to %s %s" % (
-            user, new_gid)
-
-    if os.getegid() != new_gid:
-        return "Could not set UFTPD identity (group effective) to %s %s" % (
-            user, new_gid)
+    if (os.getuid(), os.geteuid()) != (new_uid, new_uid):
+        raise RuntimeError("Could not set UFTPD identity (real,effective) for %s to %s"% (user, new_uid))
+    if (os.getgid(),os.getegid()) != (new_gid, new_gid):
+        raise RuntimeError("Could not set UFTPD gid (real, effective) for %s to %s" % (user, new_gid))
 
     set_groups = set(os.getgroups())
     if set_groups != set(new_gids):

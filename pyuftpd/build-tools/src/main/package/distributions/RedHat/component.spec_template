@@ -6,17 +6,17 @@ Summary: UNICORE UFTPD Server
 License: BSD
 Distribution: RedHat
 Group: System Environment/Daemons
-URL: http://www.unicore.eu
+URL: https://www.unicore.eu
 AutoReqProv: no
 BuildArch: x86_64
 Packager: Bernd Schuller unicore-support@lists.sourceforge.net
 @preamble@
 
 %description
-UNICORE (Uniform Interface to Computing Resources) offers a
-ready-to-run Grid system including client and server software.
-UNICORE makes distributed computing and data resources available
-in a seamless and secure way in intranets and the internet.
+UNICORE (UNiform Interface to COmputing REsources) provides tools and
+services for building federated systems, making high-performance
+computing and data resources accessible in a seamless and secure way
+for a wide variety of applications in intranets and the internet.
 
 This package contains the UFTPD server, which offers
 high-performance file upload and download with dynamic firewall 
@@ -24,17 +24,8 @@ port opening.
 
 
 %changelog
-* Tue Apr 13 2021 Bernd Schuller <unicore-support@lists.sourceforge.net> 
--Updated for v3.0.0
-
-* Wed Dec 11 2013 Bernd Schuller <unicore-support@lists.sourceforge.net> 
--Updated for v2.0.0
-
-* Wed Dec 14 2011 Bernd Schuller <unicore-support@lists.sourceforge.net> 
--Updated for v1.2.0
-
-* Fri Oct 07 2011 Bernd Schuller <unicore-support@lists.sourceforge.net> 
--Updated for v1.1.0
+* Wed Oct 27 2021 Bernd Schuller <unicore-support@lists.sourceforge.net> 
+-Updated for v3.1.0
 
 * Mon Jun 06 2011 Bernd Schuller <unicore-support@lists.sourceforge.net> 
 -Initial rpm package

@@ -71,10 +71,10 @@ class Session(object):
                 self.excludes.append(os.environ['HOME'] + "/" + f)
         for f in job.get("excludes", "").split(":"):
             if len(f)>0:
-                self.excludes.append(f)
+                self.excludes.append(self.makeabs(f))
         for f in job.get("includes", "").split(":"):
             if len(f)>0:
-                self.includes.append(f)
+                self.includes.append(self.makeabs(f))
         self.key = job.get("key", None)
         if(self.key is not None):
             from base64 import b64decode
@@ -549,6 +549,8 @@ class Session(object):
     def recv_normal_data(self):
         _mode = "r+b"
         with open(self.file_path, _mode) as f:
+            if not self.have_range:
+                f.truncate(0)
             f.seek(self.offset)
             reader = self.get_reader()
             start_time = int(time())

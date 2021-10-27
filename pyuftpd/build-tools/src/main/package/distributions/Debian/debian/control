@@ -4,8 +4,15 @@ Priority: extra
 Maintainer: Bernd Schuller <b.schuller@fz-juelich.de>
 Build-Depends: debhelper (>= 7)
 Standards-Version: 3.8.3
-Homepage: http://www.unicore.eu
+Homepage: https://www.unicore.eu
 
 Package: unicore-uftpd
 Architecture: all
-Description: UFTPD is a server component providing secure high performance filetransfer.
+Description:UNICORE (UNiform Interface to COmputing REsources) provides tools and
+ services for building federated systems, making high-performance
+ computing and data resources accessible in a seamless and secure way
+ for a wide variety of applications in intranets and the internet.
+ .
+ This package contains the UFTPD server, which offers
+ high-performance file upload and download with dynamic firewall 
+ port opening.
