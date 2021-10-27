@@ -62,7 +62,7 @@ public class AuthServiceImpl extends ServiceBase {
 			UFTPDInstance uftpd = server.getUFTPDInstance();
 			
 			try{
-				authData = assembleAttributes(uftpd, authRequest.group);
+				authData = assembleAttributes(uftpd.getServerName(), authRequest.group);
 			}
 			catch(SecurityException se){
 				return handleError(400, "", se, logger);
@@ -107,7 +107,7 @@ public class AuthServiceImpl extends ServiceBase {
 			LogicalUFTPServer server = props.getServer(serverName);
 			UFTPDInstance uftpd = server.getUFTPDInstance();
 			try{
-				authData = assembleAttributes(uftpd, tunnelRequest.group);
+				authData = assembleAttributes(uftpd.getServerName(), tunnelRequest.group);
 			}
 			catch(SecurityException se){
 				return handleError(400, "", se, logger);
@@ -144,7 +144,7 @@ public class AuthServiceImpl extends ServiceBase {
 				server.put("description",i.getDescription());
 				server.put("status",i.getConnectionStatusMessage());
 				try{
-					UserAttributes ua = assembleAttributes(i.getUFTPDInstance(), null);
+					UserAttributes ua = assembleAttributes(i.getServerName(), null);
 					if(ua.uid!=null)server.put("uid",ua.uid);
 					if(ua.gid!=null)server.put("gid",ua.gid);
 					if(ua.groups!=null)server.put("availableGroups",ua.groups);

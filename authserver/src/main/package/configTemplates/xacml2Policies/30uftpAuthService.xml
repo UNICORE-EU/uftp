@@ -23,7 +23,7 @@
       </Condition>
     </Rule>
 
-    <Rule RuleId="Permit:Service_read-access" Effect="Permit">
+    <Rule RuleId="Permit:access-service" Effect="Permit">
       <Description> Read access to the data access service is granted for anybody.
                     This allows anonymous shares.
       </Description>
@@ -45,6 +45,30 @@
         <Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:string-bag">
           <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">GET</AttributeValue>
 	  <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">PUT</AttributeValue>
+        </Apply>
+      </Apply>
+    </Condition>
+  </Rule>
+
+  <Rule RuleId="Permit:authservice-info-access" Effect="Permit">
+    <Description> Read access to the auth service is granted for anybody</Description>
+    <Target>
+      <Resources>
+        <Resource>
+          <ResourceMatch MatchId="urn:oasis:names:tc:xacml:1.0:function:anyURI-equal">
+            <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#anyURI">auth</AttributeValue>
+            <ResourceAttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:resource:resource-id" DataType="http://www.w3.org/2001/XMLSchema#anyURI" MustBePresent="true"/>
+          </ResourceMatch>
+        </Resource>
+      </Resources>
+    </Target>
+    <Condition>
+      <Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:string-is-in">
+        <Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:string-one-and-only">
+          <ActionAttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:action:action-id" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true"/>
+        </Apply>
+        <Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:string-bag">
+          <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">GET</AttributeValue>
         </Apply>
       </Apply>
     </Condition>

@@ -29,7 +29,7 @@ public abstract class ServiceBase extends ApplicationBaseResource implements Ker
 
 	protected static final Gson gson = new GsonBuilder().create();
 	
-	protected UserAttributes assembleAttributes(UFTPDInstance server, String requestedGroup){
+	protected UserAttributes assembleAttributes(String serverName, String requestedGroup){
 		Client client = AuthZAttributeStore.getClient();
 		String uid = client.getXlogin().getUserName();
 		if(requestedGroup!=null)client.getXlogin().setSelectedGroup(requestedGroup);
@@ -38,7 +38,7 @@ public abstract class ServiceBase extends ApplicationBaseResource implements Ker
 		long rateLimit = 0;
 		String includes = null;
 		String excludes = null;
-		String base = "uftpd."+server.getName();
+		String base = "uftpd."+serverName;
 		// allow to override these with uftpd specific values
 		List<XACMLAttribute> attr = client.getSubjectAttributes().getXacmlAttributes();
 		for(XACMLAttribute a: attr){

@@ -76,7 +76,7 @@ public class ShareServiceImpl extends ShareServiceBase {
 			UFTPDInstance uftp = getServer(serverName);
 			
 			AuthRequest authRequest = gson.fromJson(json, AuthRequest.class);
-			UserAttributes ua = assembleAttributes(uftp, null);
+			UserAttributes ua = assembleAttributes(serverName, null);
 			String targetID = getNormalizedCurrentUserName();
 			String path = authRequest.serverPath;
 			Target target = new SharingUser(targetID);
@@ -141,7 +141,7 @@ public class ShareServiceImpl extends ShareServiceBase {
 
 			JSONObject json = new JSONObject(jsonString);
 			String requestedGroup = json.optString("group", null);
-			UserAttributes ua = assembleAttributes(uftp, requestedGroup);
+			UserAttributes ua = assembleAttributes(serverName, requestedGroup);
 			if("nobody".equalsIgnoreCase(ua.uid)){
 				// cannot share as nobody!
 				return handleError(401, "Your User ID cannot share, please check your access level", null, logger);
@@ -193,8 +193,7 @@ public class ShareServiceImpl extends ShareServiceBase {
 			throw new WebApplicationException(404);
 		}
 		try{
-			UFTPDInstance uftp = getServer(serverName);
-			UserAttributes ua = assembleAttributes(uftp, null);
+			UserAttributes ua = assembleAttributes(serverName, null);
 			Owner owner = new Owner(getNormalizedCurrentUserName(), ua.uid, ua.gid);
 			JSONObject o = new JSONObject();
 			JSONArray jShares = new JSONArray();
@@ -226,8 +225,7 @@ public class ShareServiceImpl extends ShareServiceBase {
 			throw new WebApplicationException(404);
 		}
 		try{
-			UFTPDInstance uftp = getServer(serverName);
-			UserAttributes ua = assembleAttributes(uftp, null);
+			UserAttributes ua = assembleAttributes(serverName, null);
 			Owner owner = new Owner(getNormalizedCurrentUserName(), ua.uid, ua.gid);
 			ShareDAO share = shareDB.read(uniqueID);
 			if(share == null){
@@ -268,7 +266,7 @@ public class ShareServiceImpl extends ShareServiceBase {
 				server.put("description",i.getDescription());
 				server.put("status",i.getConnectionStatusMessage());
 				o.put(name, server);
-				UserAttributes ua = assembleAttributes(i.getUFTPDInstance(), null);
+				UserAttributes ua = assembleAttributes(i.getServerName(), null);
 				o.put("userInfo", getUserInfo(ua));
 			}
 			return Response.ok().entity(o.toString(2)).build();
