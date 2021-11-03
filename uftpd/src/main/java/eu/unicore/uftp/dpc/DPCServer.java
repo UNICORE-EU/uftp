@@ -187,6 +187,7 @@ public class DPCServer {
 		return new String[]{ UFTPCommands.PASV, 
 				UFTPCommands.EPSV, 
 				UFTPCommands.RANGSTREAM, 
+				UFTPCommands.RESTSTREAM, 
 				UFTPCommands.MFMT,
 				UFTPCommands.MLSD,
 				UFTPCommands.APPE,

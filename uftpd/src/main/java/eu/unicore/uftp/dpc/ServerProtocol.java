@@ -85,22 +85,13 @@ public class ServerProtocol {
 
 	protected UFTPTransferRequest sendFeatures() throws IOException {
 		UFTPTransferRequest authZresult = null;
-
-		String featureReply = UFTPCommands.FEATURES_REPLY_SHORT;
-		String indent = "";
+		String featureReply = UFTPCommands.FEATURES_REPLY_LONG;
 		Collection<String>features = connection.getFeatures();
-
-		if (features.size()> 1) {
-			featureReply = UFTPCommands.FEATURES_REPLY_LONG;
-			indent = " ";
-		}
 		connection.sendControl(featureReply);
 		for (String s : features) {
-			connection.sendControl(indent + s );
+			connection.sendControl(" " + s );
 		}
-		if(features.size()> 1){
-			connection.sendControl(UFTPCommands.ENDCODE);
-		}
+		connection.sendControl(UFTPCommands.ENDCODE);
 		return authZresult;
 	}
 

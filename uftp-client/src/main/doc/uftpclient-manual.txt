@@ -307,7 +307,6 @@ This is handy for quick performance tests:
 $> uftp cp -B 10G https://localhost:9000/rest/auth/TEST:/dev/zero /dev/null
 ---------------
 
-
 Encryption and compression
 ++++++++++++++++++++++++++
 
@@ -358,6 +357,24 @@ each transferring 5 gigabytes
 $> uftp cp -B 0-10G -t 2 https://localhost:9000/rest/auth/TEST:/dev/zero /dev/null
 ------------
 
+Computing checksums for remote files
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To compute a checksum for a remote file, use the checksum command:
+
+------------
+$> uftp checksum https://localhost:9000/rest/auth/TEST:/data/*.dat
+------------
+
+A number of different hashing algorithms are available, which can be selected
+using the "-a" option. For example
+
+------------
+$> uftp checksum -a SHA-256 https://localhost:9000/rest/auth/TEST:/data/*.dat
+------------
+
+
+(MD5, SHA-1, SHA-256, SHA-256)
 
 Synchronizing a file: the "sync" command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

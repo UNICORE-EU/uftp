@@ -9,6 +9,7 @@ import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.FileTime;
+import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -24,6 +25,7 @@ import eu.unicore.uftp.server.FileAccess;
 import eu.unicore.uftp.server.UFTPCommands;
 import eu.unicore.uftp.server.UserFileAccess;
 import eu.unicore.uftp.server.requests.UFTPTransferRequest;
+import eu.unicore.util.Log;
 
 /**
  * A session is used to transfer multiple files and perform common
@@ -71,6 +73,8 @@ public class Session {
 
 	public static final int ACTION_CLOSE_DATA = 7;
 
+	public static final int ACTION_SEND_HASH = 8;
+
 	private final File baseDirectory;
 
 	private File currentDirectory;
@@ -86,6 +90,11 @@ public class Session {
 
 	// original file name for rename operation
 	private String renameFrom = null;
+
+	// hash algorithm
+	private String hashAlgorithm = "MD5";
+	private String[] supportedHashAlgorithms = new String[] { "MD5", "SHA-1", "SHA-256", "SHA-512" };
+	private MessageDigest md;
 
 	private final Map<String, Pattern>patterns=new HashMap<String, Pattern>();
 
@@ -152,6 +161,11 @@ public class Session {
 		else if (chk.startsWith("RETR ")) {
 			boolean ok = handleRetrieve(cmd);
 			return ok ? ACTION_RETRIEVE : ACTION_NONE;
+		}
+
+		else if (chk.startsWith("HASH ")) {
+			boolean ok = handleHash(cmd);
+			return ok ? ACTION_SEND_HASH : ACTION_NONE;
 		}
 
 		else if (chk.startsWith("STAT ")) {
@@ -230,6 +244,10 @@ public class Session {
 			handleFeatures(cmd);
 		}
 
+		else if (chk.startsWith("OPTS ")) {
+			handleOptions(cmd);
+		}
+
 		else if (chk.startsWith("PASV") || chk.startsWith("EPSV")) {
 			if(numParCons<=maxParCons){
 				connection.addNewDataConnection(cmd);
@@ -304,6 +322,38 @@ public class Session {
 		return true;
 	}
 	
+	private boolean handleHash(String cmd) throws IOException {
+		assertMode(Mode.READ);
+		String[] tok = cmd.trim().split(" ", 2);
+		String localFileName = tok[1];
+		localFile = getFile(localFileName);
+
+		try{
+			assertACL(localFile, Mode.READ);
+			localRandomAccessFile = createRandomAccessFile(localFile, "r");
+		}catch(Exception e){
+			connection.sendError( "Can't open file for reading: "+e.getMessage());
+			return false;
+		}
+		try {
+			md = MessageDigest.getInstance(hashAlgorithm);
+		}catch(Exception e){
+			connection.sendError( "Can't create message digest for algorithm '"
+					+hashAlgorithm+"': "+e.getMessage());
+			return false;
+		}
+		long size ;
+
+		if(haveRange) {
+			size = numberOfBytes;
+		}
+		else {
+			size = stat(localFile).getSize();
+			numberOfBytes = size - offset;
+		}
+		return true;
+	}
+
 	private void handleSize(String cmd) throws IOException {
 		assertMode(Mode.INFO);
 		String[] tok = cmd.trim().split(" ", 2);
@@ -348,7 +398,8 @@ public class Session {
 			resetRange();
 		} else {
 			response = "350 Restarting at " + localOffset + ". End byte range at " + lastByte;
-			setRange(localOffset, lastByte - localOffset);
+			long numberOfBytes = lastByte - localOffset;
+			setRange(localOffset, numberOfBytes);
 		}
 		connection.sendControl(response);
 	}
@@ -733,19 +784,54 @@ public class Session {
 
 	private void handleFeatures(String cmd) throws IOException {
 		assertMode(Mode.INFO);
-		String featureReply = UFTPCommands.FEATURES_REPLY_SHORT;
-		String indent = "";
+		String featureReply = UFTPCommands.FEATURES_REPLY_LONG;
 		Collection<String>features = connection.getFeatures();
-		if (features.size()> 1) {
-			featureReply = UFTPCommands.FEATURES_REPLY_LONG;
-			indent = " ";
-		}
 		connection.sendControl(featureReply);
 		for (String s : features) {
-			connection.sendControl(indent + s );
+			connection.sendControl(" " + s );
 		}
-		if(features.size()> 1){
-			connection.sendControl(UFTPCommands.ENDCODE);
+		StringBuilder hashFeature = new StringBuilder();
+		hashFeature.append(" HASH ");
+		for(String supp: supportedHashAlgorithms)
+		{
+			hashFeature.append(supp);
+			if(hashAlgorithm.equals(supp))hashFeature.append("*");
+			hashFeature.append(";");
+		}
+		hashFeature.deleteCharAt(hashFeature.length()-1);
+		connection.sendControl(hashFeature.toString());
+		connection.sendControl(UFTPCommands.ENDCODE);
+	}
+
+	private void handleOptions(String cmd) throws IOException {
+		try {
+			String[] tokens = cmd.split(" ");
+			if(tokens.length<2){
+				throw new IllegalArgumentException("'OPTS' requires at least one argument.");
+			}
+			String optArg = tokens[1];
+			if("HASH".equalsIgnoreCase(optArg)) {
+				if(tokens.length==3) {
+					String newAlgo = tokens[2].toUpperCase();
+					boolean validAlgorithm = false;
+					for(String supported: supportedHashAlgorithms) {
+						if(supported.equalsIgnoreCase(newAlgo)) {
+							hashAlgorithm = newAlgo.toUpperCase();
+							validAlgorithm = true;
+						}
+					}
+					if(!validAlgorithm) {
+						throw new IllegalArgumentException("Hash algorithm '"+newAlgo+"' not supported. "
+								+ "Must be one of: "+Arrays.asList(supportedHashAlgorithms));
+					}
+				}
+				connection.sendControl("200 "+hashAlgorithm);
+			}
+			else {
+				throw new IllegalArgumentException("Parameters to 'OPTS' command not understood");
+			}
+		} catch(Exception ex){
+			connection.sendControl(UFTPCommands.ERROR+" "+Log.createFaultMessage("Error: ", ex));
 		}
 	}
 
@@ -815,11 +901,16 @@ public class Session {
 	}
 
 	public void reset() throws IOException {
+		reset(true);
+	}
+
+	public void reset(boolean send226) throws IOException {
 		resetRange();
 		Utils.closeQuietly(localRandomAccessFile);
 		if(!keepAlive)connection.closeData();
-		connection.sendControl("226 File transfer successful");
+		if(send226)connection.sendControl("226 File transfer successful");
 		Utils.closeQuietly(stream);
+		md = null;
 		stream = null;
 	}
 
@@ -876,6 +967,14 @@ public class Session {
 		return archiveMode;
 	}
 	
+	public MessageDigest getMessageDigest() {
+		return md;
+	}
+	
+	public String getHashAlgorithm() {
+		return hashAlgorithm;
+	}
+
 	private FileInfo[] listFiles(File directory) throws IOException {
 		return fileAccess.listFiles(directory);
 	}

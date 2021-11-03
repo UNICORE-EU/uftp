@@ -255,7 +255,7 @@ public abstract class AbstractUFTPClient implements Runnable, Closeable {
 		return client.getServerFeatures();
 	}
 
-	public void assertFeature(String feature) throws RuntimeException {
+	public void assertFeature(String feature) throws IOException {
 		if(!getServerFeatures().contains(feature)){
 			throw new RuntimeException("UFTPD server does not support the '"+feature+"' feature.");
 		}

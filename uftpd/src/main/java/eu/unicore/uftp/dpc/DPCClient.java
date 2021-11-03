@@ -92,7 +92,7 @@ public class DPCClient implements Closeable{
 		if(checkProxy()) {
 			InetAddress proxy = InetAddress.getByName(ftpProxyHost);
 			openControlSocket(new InetAddress[] {proxy}, ftpProxyPort);
-			List<String>reply = protocol.initialHandshake();
+			String reply = protocol.initialHandshake();
 			logger.debug(reply);
 			proxyType = determineProxyType(reply);
 			if(proxyType==null)throw new IOException("Unsupported proxy implementation!");
@@ -141,11 +141,9 @@ public class DPCClient implements Closeable{
 		NONE, DELEGATE, FROX	
 	}
 	
-	protected ProxyType determineProxyType(List<String>serverInfo) {
-		for(String s: serverInfo) {
-			if(s.contains("DeleGate"))return ProxyType.DELEGATE;
-			if(s.contains("Frox"))return ProxyType.FROX;
-		}
+	protected ProxyType determineProxyType(String serverInfo) {
+		if(serverInfo.contains("DeleGate"))return ProxyType.DELEGATE;
+		if(serverInfo.contains("Frox"))return ProxyType.FROX;
 		return ProxyType.FROX;
 	}
 

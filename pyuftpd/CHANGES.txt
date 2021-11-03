@@ -3,6 +3,10 @@ Changelog
 The UFTP issue tracker is at
 https://sourceforge.net/p/unicore/uftp-issues
 
+UFTPD 3.1.1 (released Nov dd, 2021)
+-----------------------------------
+ - new feature: HASH (#70)
+
 UFTPD 3.1.0 (released Oct 27, 2021)
 ------------------------------------
  - improvement: allow to run as unprivileged user with added

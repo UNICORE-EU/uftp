@@ -413,6 +413,84 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 		return baseDirectory;
 	}
 
+	public boolean supportsHashes() {
+		for(String feat: getServerFeatures()) {
+			if(feat.startsWith("HASH"))return true;
+		}
+		return false;
+	}
+
+	public String getHashAlgorithm() throws IOException {
+		checkConnected();
+		client.sendControl("OPTS HASH");
+		Reply reply = Reply.read(client);
+		if (reply.isError()) {
+			throw new IOException("Error: server reply " + reply);
+		}
+		else {
+			return reply.toString().split("200 ")[1];
+		}
+	}
+
+	public String setHashAlgorithm(String algo) throws IOException {
+		checkConnected();
+		client.sendControl("OPTS HASH "+algo);
+		Reply reply = Reply.read(client);
+		if (reply.isError()) {
+			throw new IOException("Error: server reply " + reply);
+		}
+		else {
+			return reply.toString().split("200 ")[1];
+		}
+	}
+
+	public HashInfo getHash(String file) throws IOException {
+		return getHash(file, 0, -1);
+	}
+
+	public HashInfo getHash(String remoteFile, long offset, long length) throws IOException {
+		checkConnected();
+		if(offset>=0 && length>0) sendRangeCommand(offset, length);
+		String message = "HASH " + remoteFile;
+		client.sendControl(message);
+		Reply reply = Reply.read(client);
+		if (reply.isError()) {
+			throw new IOException("Error: server reply " + reply);
+		}
+		String[] tokens = reply.getStatusLine().split(" ", 5);
+		String algo = tokens[1];
+		String[] range = tokens[2].split("-");
+		long first = Long.parseLong(range[0]);
+		long last = Long.parseLong(range[1]);
+		String hash = tokens[3];
+		String path = tokens[4];
+		return new HashInfo(path, hash, algo, first, last);
+	}
+
+	public static class HashInfo {
+		public String algorithm;
+		public long firstByte; // start byte
+		public long lastByte;  // including this byte
+		public String hash;
+		public String path;
+
+		public HashInfo(String path, String  hash, String algorithm, long firstByte, long lastByte) {
+			this.path = path;
+			this.hash = hash;
+			this.algorithm = algorithm;
+			this.firstByte = firstByte;
+			this.lastByte = lastByte;
+		}
+
+		public String fullInfo() {
+			return algorithm+" "+firstByte+"-"+lastByte+" "+hash+" "+path;
+		}
+
+		public String toString() {
+			return hash;
+		}
+	}
+
 	protected long moveData(long maxBytes) throws IOException {
 		return moveData(maxBytes, maxBytes<0);
 	}
@@ -505,7 +583,8 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 	// http://tools.ietf.org/html/draft-bryan-ftp-range-05
 	//
 	private void sendRangeCommand(long offset, long length) throws IOException {
-		String message = "RANG " + offset + " " + (offset+length);
+		long endByte = offset+length;
+		String message = "RANG " + offset + " " + endByte;
 		client.sendControl(message);
 		Reply reply = Reply.read(client);
 		if (reply.getCode() != 350) {

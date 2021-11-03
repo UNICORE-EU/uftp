@@ -32,7 +32,7 @@ public class ClientProtocol {
 	 * returns the server reply
 	 * @throws IOException
 	 */
-    public List<String> initialHandshake() throws IOException {
+    public String initialHandshake() throws IOException {
         // read initial line(s) from server containing code 220 and version
         Reply reply = null;
         try {
@@ -44,7 +44,7 @@ public class ClientProtocol {
         if (reply.getCode()!=220) {
             throw new ProtocolViolationException("Code '220' expected, got " + reply.getCode());
         }
-        return reply.getResults();
+        return reply.getStatusLine();
     }
 
     /**

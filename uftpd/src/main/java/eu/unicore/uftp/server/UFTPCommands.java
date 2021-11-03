@@ -14,7 +14,6 @@ public final class UFTPCommands {
     public static final String OK = "200 OK";
     public static final String RETR_OK = "150 OK";
     public static final String FEATURES_REQUEST = "FEAT";
-    public static final String FEATURES_REPLY_SHORT = "211 Features:";
     public static final String FEATURES_REPLY_LONG = "211-Features:";
     
     public static final String MLST = "MLST";
@@ -49,6 +48,7 @@ public final class UFTPCommands {
     
     public static final String ERROR = "500";
     public static final String RANGSTREAM = "RANG STREAM";
+    public static final String RESTSTREAM = "REST STREAM";
     public static final String MFMT = "MFMT"; // "modify fact modification time"
     
     public static final String CDUP= "CDUP"; 

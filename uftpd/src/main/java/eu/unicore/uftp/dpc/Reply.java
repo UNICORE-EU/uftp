@@ -60,13 +60,18 @@ public class Reply {
 			//read remaining lines
 			while(true){
 				reply=client.readControl();
-				if(reply==null || reply.startsWith(String.valueOf(r.code))){
+				if(reply==null)break;
+				// e.g. HASH sends repeated "213-" to avoid timeouts
+				if((codeS+"-").equals(reply))continue;
+				if(reply.startsWith(" ")) {
+					r.results.add(reply.trim());
+				}
+				if(reply.startsWith(String.valueOf(r.code))){
+					r.statusLine = reply;
 					break;
 				}
-				r.results.add(reply.trim());
 			}
 		}
-		
 		return r;
 	}
 }

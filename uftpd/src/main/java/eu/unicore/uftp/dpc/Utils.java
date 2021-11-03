@@ -191,7 +191,7 @@ public class Utils {
 			throw new RuntimeException(ex);
 		}
 	}
-
+	
 	public static void writeToFile(String content, File target) throws IOException {
 		FileOutputStream o = new FileOutputStream(target);
 		try {
@@ -201,11 +201,15 @@ public class Utils {
 		}
 	}
 
-	private static MessageDigest digest(File file) throws Exception {
+	public static MessageDigest digest(File file) throws Exception {
+		return digest(file, "MD5");
+	}
+
+	public static MessageDigest digest(File file, String algo) throws Exception {
 		FileInputStream fis = new FileInputStream(file);
 		byte[] buf = new byte[1024];
 		int r = 0;
-		MessageDigest md = MessageDigest.getInstance("MD5");
+		MessageDigest md = MessageDigest.getInstance(algo);
 		while (true) {
 			r = fis.read(buf);
 			if (r < 0) {

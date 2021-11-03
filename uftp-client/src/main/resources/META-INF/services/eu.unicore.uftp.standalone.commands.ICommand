@@ -13,3 +13,4 @@ eu.unicore.uftp.standalone.commands.GetSharedFile
 eu.unicore.uftp.standalone.commands.PutSharedFile
 eu.unicore.uftp.standalone.commands.UTunnel
 eu.unicore.uftp.standalone.commands.Auth
+eu.unicore.uftp.standalone.commands.Hash

@@ -42,9 +42,6 @@ public class GetSharedFile extends BaseUFTPCommand {
 	@Override
 	public void parseOptions(String[] args) throws ParseException {
 		super.parseOptions(args);
-		if(fileArgs.length<1){
-			throw new IllegalArgumentException("Must specify at least a source!");
-		}
 		if(fileArgs.length>1) {
 			target = new File(fileArgs[fileArgs.length-1]);
 		}
@@ -55,6 +52,9 @@ public class GetSharedFile extends BaseUFTPCommand {
 	
 	@Override
 	protected void run(ClientFacade client) throws Exception {
+		if(fileArgs.length<1){
+			throw new IllegalArgumentException("Must specify at least a source!");
+		}
 		String source = fileArgs[0];
 		ConnectionInfoManager cim = client.getConnectionManager();
 		cim.init(source);
@@ -62,8 +62,9 @@ public class GetSharedFile extends BaseUFTPCommand {
 		String path = cim.getPath();
 		AuthResponse response = authClient.connect(path,true,false);
 		File targetFile = makeTarget(source);
-		try(OutputStream targetStream = new FileOutputStream(targetFile)){
-			UFTPSessionClient uftp = new UFTPClientFactory().getUFTPClient(response);
+		try(OutputStream targetStream = new FileOutputStream(targetFile);
+			UFTPSessionClient uftp = new UFTPClientFactory().getUFTPClient(response))
+		{
 			ProgressBar pb = new ProgressBar(targetFile.getName(), -1);
 			uftp.setProgressListener(pb);
 			uftp.connect();

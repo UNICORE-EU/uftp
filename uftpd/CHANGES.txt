@@ -3,8 +3,12 @@ Changelog
 The UFTP issue tracker is at
 https://sourceforge.net/p/unicore/uftp-issues
 
-UFTP 2.11.0 (released 2021 dd yyyy)
-----------------------------------
+UFTP 2.12.0
+-----------
+ - new feature: HASH command (#70)
+
+UFTP 2.11.0
+-----------
  - update to log4j/2, logging config update recommended
  - update to securityLibrary 5.3.1
  - new feature: implement restart command ("REST")

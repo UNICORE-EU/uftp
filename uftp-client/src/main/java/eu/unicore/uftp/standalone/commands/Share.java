@@ -75,7 +75,9 @@ public class Share extends BaseCommand {
 	@Override
 	protected void run(ClientFacade client) throws Exception {
 		url = line.getOptionValue("s", Utils.getProperty(UFTP_SHARE_URL, null));
-		
+		if(url==null) {
+			throw new IllegalArgumentException("Must specify share service via '--server <URL>' or environment variable 'UFTP_SHARE_URL'");
+		}
 		if(line.hasOption("l")){
 			listShares(client);
 			return;

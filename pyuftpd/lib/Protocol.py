@@ -6,14 +6,6 @@ _FILE_ACTION_OK = "350 File action OK"
 _LOGIN_SUCCESS = "230 Login successful"
 _SYSTEM_REPLY = "215 Unix Type: L8"
 
-_FEATURES = [ "PASV", "EPSV",
-              "RANG STREAM",
-              "MFMT", "MLSD", "APPE",
-              "KEEP-ALIVE",
-              "ARCHIVE",
-              "RESTRICTED_SESSION", "DPC2_LOGIN_OK"
-]
-
 def login(cmd: str, connector: Connector):
     secret = None
     if "USER anonymous"==cmd:
@@ -28,18 +20,8 @@ def login(cmd: str, connector: Connector):
         connector.close()
     return secret
 
-def get_features():
-    return _FEATURES
-
-def send_features(connector: Connector):
-    connector.write_message("211-Features:")
-    for feat in _FEATURES:
-        connector.write_message(" %s"  % feat)
-    connector.write_message("211 END")
-
-
 def establish_connection(connector: Connector, config):
-    cmds = ["USER","FEAT","SYST"]
+    cmds = ["USER","SYST"]
     connector.write_message("220 UFTPD %s, https://www.unicore.eu" % MY_VERSION)
     while len(cmds)>0:
         try:
@@ -58,9 +40,6 @@ def establish_connection(connector: Connector, config):
                 connector.write_message("530 Not logged in")
                 connector.close()
             return job
-        elif chk.startswith("FEAT"):
-            cmds.remove("FEAT")
-            send_features(connector)
         elif chk.startswith("SYST"):
             cmds.remove("SYST")
             connector.write_message("215 Unix Type: L8")

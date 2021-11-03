@@ -8,6 +8,7 @@ import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.security.MessageDigest;
 import java.util.List;
 
 import org.apache.commons.compress.archivers.ArchiveEntry;
@@ -164,6 +165,10 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 					sendStreamData(session);
 					break;
 
+				case Session.ACTION_SEND_HASH:
+					sendHashData(session);
+					break;
+
 				case Session.ACTION_NONE:
 				}
 			}
@@ -269,7 +274,7 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 
 		// this is not intended to be high-precision
 		long interval = System.currentTimeMillis() - startTime;
-		if (interval ==0) interval = 1;
+		if (interval==0) interval = 1;
 		long rate = 1000 * total / interval;
 		long rateLimit = job.getRateLimit();
 		if (rate < rateLimit) {
@@ -287,7 +292,7 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 	 *
 	 * @param session - the session containing the required information
 	 * @throws IOException
-	 * @throws java.lang.InterruptedException  
+	 * @throws java.lang.InterruptedException
 	 */
 	protected void sendData(Session session) throws IOException, InterruptedException {
 		RandomAccessFile ra = session.getLocalRandomAccessFile();
@@ -313,7 +318,46 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 				controlRate(total, startTime);
 			}
 		}
-		postSend(target, session, total, startTime);
+		postSend(target, session, total, startTime, "Send", true);
+	}
+
+	/**
+	 * compute hash from a file and send it via the control channel
+	 *
+	 * @param session - the session containing the required information
+	 * @throws IOException
+	 * @throws java.lang.InterruptedException
+	 */
+	protected void sendHashData(Session session) throws IOException, InterruptedException {
+		RandomAccessFile ra = session.getLocalRandomAccessFile();
+		ra.seek(session.getOffset());
+		long startTime = System.currentTimeMillis();
+		long intervalStart = System.currentTimeMillis();
+		long bytesToSend = session.getNumberOfBytes();
+		final int bufSize = buffer.length;
+		int n, len;
+		long total = 0;
+		MessageDigest md = session.getMessageDigest();
+		while (total < bytesToSend) {
+			len = (int) Math.min(bufSize, bytesToSend - total);
+			n = ra.read(buffer, 0, len);
+			if (n < 0) {
+				break;
+			}
+			md.update(buffer, 0, n);
+			total += n;
+			// keep the client entertained
+			if(System.currentTimeMillis()-intervalStart > 30000) {
+				intervalStart = System.currentTimeMillis();
+				connection.sendControl("213-");
+			}
+		}
+		String hash = Utils.hexString(md);
+		String msg = "213 "+session.getHashAlgorithm()+" "
+					+session.getOffset()+"-"+(bytesToSend-1)
+					+ " "+hash+" "+session.getLocalFile().getPath();
+		connection.sendControl(msg);
+		postSend(null, session, total, startTime, session.getHashAlgorithm(), false);
 	}
 
 	protected void readData(Session session) throws IOException, InterruptedException {
@@ -356,7 +400,7 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 			logger.debug("Time: " + (System.currentTimeMillis() - startTime) + " total bytes transferred: " + total);
 		}
 		long millis = System.currentTimeMillis() - startTime;
-		logUsage(false, total, millis, connection.getAddress(), numFiles);
+		logUsage("Receive", total, millis, connection.getAddress(), numFiles);
 	}
 
 	private long readNormalData(Session session, InputStream reader) throws IOException, InterruptedException {
@@ -467,7 +511,7 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 				controlRate(total, startTime);
 			}
 		}
-		postSend(target, session, total, startTime);
+		postSend(target, session, total, startTime, "Send", true);
 	}
 	
 	private OutputStream preSend(Session session)throws IOException {
@@ -489,13 +533,15 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 		return target;
 	}
 	
-	private void postSend(OutputStream target, Session session, long total, long startTime) throws IOException {
-		target.flush();
-		if(isSession)Utils.finishWriting(target);
-		if(!session.isKeepAlive())Utils.closeQuietly(target);
-		session.reset();
+	private void postSend(OutputStream target, Session session, long total, long startTime, String operation, boolean send226) throws IOException {
+		if(target!=null) {
+			target.flush();
+			if(isSession)Utils.finishWriting(target);
+			if(!session.isKeepAlive())Utils.closeQuietly(target);
+		}
+		session.reset(send226);
 		long millis = System.currentTimeMillis() - startTime;
-		logUsage(true, total, millis, connection.getAddress(), -1);
+		logUsage(operation, total, millis, connection.getAddress(), -1);
 	}
 	
 	protected void syncMaster(Session session) throws Exception {
@@ -569,14 +615,13 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 	 *    [Sent|Received] [clientIP] [user:group] [bytes] [kb/sec]   
 	 * </p>
 	 */
-	protected void logUsage(boolean send, long dataSize, long consumedMillis, InetAddress clientIP, long numFiles){
+	protected void logUsage(String operation, long dataSize, long consumedMillis, InetAddress clientIP, long numFiles){
 		if(!logger.isInfoEnabled())return;
 		String group=job.getGroup();
-		String what = send? "Sent" : "Received";
 		float r=(float)dataSize/(float)consumedMillis;
 
 		StringBuilder sb = new StringBuilder();
-		sb.append("USAGE [").append(what).append("] ");
+		sb.append("USAGE [").append(operation).append("] ");
 		sb.append("[").append(clientIP).append("] ");
 		sb.append("[").append(job.getUser()).append(":");
 		sb.append(group!=null?group:"n/a").append("] ");

@@ -6,9 +6,10 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import org.apache.commons.cli.ParseException;
+import org.apache.commons.io.FilenameUtils;
 
 import eu.unicore.uftp.authserver.messages.AuthResponse;
-import eu.unicore.uftp.client.UFTPClient;
+import eu.unicore.uftp.client.UFTPSessionClient;
 import eu.unicore.uftp.standalone.ClientFacade;
 import eu.unicore.uftp.standalone.ConnectionInfoManager;
 import eu.unicore.uftp.standalone.UFTPClientFactory;
@@ -42,14 +43,16 @@ public class PutSharedFile extends BaseUFTPCommand {
 	@Override
 	public void parseOptions(String[] args) throws ParseException {
 		super.parseOptions(args);
-		if(fileArgs.length<2){
-			throw new IllegalArgumentException("Must specify at least a local source and remote path!");
+		if(fileArgs.length>1){
+			target = fileArgs[fileArgs.length-1];
 		}
-		target = fileArgs[fileArgs.length-1];
 	}
 	
 	@Override
 	protected void run(ClientFacade client) throws Exception {
+		if(fileArgs.length<2){
+			throw new IllegalArgumentException("Must specify at least a local source and remote path!");
+		}
 		int len = fileArgs.length-1;
 		boolean directory = len>1;
 		for(int i=0; i<len;i++){
@@ -63,15 +66,26 @@ public class PutSharedFile extends BaseUFTPCommand {
 			cim.init(target);
 			AuthClient authClient = cim.getAuthClient(client);
 			String path = cim.getPath();
+			String baseDir = null;
+			String fileName = null;
 			if(directory || path.endsWith("/")){
-				path = path+"/"+sourceFile.getName();
+				baseDir = path;
+				fileName = sourceFile.getName();
+				path = FilenameUtils.normalize(path+"/"+fileName, true);
 			}
-			AuthResponse response = authClient.connect(path,false,false);
-			try(InputStream sourceStream = new FileInputStream(sourceFile)){
-				UFTPClient uftp = new UFTPClientFactory().getClient(response, sourceStream);
+			else {
+				baseDir = new File(path).getParent();
+				if(baseDir==null)baseDir = "/";
+				fileName = new File(path).getName();
+			}
+			AuthResponse response = authClient.connect(path, true, false);
+			try(InputStream sourceStream = new FileInputStream(sourceFile);
+				UFTPSessionClient uftp = new UFTPClientFactory().getUFTPClient(response))
+			{
+				uftp.connect();
 				ProgressBar pb = new ProgressBar(source, -1);
 				uftp.setProgressListener(pb);
-				uftp.run();
+				uftp.writeAll(fileName, sourceStream, true);
 				pb.close();
 			}
 		}

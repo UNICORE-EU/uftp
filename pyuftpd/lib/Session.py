@@ -3,6 +3,7 @@ import os.path
 from pathlib import Path
 from sys import maxsize
 from time import mktime, sleep, strptime, time
+import hashlib
 
 from Connector import Connector
 from FileInfo import FileInfo
@@ -18,6 +19,7 @@ class Session(object):
     ACTION_STORE = 2
     ACTION_OPEN_SOCKET = 5
     ACTION_CLOSE_DATA = 7
+    ACTION_SEND_HASH = 8
     ACTION_END = 99
 
     MODE_NONE = 0
@@ -27,6 +29,15 @@ class Session(object):
     MODE_FULL = 4
 
     _FILE_READ_BUFFERSIZE = 2*65536
+
+    _FEATURES = [ "PASV", "EPSV",
+              "RANG STREAM", "REST STREAM"
+              "MFMT", "MLSD", "APPE",
+              "KEEP-ALIVE",
+              "ARCHIVE",
+              "RESTRICTED_SESSION",
+              "DPC2_LOGIN_OK"
+    ]
 
     def __init__(self, connector: Connector, job, LOG: Logger):
         self.job = job
@@ -86,6 +97,11 @@ class Session(object):
             self.rate_limit = int(job.get("rateLimit", "0"))
         except:
             pass
+        self.hash_algorithm = "MD5"
+        self.hash_algorithms = {"MD5": hashlib.md5(),
+                                "SHA-1": hashlib.sha1(),
+                                "SHA-256": hashlib.sha256(),
+                                "SHA-512": hashlib.sha512()}
 
     def init_functions(self):
         self.functions = {
@@ -118,6 +134,8 @@ class Session(object):
             "MFMT": self.set_file_mtime,
             "TYPE": self.switch_type,
             "KEEP-ALIVE": self.set_keep_alive,
+            "OPTS": self.opts,
+            "HASH": self.hash,
         }
 
     def assert_permission(self, requested):
@@ -156,13 +174,22 @@ class Session(object):
         return Session.ACTION_CONTINUE
 
     def feat(self, params):
-        Protocol.send_features(self.control)
+        self.control.write_message("211-Features:")
+        for feat in self._FEATURES:
+            self.control.write_message(" %s"  % feat)
+        feat = "HASH "
+        for f in self.hash_algorithms:
+            feat+=f
+            if f==self.hash_algorithm:
+                feat+="*"
+            if f!="SHA-512":
+                feat+=";"
+        self.control.write_message(" %s" % feat)
+        self.control.write_message("211 END")
         return Session.ACTION_CONTINUE
 
     def noop(self, params):
         try:
-            # be compatible with the Java client that may want
-            # multiple parallel TCP streams which we don't support
             self.num_streams = int(params)
             if self.num_streams<=self.max_streams:
                 # accepted
@@ -285,9 +312,10 @@ class Session(object):
             else:
                 return Session.ACTION_CONTINUE
 
-    def post_transfer(self):
+    def post_transfer(self, send226=True):
         self.reset_range()        
-        self.control.write_message("226 File transfer successful")
+        if send226:
+            self.control.write_message("226 File transfer successful")
 
     def list(self, params):
         self.assert_permission(Session.MODE_INFO)
@@ -412,7 +440,8 @@ class Session(object):
             self.reset_range()
         else:
             response = "350 Restarting at %s. End byte range at %s" % (local_offset, last_byte)
-            self.set_range(local_offset, last_byte - local_offset)
+            num_bytes = last_byte - local_offset
+            self.set_range(local_offset, num_bytes)
         self.control.write_message(response)
         return Session.ACTION_CONTINUE
 
@@ -477,6 +506,21 @@ class Session(object):
         self.control.write_message("150 OK")
         return Session.ACTION_STORE
 
+    def hash(self, params):
+        self.assert_permission(Session.MODE_READ)
+        path = self.makeabs(params)
+        fi = FileInfo(path)
+        if not fi.can_read():
+            self.control.write_message("500 Directory/file does not exist or cannot be accessed!")
+            return Session.ACTION_CONTINUE
+        if self.have_range:
+            size = self.number_of_bytes
+        else:
+            size = fi.size()
+            self.number_of_bytes = size - self.offset
+        self.file_path = path
+        return Session.ACTION_SEND_HASH
+
     def set_file_mtime(self, params):
         self.assert_permission(Session.MODE_WRITE)
         mtime, target = params.split(" ", 2)
@@ -500,6 +544,22 @@ class Session(object):
         self.control.write_message("200 OK")
         return Session.ACTION_CONTINUE
 
+    def opts(self, params):
+        cmd_tokens = params.split(" ", 2)
+        cmd = cmd_tokens[0].upper()
+        if cmd=="HASH":
+            if(len(cmd_tokens)==2):
+                algo = cmd_tokens[1].upper()
+                if algo in self.hash_algorithms:
+                    self.hash_algorithm = algo
+                else:
+                    self.control.write_message("500 Unsupported hash algorithm '%s'" % algo)
+                    return Session.ACTION_CONTINUE
+            self.control.write_message("200 %s" % self.hash_algorithm)
+        else:
+            self.control.write_message("500 OPTS command not understood")
+        return Session.ACTION_CONTINUE
+
     def open_data_socket(self):
         if self.num_streams == 1:
             self.BUFFER_SIZE = 65536
@@ -514,6 +574,33 @@ class Session(object):
             self.LOG.debug("Opening parallel data connector with <%d> streams" % self.num_streams)
             self.BUFFER_SIZE = 16384 # Java version compatibility
             self.data = PConnector.PConnector(self.data_connectors, self.LOG, self.key, self.compress)
+
+    def send_hash(self):
+        with open(self.file_path, "rb", buffering = Session._FILE_READ_BUFFERSIZE) as f:
+            f.seek(self.offset)
+            to_send = self.number_of_bytes
+            total = 0
+            start_time = int(time())
+            interval_start = start_time
+            md = self.hash_algorithms[self.hash_algorithm]
+            while total<to_send:
+                length = min(self.BUFFER_SIZE, to_send-total)
+                data = f.read(length)
+                if len(data)==0:
+                    break
+                total = total + len(data)
+                md.update(data)
+                if (int(time())-interval_start)>30:
+                    # keep client entertained
+                    self.control.write_message("213-")
+                    interval_start = int(time())
+            msg = "213 %s %s-%s %s %s" % (self.hash_algorithm,
+                    self.offset, self.offset+self.number_of_bytes-1,
+                    md.hexdigest(), self.file_path)
+            self.control.write_message(msg)
+            self.post_transfer(send226=False)
+            duration = int(time()) - start_time
+            self.log_usage(True, total, duration, 1, self.hash_algorithm)
 
     def send_data(self):
         with open(self.file_path, "rb", buffering = Session._FILE_READ_BUFFERSIZE) as f:
@@ -640,11 +727,12 @@ class Session(object):
             self.sleep_time = self.sleep_time + 5
             sleep(0.001*self.sleep_time)
 
-    def log_usage(self, send, size, duration, num_files = 1):
-        if send:
-            what = "Sent %d file(s)" % num_files
-        else:
-            what = "Received %d file(s)" % num_files
+    def log_usage(self, send, size, duration, num_files = 1, operation=None):
+        if operation is None:
+            if send:
+                operation = "Sent %d file(s)" % num_files
+            else:
+                operation = "Received %d file(s)" % num_files
         rate = 0.001*float(size)/(float(duration)+1)
         if rate<1000:
             unit = "kB/sec"
@@ -652,7 +740,7 @@ class Session(object):
         else:
             unit = "MB/sec"
             rate = int(rate / 1000)
-        msg = "USAGE [%s] [%s bytes] [%s %s] [%s]" % (what, size, rate, unit, self.job['user'])
+        msg = "USAGE [%s] [%s bytes] [%s %s] [%s]" % (operation, size, rate, unit, self.job['user'])
         self.LOG.info(msg)
 
     def run(self):
@@ -673,7 +761,7 @@ class Session(object):
                 continue
             params = None
             tokens = msg.split(" ", 1)
-            cmd = tokens[0]
+            cmd = tokens[0].upper()
             if len(tokens)>1:
                 params = tokens[1]
             func = self.functions.get(cmd, None)
@@ -696,6 +784,8 @@ class Session(object):
                         self.open_data_socket()
                     elif mode==Session.ACTION_CLOSE_DATA:
                         self.close_data()
+                    elif mode==Session.ACTION_SEND_HASH:
+                        self.send_hash()
                     elif mode==Session.ACTION_END:
                         break
                 except Exception as e:

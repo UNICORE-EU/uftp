@@ -25,6 +25,7 @@ import org.junit.Test;
 
 import eu.unicore.uftp.client.FileInfo;
 import eu.unicore.uftp.client.SessionCommands.Get;
+import eu.unicore.uftp.client.UFTPSessionClient.HashInfo;
 import eu.unicore.uftp.client.UFTPSessionClient;
 import eu.unicore.uftp.dpc.Session.Mode;
 import eu.unicore.uftp.rsync.RsyncStats;
@@ -752,6 +753,40 @@ public class TestSessionMode extends ClientServerTestBase{
 		System.out.println("Source file "+sourceFile.getAbsolutePath()+" "+expected);
 		System.out.println("Target file "+targetFile.getAbsolutePath()+" "+actual);
 		assertEquals("File contents do not match", expected, actual);
+	}
+
+	@Test
+	public void testHashing() throws Exception {
+		String fileName = "target/testdata/source-"+System.currentTimeMillis();
+		File dataFile = new File(fileName);
+		makeTestFile(dataFile, 32768, 10);
+		String secret = String.valueOf(System.currentTimeMillis());
+		File cwd = new File(".").getAbsoluteFile();
+		//initiate session mode
+		UFTPTransferRequest job = new UFTPTransferRequest(host, "nobody", secret, new File(cwd,UFTPWorker.sessionModeTag), false);
+		job.sendTo(host[0], jobPort);
+		Thread.sleep(1000);
+		try(UFTPSessionClient client = new UFTPSessionClient(host, srvPort)){
+			client.setSecret(secret);
+			client.connect();
+			assertTrue(client.supportsHashes());
+			System.out.println("Hash algorithm: " + client.getHashAlgorithm());
+			try {
+				client.setHashAlgorithm("no_such_algo");
+			}catch(IOException ok) {
+				System.out.println("Expected error: "+ok.getMessage());
+			}
+			String[] algos = new String[] {"MD5", "SHA-1", "SHA-256", "SHA-512"};
+			for(String algo: algos) {
+				System.out.println("Hash algorithm set to: " + client.setHashAlgorithm(algo));
+				// compute local hash
+				HashInfo hashInfo = client.getHash(fileName, 0, dataFile.length());
+				String localMD = Utils.hexString(Utils.digest(dataFile, algo));
+				String remoteMD = hashInfo.hash;
+				System.out.println(algo+" local: "+localMD+" remote: "+remoteMD);
+				assertEquals(localMD, remoteMD);
+			}
+		}
 	}
 
 	private void makeTestFile2(File file, int lines) throws IOException {

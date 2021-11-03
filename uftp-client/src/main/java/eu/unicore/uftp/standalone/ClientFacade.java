@@ -330,7 +330,77 @@ public class ClientFacade {
 		logger.info("Statistics : {}", stats);
 		return stats;
 	}
+	
+	/**
+	 * Copy function
+	 *
+	 * Source and destination can include wildcards e.g.:
+	 * <p>
+	 * Local:
+	 * <ul>
+	 * <li>/tmp/*</li>
+	 * <li>/tmp/*.dat</li>
+	 * </ul>
+	 * </p>
+	 * <p>
+	 * Remote:
+	 * <ul>
+	 * <li>uftp://server:port/path/dir/*.dat</li>
+	 * <li>uftp://server/path/*</li>
+	 * </ul>
+	 *
+	 * If not connection is established to remote server, such connection will
+	 * be initialized.
+	 *
+	 * @param source local or remote source
+	 * @param destination local or remote destination
+	 * @param policy policy to include subdirectories
+	 * @throws Exception
+	 */
+	public void checksum(String fileSpec, String algorithm, FileCrawler.RecursivePolicy policy)
+			throws Exception {
+		if (!connected) {
+			connect(fileSpec);
+			checksum(fileSpec, algorithm, policy);
+			return;
+		}
+		
+		if (connected) {
+			if (!connectionManager.isSameServer(fileSpec)) {
+				disconnect();
+				checksum(fileSpec, algorithm, policy);
+				return;
+			}
+		}
 
+		logger.debug("checksum {}", fileSpec);
+		Map<String, String> params = connectionManager.extractConnectionParameters(fileSpec);
+		String path = params.get("path");
+		FileCrawler fileList = new RemoteFileCrawler(path, "./dummy/", sc);
+		if (fileList.isSingleFile(path)) {
+				doChecksum(path, algorithm);
+		}
+		else{
+			Command cmd = new Command() {
+				public void execute(String path, String dummy) throws IOException{
+					doChecksum(path, algorithm);
+				}
+			};
+			fileList.crawl(cmd, policy);
+		}
+	}
+
+	private boolean haveSetAlgorithm = false;
+	
+	private void doChecksum(String path, String algorithm) throws IOException{
+		if(algorithm!=null && !haveSetAlgorithm) {
+			String reply = sc.setHashAlgorithm(algorithm);
+			haveSetAlgorithm = true;
+			if(verbose)System.out.println("Set hash algorithm: "+reply);
+		}
+		UFTPSessionClient.HashInfo hi = sc.getHash(path);
+		System.out.println(hi.hash+"  "+hi.path);
+	}
 
 	private void startUpload(String localSource, String destinationURL, RecursivePolicy policy) 
 			throws Exception {

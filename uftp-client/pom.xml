@@ -15,8 +15,8 @@
   </parent>
 
   <properties>
-    <auth.version>2.4.1</auth.version>
-    <core.version>2.11.0</core.version>
+    <auth.version>2.5.0</auth.version>
+    <core.version>2.12.0</core.version>
     <seclib.version>5.3.1</seclib.version>
 
     <jsch.version>0.0.9</jsch.version>
@@ -28,7 +28,7 @@
     <doc.template>plain</doc.template>
     
     <packman.enabled/>
-    <package.version>${version}</package.version>
+    <package.version>${project.version}</package.version>
     <package.release>1</package.release>
 
   </properties>
