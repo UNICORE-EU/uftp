@@ -7,6 +7,11 @@ https://sourceforge.net/p/unicore/uftp-issues
 ***  see README-UPGRADE.txt for how to update
 ***
 
+Auth Server 2.5.0-p1 (released Nov 3, 2021)
+--------------------------------------------
+ - remove unneeded xerces jar from lib directory
+   which caused errors on Java 8
+
 Auth Server 2.5.0 (released Oct 27, 2021)
 -----------------------------------------
  - update to UNICORE 8.2 base libs

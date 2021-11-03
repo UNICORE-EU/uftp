@@ -52,7 +52,7 @@
     <dependency>
       <groupId>org.apache.santuario</groupId>
       <artifactId>xmlsec</artifactId>
-      <version>2.2.3</version>
+      <version>2.2.2</version>
     </dependency>
     <dependency>
       <groupId>eu.unicore.uftp</groupId>
@@ -64,7 +64,7 @@
       <artifactId>uftp-datashare</artifactId>
       <version>${datashare.version}</version>
     </dependency>
-        <dependency>
+    <dependency>
       <groupId>eu.unicore.security</groupId>
       <artifactId>securityLibrary</artifactId>
       <version>${seclib.version}</version>
@@ -82,10 +82,22 @@
     <dependency>
       <groupId>eu.unicore.services</groupId>
       <artifactId>use-rest</artifactId>
+      <exclusions>
+	<exclusion>
+          <groupId>xerces</groupId>
+          <artifactId>xercesImpl</artifactId>
+	</exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>eu.unicore.services</groupId>
       <artifactId>use-aip</artifactId>
+      <exclusions>
+	<exclusion>
+          <groupId>xerces</groupId>
+          <artifactId>xercesImpl</artifactId>
+	</exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>eu.unicore.services</groupId>
