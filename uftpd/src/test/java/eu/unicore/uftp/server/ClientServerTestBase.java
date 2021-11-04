@@ -14,6 +14,7 @@ import org.apache.commons.io.FileUtils;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
+import eu.unicore.uftp.client.UFTPProgressListener;
 import eu.unicore.uftp.dpc.Utils;
 
 public abstract class ClientServerTestBase {
@@ -75,5 +76,14 @@ public abstract class ClientServerTestBase {
 		assertTrue(target.exists());
 		String actual = Utils.md5(target);
 		assertEquals("File <"+target+">: contents "+target.getName()+" do not match", md5, actual);
+	}
+
+	public static class MockProgressListener implements UFTPProgressListener{
+
+		public static boolean gotNotify=false;
+		
+		public void notifyTotalBytesTransferred(long totalBytesSent) {
+			gotNotify=true;
+		}
 	}
 }

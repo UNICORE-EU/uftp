@@ -100,6 +100,11 @@ public class Session {
 
 	private boolean archiveMode = false;
 
+	// false = UFTP "legacy bug" in how to interpret RANG
+	// true  = be compliant with the IETF draft
+	// http://tools.ietf.org/html/draft-bryan-ftp-range-05
+	private boolean rfcRangeMode = false;
+
 	public static enum Mode {
 		// ordered by "access level"
 		FULL, WRITE, READ, INFO, NONE
@@ -398,7 +403,7 @@ public class Session {
 			resetRange();
 		} else {
 			response = "350 Restarting at " + localOffset + ". End byte range at " + lastByte;
-			long numberOfBytes = lastByte - localOffset;
+			long numberOfBytes = rfcRangeMode ? lastByte - localOffset + 1: lastByte - localOffset;
 			setRange(localOffset, numberOfBytes);
 		}
 		connection.sendControl(response);
@@ -790,6 +795,9 @@ public class Session {
 		for (String s : features) {
 			connection.sendControl(" " + s );
 		}
+		if(rfcRangeMode) {
+			connection.sendControl(" "+UFTPCommands.FEATURE_RFC_RANG);
+		}
 		StringBuilder hashFeature = new StringBuilder();
 		hashFeature.append(" HASH ");
 		for(String supp: supportedHashAlgorithms)
@@ -1095,5 +1103,9 @@ public class Session {
 		if(defaultExcludes!=null)sb.append(" write_forbidden=").append(Arrays.asList(defaultExcludes));
 		
 		return sb.toString();
+	}
+	
+	public void setRFCRangeMode(boolean rfcMode) {
+		this.rfcRangeMode = rfcMode;
 	}
 }

@@ -195,6 +195,10 @@ public class UFTPServer implements Runnable {
 		if(svrThread!=null)svrThread.setCheckClientIP(checkIP);
 	}
 
+	public void setRFCRangeMode(boolean rfcMode){
+		if(svrThread!=null)svrThread.setRFCRangeMode(rfcMode);
+	}
+	
 	/**
 	 * stops the server. Both command and listener sockets are closed.
 	 */

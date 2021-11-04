@@ -71,11 +71,12 @@ public class TunnelledEchoTest extends ClientServerTestBase {
 		
 		Thread.sleep(2000);
 		
-		System.out.println("CONNECTING to local tunnel endpoint");
+		System.out.println("MAIN: connecting to local tunnel endpoint");
 		try(Socket socket = new Socket("localhost", tunnelPort)){
 			Thread.sleep(2000);
 			socket.getOutputStream().write(ECHO_STRING.getBytes());
 			socket.getOutputStream().flush();
+			System.out.println("MAIN: reading reply...");
 			byte[] buf = new byte[ECHO_STRING.length()];
 			if(socket.getInputStream().read(buf) == ECHO_STRING.length()) {
 				System.out.println(new String(buf));

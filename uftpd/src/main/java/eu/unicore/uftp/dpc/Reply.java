@@ -31,6 +31,12 @@ public class Reply {
 		return code>=500;
 	}
 	
+	public void assertStatus(int expectedCode) throws IOException {
+		if (code!=expectedCode) {
+			throw new IOException("Error: server reply " + getStatusLine());
+		}
+	}
+	
 	public String getStatusLine(){
 		return statusLine;
 	}

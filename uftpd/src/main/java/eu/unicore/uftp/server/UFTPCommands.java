@@ -38,6 +38,10 @@ public final class UFTPCommands {
     // and has accepted the login using the client secret
     public static final String PROTOCOL_VER_2_LOGIN_OK = "DPC2_LOGIN_OK";
     
+    // pseudo feature denoting that server expects RFC compliant
+    // "RANG startbyte endbyte"
+    public static final String FEATURE_RFC_RANG = "RFC_RANG";
+    
     
     public static final String USER_ANON = "USER anonymous";
     public static final String REQUEST_PASSWORD = "331 Please specify the password";

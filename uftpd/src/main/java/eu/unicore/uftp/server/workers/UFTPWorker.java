@@ -98,6 +98,7 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 	@Override
 	public void run() {
 		Session session = new Session(connection, job, server.getFileAccess(), maxStreams);
+		session.setRFCRangeMode(server.getRFCRangeMode());
 		isSession = job.getFile().getName().endsWith(sessionModeTag);
 		if (isSession) {
 			boolean isPersistent = job.isPersistent();

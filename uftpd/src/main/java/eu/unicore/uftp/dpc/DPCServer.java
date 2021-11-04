@@ -52,7 +52,9 @@ public class DPCServer {
 	private final JobStore jobMap;
 
 	private boolean checkClientIP;
-
+	
+	private boolean rfcMode= false;
+	
 	/**
 	 * String-Array holding response messages used to establish the pseudo-FTP
 	 * connection
@@ -153,7 +155,15 @@ public class DPCServer {
 	public void setCheckClientIP(boolean checkIP){
 		this.checkClientIP = checkIP;
 	}
-	
+
+	public void setRFCRangeMode(boolean rfcMode){
+		this.rfcMode = rfcMode;
+	}
+
+	public boolean getRFCRangeMode(){
+		return rfcMode;
+	}
+
 	public int getPort() {
 		return port;
 	}

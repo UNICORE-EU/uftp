@@ -153,11 +153,9 @@ public class ServerThread extends Thread {
     }
 
     public void addJob(UFTPBaseRequest job) {
-        //check user if possible
         if (haveUnixUser) {
             UnixUser user = new UnixUser(job.getUser());
-            //TODO limit connections per user?!
-            logger.debug("Have Unix user: " + user.toString());
+            logger.debug("Have Unix user: {}", user.toString());
         }
         jobStore.addJob(job);
     }
@@ -230,6 +228,14 @@ public class ServerThread extends Thread {
 		server.setCheckClientIP(checkIP);
 	}
 	
+	public void setRFCRangeMode(boolean rfcMode){
+		server.setRFCRangeMode(rfcMode);
+	}
+
+	public boolean getRFCRangeMode(){
+		return server.getRFCRangeMode();
+	}
+
     /**
      * a connection to the given client was closed
      *

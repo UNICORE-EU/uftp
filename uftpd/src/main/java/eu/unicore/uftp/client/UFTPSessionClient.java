@@ -45,6 +45,8 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 	private String commandFile;
 	private File baseDirectory;
 	protected boolean keepAlive = false;
+	
+	protected boolean rfcCompliantRange = false;
 
 	/**
 	 * create a new UFTP session client
@@ -68,6 +70,9 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 		super.connect();
 		if(getServerFeatures().contains(UFTPCommands.KEEP_ALIVE)) {
 			enableKeepAlive();
+		}
+		if(getServerFeatures().contains(UFTPCommands.FEATURE_RFC_RANG)) {
+			rfcCompliantRange = true;
 		}
 	}
 
@@ -150,7 +155,9 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 		checkConnected();
 		openDataConnection();
 		if(offset>=0 && length>0) sendRangeCommand(offset, length);
-		long size = sendRetrieveCommand(remoteFile);
+		Reply reply = runCommand("RETR " + remoteFile);
+		//expect "xxx OK <size> ...", want the size
+		long size = Long.parseLong(reply.getStatusLine().split(" ")[2]);
 		if(progressListener!=null && progressListener instanceof UFTPProgressListener2){
 			((UFTPProgressListener2)progressListener).setTransferSize(size);
 		}
@@ -217,7 +224,10 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 	public long append(String remoteFile, long size, InputStream localSource) throws IOException {
 		checkConnected();
 		openDataConnection();
-		sendAppendCommand(remoteFile, size);
+		if(size>-1) {
+			runCommand("ALLO " + size);
+		}
+		runCommand("APPE " + size);
 		preparePut(localSource);
 		return moveData(size);
 	}
@@ -270,7 +280,10 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 
 	public long getFileSize(String pathName) throws IOException {
 		checkConnected();
-		return sendSizeCommand(pathName);
+		Reply reply = runCommand( "SIZE " + pathName);
+		//expect "213 <size> ..."
+		reply.assertStatus(213);
+		return Long.parseLong(reply.getStatusLine().split(" ")[1]);
 	}
 
 	/**
@@ -283,7 +296,7 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 	 */
 	public void cd(String dir) throws IOException {
 		checkConnected();
-		sendCD(dir);
+		runCommand("CWD " + dir);
 	}
 
 	/**
@@ -293,7 +306,7 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 	 */
 	public void cdUp() throws IOException {
 		checkConnected();
-		sendCDUP();
+		runCommand(UFTPCommands.CDUP);
 	}
 
 	/**
@@ -306,7 +319,7 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 	 */
 	public void mkdir(String dir) throws IOException {
 		checkConnected();
-		sendMKD(dir);
+		runCommand("MKD " + dir);
 	}
 
 	/**
@@ -319,7 +332,7 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 	 */
 	public void rm(String path) throws IOException {
 		checkConnected();
-		sendRM(path);
+		runCommand("DELE " + path);
 	}
 
 	/**
@@ -332,7 +345,8 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 	 */
 	public void rename(String from, String to) throws IOException {
 		checkConnected();
-		sendRename(from, to);
+		runCommand("RNFR " + from);
+		runCommand("RNTO " + to);
 	}
 
 
@@ -346,7 +360,8 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 	 */
 	public void setModificationTime(String path, Calendar to) throws IOException {
 		checkConnected();
-		sendChangeModificationTime(path, to);
+		String time = FileInfo.toTimeVal(to.getTime().getTime());
+		runCommand(UFTPCommands.MFMT + " " + time + " " + path);
 	}
 	
 	/**
@@ -354,7 +369,8 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 	 */
 	public String pwd() throws IOException {
 		checkConnected();
-		return sendPWD();
+		Reply reply = runCommand("PWD");
+		return reply.getStatusLine().split(" ", 2)[1];
 	}
 
 	public static final String TYPE_NORMAL = "NORMAL";
@@ -379,7 +395,7 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 	 * @param localSlave - the local file (out of date)
 	 */
 	public RsyncStats syncLocalFile(String remoteMaster, File localSlave) throws Exception {
-		sendSYNCMaster(remoteMaster);
+		runCommand("SYNC-MASTER " + remoteMaster);
 		Slave slave = new Slave(localSlave, new SocketSlaveChannel(socket), localSlave.getAbsolutePath());
 		return slave.call();
 	}
@@ -392,7 +408,7 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 	 * @return RsyncStats info about the rsync process
 	 */
 	public RsyncStats syncRemoteFile(File localMaster, String remoteSlave) throws Exception {
-		sendSYNCSlave(remoteSlave);
+		runCommand("SYNC-SLAVE " + remoteSlave);
 		Master master = new Master(localMaster, new SocketMasterChannel(socket), localMaster.getAbsolutePath());
 		return master.call();
 	}
@@ -434,14 +450,8 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 
 	public String setHashAlgorithm(String algo) throws IOException {
 		checkConnected();
-		client.sendControl("OPTS HASH "+algo);
-		Reply reply = Reply.read(client);
-		if (reply.isError()) {
-			throw new IOException("Error: server reply " + reply);
-		}
-		else {
-			return reply.toString().split("200 ")[1];
-		}
+		Reply reply = runCommand("OPTS HASH " + algo);
+		return reply.getStatusLine().split("200 ")[1];
 	}
 
 	public HashInfo getHash(String file) throws IOException {
@@ -451,12 +461,7 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 	public HashInfo getHash(String remoteFile, long offset, long length) throws IOException {
 		checkConnected();
 		if(offset>=0 && length>0) sendRangeCommand(offset, length);
-		String message = "HASH " + remoteFile;
-		client.sendControl(message);
-		Reply reply = Reply.read(client);
-		if (reply.isError()) {
-			throw new IOException("Error: server reply " + reply);
-		}
+		Reply reply = runCommand("HASH " + remoteFile);
 		String[] tokens = reply.getStatusLine().split(" ", 5);
 		String algo = tokens[1];
 		String[] range = tokens[2].split("-");
@@ -578,33 +583,26 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 		Thread.sleep(sleepTime);
 	}
 
+	private Reply runCommand(String command) throws IOException {
+		client.sendControl(command);
+		Reply reply = Reply.read(client);
+		if (reply.isError()) {
+			throw new IOException("Error: server reply " + reply);
+		}
+		return reply;
+	}
+
 	//
 	// send "RANG <start> <end>" 
 	// http://tools.ietf.org/html/draft-bryan-ftp-range-05
 	//
 	private void sendRangeCommand(long offset, long length) throws IOException {
-		long endByte = offset+length;
+		long endByte = rfcCompliantRange ? offset+length-1 : offset+length;
 		String message = "RANG " + offset + " " + endByte;
-		client.sendControl(message);
-		Reply reply = Reply.read(client);
-		if (reply.getCode() != 350) {
-			throw new IOException("Error: server reply " + reply);
-		}
+		Reply reply = runCommand(message);
+		reply.assertStatus(350);
 	}
 
-	private long sendRetrieveCommand(String remoteFile) throws IOException {
-		String message = "RETR " + remoteFile;
-		client.sendControl(message);
-		Reply reply = Reply.read(client);
-		if (reply.isError()) {
-			throw new IOException("Error: server reply " + reply);
-		}
-
-		//expect "xxx OK <size> ...", want the size
-		long size = Long.parseLong(reply.getStatusLine().split(" ")[2]);
-		return size;
-	}
-	
 	/**
 	 * @param options - option string : 'N' for normal mode (list a directory)
 	 * @param baseDir
@@ -613,173 +611,24 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 		if (baseDir == null) {
 			baseDir = ".";
 		}
-		String message = "STAT "+(dir? "N ": "F ")+ baseDir;
-		client.sendControl(message);
-		Reply reply = Reply.read(client);
-		if (reply.isError()) {
-			throw new IOException("Error reading file list: " + reply);
-		}
+		Reply reply = runCommand("STAT " + (dir? "N ": "F ") + baseDir);
 		return reply.getResults();
 	}
 
-	private void sendCD(String dir) throws IOException {
-		String message = "CWD " + dir;
-		client.sendControl(message);
-		Reply reply = Reply.read(client);
-		if (reply.isError()) {
-			throw new IOException("Error: server reply " + reply);
-		}
-	}
-
-	private void sendCDUP() throws IOException {		
-		client.sendControl(UFTPCommands.CDUP);
-		Reply reply = Reply.read(client);
-		if (reply.isError()) {
-			throw new IOException("Error: server reply " + reply);
-		}
-	}
-
-	private long sendSizeCommand(String remoteFile) throws IOException {
-		String message = "SIZE " + remoteFile;
-		client.sendControl(message);
-		Reply reply = Reply.read(client);
-		if (reply.getCode() != 213) {
-			throw new IOException("Error: server reply " + reply);
-		}
-
-		//expect "213 <size> ...", want the size
-		long size = Long.parseLong(reply.getStatusLine().split(" ")[1]);
-		return size;
-	}
-
-	private void sendMKD(String pathname) throws IOException {
-		String message = "MKD " + pathname;
-		client.sendControl(message);
-		Reply reply = Reply.read(client);
-		if (reply.isError()) {
-			throw new IOException("Error: server reply " + reply);
-		}
-	}
-
-	private void sendRM(String pathname) throws IOException {
-		String message = "DELE " + pathname;
-		client.sendControl(message);
-		Reply reply = Reply.read(client);
-		if (reply.isError()) {
-			throw new IOException("Error: server reply " + reply);
-		}
-	}
-
-	private String sendPWD() throws IOException {
-		String message = "PWD";
-		client.sendControl(message);
-		Reply reply = Reply.read(client);
-		if (reply.isError()) {
-			throw new IOException("Error: server reply " + reply);
-		}
-		return reply.getStatusLine().split(" ", 2)[1];
-	}
-
 	private void sendStoreCommand(String remoteFile, long size, Long offset) throws IOException {
-		Reply reply = null;
 		if(offset!=null){
-			client.sendControl("RANG "+offset+" "+(offset+size));
-			reply = Reply.read(client);
-			if (reply.isError()) {
-				throw new IOException("Error setting range: server reply " + reply);
-			}
+			sendRangeCommand(offset, size);
 		}
-		String message = "ALLO " + size;
-		client.sendControl(message);
-		reply = Reply.read(client);
-		if (reply.isError()) {
-			throw new IOException("Error: server reply " + reply);
+		if(size>-1) {
+			runCommand("ALLO " + size);
 		}
-
-		message = "STOR " + remoteFile;
-		client.sendControl(message);
-		reply = Reply.read(client);
-		if (reply.isError()) {
-			throw new IOException("Error: server reply " + reply);
-		}
+		runCommand("STOR " + remoteFile);
 	}
 	
 	private void sendStoreCommand(String remoteFile) throws IOException {
-		Reply reply = null;
-		String message = "STOR " + remoteFile;
-		client.sendControl(message);
-		reply = Reply.read(client);
-		if (reply.isError()) {
-			throw new IOException("Error: server reply " + reply);
-		}
-	}
-	
-	private void sendAppendCommand(String remoteFile, long size) throws IOException {
-		Reply reply = null;
-		String message;
-		if(size>-1) {
-			message = "ALLO " + size;
-			client.sendControl(message);
-			reply = Reply.read(client);
-			if (reply.isError()) {
-				throw new IOException("Error: server reply " + reply);
-			}
-		}
-		message = "APPE " + remoteFile;
-		client.sendControl(message);
-		reply = Reply.read(client);
-		if (reply.isError()) {
-			throw new IOException("Error: server reply " + reply);
-		}
+		sendStoreCommand(remoteFile, -1, null);
 	}
 
-	private void sendSYNCMaster(String pathname) throws IOException {
-		// server is master
-		String message = "SYNC-MASTER " + pathname;
-		client.sendControl(message);
-		Reply reply = Reply.read(client);
-		if (reply.isError()) {
-			throw new IOException("Error: server reply " + reply);
-		}
-	}
-
-	private void sendSYNCSlave(String pathname) throws IOException {
-		// server is slave
-		String message = "SYNC-SLAVE " + pathname;
-		client.sendControl(message);
-		Reply reply = Reply.read(client);
-		if (reply.isError()) {
-			throw new IOException("Error: server reply " + reply);
-		}
-	}
-
-	private void sendRename(String from, String to) throws IOException {
-		Reply reply = null;
-		String message = "RNFR " + from;
-		client.sendControl(message);
-		reply = Reply.read(client);
-		if (reply.isError()) {
-			throw new IOException("Error: server reply " + reply);
-		}
-		message = "RNTO " + to ;
-		client.sendControl(message);
-		reply = Reply.read(client);
-		if (reply.isError()) {
-			throw new IOException("Error: server reply " + reply);
-		}
-	}
-
-	private void sendChangeModificationTime(String path, Calendar to) throws IOException {
-		Reply reply = null;
-		String time = FileInfo.toTimeVal(to.getTime().getTime());
-		String message = UFTPCommands.MFMT+" "+ time+" "+ path;
-		client.sendControl(message);
-		reply = Reply.read(client);
-		if (reply.isError()) {
-			throw new IOException("Error: server reply " + reply);
-		}
-	}
-	
 	private void enableKeepAlive() throws IOException {
 		if(Boolean.parseBoolean(Utils.getProperty("UFTP_DISABLE_KEEPALIVE", "false"))) {
 			logger.debug("KEEP-ALIVE disabled via environment");
@@ -789,9 +638,7 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 			logger.debug("KEEP-ALIVE disabled (numstreams/encryption)");
 			return;
 		}
-		String message = UFTPCommands.KEEP_ALIVE+" true";
-		client.sendControl(message);
-		Reply reply = Reply.read(client);
+		Reply reply = runCommand(UFTPCommands.KEEP_ALIVE + " true");
 		keepAlive = reply.isOK();
 	}
 
@@ -800,7 +647,11 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 			throw new IOException("Not connected!");
 		}
 	}
-	
+
+	public void setRFCRangeMode(boolean rfcMode){
+		this.rfcCompliantRange = rfcMode;
+	}
+
 	/**
 	 * create a correct commandline for passing the given parameters to a
 	 * UFTPSessionClient

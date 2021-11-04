@@ -100,12 +100,16 @@ public class UFTPTunnelWorker extends UFTPWorker {
 		}
 		
 		try {
+			logger.info("Starting client-server forwarding ...");
 			new ForwardThread("clientToServer", clientIn, serverSocket.getOutputStream()).start();
+			logger.info("Starting server-client forwarding ...");
 			new ForwardThread("serverToClient", serverSocket.getInputStream(), clientOut).run();
+			logger.info("Exiting tunnel worker");
+			
 		} catch (UnknownHostException e) {
-			// 
+			logger.error(e); 
 		} catch (IOException e) {
-			// 
+			logger.error(e); 
 		} finally {
 			Utils.closeQuietly(serverSocket);
 		}

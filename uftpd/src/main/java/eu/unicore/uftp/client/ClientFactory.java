@@ -24,9 +24,6 @@ public class ClientFactory {
 			if(line.hasOption("S")){
 				return UFTPSessionClient.create(args);
 			}
-			else{
-				return UFTPClient.create(args);
-			}
 		}catch(ParseException pe){
 			System.out.println("Unable to parse client parameters "+pe.getLocalizedMessage());
 			System.exit(1);

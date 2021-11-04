@@ -55,7 +55,7 @@ public class EchoServer extends Thread {
 		while(active) {
 			try {
 				Socket conn = socket.accept();
-				System.out.println("New connection from " + conn.getRemoteSocketAddress());
+				System.out.println("ECHO: New connection from " + conn.getRemoteSocketAddress());
 				new EchoConnection(conn).start();
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -93,13 +93,13 @@ public class EchoServer extends Thread {
 			try {
 				while((read = in.read(buf)) > -1) {
 					// echo back
-					System.out.println("Echoing back: " + new String(buf, 0, read));
+					System.out.println("ECHO: Echoing back: " + new String(buf, 0, read));
 					out.write(buf, 0, read);
 				}
 			} catch (IOException e) {
 				// we're done
 			}
-			System.out.println("Closed connection with " + conn.getRemoteSocketAddress());
+			System.out.println("ECHO: Closed connection with " + conn.getRemoteSocketAddress());
 		}
 	}
 	
