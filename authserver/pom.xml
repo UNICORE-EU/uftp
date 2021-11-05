@@ -107,6 +107,10 @@
 	  <groupId>eu.unicore.services</groupId>
 	  <artifactId>use-wsrfclient</artifactId>	  
 	</exclusion>
+	<exclusion>
+          <groupId>xerces</groupId>
+          <artifactId>xercesImpl</artifactId>
+	</exclusion>
       </exclusions>	
     </dependency>
     <dependency>
