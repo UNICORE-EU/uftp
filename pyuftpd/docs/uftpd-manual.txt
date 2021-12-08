@@ -53,6 +53,7 @@ UFTP features
 
  - supports third-party FTP clients such as 'curl' or 'ftp', 
    after getting a one-time password via the Auth server (RESTful API)
+   or a UNICORE/X storage endpoint
 
  - integrated into UNICORE clients for fast file upload and download
 
@@ -73,6 +74,8 @@ UFTP features
    multiple UFTP processes can thus read/write a file in parallel
    (striping)
 
+ - support for getting file checksums with the HASH command
+
  - command port protected by SSL
 
 
@@ -86,7 +89,7 @@ two different network interfaces):
 
  - the listen port accepts data connections from clients.
 
-The uftpd server is "controlled" (by a UNICORE/X or Auth server) via the
+The uftpd server is "controlled" (by an Auth server or UNICORE/X) via the
 command port, and receives/sends data directly from/to a client
 machine (which can be an actual user client machine or another
 server). The client connnects to the "listen" port, which has to
@@ -117,8 +120,8 @@ The sequence for a UFTP file transfer is as follows:
    open the requested ports (which can by any port, see below if you want to a 
    fixed port range).
 
- * for each UFTP session, UFTPD will fork a process which runs as the requested user (with the
-   requested primary group)
+ * for each UFTP session, UFTPD will fork a process which runs as the requested user
+   (with the requested primary group)
 
 
 [NOTE] .IMPORTANT SECURITY NOTE
@@ -271,8 +274,8 @@ network interfaces.
 If possible, use an "internal" interface for the Command socket. If that
 is not possible, make sure the Command socket is protected by a firewall!
 
-We STRONGLY recommend enabling SSL for the Command socket. Please refer to the 
-next section.
+We VERY STRONGLY recommend enabling SSL for the Command socket.
+Please refer to the next section.
 
 Protecting the Command socket
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

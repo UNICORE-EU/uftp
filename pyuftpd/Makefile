@@ -5,9 +5,9 @@
 #  - creating and deploying documentation  
 #
 
-VERSION=3.1.0
+VERSION=3.1.1
 RELEASE=1
-DOCVERSION=3.1.0
+DOCVERSION=3.1.1
 MVN=mvn
 
 VERSION ?= ${DEFAULT_VERSION}
