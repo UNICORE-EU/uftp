@@ -11,7 +11,7 @@ import eu.unicore.uftp.standalone.authclient.AuthClient;
  * 
  * @author schuller
  */
-public class Auth extends BaseUFTPCommand {
+public class Auth extends DataTransferCommand {
 
 	@Override
 	public String getName() {

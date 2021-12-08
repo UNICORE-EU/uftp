@@ -86,7 +86,7 @@ public class ClientFactory {
 				.withDescription("(Session mode only) Commands file name")
 				.withArgName("Cmdfile")
 				.hasArg()
-				.isRequired(false)
+				.isRequired(true)
 				.create("c")
 				);
 		
@@ -137,7 +137,7 @@ public class ClientFactory {
 				.withDescription("Number of streams")
 				.withArgName("Streams")
 				.hasArg()
-				.isRequired(true)
+				.isRequired(false)
 				.create("n")
 				);
 		

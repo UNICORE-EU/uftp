@@ -9,7 +9,7 @@ import org.apache.commons.cli.ParseException;
 import eu.unicore.uftp.standalone.ClientFacade;
 import jline.console.ConsoleReader;
 
-public class URM extends BaseUFTPCommand {
+public class URM extends Command {
 
 	private boolean quiet = false;
 	

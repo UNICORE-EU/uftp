@@ -12,7 +12,7 @@ import eu.unicore.uftp.client.FileInfo;
 import eu.unicore.uftp.standalone.ClientFacade;
 import eu.unicore.uftp.standalone.util.UnitParser;
 
-public class ULS extends BaseUFTPCommand {
+public class ULS extends Command {
 
 	boolean humanReadable = false;
 	

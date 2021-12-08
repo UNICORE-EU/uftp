@@ -19,7 +19,7 @@ import eu.unicore.uftp.standalone.util.BaseClient;
  * 
  * @author schuller
  */
-public class Share extends BaseCommand {
+public class Share extends Command {
 	
 	/**
 	 * environment variable defining the server URL for sharing

@@ -5,9 +5,9 @@ _uftp()
   COMPREPLY=()
   cur=`_get_cword`
   prev="${COMP_WORDS[COMP_CWORD-1]}"
-  commands="cp get info ls mkdir put rm share sync tunnel"
-  global_opts="--auth --group --identity --oidc-agent --password --user --verbose --help"
-
+  commands="cp info ls mkdir put rm share sync tunnel get-share put-share checksum"
+  global_opts="--auth --group --identity --oidc-agent --password --user --client --verbose --help"
+  transfer_opts="--encrypt --compress --streams --bandwidthlimit"
 
   # parsing for uftp command word (2nd word in commandline.
   # uftp <command> [OPTIONS] <args>)
@@ -19,34 +19,40 @@ _uftp()
   # looking for arguments matching to command
   case "${COMP_WORDS[1]}" in
     cp)
-    opts="$global_opts --bytes --threads --encrypt --client --resume --archive --recurse --compress --bandwithlimit --preserve --streams --split-threshold"
-    ;;
-    get)
-    opts="$global_opts --compress --streams --bandwithlimit --encrypt --client"
+    opts="$global_opts $transfer_opts --bytes --threads  --split-threshold --resume --archive --recurse --preserve"
     ;;
     info)
     opts="$global_opts --raw"
     ;;
     ls)
-    opts="$global_opts --streams --client --human-readable --bandwithlimit --compress --encrypt"
+    opts="$global_opts --human-readable"
     ;;
     mkdir)
-    opts="$global_opts --compress --streams --bandwithlimit --encrypt --client"
-    ;;
-    put)
-    opts="$global_opts --compress --streams --bandwithlimit --encrypt --client"
+    opts="$global_opts"
     ;;
     rm)
-    opts="$global_opts --quiet --encrypt --client --bandwithlimit --compress --streams"
+    opts="$global_opts --quiet"
     ;;
     share)
-    opts="$global_opts --list --anonymous --delete --write"
+    opts="$global_opts --server --list --access --delete --write"
     ;;
     sync)
-    opts="$global_opts --compress --streams --bandwithlimit --encrypt --client"
+    opts="$global_opts $transfer_opts"
     ;;
     tunnel)
-    opts="$global_opts --streams --client --bandwithlimit --compress --encrypt --listen"
+    opts="$global_opts --listen"
+    ;;
+    checksum)
+    opts="$global_opts --algorithm --bytes"
+    ;;
+    get-share)
+    opts="$global_opts $transfer_opts"
+    ;;
+    put-share)
+    opts="$global_opts $transfer_opts"
+    ;;
+    authenticate)
+    opts="$global_opts $transfer_opts"
     ;;
 
   esac

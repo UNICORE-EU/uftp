@@ -3,7 +3,10 @@ package eu.unicore.uftp.standalone.commands;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
 import java.util.Arrays;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -29,9 +32,13 @@ import eu.unicore.uftp.standalone.ssh.SshKeyHandler;
 import eu.unicore.uftp.standalone.util.ConsoleUtils;
 import eu.unicore.util.Log;
 
-public abstract class BaseCommand implements ICommand {
+/***
+ * handles options related to authentication
+ * 
+ * @author schuller
+ */
+public abstract class Command implements ICommand {
 
-	
 	/**
 	 * environment variable defining the UFTP user name
 	 */
@@ -51,7 +58,9 @@ public abstract class BaseCommand implements ICommand {
 	protected boolean verbose = false;
 
 	protected String oidcAccount = null;
-	
+
+	protected String clientIP;
+
 	@SuppressWarnings("static-access")
 	protected Options getOptions() {
 		Options options = new Options();
@@ -109,6 +118,15 @@ public abstract class BaseCommand implements ICommand {
 				.isRequired(false)
 				.hasArg()
 				.create("i")
+				);
+
+		options.addOption(
+				OptionBuilder.withLongOpt("client")
+				.withDescription("Client IP address: AUTO|ALL|address-list")
+				.withArgName("client")
+				.hasArg()
+				.isRequired(false)
+				.create("I")
 				);
 
 		options.addOption(
@@ -170,10 +188,16 @@ public abstract class BaseCommand implements ICommand {
 				sshIdentity = line.getOptionValue('i');
 			}
 		}
+
+		if(line.hasOption('I')){
+			setupClientIPMode(line.getOptionValue('I'));
+		}
 	}
 
 	protected void setOptions(ClientFacade client){
+		client.setVerbose(verbose);
 		client.setGroup(group);
+		client.setClientIP(clientIP);
 	}
 
 	protected abstract void run(ClientFacade facade) throws Exception;
@@ -319,5 +343,29 @@ public abstract class BaseCommand implements ICommand {
 		return ssh.getAuthData();
 	}
 
+	private void setupClientIPMode(String ip){
+		if("AUTO".equals(ip))return;
+		else if("ALL".equals(ip)){
+			try{
+				StringBuilder sb = new StringBuilder();
+				Enumeration<NetworkInterface>iter = NetworkInterface.getNetworkInterfaces();
+				while(iter.hasMoreElements()){
+					NetworkInterface ni = iter.nextElement();
+					Enumeration<InetAddress> addresses = ni.getInetAddresses();
+					while(addresses.hasMoreElements()){
+						InetAddress ia = addresses.nextElement();
+						if(sb.length()>0)sb.append(",");
+						sb.append(ia.getHostAddress());
+					}
+				}
+				clientIP = sb.toString();
+			}catch(Exception e){
+				System.err.println(Log.createFaultMessage("WARNING:", e));
+			}	
+		}
+		else {
+			clientIP=ip;
+		}
+	}
 
 }

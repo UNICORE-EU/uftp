@@ -21,7 +21,7 @@ import eu.unicore.uftp.standalone.util.ProgressBar;
  * 
  * @author schuller
  */
-public class PutSharedFile extends BaseUFTPCommand {
+public class PutSharedFile extends DataTransferCommand {
 	
 	protected String target;
 

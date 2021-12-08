@@ -1,9 +1,5 @@
 package eu.unicore.uftp.standalone.commands;
 
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.util.Enumeration;
-
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
@@ -12,9 +8,14 @@ import org.apache.commons.cli.ParseException;
 import eu.unicore.uftp.dpc.Utils;
 import eu.unicore.uftp.standalone.ClientFacade;
 import eu.unicore.uftp.standalone.util.UnitParser;
-import eu.unicore.util.Log;
 
-public abstract class BaseUFTPCommand extends BaseCommand {
+/**
+ * handles options related to data connections 
+ * (like number of TCP streams per data connection)
+ * 
+ * @author schuller
+ */
+public abstract class DataTransferCommand extends Command {
 
 	protected int streams = 1;
 	
@@ -23,8 +24,7 @@ public abstract class BaseUFTPCommand extends BaseCommand {
 	protected boolean compress;
 	protected boolean encrypt;
 	protected byte[] key;
-	protected String clientIP;
-	
+
 	@SuppressWarnings("static-access")
 	protected Options getOptions() {
 		Options options = super.getOptions();
@@ -55,14 +55,6 @@ public abstract class BaseUFTPCommand extends BaseCommand {
 				.hasArg()
 				.isRequired(false)
 				.create("K")
-				);
-		options.addOption(
-				OptionBuilder.withLongOpt("client")
-				.withDescription("Client IP address: AUTO|ALL|address-list")
-				.withArgName("client")
-				.hasArg()
-				.isRequired(false)
-				.create("I")
 				);
 		return options;
 	}
@@ -95,37 +87,7 @@ public abstract class BaseUFTPCommand extends BaseCommand {
 		}
 		
 		compress = line.hasOption('C');
-		
-		if(line.hasOption('I')){
-			setupClientIPMode(line.getOptionValue('I'));
-		}
-	}
-	
-	protected void setupClientIPMode(String ip){
-		if("AUTO".equals(ip))return;
-		else if("ALL".equals(ip)){
-			try{
-				StringBuilder sb = new StringBuilder();
-				Enumeration<NetworkInterface>iter = NetworkInterface.getNetworkInterfaces();
-				while(iter.hasMoreElements()){
-					NetworkInterface ni = iter.nextElement();
-					Enumeration<InetAddress> addresses = ni.getInetAddresses();
-					while(addresses.hasMoreElements()){
-						InetAddress ia = addresses.nextElement();
-						if(sb.length()>0)sb.append(",");
-						sb.append(ia.getHostAddress());
-					}
-				}
-				clientIP = sb.toString();
-			}catch(Exception e){
-				System.err.println(Log.createFaultMessage("WARNING:", e));
-			}
-			
-		}
-		else {
-			clientIP=ip;
-		}
-		
+
 	}
 	
 	protected String getRemoteURLExample1(){
@@ -156,12 +118,12 @@ public abstract class BaseUFTPCommand extends BaseCommand {
 	}
 
 	@Override
-	public void setOptions(ClientFacade client){
+	protected void setOptions(ClientFacade client){
 		super.setOptions(client);
 		client.setStreams(streams);
-		client.setClientIP(clientIP);
 		if(encrypt)client.setEncryptionKey(key);
 		client.setCompress(compress);
+		client.setBandwithLimit(bandwithLimit);
 	}
 	
 }

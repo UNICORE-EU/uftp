@@ -10,7 +10,7 @@ import eu.unicore.uftp.standalone.lists.FileCrawler.RecursivePolicy;
 import eu.unicore.uftp.standalone.util.RangeMode;
 import eu.unicore.uftp.standalone.util.UnitParser;
 
-public class UCP extends BaseUFTPCommand {
+public class UCP extends DataTransferCommand {
 
 	//index of first byte to process
 	protected Long startByte;
@@ -165,8 +165,6 @@ public class UCP extends BaseUFTPCommand {
 		}
 		client.setResume(resume);
 		client.setPreserveAttributes(preserve);
-		client.setBandwithLimit(bandwithLimit);
-		client.setCompress(compress);
 		client.setArchiveMode(archiveMode);
 	}
 

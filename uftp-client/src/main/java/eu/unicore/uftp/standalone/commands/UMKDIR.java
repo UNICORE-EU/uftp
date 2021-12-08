@@ -2,7 +2,7 @@ package eu.unicore.uftp.standalone.commands;
 
 import eu.unicore.uftp.standalone.ClientFacade;
 
-public class UMKDIR extends BaseUFTPCommand {
+public class UMKDIR extends Command {
 
 	@Override
 	public String getName() {

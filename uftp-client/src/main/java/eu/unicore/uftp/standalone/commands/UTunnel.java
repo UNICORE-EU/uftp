@@ -18,7 +18,7 @@ import eu.unicore.uftp.standalone.util.BaseClient;
  * 
  * @author schuller
  */
-public class UTunnel extends BaseUFTPCommand {
+public class UTunnel extends Command {
 	
 	String host = "";
 	int remotePort;

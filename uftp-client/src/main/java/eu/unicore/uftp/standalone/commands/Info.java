@@ -11,7 +11,7 @@ import eu.unicore.uftp.standalone.ClientFacade;
 import eu.unicore.uftp.standalone.ConnectionInfoManager;
 import eu.unicore.uftp.standalone.authclient.AuthClient;
 
-public class Info extends BaseCommand {
+public class Info extends Command {
 	
 	boolean raw = false;
 	

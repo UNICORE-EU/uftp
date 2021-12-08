@@ -2,7 +2,7 @@ package eu.unicore.uftp.standalone.commands;
 
 import eu.unicore.uftp.standalone.ClientFacade;
 
-public class USYNC extends BaseUFTPCommand {
+public class USYNC extends DataTransferCommand {
 
 	@Override
 	public String getName() {
