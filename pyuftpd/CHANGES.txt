@@ -3,9 +3,10 @@ Changelog
 The UFTP issue tracker is at
 https://sourceforge.net/p/unicore/uftp-issues
 
-UFTPD 3.1.1 (released Nov dd, 2021)
+UFTPD 3.1.1 (released Dec 8, 2021)
 -----------------------------------
- - new feature: HASH (#70)
+ - new feature: HASH command to get file checksums (#70)
+ - fix: cleanup child processes forked in get_user_info()
 
 UFTPD 3.1.0 (released Oct 27, 2021)
 ------------------------------------

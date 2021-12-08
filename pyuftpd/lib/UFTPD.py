@@ -174,6 +174,14 @@ def cleanup(config, LOG):
                             del job_map[key]
             except Exception as e:
                 LOG.error(e)
+        try:
+            children = config.get('user_info_process_pids')
+            for pid in children:
+                (_pid, _status) = os.waitpid(pid, os.WNOHANG)
+                if _pid!=0:
+                    children.remove(pid)
+        except Exception as e:
+            LOG.error(e)
         time.sleep(5)
                              
 def process(cmd_server, config, LOG):
@@ -219,7 +227,9 @@ def main():
 
     config['_JOB_COUNTER'] = {}
     config['_JOB_COUNTER_LOCK'] = threading.Lock()
-    
+
+    config['user_info_process_pids'] = []
+
     cmd_server = Server.setup_cmd_server_socket(config, LOG)
 
     housekeeping_thread = threading.Thread(target=cleanup,

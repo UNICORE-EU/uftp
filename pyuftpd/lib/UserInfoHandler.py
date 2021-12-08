@@ -6,6 +6,7 @@ def get_user_info(user, home, connector: Connector, config, LOG: Log):
     pid = os.fork()
     if pid:
         # parent
+        config['user_info_process_pids'].append(pid)
         connector.cleanup()
         return
     #
