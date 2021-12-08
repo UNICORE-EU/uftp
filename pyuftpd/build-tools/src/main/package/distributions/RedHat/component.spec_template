@@ -24,8 +24,8 @@ port opening.
 
 
 %changelog
-* Wed Oct 27 2021 Bernd Schuller <unicore-support@lists.sourceforge.net> 
--Updated for v3.1.0
+* TIME_STAMP Bernd Schuller <unicore-support@lists.sourceforge.net>
+-Latest
 
 * Mon Jun 06 2011 Bernd Schuller <unicore-support@lists.sourceforge.net> 
 -Initial rpm package
