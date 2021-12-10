@@ -11,6 +11,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.logging.log4j.Logger;
 
+import eu.unicore.uftp.dpc.ProtocolViolationException;
 import eu.unicore.uftp.dpc.Utils;
 
 public class ClientFactory {
@@ -190,5 +191,20 @@ public class ClientFactory {
 		String syntax="UFTPClient [OPTIONS]"+System.getProperty("line.separator");
 		formatter.printHelp(syntax, options);
 	}
+
+	 public static void main(String[] args) throws Exception {
+		 try {
+			 AbstractUFTPClient client = ClientFactory.create(args);
+			 client.run();
+			 System.exit(0);
+		 } catch (Exception ex) {
+			 System.err.println(Utils.createFaultMessage("Error running UFTP client", ex));
+			 if (ex.getCause() instanceof ProtocolViolationException) {
+				 System.err.println();
+				 System.err.println("Please check hostname and port of the remote server!");
+			 }
+			 System.exit(1);
+		 }
+	 }
 
 }
