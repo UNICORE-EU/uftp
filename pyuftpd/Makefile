@@ -15,7 +15,7 @@ DOCVERSION ?= ${DEFAULT_DOCVERSION}
 RELEASE ?= ${DEFAULT_RELEASE}
 
 
-TESTS = $(wildcard tests/*.py)
+TESTS = $(wildcard tests/test_*.py)
 
 export PYTHONPATH := lib:.:tests
 

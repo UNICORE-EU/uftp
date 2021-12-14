@@ -3,6 +3,12 @@ Changelog
 The UFTP issue tracker is at
 https://sourceforge.net/p/unicore/uftp-issues
 
+UFTPD 3.1.2 (released MMM dd, 2022)
+-----------------------------------
+ - improvement: support credential as separate key and
+   certificate files specified by the 'credential.key' and
+   'credential.certificate' properties
+
 UFTPD 3.1.1 (released Dec 8, 2021)
 -----------------------------------
  - new feature: HASH command to get file checksums (#70)

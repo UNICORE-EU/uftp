@@ -7,13 +7,20 @@ import re
 
 def setup_ssl(config, socket, LOG, server_mode=False):
     """ Wraps the given socket with an SSL context """
-    cert = config.get('credential.path')
     keypass = config.get('credential.password', None)
-    truststore = config.get('truststore', None)
     context = ssl.SSLContext(ssl.PROTOCOL_TLS)
     context.verify_mode = ssl.CERT_REQUIRED
     context.check_hostname = False
-    context.load_cert_chain(certfile=cert, password=keypass)
+    cert = config.get('credential.path', None)
+    if cert is not None:
+        LOG.info("Loading uftpd credential from '%s'" % cert )
+        context.load_cert_chain(certfile=cert, password=keypass)
+    else:
+        key = config.get('credential.key');
+        cert = config.get('credential.certificate')
+        LOG.info("Loading uftpd key from '%s', certificate from '%s'" % (key, cert))
+        context.load_cert_chain(certfile=cert, keyfile=key, password=keypass)
+    truststore = config.get('truststore', None)
     if truststore:
         context.load_verify_locations(cafile=truststore)
     else:
