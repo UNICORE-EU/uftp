@@ -7,7 +7,7 @@ Summary: UNICORE UFTP Client
 License: BSD
 Distribution: RedHat
 Group: Converted/contrib/misc
-URL: http://www.unicore.eu
+URL: https://www.unicore.eu
 Requires: java-1.@java-main-version@.0-openjdk
 AutoReqProv: no
 BuildArch: @component-architecture@
@@ -25,8 +25,8 @@ This package contains the standalone UFTP commandline client.
 
 
 %changelog
-* Tue Oct 26 2021 Bernd Schuller <unicore-support@lists.sourceforge.net> 1.0.0-1
--updates for v1.4.3
+* @release-timestamp@ Bernd Schuller <unicore-support@lists.sourceforge.net>
+-updates for v@component-version@
 
 @install_command@
 

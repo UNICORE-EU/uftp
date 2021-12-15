@@ -15,9 +15,9 @@
   </parent>
 
   <properties>
-    <auth.version>2.5.0</auth.version>
+    <auth.version>2.6.0</auth.version>
     <core.version>2.12.0</core.version>
-    <seclib.version>5.3.1</seclib.version>
+    <seclib.version>5.3.4</seclib.version>
 
     <jsch.version>0.0.9</jsch.version>
     <jnr.version>0.38.8</jnr.version>

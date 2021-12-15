@@ -2,8 +2,9 @@ Change log for the UFTP standalone client
 The issue tracker is at
 https://sourceforge.net/p/unicore/uftp-issues/
 
-UFTP Client 1.4.3 (released Nov dd, 2021)
+UFTP Client 1.4.3 (released Dec 15, 2021)
 ----------------------------------------
+ - update to latest UNICORE base libs
  - new feature: 'checksum' command for getting
    hashes (MD5, SHA-1, SHA-256, SHA-512) for remote
    files from server (requires UFTPD 3.1.1 or later!)
