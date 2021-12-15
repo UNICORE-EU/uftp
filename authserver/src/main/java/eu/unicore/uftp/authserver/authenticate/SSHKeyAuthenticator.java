@@ -259,7 +259,7 @@ public class SSHKeyAuthenticator implements IAuthenticator, KernelInjectable {
 	
 	public String toString(){
 		return "SSH Keys ["+(file!=null?"from <"+file+">,":"")
-				+(!useAuthorizedKeys?"not ":"")+"reading ~/.ssh/authorized_keys]";
+				+(!useAuthorizedKeys?"not ":"")+"retrieved via UFTPD]";
 	}
 	
 	public static class AttributesHolder {
