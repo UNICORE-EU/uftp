@@ -6,7 +6,7 @@ Summary: UNICORE UFTP Authentication Server
 License: BSD
 Distribution: RedHat
 Group: System Environment/Daemons
-URL: http://www.unicore.eu
+URL: https://www.unicore.eu
 Requires: java-1.@java-main-version@.0-openjdk
 AutoReqProv: no
 BuildArch: x86_64
@@ -25,8 +25,8 @@ RESTful APIs.
 
 %changelog
 
-* Tue Oct 26 2021 Bernd Schuller <unicore-support@lists.sourceforge.net> 
--updates for v2.5.0
+* @release-timestamp@ Bernd Schuller <unicore-support@lists.sourceforge.net> 
+-latest
 
 @install_command@
 
