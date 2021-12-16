@@ -594,8 +594,9 @@ class Session(object):
                     # keep client entertained
                     self.control.write_message("213-")
                     interval_start = int(time())
+            last_byte = max(0,  self.offset+self.number_of_bytes-1)
             msg = "213 %s %s-%s %s %s" % (self.hash_algorithm,
-                    self.offset, self.offset+self.number_of_bytes-1,
+                    self.offset, last_byte,
                     md.hexdigest(), self.file_path)
             self.control.write_message(msg)
             self.post_transfer(send226=False)

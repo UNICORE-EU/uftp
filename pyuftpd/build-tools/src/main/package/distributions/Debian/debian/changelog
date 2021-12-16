@@ -1,5 +1,5 @@
 @component-prefix@@component-name@@component-suffix@ (@component-version@-@component-release@@component-disttag@) unstable; urgency=low
 
-  * Deb packaging
+  * v@component-version@
 
- -- Bernd Schuller <b.schuller@fz-juelich.de>  DEB_TIME_STAMP
+ -- Bernd Schuller <b.schuller@fz-juelich.de>  @release-timestamp@

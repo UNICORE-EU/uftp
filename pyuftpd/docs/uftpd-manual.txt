@@ -258,8 +258,8 @@ The following variables can be defined in the configuration file (uftpd.conf):
                      will disable the IP check. Only the one-time password will be checked
 
   UFTP_KEYFILES    : (optional) list of files (relative to current user's $HOME) where uftpd will
-                     read public keys for authentication. List is separated by ":". This defaults
-		             to ".ssh/authorized_keys"
+                     read public keys for authentication. List is separated by ":".
+                     This defaults to ".ssh/authorized_keys"
 
   UFTP_NO_WRITE    : (optional) ":"-separated list of file name patters that uftpd should
                      not write to
@@ -312,7 +312,18 @@ credential.password=...
 truststore=path/to/ca-cert-file.pem
 ---------------
 
-If the +credential.path+ property is NOT set, SSL will be disabled.
+
+You can also use separate PEM files for key and certificate:
+
+---------------
+credential.key=path/to/key.pem
+credential.password=...
+credential.certificate=path/to/certificate.pem
+
+truststore=path/to/ca-cert-file.pem
+---------------
+
+The credential.password is only needed and used if the key is encrypted.
 
 
 [NOTE] 

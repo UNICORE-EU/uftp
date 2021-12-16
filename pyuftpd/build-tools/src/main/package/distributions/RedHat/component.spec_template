@@ -24,7 +24,7 @@ port opening.
 
 
 %changelog
-* TIME_STAMP Bernd Schuller <unicore-support@lists.sourceforge.net>
+* @release-timestamp@ Bernd Schuller <unicore-support@lists.sourceforge.net>
 -Latest
 
 * Mon Jun 06 2011 Bernd Schuller <unicore-support@lists.sourceforge.net> 

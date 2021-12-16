@@ -3,11 +3,13 @@ Changelog
 The UFTP issue tracker is at
 https://sourceforge.net/p/unicore/uftp-issues
 
-UFTPD 3.1.2 (released MMM dd, 2022)
+UFTPD 3.1.2 (released Dec 16, 2021)
 -----------------------------------
  - improvement: support credential as separate key and
    certificate files specified by the 'credential.key' and
    'credential.certificate' properties
+ - fix: reply for checksum of files with length zero gave "-1"
+   as the last byte
 
 UFTPD 3.1.1 (released Dec 8, 2021)
 -----------------------------------

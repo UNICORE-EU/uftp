@@ -5,9 +5,9 @@
 #  - creating and deploying documentation  
 #
 
-VERSION=3.1.1
+VERSION=3.1.2
 RELEASE=1
-DOCVERSION=3.1.1
+DOCVERSION=3.1.2
 MVN=mvn
 
 VERSION ?= ${DEFAULT_VERSION}
@@ -74,8 +74,6 @@ prepare:
 	cp CHANGES.txt LICENSE build/docs/
 	sed -i "s/VERSION/${VERSION}/" build/pom.xml
 	sed -i "s/MY_VERSION = \"DEV\"/MY_VERSION = \"${VERSION}\"/" build/lib/UFTPD.py
-	sed -i "s/TIME_STAMP/$(shell date -R)/" build/src/main/package/distributions/Debian/debian/changelog
-	sed -i "s/TIME_STAMP/$(shell LC_ALL=en_EN.utf8 date '+%a %b %d %Y')/" build/src/main/package/distributions/RedHat/component.spec_template
 
 deb: prepare
 	cd build && ${MVN} package -Ppackman -Dpackage.type=deb -Ddistribution=Debian -Dpackage.version=${VERSION} -Dpackage.release=${RELEASE}
