@@ -5,9 +5,9 @@
 #  - creating and deploying documentation  
 #
 
-VERSION=3.1.2
+VERSION=3.1.3
 RELEASE=1
-DOCVERSION=3.1.2
+DOCVERSION=3.1.3
 MVN=mvn
 
 VERSION ?= ${DEFAULT_VERSION}
@@ -49,8 +49,8 @@ DOCOPTS=-Ddocman.enabled -Ddoc.relversion=${DOCVERSION} -Ddoc.compversion=${DOCV
 
 doc-generate:
 	mkdir -p target
-	if [ ! -d target/docman ] ; then svn export https://svn.code.sf.net/p/unicore/svn/tools/docman/trunk target/docman --force ; fi 
-	ant -f target/docman/doc-build.xml -lib target/package/tools ${DOCOPTS} doc-all
+	if [ ! -d target/tools ] ; then git clone --depth 1 https://github.com/UNICORE-EU/tools.git target/tools ; fi
+	ant -f target/tools/docman/doc-build.xml ${DOCOPTS} doc-all
 
 doc-deploy:
 	ssh bschuller@unicore-dev.zam.kfa-juelich.de sudo rm -rf /var/www/documentation/uftpd-${DOCVERSION}
