@@ -1,4 +1,0 @@
-
-.. mdinclude:: ..\..\pyuftpd\README.md
-
-   

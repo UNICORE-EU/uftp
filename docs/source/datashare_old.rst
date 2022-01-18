@@ -1,4 +1,0 @@
-
-.. mdinclude:: ..\..\datashare\README.md
-
-   
