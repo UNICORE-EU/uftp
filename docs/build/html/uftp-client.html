@@ -1,0 +1,177 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>UFTP client &#8212; UNICORE uftp 2.6 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/nature.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Datashare" href="datashare.html" />
+    <link rel="prev" title="Auth server" href="authserver.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="datashare.html" title="Datashare"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="authserver.html" title="Auth server"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">UNICORE uftp 2.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">UFTP client</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section class="tex2jax_ignore mathjax_ignore" id="uftp-client">
+<h1>UFTP client<a class="headerlink" href="#uftp-client" title="Permalink to this headline">¶</a></h1>
+<p>This is a Java-based client for UFTP. It allows to</p>
+<ul class="simple">
+<li><p>list remote directories</p></li>
+<li><p>upload/download files</p></li>
+<li><p>sync files</p></li>
+<li><p>make remote directories</p></li>
+<li><p>delete remote files or directories</p></li>
+<li><p>manage shares and access shared data</p></li>
+</ul>
+<p>It supports username/password authentication, token authentication, and ssh-key (on Linux) authentication to a UFTP Authentication Server or UNICORE/X server.</p>
+<section id="prerequisites">
+<h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Java 8 (OpenJDK, Oracle, IBM)</p></li>
+<li><p>Access to a <a class="reference internal" href="authserver.html"><span class="doc std std-doc">UFTP authentication service</span></a> and the corresponding <a class="reference internal" href="uftpd.html"><span class="doc std std-doc">UFTPD server</span></a>. To use the client, you need to know the address of the authentication service.</p></li>
+</ul>
+</section>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<p>Unzip the archive in a location of your choice. Add the <code class="docutils literal notranslate"><span class="pre">bin</span></code>
+directory to your path. (Alternatively, you can copy <code class="docutils literal notranslate"><span class="pre">bin/uftp</span></code> script to a directory that is already on your path, in this case
+edit the script and setup the required directories.)</p>
+</section>
+<section id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
+<p>Invoking <code class="docutils literal notranslate"><span class="pre">uftp</span></code> will list the available commands.</p>
+<p>Invoking <code class="docutils literal notranslate"><span class="pre">uftp</span> <span class="pre">&lt;command&gt;</span> <span class="pre">-h</span></code> will show help for a command</p>
+<p>For password authentication, use the “<code class="docutils literal notranslate"><span class="pre">-P</span></code>” option. The password can
+be written into the URL, for example:</p>
+<p><code class="docutils literal notranslate"><span class="pre">uftp</span> <span class="pre">ls</span> <span class="pre">-u</span> <span class="pre">demo:password</span> <span class="pre">https://localhost:9000/rest/auth/TEST:/home/demo/</span></code></p>
+<p>If not given on the command line, the password will be queried interactively.</p>
+<p>For detailed usage instructions and examples, refer to the
+manual available in the doc directory or online.</p>
+</section>
+<section id="building-packages">
+<h2>Building packages<a class="headerlink" href="#building-packages" title="Permalink to this headline">¶</a></h2>
+<p>You need Java and Apache Maven.
+Check the versions given in the <code class="docutils literal notranslate"><span class="pre">pom.xml</span></code> file.</p>
+<section id="creating-distribution-packages">
+<h3>Creating distribution packages<a class="headerlink" href="#creating-distribution-packages" title="Permalink to this headline">¶</a></h3>
+<p>The following commands create the distribution packages
+in tgz, deb and rpm formats. The versions are taken from the <code class="docutils literal notranslate"><span class="pre">pom.xml</span></code></p>
+<section id="tgz">
+<h4>tgz<a class="headerlink" href="#tgz" title="Permalink to this headline">¶</a></h4>
+<p><code class="docutils literal notranslate"><span class="pre">mvn</span> <span class="pre">package</span> <span class="pre">-DskipTests</span> <span class="pre">-Ppackman</span> <span class="pre">-Dpackage.type=bin.tar.gz</span></code></p>
+</section>
+<section id="deb">
+<h4>deb<a class="headerlink" href="#deb" title="Permalink to this headline">¶</a></h4>
+<p><code class="docutils literal notranslate"><span class="pre">mvn</span> <span class="pre">package</span> <span class="pre">-DskipTests</span> <span class="pre">-Ppackman</span> <span class="pre">-Dpackage.type=deb</span> <span class="pre">-Ddistribution=Debian</span></code></p>
+</section>
+<section id="rpm-redhat">
+<h4>rpm redhat<a class="headerlink" href="#rpm-redhat" title="Permalink to this headline">¶</a></h4>
+<p><code class="docutils literal notranslate"><span class="pre">mvn</span> <span class="pre">package</span> <span class="pre">-DskipTests</span> <span class="pre">-Ppackman</span> <span class="pre">-Dpackage.type=rpm</span> <span class="pre">-Ddistribution=RedHat</span></code></p>
+</section>
+</section>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">UFTP client</a><ul>
+<li><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
+<li><a class="reference internal" href="#installation">Installation</a></li>
+<li><a class="reference internal" href="#usage">Usage</a></li>
+<li><a class="reference internal" href="#building-packages">Building packages</a><ul>
+<li><a class="reference internal" href="#creating-distribution-packages">Creating distribution packages</a><ul>
+<li><a class="reference internal" href="#tgz">tgz</a></li>
+<li><a class="reference internal" href="#deb">deb</a></li>
+<li><a class="reference internal" href="#rpm-redhat">rpm redhat</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="authserver.html"
+                        title="previous chapter">Auth server</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="datashare.html"
+                        title="next chapter">Datashare</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/uftp-client.md.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="datashare.html" title="Datashare"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="authserver.html" title="Auth server"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">UNICORE uftp 2.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">UFTP client</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2022, UNICORE.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    </div>
+  </body>
+</html>

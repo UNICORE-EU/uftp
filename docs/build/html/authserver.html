@@ -1,0 +1,166 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Auth server &#8212; UNICORE uftp 2.6 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/nature.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="UFTP client" href="uftp-client.html" />
+    <link rel="prev" title="PyUFTPD" href="pyuftpd.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="uftp-client.html" title="UFTP client"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="pyuftpd.html" title="PyUFTPD"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">UNICORE uftp 2.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Auth server</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section class="tex2jax_ignore mathjax_ignore" id="auth-server">
+<h1>Auth server<a class="headerlink" href="#auth-server" title="Permalink to this headline">¶</a></h1>
+<p>The UFTP authentication service (<strong>Auth server</strong>) is a RESTful
+service for authenticating users and initiating UFTP transfers. It is indended to be used with a standalone UFTP client and provides access to one or more UFTPD servers.</p>
+<p>Besides data transfer via UFTP and data management features like <code class="docutils literal notranslate"><span class="pre">ls</span></code>, the Auth server also provides REST APIs for data sharing and accessing shared data sets.</p>
+<p>The Auth server is based on the UNICORE Services Environment, and all of UNICORE’s flexible authentication features and security
+configuration options are available as well. For example, the Auth server can be deployed behind a UNICORE Gateway, or it can be configured to use Unity for authenticating users.</p>
+<section id="update-procedure">
+<h2>Update procedure<a class="headerlink" href="#update-procedure" title="Permalink to this headline">¶</a></h2>
+<p>As a first step and precaution, you should make backups of your
+existing config files and put them in a safe place.</p>
+<p>In the following, LIB refers to the directory containing the jar files for the component, and CONF to the config directory of the existing installation.</p>
+<p>It is assumed that you have unpacked the tar.gz file somewhere,
+e.g. to <code class="docutils literal notranslate"><span class="pre">/tmp/</span></code></p>
+<p>In the following, this location will be denoted as “<code class="docutils literal notranslate"><span class="pre">$NEW</span></code>”:</p>
+<p><code class="docutils literal notranslate"><span class="pre">export</span> <span class="pre">NEW=/tmp/unicore-authserver-2.5.0</span></code></p>
+<ul>
+<li><p>Stop the server. If not yet done, make a backup of the config files.</p></li>
+<li><p>Update the jar files:</p>
+<p><code class="docutils literal notranslate"><span class="pre">rm</span> <span class="pre">-rf</span> <span class="pre">LIB/*</span></code>
+<code class="docutils literal notranslate"><span class="pre">cp</span> <span class="pre">$NEW/lib/*.jar</span> <span class="pre">LIB/</span></code></p>
+</li>
+<li><p>Start the server.</p></li>
+<li><p>Check the logs for any ERROR or WARN messages and if necessary correct them.</p></li>
+</ul>
+</section>
+<section id="building-packages">
+<h2>Building packages<a class="headerlink" href="#building-packages" title="Permalink to this headline">¶</a></h2>
+<p>You need Java 8 and Apache Maven.</p>
+<p>The java code is then built and tested using</p>
+<p><code class="docutils literal notranslate"><span class="pre">mvn</span> <span class="pre">install</span></code></p>
+<section id="creating-distribution-packages">
+<h3>Creating distribution packages<a class="headerlink" href="#creating-distribution-packages" title="Permalink to this headline">¶</a></h3>
+<p>The following commands create the distribution packages
+in tgz, deb and rpm formats</p>
+<section id="tgz">
+<h4>tgz<a class="headerlink" href="#tgz" title="Permalink to this headline">¶</a></h4>
+<p><code class="docutils literal notranslate"><span class="pre">mvn</span> <span class="pre">package</span> <span class="pre">-DskipTests</span> <span class="pre">-Ppackman</span> <span class="pre">-Dpackage.type=bin.tar.gz</span></code></p>
+</section>
+<section id="deb">
+<h4>deb<a class="headerlink" href="#deb" title="Permalink to this headline">¶</a></h4>
+<p><code class="docutils literal notranslate"><span class="pre">mvn</span> <span class="pre">package</span> <span class="pre">-DskipTests</span> <span class="pre">-Ppackman</span> <span class="pre">-Dpackage.type=deb</span> <span class="pre">-Ddistribution=Debian</span></code></p>
+</section>
+<section id="rpm">
+<h4>rpm<a class="headerlink" href="#rpm" title="Permalink to this headline">¶</a></h4>
+<p><code class="docutils literal notranslate"><span class="pre">mvn</span> <span class="pre">package</span> <span class="pre">-DskipTests</span> <span class="pre">-Ppackman</span> <span class="pre">-Dpackage.type=rpm</span> <span class="pre">-Ddistribution=RedHat</span></code></p>
+</section>
+</section>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Auth server</a><ul>
+<li><a class="reference internal" href="#update-procedure">Update procedure</a></li>
+<li><a class="reference internal" href="#building-packages">Building packages</a><ul>
+<li><a class="reference internal" href="#creating-distribution-packages">Creating distribution packages</a><ul>
+<li><a class="reference internal" href="#tgz">tgz</a></li>
+<li><a class="reference internal" href="#deb">deb</a></li>
+<li><a class="reference internal" href="#rpm">rpm</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="pyuftpd.html"
+                        title="previous chapter">PyUFTPD</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="uftp-client.html"
+                        title="next chapter">UFTP client</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/authserver.md.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="uftp-client.html" title="UFTP client"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="pyuftpd.html" title="PyUFTPD"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">UNICORE uftp 2.6 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Auth server</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2022, UNICORE.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.3.2.
+    </div>
+  </body>
+</html>
