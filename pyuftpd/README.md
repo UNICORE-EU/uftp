@@ -1,14 +1,10 @@
 # PyUFTPD
 
-Python implementation of UFTPD
+The UFTPD server, implemented in Python 3
 
-Work in progress!
+UFTPD is the file server, for a full UFTP system you'll also need
+an Auth server and/or UNICORE/X which deals with user authentication.
 
-The Python version will "take over" from the Java implementation of
-the server with version 3.0
+Download pre-built binaries from 
+https://sourceforge.net/projects/unicore/files/Servers/UFTPD/
 
-Goals:
-
- * every FTP session gets its own Python process
- * fully drop permissions to the current user
- * better Unix integration (profile, variable resolving etc)
