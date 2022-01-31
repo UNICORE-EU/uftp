@@ -44,6 +44,9 @@ public class Info extends Command {
 	@Override
 	protected void run(ClientFacade client) throws Exception {	
 		ConnectionInfoManager mgr = client.getConnectionManager();
+		if(fileArgs.length==0) {
+			throw new IllegalArgumentException("'info' requires a server URL");
+		}
 		String uri = fileArgs[0];
 		mgr.init(uri+":/");
 		AuthClient auth = mgr.getAuthClient(client);
