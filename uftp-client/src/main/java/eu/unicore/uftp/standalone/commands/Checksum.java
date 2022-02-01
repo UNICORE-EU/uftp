@@ -77,6 +77,9 @@ public class Checksum extends Command {
 			String bytes = line.getOptionValue('B');
 			if(bytes!=null)initRange(bytes);
 		}
+		if(fileArgs.length==0) {
+			throw new IllegalArgumentException("Missing argument: "+getArgumentDescription());
+		}
 	}
 	
 	@Override

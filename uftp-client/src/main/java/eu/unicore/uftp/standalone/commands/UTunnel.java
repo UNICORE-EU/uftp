@@ -45,6 +45,9 @@ public class UTunnel extends Command {
 
 	@Override
 	protected void run(ClientFacade client) throws Exception {
+		if(fileArgs.length==0) {
+			throw new IllegalArgumentException("Missing argument: "+getArgumentDescription());
+		}
 		String url = fileArgs[0];
 		String[]tok = line.getOptionValue('L').split(":");
 		localPort = Integer.parseInt(tok[0]);

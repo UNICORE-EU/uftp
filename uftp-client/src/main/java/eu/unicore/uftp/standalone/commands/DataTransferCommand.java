@@ -87,7 +87,6 @@ public abstract class DataTransferCommand extends Command {
 		}
 		
 		compress = line.hasOption('C');
-
 	}
 	
 	protected String getRemoteURLExample1(){

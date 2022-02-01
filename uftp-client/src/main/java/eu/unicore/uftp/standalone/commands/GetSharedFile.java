@@ -53,7 +53,7 @@ public class GetSharedFile extends DataTransferCommand {
 	@Override
 	protected void run(ClientFacade client) throws Exception {
 		if(fileArgs.length<1){
-			throw new IllegalArgumentException("Must specify at least a source!");
+			throw new IllegalArgumentException("Missing argument: "+getArgumentDescription());
 		}
 		String source = fileArgs[0];
 		ConnectionInfoManager cim = client.getConnectionManager();

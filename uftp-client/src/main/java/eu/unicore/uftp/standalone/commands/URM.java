@@ -41,6 +41,9 @@ public class URM extends Command {
 	protected void run(ClientFacade client) throws Exception {
 		this.client = client;
 		int len = fileArgs.length;
+		if(len==0) {
+			throw new IllegalArgumentException("Missing argument: "+getArgumentDescription());
+		}
 		for(int i=0; i<len;i++){
 			doRM(fileArgs[i]);
 		}

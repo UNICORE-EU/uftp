@@ -15,7 +15,7 @@ import eu.unicore.uftp.standalone.util.UnitParser;
 public class ULS extends Command {
 
 	boolean humanReadable = false;
-	
+
 	@SuppressWarnings("static-access")
 	protected Options getOptions() {
 		Options options = super.getOptions();
@@ -25,16 +25,16 @@ public class ULS extends Command {
 				.isRequired(false)
 				.create("H")
 				);
-		
+
 		return options;
 	}
-	
+
 	@Override
 	public void parseOptions(String[] args) throws ParseException {
 		super.parseOptions(args);
 		humanReadable = line.hasOption('H');
 	}
-	
+
 	@Override
 	public String getName() {
 		return "ls";
@@ -42,6 +42,9 @@ public class ULS extends Command {
 
 	@Override
 	protected void run(ClientFacade client) throws Exception {
+		if(fileArgs.length==0) {
+			throw new IllegalArgumentException("Missing argument: "+getArgumentDescription());
+		}
 		FileInfo info = client.stat(fileArgs[0]);
 		if(info.isDirectory()){
 			List<FileInfo> ls = client.ls(fileArgs[0]);
@@ -57,7 +60,7 @@ public class ULS extends Command {
 		for (FileInfo item : ls) {
 			size = Math.max(size, String.valueOf(item.getSize()).length());
 		}
-		
+
 		for (FileInfo item : ls) {
 			printSingle(item, size);
 		}
@@ -66,7 +69,7 @@ public class ULS extends Command {
 	final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 
 	final UnitParser up = UnitParser.getCapacitiesParser(2);
-	
+
 	protected void printSingle(FileInfo fi, int size) {
 		StringBuilder info = new StringBuilder();
 		info.append(fi.getIsDirectory());
@@ -87,14 +90,14 @@ public class ULS extends Command {
 		System.out.println(info.toString());
 	}
 
-@Override
-public String getArgumentDescription() {
-	return "<remote_directory>";
-}
+	@Override
+	public String getArgumentDescription() {
+		return "<remote_directory>";
+	}
 
-@Override
-public String getSynopsis() {
-	return "Lists a remote directory.";
-}
+	@Override
+	public String getSynopsis() {
+		return "Lists a remote directory.";
+	}
 
 }

@@ -2,7 +2,7 @@
 # UFTP standalone client
 #
 
-This is a Java-based client for UFTP. It allows to 
+This is a full-featured client for UFTP. It allows to 
 
  * list remote directories
  * upload/download files
@@ -18,7 +18,7 @@ or UNICORE/X server.
 Prerequisites
 *************
 
- * Java 8 (OpenJDK, Oracle, IBM)
+ * Java 8 (OpenJDK, Oracle, IBM) or later
 
  * Access to a UFTP authentication service and the corresponding UFTPD
    server. To use the client, you need to know the address of the

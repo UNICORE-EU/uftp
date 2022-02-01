@@ -21,6 +21,9 @@ public class Auth extends DataTransferCommand {
 	@Override
 	protected void run(ClientFacade client) throws Exception {
 		ConnectionInfoManager mgr = client.getConnectionManager();
+		if(fileArgs.length==0) {
+			throw new IllegalArgumentException("Missing argument: "+getArgumentDescription());
+		}
 		String uri = fileArgs[0];
 		mgr.init(uri);
 		AuthClient auth = mgr.getAuthClient(client);

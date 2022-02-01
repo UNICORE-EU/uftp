@@ -11,6 +11,9 @@ public class USYNC extends DataTransferCommand {
 
 	@Override
 	protected void run(ClientFacade client) throws Exception {
+		if(fileArgs.length<2) {
+			throw new IllegalArgumentException("Missing argument: "+getArgumentDescription());
+		}
 		client.sync(fileArgs[0], fileArgs[1]);
 	}
 	

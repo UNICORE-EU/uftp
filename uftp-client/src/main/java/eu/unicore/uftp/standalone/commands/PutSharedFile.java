@@ -51,7 +51,7 @@ public class PutSharedFile extends DataTransferCommand {
 	@Override
 	protected void run(ClientFacade client) throws Exception {
 		if(fileArgs.length<2){
-			throw new IllegalArgumentException("Must specify at least a local source and remote path!");
+			throw new IllegalArgumentException("Missing argument: "+getArgumentDescription());
 		}
 		int len = fileArgs.length-1;
 		boolean directory = len>1;

@@ -11,6 +11,9 @@ public class UMKDIR extends Command {
 
 	@Override
 	protected void run(ClientFacade client) throws Exception {
+		if(fileArgs.length==0) {
+			throw new IllegalArgumentException("Missing argument: "+getArgumentDescription());
+		}
 		int len = fileArgs.length;
 		for(int i=0; i<len;i++){
 			client.mkdir(fileArgs[i]);

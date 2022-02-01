@@ -110,7 +110,7 @@ public class UCP extends DataTransferCommand {
 	public void parseOptions(String[] args) throws ParseException {
 		super.parseOptions(args);
 		if(fileArgs.length<2){
-			throw new IllegalArgumentException("Must specify source and target!");
+			throw new IllegalArgumentException("Missing argument: "+getArgumentDescription());
 		}
 		target = fileArgs[fileArgs.length-1];
 		isUpload = !ConnectionInfoManager.isLocal(target);

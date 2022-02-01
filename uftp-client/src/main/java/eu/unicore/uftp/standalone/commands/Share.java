@@ -107,6 +107,9 @@ public class Share extends Command {
 		String accessType = write? "WRITE" : "READ" ;
 		if(delete)accessType = "NONE";
 		String target = anonymous? Client.ANONYMOUS_CLIENT_DN : line.getOptionValue('a');
+		if(fileArgs.length==0) {
+			throw new IllegalArgumentException("Missing argument: <path>");
+		}
 		String path = fileArgs[0];
 		
 		File file = new File(path);
