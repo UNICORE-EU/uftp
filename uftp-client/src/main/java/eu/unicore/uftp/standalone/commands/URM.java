@@ -7,12 +7,15 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 import eu.unicore.uftp.standalone.ClientFacade;
+import eu.unicore.uftp.standalone.lists.FileCrawler.RecursivePolicy;
 import jline.console.ConsoleReader;
 
 public class URM extends Command {
 
 	private boolean quiet = false;
-	
+
+	private boolean recurse = false;
+
 	@SuppressWarnings("static-access")
 	protected Options getOptions() {
 		Options options = super.getOptions();
@@ -21,6 +24,12 @@ public class URM extends Command {
 				.isRequired(false)
 				.create("q")
 				);
+		options.addOption(
+				OptionBuilder.withLongOpt("recurse")
+				.withDescription("Delete (sub)directories, if applicable")
+				.isRequired(false)
+				.create("r")
+				);
 		return options;
 	}
 	
@@ -28,6 +37,7 @@ public class URM extends Command {
 	public void parseOptions(String[] args) throws ParseException {
 		super.parseOptions(args);
 		quiet = line.hasOption('q');
+		recurse = line.hasOption('r');
 	}
 	
 	@Override
@@ -53,7 +63,8 @@ public class URM extends Command {
 		if(!quiet && !confirm(file)){
 			return;
 		}
-		client.rm(file);
+		RecursivePolicy policy = recurse ? RecursivePolicy.RECURSIVE : RecursivePolicy.NONRECURSIVE;
+		client.rm(file, policy);
 	}
 		
 	@Override

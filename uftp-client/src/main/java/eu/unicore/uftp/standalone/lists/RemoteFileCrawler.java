@@ -25,12 +25,15 @@ public class RemoteFileCrawler extends FileCrawler {
     
     private final String wildCard;
     
+	private final String localSeparator;
+
     /**
      * @param remoteSource - source file specification
      * @param localTarget - target directory
      * @param sc - already connected session client
      */
     public RemoteFileCrawler(String remoteSource, String localTarget, UFTPSessionClient sc) throws IOException {
+    	this.localSeparator = File.separator;
     	try{
     		if(!remoteSource.endsWith("/")){
     			if(getFileInfo(remoteSource).isDirectory()){
@@ -43,9 +46,9 @@ public class RemoteFileCrawler extends FileCrawler {
         String sourceName = FilenameUtils.getName(remoteSource);
         this.wildCard = (sourceName == null || sourceName.isEmpty())? "*" : sourceName;
         
-        if(localTarget!=null && !localTarget.endsWith("/")){
+        if(localTarget!=null && !localTarget.endsWith(localSeparator)){
 			if(new File(localTarget).isDirectory()){
-				localTarget += "/";
+				localTarget += localSeparator;
 			}
 		}
         this.localTarget = localTarget;
@@ -81,8 +84,8 @@ public class RemoteFileCrawler extends FileCrawler {
         	if (all || FilenameUtils.wildcardMatch(name, wildCard)) {
         		if (file.isDirectory()) {
         			if(!name.endsWith("/"))name=name+"/";
-        			String newDestination = isDevNull(destination)? 
-        					destination: FilenameUtils.concat(destination, name);
+        			String newDestination = isDevNull(destination) ? destination :
+        				FilenameUtils.separatorsToSystem(FilenameUtils.concat(destination, name));
         			String newSource = FilenameUtils.concat(remoteDir, name);
         			if(!isDevNull(newDestination))Files.createDirectories(Paths.get(newDestination));
         			if(recursive){
@@ -94,7 +97,7 @@ public class RemoteFileCrawler extends FileCrawler {
         				System.err.println("uftp: omitting directory '"+name+"'");
         			}
         		} else {
-        			cmd.execute(FilenameUtils.concat(remoteDir, name), destination);
+        			cmd.execute(FilenameUtils.separatorsToUnix(FilenameUtils.concat(remoteDir, name)), destination);
         		}
         	}
         }

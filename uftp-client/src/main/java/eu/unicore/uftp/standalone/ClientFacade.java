@@ -266,7 +266,7 @@ public class ClientFacade {
 	 * 
 	 * @throws IOException
 	 */
-	public void rm(String file) throws Exception {
+	public void rm(String file, FileCrawler.RecursivePolicy policy) throws Exception {
 		if (!connected) {
 			connect(file);
 		}
@@ -278,12 +278,12 @@ public class ClientFacade {
 		Command cmd = getRemoveCommand();
 		Map<String, String> params = connectionManager.extractConnectionParameters(file);
 		String path = params.get("path");
-		FileCrawler fileList = new RemoteFileCrawler(path, null, sc);
+		FileCrawler fileList = new RemoteFileCrawler(path, ".", sc);
 		if (fileList.isSingleFile(path)) {
 			sc.rm(path);
 		}
 		else{
-			fileList.crawl(cmd, FileCrawler.RecursivePolicy.NONRECURSIVE);
+			fileList.crawl(cmd, policy);
 		}
 	}
 
@@ -415,6 +415,7 @@ public class ClientFacade {
 
 	private void uploadFile(String local, String remotePath, ClientPool pool) throws FileNotFoundException, URISyntaxException, IOException {
 		logger.debug("Uploading file {} -> {}", local, remotePath);
+
 		ProgressBar pb = null;
 		String dest = getFullRemoteDestination(local, remotePath);
 		if(archiveMode) {

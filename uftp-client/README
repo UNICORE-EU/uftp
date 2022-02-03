@@ -2,7 +2,7 @@
 # UFTP standalone client
 #
 
-This is a full-featured client for UFTP. It allows to 
+This is a full-featured client for UFTP. It allows to
 
  * list remote directories
  * upload/download files

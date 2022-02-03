@@ -7,7 +7,7 @@ import java.io.IOException;
  *
  * @author jj
  */
-public abstract class Command {
+public interface Command {
 
 	/**
 	 * perform some command
@@ -16,6 +16,6 @@ public abstract class Command {
 	 * @param destination
 	 * @throws IOException
 	 */
-    public abstract void execute(String source, String destination) throws IOException;
+    public void execute(String source, String destination) throws IOException;
  
 }

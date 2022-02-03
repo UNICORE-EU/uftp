@@ -9,6 +9,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.logging.log4j.Logger;
 
+import eu.unicore.uftp.client.FileInfo;
 import eu.unicore.uftp.client.UFTPSessionClient;
 import eu.unicore.util.Log;
 
@@ -21,17 +22,20 @@ public class LocalFileCrawler extends FileCrawler {
 	private static final Logger logger = Log.getLogger(Log.CLIENT, LocalFileCrawler.class);
 
 	private String path;
-    
+
 	private FileFilter filter;
 
 	private String target;
     
+	private final String localSeparator;
+
 	private final UFTPSessionClient sc;
     
     public LocalFileCrawler(String path, String target, UFTPSessionClient sc) {
     	this.path = path;
     	this.sc = sc;
     	this.target = target;
+    	this.localSeparator = File.separator;
     }
 
     private boolean init(RecursivePolicy policy) throws Exception {
@@ -41,9 +45,9 @@ public class LocalFileCrawler extends FileCrawler {
     			System.err.println("uftp: omitting directory '"+path+"'");
     			return false;
     		}
-    		target = new File(target, source.getName()).getPath();
-    		sc.mkdir(target);
-    		if(!path.endsWith("/"))path=path+"/";
+    		target = target + "/" + source.getName();
+    		safeMkDir(target);
+    		if(!path.endsWith(localSeparator))path=path+localSeparator;
     	}
     	String name = FilenameUtils.getName(path);
         if (name == null || name.isEmpty()) {
@@ -51,8 +55,7 @@ public class LocalFileCrawler extends FileCrawler {
         }
         filter = new WildcardFileFilter(name);
         path = FilenameUtils.getFullPath(path);
-        if("".equals(path))path="./";
-
+        if("".equals(path))path= "." + localSeparator;
         return true;
     }
     
@@ -87,14 +90,14 @@ public class LocalFileCrawler extends FileCrawler {
     	if(files == null || files.length == 0)return;
     	
 		for(File localFile: files){
-			String target = new File(remoteDirectory, localFile.getName()).getPath();
+			String target = remoteDirectory + "/" + localFile.getName();
 			if(localFile.isDirectory()){
 				if(RecursivePolicy.RECURSIVE!=policy){
 					String msg = "uftp: omitting directory '"+localFile+"'";
 					System.err.println(msg);
 					logger.debug(msg);
 				}else{
-					sc.mkdir(target);
+					safeMkDir(target);
 					crawl(localFile.getPath(), target, policy, true);
 				}
 			}else{
@@ -103,6 +106,18 @@ public class LocalFileCrawler extends FileCrawler {
 		}
     }
 
+    private void safeMkDir(String target) throws IOException {
+    	FileInfo i = null;
+    	try{
+    		i = sc.stat(target);
+		}catch(IOException ie){
+			sc.mkdir(target);
+			return;
+		}
+    	if(!i.isDirectory()){
+			throw new IOException("Remote file exists: <"+target+"> and is not a directory.");
+		}
+    }
 
     /**
      * get matching files and directories
