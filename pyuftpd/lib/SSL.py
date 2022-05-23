@@ -8,7 +8,13 @@ import re
 def setup_ssl(config, socket, LOG, server_mode=False):
     """ Wraps the given socket with an SSL context """
     keypass = config.get('credential.password', None)
-    context = ssl.SSLContext(ssl.PROTOCOL_TLS)
+    try:
+        # Python 3.6 and later
+        protocol_version = ssl.PROTOCOL_TLS
+    except:
+        protocol_version = ssl.PROTOCOL_TLSv1_2
+        LOG.info("Fallback to SSL protocol TLS v1.2 - consider updating your OS or python3 version")
+    context = ssl.SSLContext(protocol_version)
     context.verify_mode = ssl.CERT_REQUIRED
     context.check_hostname = False
     cert = config.get('credential.path', None)

@@ -7,6 +7,15 @@ https://sourceforge.net/p/unicore/uftp-issues
 ***  see README-UPGRADE.txt for how to update
 ***
 
+Auth Server 2.7.0 (released mmm dd, 2022)
+-----------------------------------------
+ - update to UNICORE 9.0 base libs
+ - validate JWT user authentication tokens with
+   keys obtained via UFTP (instead of / in addition to
+   "homegrown" SSH key authentication)
+ - new feature: shares can have a lifetime
+   and a "onetime" property
+
 Auth Server 2.6.0 (released Dec 15, 2021)
 ------------------------------------------
  - update to UNICORE 8.3 base libs

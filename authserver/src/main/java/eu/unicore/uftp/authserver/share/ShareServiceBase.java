@@ -171,29 +171,31 @@ public abstract class ShareServiceBase extends ServiceBase {
 	
 	protected JSONObject toJSON(ShareDAO share, String serverName) throws JSONException {
 		JSONObject o = new JSONObject();
-		o.put("path", share.getPath());
-		o.put("directory", share.isDirectory());
 		o.put("user", share.getTargetID());
-		o.put("access", share.getAccess());
 		o.put("id", share.getID());
-		String url = (baseURL+"/"+serverName+"/"+share.getID()).replaceFirst("/rest/share/", "/rest/access/");
-		o.put("http", url);
-		String auth = baseURL+"/"+serverName+"/auth:"+share.getPath();
-		o.put("uftp", auth);
+		o.put("directory", share.isDirectory());
+		addCommon(o, share, serverName);
 		return o;
 	}
 
 	protected JSONObject toJSONAccessible(ShareDAO share, String serverName) throws JSONException {
 		JSONObject o = new JSONObject();
-		o.put("path", share.getPath());
 		o.put("owner", share.getOwnerID());
+		addCommon(o, share, serverName);
+		return o;
+	}
+	
+	protected void addCommon(JSONObject o, ShareDAO share, String serverName) throws JSONException{
+		o.put("path", share.getPath());
 		o.put("access", share.getAccess());
-		o.put("id", share.getID());
+		if(share.getExpires()>0) {
+			o.put("lifetime", share.getExpires()-System.currentTimeMillis()/1000);
+		}
+		o.put("onetime", share.isOneTime());
 		String url = (baseURL+"/"+serverName+"/"+share.getID()).replaceFirst("/rest/share/", "/rest/access/");
 		o.put("http", url);
 		String auth = baseURL+"/"+serverName+"/auth:"+share.getPath();
 		o.put("uftp", auth);
-		return o;
 	}
 	
 	protected JSONObject getUserInfo(UserAttributes ua) throws Exception {

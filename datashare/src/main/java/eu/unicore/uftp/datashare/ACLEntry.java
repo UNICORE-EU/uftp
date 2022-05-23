@@ -91,7 +91,7 @@ public class ACLEntry {
 	
 	public void write() throws Exception {
 		for(Map.Entry<Target, AccessType> e : accessMap.entrySet()){
-			storage.grant(e.getValue(), path, e.getKey(), owner);		
+			storage.grant(e.getValue(), path, e.getKey(), owner, 0, false);		
 		}
 	}
 

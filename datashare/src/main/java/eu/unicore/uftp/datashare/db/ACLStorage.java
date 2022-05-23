@@ -47,7 +47,7 @@ public class ACLStorage {
 		}
 	}
 	
-	public String grant(AccessType accessType, String path, Target target, Owner owner) throws PersistenceException, InterruptedException {
+	public String grant(AccessType accessType, String path, Target target, Owner owner, long expiry, boolean onetime) throws PersistenceException, InterruptedException {
 		Collection<ShareDAO> grants = readAll(path, false, owner);
 		ShareDAO grant = null;
 		if(grants.size()>0){
@@ -71,6 +71,8 @@ public class ACLStorage {
 			grant = storage.getForUpdate(grant.getID());
 		}
 		grant.setAccess(accessType);
+		grant.setExpires(expiry);
+		grant.setOneTime(onetime);
 		storage.write(grant);
 		return grant.getID();
 	}
@@ -134,7 +136,14 @@ public class ACLStorage {
 		Collection<String> ids = storage.getIDs("owner", owner.getName());
 		for(String id: ids){
 			ShareDAO d = storage.read(id);
-			if(d!=null)result.add(d);
+			long now = System.currentTimeMillis() / 1000;
+			if(d!=null) {
+				long expires = d.getExpires();
+				if(expires>0 && expires<now) {
+					delete(id);
+				}
+				result.add(d);
+			}
 		}
 		return result;
 	}

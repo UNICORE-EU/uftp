@@ -12,11 +12,11 @@ public class TestACLEntry {
 		ACLStorage s = 	TestACLStorage.getStore();
 		Owner owner = new Owner("Me", "nobody", "nobody");
 		SharingUser user = new SharingUser("Demo User");
-		s.grant(AccessType.READ, "/tmp", user, owner);
+		s.grant(AccessType.READ, "/tmp", user, owner, 0, false);
 		user = new SharingUser("Trusted");
-		s.grant(AccessType.WRITE, "/tmp", user, owner);
+		s.grant(AccessType.WRITE, "/tmp", user, owner, 0, false);
 		user = new SharingUser("Senior");
-		s.grant(AccessType.MODIFY, "/tmp", user, owner);
+		s.grant(AccessType.MODIFY, "/tmp", user, owner, 0, false);
 		ACLEntry e = ACLEntry.read("/tmp", owner, s);
 		Assert.assertEquals(3, e.getAllReadable().size());
 		Assert.assertEquals(1,e.list(AccessType.MODIFY).size());

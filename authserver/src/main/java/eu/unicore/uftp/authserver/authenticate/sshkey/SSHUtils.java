@@ -7,91 +7,24 @@ import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.util.StringTokenizer;
 
 import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.io.FileUtils;
-import org.apache.logging.log4j.Logger;
 
 import com.hierynomus.sshj.key.KeyAlgorithm;
 
-import eu.unicore.util.Log;
+import eu.emi.security.authn.x509.helpers.PasswordSupplier;
 import net.schmizz.sshj.ConfigImpl;
 import net.schmizz.sshj.DefaultConfig;
 import net.schmizz.sshj.common.Buffer;
 import net.schmizz.sshj.common.Factory;
 import net.schmizz.sshj.common.KeyType;
 import net.schmizz.sshj.signature.Signature;
-import net.schmizz.sshj.userauth.keyprovider.FileKeyProvider;
-import net.schmizz.sshj.userauth.keyprovider.KeyFormat;
-import net.schmizz.sshj.userauth.keyprovider.KeyProviderUtil;
-import net.schmizz.sshj.userauth.password.PasswordFinder;
-import net.schmizz.sshj.userauth.password.Resource;
 
-public class SSHUtils {
+public class SSHUtils extends eu.unicore.services.rest.security.sshkey.SSHUtils {
 
-	private static final Logger logger = Log.getLogger(Log.SECURITY, SSHUtils.class);
-	
 	private static final ConfigImpl sshConfig = new DefaultConfig();
-	
-	public static PrivateKey readPrivateKey(File priv, PasswordFinder passwordFinder) throws IOException {
-		FileKeyProvider fkp = getFileKeyProvider(priv);
-		fkp.init(priv, passwordFinder);
-		return fkp.getPrivate();
-	}
-	
-	public static PrivateKey readPrivateKey(File priv, char[] password) throws IOException {
-		PasswordFinder passwordFinder = new PasswordFinder() {
-			
-			@Override
-			public boolean shouldRetry(Resource<?> resource) {
-				// TODO Auto-generated method stub
-				return false;
-			}
-			
-			@Override
-			public char[] reqPassword(Resource<?> resource) {
-				return password;
-			}
-		};
-		return readPrivateKey(priv, passwordFinder);
-	}
-	
-	private static FileKeyProvider getFileKeyProvider(File key) throws IOException {
-		KeyFormat format = KeyProviderUtil.detectKeyFileFormat(key);
-		FileKeyProvider fkp = Factory.Named.Util.create(sshConfig.getFileKeyProviderFactories(), format.toString());
-		if (fkp == null) {
-			throw new IOException("No support for " + format + " key file");
-		}
-		return fkp;
-	}
 
-	public static PublicKey readPubkey(File file) throws IOException, GeneralSecurityException {
-		return readPubkey(FileUtils.readFileToString(file, "UTF-8"));
-	}
-	
-	final static String[] ssh_options = { "from=", "no-", "environment=",
-			"permitopen=", "principals=", "tunnel=",
-			"ssh-rsa", "ssh-ed25519",
-	};
-
-	public static PublicKey readPubkey(String pubkey) throws IOException, GeneralSecurityException {
-		StringTokenizer st = new StringTokenizer(pubkey);
-			outer: while(st.hasMoreTokens()) {
-				String token = st.nextToken();
-				for(String opt: ssh_options){
-					if(token.startsWith(opt))continue outer;
-				}
-				try{
-					Buffer.PlainBuffer buf = new Buffer.PlainBuffer(Base64.decodeBase64(token.getBytes()));
-					return buf.readPublicKey();
-				}catch(Exception ex) {}
-			}
-		throw new GeneralSecurityException("Not recognized as public key: "+pubkey);
-	}
-	
-	
-	public static SSHKey createAuthData(File key, PasswordFinder pf, String token) throws GeneralSecurityException, IOException {
+	public static SSHKey createAuthData(File key, PasswordSupplier pf, String token) throws GeneralSecurityException, IOException {
 		SSHKey authData = new SSHKey();
 		byte[] hashedToken = hash(token.getBytes());
 		authData.token = new String(Base64.encodeBase64(hashedToken));
@@ -120,8 +53,13 @@ public class SSHUtils {
 		SSHKey authData = new SSHKey();
 		byte[] hashedToken = hash(token.getBytes());
 		authData.token = new String(Base64.encodeBase64(hashedToken));
-		PrivateKey pk = readPrivateKey(key, password);
-		
+		PrivateKey pk = readPrivateKey(key, 
+				new PasswordSupplier() {
+					@Override
+					public char[] getPassword() {
+						return	password;
+					}
+		});
 		final String kt = KeyType.fromKey(pk).toString();
 		KeyAlgorithm ka = Factory.Named.Util.create(sshConfig.getKeyAlgorithms(), kt);
 		Signature signature = ka.newSignature();
@@ -153,7 +91,6 @@ public class SSHUtils {
 		}
 		try{
 			PublicKey pub = SSHUtils.readPubkey(pubkey);
-		
 			final String kt = KeyType.fromKey(pub).toString();
 			KeyAlgorithm ka = Factory.Named.Util.create(sshConfig.getKeyAlgorithms(), kt);
 			Signature signature = ka.newSignature();
@@ -167,12 +104,9 @@ public class SSHUtils {
 			Buffer.PlainBuffer buf = new Buffer.PlainBuffer();
 			buf.putString(kt);
 			buf.putBytes(sig);
-			boolean sigOK = signature.verify(buf.getCompactData());
-			return sigOK; // TODO also, check that token is OK
+			return signature.verify(buf.getCompactData());
 		}
 		catch(Exception ex){
-			logger.info("Error verifying signature",ex);
-			
 			return false;
 		}
 	}

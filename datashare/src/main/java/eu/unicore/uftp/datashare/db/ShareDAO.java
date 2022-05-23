@@ -28,6 +28,10 @@ public class ShareDAO {
 	
 	private AccessType access;
 	
+	private boolean oneTime;
+	
+	private long expires;
+	
 	@ID
 	public String getID(){
 		return ID;
@@ -88,11 +92,26 @@ public class ShareDAO {
 
 	public void setID(String ID) {
 		this.ID = ID;
-
 	}
 
 	public void setAccess(AccessType access) {
 		this.access = access;
+	}
+
+	public boolean isOneTime() {
+		return oneTime;
+	}
+
+	public void setOneTime(boolean oneTime) {
+		this.oneTime = oneTime;
+	}
+
+	public long getExpires() {
+		return expires;
+	}
+
+	public void setExpires(long expires) {
+		this.expires = expires;
 	}
 
 	public String toString(){

@@ -157,7 +157,15 @@ public class ShareServiceImpl extends ShareServiceBase {
 			String user = json.getString("user");
 			Target target = new SharingUser(normalize(user));
 			Owner owner = new Owner(getNormalizedCurrentUserName(), ua.uid, ua.gid);
-			String unique = shareDB.grant(accessType, path, target, owner);
+
+			long expires = 0;
+			long lifetime = json.optLong("lifetime", 0);
+			if(lifetime > 0) {
+				expires = lifetime + System.currentTimeMillis()/1000;
+			}
+			boolean onetime= json.optBoolean("onetime", false);
+
+			String unique = shareDB.grant(accessType, path, target, owner, expires, onetime);
 			Response r = null;
 			if(accessType.equals(AccessType.NONE)){
 				r = Response.ok().build();

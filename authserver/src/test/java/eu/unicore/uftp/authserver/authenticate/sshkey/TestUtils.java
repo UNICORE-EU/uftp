@@ -9,8 +9,7 @@ import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import net.schmizz.sshj.userauth.password.PasswordFinder;
-import net.schmizz.sshj.userauth.password.Resource;
+import eu.emi.security.authn.x509.helpers.PasswordSupplier;
 
 public class TestUtils {
 
@@ -23,7 +22,7 @@ public class TestUtils {
 		};
 		for(String p: pub) {
 			File key = new File(p);
-			PublicKey pubKey = SSHUtils.readPubkey(key);
+			PublicKey pubKey = SSHUtils.readPublicKey(key);
 			Assert.assertNotNull(pubKey);
 		}
 	}
@@ -92,17 +91,12 @@ public class TestUtils {
 	
 	@Test
 	public void testNoPassKeyWithoutQuery() throws Exception {
-		PasswordFinder pf = new PasswordFinder() {
+		PasswordSupplier pf = new PasswordSupplier() {
 			@Override
-			public boolean shouldRetry(Resource<?> resource) {
-				return false;
-			}
-			@Override
-			public char[] reqPassword(Resource<?> resource) {
+			public char[] getPassword() {
 				throw new IllegalStateException("Should not query for password-less key");
 			}
 		};
-		
 		String orig = new Date().toString();
 		File key = new File("src/test/resources/ssh/id_nopass");
 		String pubkey = FileUtils.readFileToString(new File("src/test/resources/ssh/id_nopass.pub"), "UTF-8");

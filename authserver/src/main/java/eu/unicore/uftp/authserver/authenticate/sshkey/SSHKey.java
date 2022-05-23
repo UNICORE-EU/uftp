@@ -35,7 +35,7 @@ public class SSHKey implements AuthData {
 	}
 
 	public Map<String,String>getHttpHeaders() {
-		Map<String,String> res = new HashMap<String, String>();
+		Map<String,String> res = new HashMap<>();
 		res.put("Authorization",UsernamePassword.getBasicAuth(username, signature));
 		res.put(HEADER_PLAINTEXT_TOKEN,token);
 		return res;

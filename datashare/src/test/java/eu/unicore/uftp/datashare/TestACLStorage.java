@@ -35,6 +35,17 @@ public class TestACLStorage {
 		
 	}
 	
+	@Test
+	public void testExpiry() throws Exception {
+		ACLStorage s = getStore();
+		fillTestContent2(s);
+		Collection<ShareDAO> grants = s.readAll("/tmp/");
+		Assert.assertEquals(1, grants.size());
+		Thread.sleep(2000);		
+		grants = s.readAll("/tmp");
+		Assert.assertEquals(0, grants.size());
+	}
+	
 	public static ACLStorage getStore() throws Exception {
 		Properties p = new Properties();
 		p.put("persistence.directory", "./target/acldata");
@@ -47,6 +58,12 @@ public class TestACLStorage {
 	private void fillTestContent(ACLStorage s) throws Exception {
 		SharingUser user = new SharingUser("Demo User");
 		Owner owner = new Owner("Me", "nobody", "nobody");
-		s.grant(AccessType.READ, "/tmp/", user, owner);
+		s.grant(AccessType.READ, "/tmp/", user, owner, 0, false);
+	}
+	
+	private void fillTestContent2(ACLStorage s) throws Exception {
+		SharingUser user = new SharingUser("Demo User");
+		Owner owner = new Owner("Me", "nobody", "nobody");
+		s.grant(AccessType.READ, "/tmp/", user, owner, 1, false);
 	}
 }

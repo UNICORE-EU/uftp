@@ -2,18 +2,14 @@
 # Makefile for 
 #  - running unit tests
 #  - building RPM and other packages
-#  - creating and deploying documentation  
 #
 
 VERSION=3.1.3
 RELEASE=1
-DOCVERSION=3.1.3
 MVN=mvn
 
 VERSION ?= ${DEFAULT_VERSION}
-DOCVERSION ?= ${DEFAULT_DOCVERSION}
 RELEASE ?= ${DEFAULT_RELEASE}
-
 
 TESTS = $(wildcard tests/test_*.py)
 
@@ -41,26 +37,6 @@ runtest: $(TESTS)
 $(TESTS):
 	@echo "\n** Running test $@"
 	@${PYTHON} $@
-
-#
-# documentation
-#
-DOCOPTS=-Ddocman.enabled -Ddoc.relversion=${DOCVERSION} -Ddoc.compversion=${DOCVERSION} -Ddoc.src=docs/uftpd-manual.txt -Ddoc.target=uftpd-manual
-
-doc-generate:
-	mkdir -p target
-	if [ ! -d target/tools ] ; then git clone --depth 1 https://github.com/UNICORE-EU/tools.git target/tools ; fi
-	ant -f target/tools/docman/doc-build.xml ${DOCOPTS} doc-all
-
-doc-deploy:
-	ssh bschuller@unicore-dev.zam.kfa-juelich.de sudo rm -rf /var/www/documentation/uftpd-${DOCVERSION}
-	ssh bschuller@unicore-dev.zam.kfa-juelich.de sudo mkdir /var/www/documentation/uftpd-${DOCVERSION}
-	ssh bschuller@unicore-dev.zam.kfa-juelich.de mkdir -p uftpd-${DOCVERSION}
-	scp target/site/* bschuller@unicore-dev.zam.kfa-juelich.de:uftpd-${DOCVERSION}
-	ssh bschuller@unicore-dev.zam.kfa-juelich.de sudo mv uftpd-${DOCVERSION}/* /var/www/documentation/uftpd-${DOCVERSION}
-
-doc: doc-generate doc-deploy
-
 
 #
 # packaging
