@@ -1,4 +1,4 @@
-package eu.unicore.uftp.authserver.authenticate;
+package eu.unicore.uftp.authserver;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

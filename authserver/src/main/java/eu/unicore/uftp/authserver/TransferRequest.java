@@ -3,7 +3,6 @@ package eu.unicore.uftp.authserver;
 import java.io.File;
 import java.util.Random;
 
-import eu.unicore.uftp.authserver.authenticate.UserAttributes;
 import eu.unicore.uftp.authserver.messages.AuthRequest;
 import eu.unicore.uftp.dpc.Utils;
 import eu.unicore.uftp.server.requests.UFTPTransferRequest;

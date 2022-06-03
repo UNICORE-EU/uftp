@@ -2,7 +2,6 @@ package eu.unicore.uftp.authserver;
 
 import java.util.Random;
 
-import eu.unicore.uftp.authserver.authenticate.UserAttributes;
 import eu.unicore.uftp.authserver.messages.CreateTunnelRequest;
 import eu.unicore.uftp.dpc.Utils;
 import eu.unicore.uftp.server.requests.UFTPTunnelRequest;

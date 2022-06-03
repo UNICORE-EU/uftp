@@ -32,7 +32,7 @@ public class TestUtils {
 		String orig = new Date().toString();
 		File key = new File("src/test/resources/ssh/id_rsa");
 		String pubkey = FileUtils.readFileToString(new File("src/test/resources/ssh/id_rsa.pub"), "UTF-8");
-		SSHKey sshAuth = SSHUtils.createAuthData(key, "test123".toCharArray(), orig);
+		SSHKeyUC sshAuth = SSHUtils.createAuthData(key, "test123".toCharArray(), orig);
 		Assert.assertTrue(SSHUtils.validateAuthData(sshAuth,pubkey));
 	}
 
@@ -41,7 +41,7 @@ public class TestUtils {
 		String orig = new Date().toString();
 		File key = new File("src/test/resources/ssh/id_dsa");
 		String pubkey = FileUtils.readFileToString(new File("src/test/resources/ssh/id_dsa.pub"), "UTF-8");
-		SSHKey sshAuth = SSHUtils.createAuthData(key, "test123".toCharArray(), orig);
+		SSHKeyUC sshAuth = SSHUtils.createAuthData(key, "test123".toCharArray(), orig);
 		Assert.assertTrue(SSHUtils.validateAuthData(sshAuth,pubkey));
 	}
 
@@ -50,7 +50,7 @@ public class TestUtils {
 		String orig = new Date().toString();
 		File key = new File("src/test/resources/ssh/id_ed25519");
 		String pubkey = FileUtils.readFileToString(new File("src/test/resources/ssh/id_ed25519.pub"), "UTF-8");
-		SSHKey sshAuth = SSHUtils.createAuthData(key, "test123".toCharArray(), orig);
+		SSHKeyUC sshAuth = SSHUtils.createAuthData(key, "test123".toCharArray(), orig);
 		Assert.assertTrue(SSHUtils.validateAuthData(sshAuth,pubkey));
 	}
 	
@@ -59,7 +59,7 @@ public class TestUtils {
 		String orig = new Date().toString();
 		File key = new File("src/test/resources/ssh/id_ecdsa");
 		String pubkey = FileUtils.readFileToString(new File("src/test/resources/ssh/id_ecdsa.pub"), "UTF-8");
-		SSHKey sshAuth = SSHUtils.createAuthData(key, "test123".toCharArray(), orig);
+		SSHKeyUC sshAuth = SSHUtils.createAuthData(key, "test123".toCharArray(), orig);
 		Assert.assertTrue(SSHUtils.validateAuthData(sshAuth,pubkey));
 	}
 
@@ -68,7 +68,7 @@ public class TestUtils {
 		String orig = new Date().toString();
 		File key = new File("src/test/resources/ssh/putty-key.ppk");
 		String pubkey = FileUtils.readFileToString(new File("src/test/resources/ssh/putty-key.pub"), "UTF-8");
-		SSHKey sshAuth = SSHUtils.createAuthData(key, (char[])null, orig);
+		SSHKeyUC sshAuth = SSHUtils.createAuthData(key, (char[])null, orig);
 		Assert.assertTrue(SSHUtils.validateAuthData(sshAuth,pubkey));
 	}
 	
@@ -85,7 +85,7 @@ public class TestUtils {
 		String orig = new Date().toString();
 		File key = new File("src/test/resources/ssh/id_nopass");
 		String pubkey = FileUtils.readFileToString(new File("src/test/resources/ssh/id_nopass.pub"), "UTF-8");
-		SSHKey sshAuth = SSHUtils.createAuthData(key, (char[])null, orig);
+		SSHKeyUC sshAuth = SSHUtils.createAuthData(key, (char[])null, orig);
 		Assert.assertTrue(SSHUtils.validateAuthData(sshAuth,pubkey));
 	}
 	
@@ -100,7 +100,7 @@ public class TestUtils {
 		String orig = new Date().toString();
 		File key = new File("src/test/resources/ssh/id_nopass");
 		String pubkey = FileUtils.readFileToString(new File("src/test/resources/ssh/id_nopass.pub"), "UTF-8");
-		SSHKey sshAuth = SSHUtils.createAuthData(key, pf, orig);
+		SSHKeyUC sshAuth = SSHUtils.createAuthData(key, pf, orig);
 		Assert.assertTrue(SSHUtils.validateAuthData(sshAuth,pubkey));
 	}
 }

@@ -29,7 +29,7 @@ import eu.unicore.uftp.authserver.LogicalUFTPServer;
 import eu.unicore.uftp.authserver.TransferInitializer;
 import eu.unicore.uftp.authserver.TransferRequest;
 import eu.unicore.uftp.authserver.UFTPDInstance;
-import eu.unicore.uftp.authserver.authenticate.UserAttributes;
+import eu.unicore.uftp.authserver.UserAttributes;
 import eu.unicore.uftp.authserver.messages.AuthRequest;
 import eu.unicore.uftp.authserver.messages.AuthResponse;
 import eu.unicore.uftp.client.FileInfo;

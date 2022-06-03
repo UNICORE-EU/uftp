@@ -6,7 +6,6 @@ import static org.junit.Assert.fail;
 
 import org.junit.Test;
 
-import eu.unicore.uftp.authserver.authenticate.UserAttributes;
 import eu.unicore.uftp.authserver.share.IdentityExtractor.EmailExtractor;
 
 public class TestUtils {

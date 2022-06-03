@@ -12,7 +12,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.http.HttpMessage;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.entity.ContentType;
@@ -32,8 +31,8 @@ import eu.emi.security.authn.x509.impl.X500NameUtils;
 import eu.unicore.services.Kernel;
 import eu.unicore.services.rest.client.BaseClient;
 import eu.unicore.services.rest.client.IAuthCallback;
+import eu.unicore.services.rest.client.UsernamePassword;
 import eu.unicore.services.server.JettyServer;
-import eu.unicore.uftp.authserver.authenticate.UsernamePassword;
 import eu.unicore.uftp.authserver.messages.AuthRequest;
 import eu.unicore.uftp.authserver.share.ShareServiceProperties;
 import eu.unicore.uftp.datashare.db.ACLStorage;
@@ -267,28 +266,16 @@ public class TestShareService {
 
 	
 	private IAuthCallback getSharingUserAuth(){
-		//setup basic auth
 		String userName = "demouser";
 		String password = "test123";
-		IAuthCallback auth = new IAuthCallback() {
-			public void addAuthenticationHeaders(HttpMessage httpMessage) throws Exception {
-				httpMessage.addHeader(UsernamePassword.getBasicAuthHeader(userName, password));
-			}
-		};
-		return auth;
+		return new UsernamePassword(userName, password) ;
 	}
 	
 
 	private IAuthCallback getTargetUserAuth(){
-		//setup basic auth
 		String userName = "otheruser";
 		String password = "test123";
-		IAuthCallback auth = new IAuthCallback() {
-			public void addAuthenticationHeaders(HttpMessage httpMessage) throws Exception {
-				httpMessage.addHeader(UsernamePassword.getBasicAuthHeader(userName, password));
-			}
-		};
-		return auth;
+		return new UsernamePassword(userName, password) ;
 	}
 
 	protected static UFTPServer server;

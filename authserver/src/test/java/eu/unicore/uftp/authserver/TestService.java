@@ -26,9 +26,10 @@ import com.google.gson.GsonBuilder;
 import eu.unicore.services.Kernel;
 import eu.unicore.services.admin.AdminAction;
 import eu.unicore.services.admin.AdminActionResult;
+import eu.unicore.services.rest.client.IAuthCallback;
+import eu.unicore.services.rest.client.UsernamePassword;
 import eu.unicore.services.server.JettyServer;
 import eu.unicore.uftp.authserver.admin.ShowUserInfo;
-import eu.unicore.uftp.authserver.authenticate.UsernamePassword;
 import eu.unicore.uftp.authserver.messages.AuthRequest;
 import eu.unicore.uftp.authserver.messages.CreateTunnelRequest;
 import eu.unicore.uftp.server.UFTPServer;
@@ -46,7 +47,8 @@ public class TestService {
 		HttpGet get=new HttpGet(resource);
 		String userName = "demouser";
 		String password = "test123";
-		get.addHeader(UsernamePassword.getBasicAuthHeader(userName, password));
+		IAuthCallback auth = new UsernamePassword(userName, password);
+		auth.addAuthenticationHeaders(get);
 		HttpResponse response=client.execute(get);
 		int status=response.getStatusLine().getStatusCode();
 		assertEquals("got "+response.getStatusLine(),200, status);
@@ -59,7 +61,7 @@ public class TestService {
 
 		// now do an actual authn post
 		HttpPost post=new HttpPost(authUrl);
-		post.addHeader(UsernamePassword.getBasicAuthHeader(userName, password));
+		auth.addAuthenticationHeaders(post);
 		Gson gson = new GsonBuilder().create();
 		AuthRequest req = new AuthRequest();
 		req.serverPath="/tmp/foo";
@@ -73,7 +75,7 @@ public class TestService {
 		url = server.getUrls()[0].toExternalForm()+"/rest";
 		resource  = url+"/auth";
 		get=new HttpGet(resource);
-		get.addHeader(UsernamePassword.getBasicAuthHeader(userName, password));
+		auth.addAuthenticationHeaders(get);
 		response=client.execute(get);
 		status=response.getStatusLine().getStatusCode();
 		assertEquals("got "+response.getStatusLine(),200, status);
@@ -85,7 +87,7 @@ public class TestService {
 		authUrl = s.getString("href")+"/tunnel";
 
 		post=new HttpPost(authUrl);
-		post.addHeader(UsernamePassword.getBasicAuthHeader(userName, password));
+		auth.addAuthenticationHeaders(post);
 		CreateTunnelRequest req2 = new CreateTunnelRequest();
 		req2.targetHost = "localhost";
 		req2.targetPort = 9001;

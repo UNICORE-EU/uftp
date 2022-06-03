@@ -23,7 +23,6 @@ import eu.unicore.security.Client;
 import eu.unicore.security.Role;
 import eu.unicore.security.SecurityException;
 import eu.unicore.services.security.util.AuthZAttributeStore;
-import eu.unicore.uftp.authserver.authenticate.UserAttributes;
 import eu.unicore.uftp.authserver.messages.AuthRequest;
 import eu.unicore.uftp.authserver.messages.AuthResponse;
 import eu.unicore.uftp.authserver.messages.CreateTunnelRequest;

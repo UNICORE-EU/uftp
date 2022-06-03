@@ -24,8 +24,8 @@ public class SSHUtils extends eu.unicore.services.rest.security.sshkey.SSHUtils 
 
 	private static final ConfigImpl sshConfig = new DefaultConfig();
 
-	public static SSHKey createAuthData(File key, PasswordSupplier pf, String token) throws GeneralSecurityException, IOException {
-		SSHKey authData = new SSHKey();
+	public static SSHKeyUC createAuthData(File key, PasswordSupplier pf, String token) throws GeneralSecurityException, IOException {
+		SSHKeyUC authData = new SSHKeyUC();
 		byte[] hashedToken = hash(token.getBytes());
 		authData.token = new String(Base64.encodeBase64(hashedToken));
 		PrivateKey pk = readPrivateKey(key, pf);
@@ -49,8 +49,8 @@ public class SSHUtils extends eu.unicore.services.rest.security.sshkey.SSHUtils 
 	 * @param key - file containing the private key
 	 * @param token - plaintext token to hash and sign
 	 */
-	public static SSHKey createAuthData(File key, char[] password, String token) throws GeneralSecurityException, IOException {
-		SSHKey authData = new SSHKey();
+	public static SSHKeyUC createAuthData(File key, char[] password, String token) throws GeneralSecurityException, IOException {
+		SSHKeyUC authData = new SSHKeyUC();
 		byte[] hashedToken = hash(token.getBytes());
 		authData.token = new String(Base64.encodeBase64(hashedToken));
 		PrivateKey pk = readPrivateKey(key, 
@@ -84,7 +84,7 @@ public class SSHUtils extends eu.unicore.services.rest.security.sshkey.SSHUtils 
 	 * @param authData 
 	 * @param pubkey - PEM formatted public key
 	 */
-	public static boolean validateAuthData(SSHKey authData, String pubkey){
+	public static boolean validateAuthData(SSHKeyUC authData, String pubkey){
 		if(authData == null || authData.token == null || authData.token.isEmpty()
 				||  authData.signature == null || authData.signature.isEmpty()){
 			return false;

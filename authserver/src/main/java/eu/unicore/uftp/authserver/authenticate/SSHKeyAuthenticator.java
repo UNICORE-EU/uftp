@@ -30,7 +30,7 @@ import eu.unicore.services.rest.security.PAMAttributeSource.PAMAttributes;
 import eu.unicore.uftp.authserver.AuthServiceProperties;
 import eu.unicore.uftp.authserver.LogicalUFTPServer;
 import eu.unicore.uftp.authserver.UFTPDInstance;
-import eu.unicore.uftp.authserver.authenticate.sshkey.SSHKey;
+import eu.unicore.uftp.authserver.authenticate.sshkey.SSHKeyUC;
 import eu.unicore.uftp.authserver.authenticate.sshkey.SSHUtils;
 import eu.unicore.uftp.authserver.exceptions.AuthenticationFailedException;
 import eu.unicore.uftp.server.requests.UFTPGetUserInfoRequest;
@@ -92,10 +92,10 @@ public class SSHKeyAuthenticator implements IAuthenticator, KernelInjectable {
 			throw new AuthenticationFailedException("Server error: could not update user database.", ioe);
 		}
 		readKeysFromServer(requestedUserName);
-		SSHKey authData = new SSHKey();
+		SSHKeyUC authData = new SSHKeyUC();
 		authData.username = requestedUserName;
 		HttpServletRequest request = CXFUtils.getServletRequest(message);
-		authData.token = request.getHeader(SSHKey.HEADER_PLAINTEXT_TOKEN);
+		authData.token = request.getHeader(SSHKeyUC.HEADER_PLAINTEXT_TOKEN);
 		authData.signature = auth.getPasswd();
 		String dn = null;
 		try{
@@ -103,15 +103,13 @@ public class SSHKeyAuthenticator implements IAuthenticator, KernelInjectable {
 		}catch(AuthenticationFailedException e){
 			logger.debug(Log.createFaultMessage("SSH auth failed", e));
 		}
-		if(dn !=null){
-			logger.info(requestedUserName+" --> <" + dn + ">");
+		if(dn!=null){
+			logger.info("{} --> <{}>", requestedUserName, dn);
 			tokens.setUserName(dn);
 			tokens.setConsignorTrusted(true);
 			storePAMInfo(requestedUserName, tokens);
 		}
-		else if(logger.isDebugEnabled()){
-			logger.debug("No match found for " + auth.getUserName());
-		}
+		else logger.debug("No match found for {}", auth.getUserName());
 		return true;
 	}
 
@@ -156,7 +154,7 @@ public class SSHKeyAuthenticator implements IAuthenticator, KernelInjectable {
 	protected synchronized void updateDB() throws IOException {
 		if(file==null)return;
 		if(lastUpdated == 0 || dbFile.lastModified() > lastUpdated){
-			logger.info("(Re)reading user attributes from <"+dbFile.getAbsolutePath()+">");
+			logger.info("(Re)reading user attributes from <{}>", dbFile.getAbsolutePath());
 			lastUpdated = dbFile.lastModified();
 			removeFileEntriesFromDB();
 			try(BufferedReader bufferedReader = new BufferedReader(new FileReader(dbFile))) {
@@ -171,7 +169,7 @@ public class SSHKeyAuthenticator implements IAuthenticator, KernelInjectable {
 						coll.add(0,af);
 					}
 					catch(IllegalArgumentException ex){
-						logger.error("Invalid line in user db "+dbFile.getAbsolutePath());
+						logger.error("Invalid line in user db {}", dbFile.getAbsolutePath());
 					}
 				}
 			}
@@ -210,7 +208,7 @@ public class SSHKeyAuthenticator implements IAuthenticator, KernelInjectable {
 				if(!hasEntry(attrs,key)){
 					if(isValidKey(key)){
 						attrs.add(new AttributesHolder(user,key,dn));
-						logger.info("Added SSH pub key for <"+user+">");
+						logger.info("Added SSH pub key for <{}>", user);
 					}
 				}
 			}
@@ -230,7 +228,7 @@ public class SSHKeyAuthenticator implements IAuthenticator, KernelInjectable {
 		}
 	}
 
-	private String sshKeyAuth(SSHKey authData){
+	private String sshKeyAuth(SSHKeyUC authData){
 		String username = authData.username;
 		AttributeHolders attr = db.get(username);
 		if(attr==null)return null;
@@ -239,7 +237,7 @@ public class SSHKeyAuthenticator implements IAuthenticator, KernelInjectable {
 		if(coll != null){
 			for(AttributesHolder af : coll){
 				if(af.sshkey==null || af.sshkey.isEmpty()){
-					logger.error("Server config error: No public key stored for "+username);
+					logger.error("Server config error: No public key stored for {}", username);
 					continue;
 				}
 				if(SSHUtils.validateAuthData(authData,af.sshkey)){
@@ -278,7 +276,7 @@ public class SSHKeyAuthenticator implements IAuthenticator, KernelInjectable {
 			String[] fields = line.split(":");
 			//#user:sshkey:dn
 			if (fields.length!=3) {
-				logger.error("Invalid line:"+line);
+				logger.error("Invalid line: {}", line);
 				throw new IllegalArgumentException();
 			}
 			user=fields[0];

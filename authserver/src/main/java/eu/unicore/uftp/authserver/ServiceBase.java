@@ -15,7 +15,6 @@ import eu.unicore.security.XACMLAttribute;
 import eu.unicore.services.KernelInjectable;
 import eu.unicore.services.rest.impl.ApplicationBaseResource;
 import eu.unicore.services.security.util.AuthZAttributeStore;
-import eu.unicore.uftp.authserver.authenticate.UserAttributes;
 import eu.unicore.util.Log;
 
 /**
