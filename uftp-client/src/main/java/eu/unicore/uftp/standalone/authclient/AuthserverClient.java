@@ -3,7 +3,6 @@ package eu.unicore.uftp.standalone.authclient;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Iterator;
-import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
@@ -23,7 +22,7 @@ import org.json.JSONObject;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import eu.unicore.uftp.authserver.authenticate.AuthData;
+import eu.unicore.services.rest.client.IAuthCallback;
 import eu.unicore.uftp.authserver.messages.AuthRequest;
 import eu.unicore.uftp.authserver.messages.AuthResponse;
 import eu.unicore.uftp.dpc.Utils;
@@ -38,7 +37,7 @@ public class AuthserverClient implements AuthClient {
 
 	private final String uri;
 
-	private final AuthData authData;
+	private final IAuthCallback authData;
 
 	private final Gson gson = new GsonBuilder().create();
 
@@ -46,24 +45,22 @@ public class AuthserverClient implements AuthClient {
 	
 	private static final Logger LOG = Log.getLogger(Log.CLIENT, AuthserverClient.class);
 
-	public AuthserverClient(String authUrl, AuthData authData, ClientFacade client) {
-		uri = authUrl;
+	public AuthserverClient(String authUrl, IAuthCallback authData, ClientFacade client) {
+		this.uri = authUrl;
 		this.authData = authData;
 		this.client = client;
 	}
 
 	@Override
-	public AuthResponse connect(String path, boolean send, boolean append) throws IOException {
+	public AuthResponse connect(String path, boolean send, boolean append) throws Exception {
 		return do_connect(path, send, append, false);
 	}
 
-	private AuthResponse do_connect(String path, boolean send, boolean append, boolean persistent) throws IOException {
+	private AuthResponse do_connect(String path, boolean send, boolean append, boolean persistent) throws Exception {
 		HttpClient httpClient = HttpClientFactory.getClient(uri);
 
 		HttpPost postRequest = new HttpPost(uri);
-		for(Map.Entry<String,String> e: authData.getHttpHeaders().entrySet()){
-			postRequest.addHeader(e.getKey(), e.getValue());
-		}
+		authData.addAuthenticationHeaders(postRequest);
 		postRequest.addHeader("Accept", "application/json");
 		String base64Key = client.getEncryptionKey()!=null? Utils.encodeBase64(client.getEncryptionKey()) : null;
 		AuthRequest request = createRequestObject(path, send, append, 
@@ -80,7 +77,7 @@ public class AuthserverClient implements AuthClient {
 	}
 	
 	@Override
-	public AuthResponse createSession(String baseDir, boolean persistent) throws IOException {
+	public AuthResponse createSession(String baseDir, boolean persistent) throws Exception {
 		if(baseDir!=null && !baseDir.endsWith("/")) {
 			baseDir = baseDir+"/";
 		}
@@ -91,13 +88,11 @@ public class AuthserverClient implements AuthClient {
 
 	String infoURL;
 	
-	public HttpResponse getInfo() throws IOException {
+	public HttpResponse getInfo() throws Exception {
 		infoURL = makeInfoURL(uri);
 		HttpClient client = HttpClientFactory.getClient(infoURL);
 		HttpGet getRequest = new HttpGet(infoURL);
-		for(Map.Entry<String,String> e: authData.getHttpHeaders().entrySet()){
-			getRequest.addHeader(e.getKey(), e.getValue());
-		}
+		authData.addAuthenticationHeaders(getRequest);
 		getRequest.addHeader("Accept", "application/json");
 		return client.execute(getRequest);
 	}
@@ -172,7 +167,7 @@ public class AuthserverClient implements AuthClient {
 		return ret;
 	}
 
-	public AuthData getAuthData() {
+	public IAuthCallback getAuthData() {
 		return authData;
 	}
 

@@ -13,7 +13,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import eu.unicore.uftp.authserver.authenticate.UsernamePassword;
+import eu.unicore.services.rest.client.UsernamePassword;
 import eu.unicore.uftp.client.FileInfo;
 import eu.unicore.uftp.dpc.Utils;
 import eu.unicore.uftp.standalone.lists.FileCrawler.RecursivePolicy;

@@ -2,6 +2,10 @@ Change log for the UFTP standalone client
 The issue tracker is at
 https://sourceforge.net/p/unicore/uftp-issues/
 
+UFTP Client 1.4.5 (released mmm dd, 2022)
+-----------------------------------------
+ - documentation at https://uftp-docs.readthedocs.io
+
 UFTP Client 1.4.4 (released Feb 03, 2022)
 ----------------------------------------
  - fix: when running on Windows, remote paths

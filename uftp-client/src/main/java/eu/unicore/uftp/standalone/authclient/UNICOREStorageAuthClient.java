@@ -2,7 +2,6 @@ package eu.unicore.uftp.standalone.authclient;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.Map;
 import java.util.Random;
 
 import org.apache.commons.io.IOUtils;
@@ -20,7 +19,7 @@ import org.apache.logging.log4j.Logger;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import eu.unicore.uftp.authserver.authenticate.AuthData;
+import eu.unicore.services.rest.client.IAuthCallback;
 import eu.unicore.uftp.authserver.messages.AuthResponse;
 import eu.unicore.uftp.dpc.Utils;
 import eu.unicore.uftp.standalone.ClientFacade;
@@ -35,30 +34,28 @@ public class UNICOREStorageAuthClient implements AuthClient {
 
 	private final String uri;
 
-	private final AuthData authData;
+	private final IAuthCallback authData;
 
 	private final ClientFacade client;
 
 	private static final Logger LOG = Log.getLogger(Log.CLIENT, UNICOREStorageAuthClient.class);
 
-	public UNICOREStorageAuthClient(String authUrl, AuthData authData, ClientFacade client) {
-		uri = authUrl;
+	public UNICOREStorageAuthClient(String authUrl, IAuthCallback authData, ClientFacade client) {
+		this.uri = authUrl;
 		this.authData = authData;
 		this.client = client;
 	}
 
 	@Override
-	public AuthResponse connect(String path, boolean send, boolean append) throws IOException {
+	public AuthResponse connect(String path, boolean send, boolean append) throws Exception {
 		return do_connect(path, send, append, false);
 	}
 
-	private AuthResponse do_connect(String path, boolean send, boolean append, boolean persistent) throws IOException {
+	private AuthResponse do_connect(String path, boolean send, boolean append, boolean persistent) throws Exception {
 		HttpClient httpClient = HttpClientFactory.getClient(uri);
 
 		HttpPost postRequest = new HttpPost(uri);
-		for(Map.Entry<String,String> e: authData.getHttpHeaders().entrySet()){
-			postRequest.addHeader(e.getKey(), e.getValue());
-		}
+		authData.addAuthenticationHeaders(postRequest);
 		postRequest.addHeader("Accept", "application/json");
 		String base64Key = client.getEncryptionKey()!=null? Utils.encodeBase64(client.getEncryptionKey()) : null;
 		JSONObject request = createRequestObject(path, base64Key, client.isCompress(), client.getClientIP(), persistent);
@@ -78,7 +75,7 @@ public class UNICOREStorageAuthClient implements AuthClient {
 	}
 	
 	@Override
-	public AuthResponse createSession(String baseDir, boolean persistent) throws IOException {
+	public AuthResponse createSession(String baseDir, boolean persistent) throws Exception {
 		if(baseDir!=null && !baseDir.endsWith("/")) {
 			baseDir = baseDir+"/";
 		}
@@ -87,13 +84,12 @@ public class UNICOREStorageAuthClient implements AuthClient {
 		return do_connect(baseDir+sessionModeTag, true, true, persistent);
 	}
 
-	public HttpResponse getInfo() throws IOException {
+	@Override
+	public HttpResponse getInfo() throws Exception {
 		String infoURL = makeInfoURL(uri);
 		HttpClient client = HttpClientFactory.getClient(infoURL);
 		HttpGet getRequest = new HttpGet(infoURL);
-		for(Map.Entry<String,String> e: authData.getHttpHeaders().entrySet()){
-			getRequest.addHeader(e.getKey(), e.getValue());
-		}
+		authData.addAuthenticationHeaders(getRequest);
 		getRequest.addHeader("Accept", "application/json");
 		return client.execute(getRequest);
 	}
@@ -166,7 +162,7 @@ public class UNICOREStorageAuthClient implements AuthClient {
 		}
 	}
 
-	public AuthData getAuthData() {
+	public IAuthCallback getAuthData() {
 		return authData;
 	}
 

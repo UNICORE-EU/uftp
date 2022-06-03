@@ -7,12 +7,10 @@ import java.security.GeneralSecurityException;
 import org.apache.commons.codec.binary.Base64;
 
 import eu.emi.security.authn.x509.helpers.PasswordSupplier;
-import eu.unicore.uftp.authserver.authenticate.sshkey.SSHKey;
+import eu.unicore.uftp.authserver.authenticate.sshkey.SSHKeyUC;
 import eu.unicore.uftp.authserver.authenticate.sshkey.SSHUtils;
 import eu.unicore.uftp.dpc.Utils;
 import eu.unicore.uftp.standalone.util.ConsoleUtils;
-import net.schmizz.sshj.userauth.password.PasswordFinder;
-import net.schmizz.sshj.userauth.password.Resource;
 
 /**
  * create SSHKey auth info using SSH agent, if possible. 
@@ -49,8 +47,8 @@ public class SshKeyHandler implements PasswordSupplier {
 		return ConsoleUtils.readPassword("Enter passphrase for '"+privateKey.getAbsolutePath()+"': ").toCharArray();
 	}
 	
-	public SSHKey getAuthData() throws Exception {
-		SSHKey result = null;
+	public SSHKeyUC getAuthData() throws Exception {
+		SSHKeyUC result = null;
 		if(SSHAgent.isAgentAvailable()){
 			try{
 				result = useAgent();
@@ -67,26 +65,22 @@ public class SshKeyHandler implements PasswordSupplier {
 		this.selectIdentity = true;
 	}
 	
-	protected SSHKey create() throws GeneralSecurityException, IOException {
+	protected SSHKeyUC create() throws GeneralSecurityException, IOException {
 		if(privateKey == null || !privateKey.exists()){
 	                 throw new IOException("No private key found!");
 		}
-		final PasswordFinder pf = new PasswordFinder() {
+		final PasswordSupplier pf = new PasswordSupplier() {
 			@Override
-			public boolean shouldRetry(Resource<?> resource) {
-				return false;
-			}
-			@Override
-			public char[] reqPassword(Resource<?> resource) {
+			public char[] getPassword() {
 				return getPassword();
 			}
 		};
-		SSHKey sshauth = SSHUtils.createAuthData(privateKey, pf , token);
+		SSHKeyUC sshauth = SSHUtils.createAuthData(privateKey, pf , token);
 		sshauth.username = userName;
 		return sshauth;
 	}
 
-	protected SSHKey useAgent() throws Exception {
+	protected SSHKeyUC useAgent() throws Exception {
 		SSHAgent agent = new SSHAgent();
 		agent.setVerbose(verbose);
 		if(selectIdentity) {
@@ -98,7 +92,7 @@ public class SshKeyHandler implements PasswordSupplier {
 		}
 		
 		byte[] signature = agent.sign(token);
-		SSHKey authData = new SSHKey();
+		SSHKeyUC authData = new SSHKeyUC();
 		authData.signature = new String(Base64.encodeBase64(signature));
 		authData.token = new String(Base64.encodeBase64(token.getBytes()));
 		authData.username= userName;

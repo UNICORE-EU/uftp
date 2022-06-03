@@ -9,7 +9,7 @@ import java.util.Map;
 
 import org.junit.Test;
 
-import eu.unicore.uftp.authserver.authenticate.UsernamePassword;
+import eu.unicore.services.rest.client.UsernamePassword;
 
 /**
  *

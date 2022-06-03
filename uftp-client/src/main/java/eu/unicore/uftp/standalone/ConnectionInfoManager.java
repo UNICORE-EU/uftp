@@ -5,7 +5,7 @@ import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 
-import eu.unicore.uftp.authserver.authenticate.AuthData;
+import eu.unicore.services.rest.client.IAuthCallback;
 import eu.unicore.uftp.standalone.authclient.AuthClient;
 import eu.unicore.uftp.standalone.authclient.AuthserverClient;
 import eu.unicore.uftp.standalone.authclient.UNICOREStorageAuthClient;
@@ -22,9 +22,9 @@ public class ConnectionInfoManager {
     
     private Map<String, String> extracted;
 
-    private final AuthData authData;
+    private final IAuthCallback authData;
 
-    public ConnectionInfoManager(AuthData authData) {
+    public ConnectionInfoManager(IAuthCallback authData) {
     	this.authData = authData;
     }
 
@@ -128,7 +128,7 @@ public class ConnectionInfoManager {
     
     public AuthClient getAuthClient(ClientFacade client) throws Exception {
         String url = getAuthURL();
-        AuthData auth = getAuthData();
+        IAuthCallback auth = getAuthData();
         if(url.contains("/rest/core/storages/") && !url.contains("/rest/auth")){
         	if(!url.endsWith("/exports"))url+="/exports";
         	return new UNICOREStorageAuthClient(url, auth, client);
@@ -138,7 +138,7 @@ public class ConnectionInfoManager {
         }
     }
 
-    public AuthData getAuthData() throws Exception {
+    public IAuthCallback getAuthData() throws Exception {
     	return authData;
     }
     

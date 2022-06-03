@@ -9,10 +9,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import eu.unicore.security.Client;
+import eu.unicore.services.rest.client.BaseClient;
 import eu.unicore.uftp.datashare.AccessType;
 import eu.unicore.uftp.dpc.Utils;
 import eu.unicore.uftp.standalone.ClientFacade;
-import eu.unicore.uftp.standalone.util.BaseClient;
+import eu.unicore.util.httpclient.DefaultClientConfiguration;
 
 /**
  * create, update, delete shares
@@ -88,7 +89,7 @@ public class Share extends Command {
 	
 	public void listShares(ClientFacade client) throws Exception {
 		BaseClient bc = getClient(url, client);
-		JSONObject shares = bc.getJSON(url);
+		JSONObject shares = bc.getJSON();
 		System.out.println(shares.toString(2));
 	}
 	
@@ -120,12 +121,13 @@ public class Share extends Command {
 			
 		JSONObject req = createRequest(accessType, target, path);
 		BaseClient bc = getClient(url, client);
-		HttpResponse res = bc.post(req, url);
+		HttpResponse res = bc.post(req);
 		bc.checkError(res);
 		if(!delete) {
 			String location = res.getFirstHeader("Location").getValue();
 			if(location!=null){
-				showNewShareInfo(bc.getJSON(location));
+				bc.setURL(location);
+				showNewShareInfo(bc.getJSON());
 			}
 		}
 	}
@@ -149,7 +151,7 @@ public class Share extends Command {
 	}
 	
 	protected BaseClient getClient(String url, ClientFacade client) throws Exception {	
-		return new BaseClient(url, client.getConnectionManager().getAuthData());
+		return new BaseClient(url, new DefaultClientConfiguration(), client.getConnectionManager().getAuthData());
 	}
 	
 	protected JSONObject createRequest(String access, String target, String path) throws JSONException {

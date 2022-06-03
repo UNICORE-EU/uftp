@@ -7,8 +7,6 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.util.Arrays;
 import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -17,10 +15,10 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.http.HttpMessage;
 
-import eu.unicore.uftp.authserver.authenticate.AuthData;
-import eu.unicore.uftp.authserver.authenticate.UsernamePassword;
-import eu.unicore.uftp.authserver.authenticate.sshkey.SSHKey;
+import eu.unicore.services.rest.client.IAuthCallback;
+import eu.unicore.services.rest.client.UsernamePassword;
 import eu.unicore.uftp.dpc.Utils;
 import eu.unicore.uftp.standalone.ClientDispatcher;
 import eu.unicore.uftp.standalone.ClientFacade;
@@ -245,13 +243,13 @@ public abstract class Command implements ICommand {
 	}
 
 
-	protected AuthData getAuthData() throws Exception {
+	protected IAuthCallback getAuthData() throws Exception {
 		if(enableSSH){
 			return getSSHAuthData();
 		}
 		
 		if(authheader!=null){
-			return new AuthData() {
+			return new IAuthCallback() {
 
 				@Override
 				public String getType() {
@@ -259,10 +257,8 @@ public abstract class Command implements ICommand {
 				}
 
 				@Override
-				public Map<String, String> getHttpHeaders() {
-					Map<String,String> m = new HashMap<>();
-					m.put("Authorization", authheader);
-					return m;
+				public void addAuthenticationHeaders(HttpMessage httpMessage) {
+					httpMessage.setHeader("Authorization", authheader);
 				}
 			};
 		}
@@ -275,16 +271,16 @@ public abstract class Command implements ICommand {
 
 	}
 
-	protected AuthData getUPAuthData(){
+	protected IAuthCallback getUPAuthData(){
 		return new UsernamePassword(username, password);
 	}
 
-	protected SSHKey getSSHAuthData() throws Exception {
+	protected IAuthCallback getSSHAuthData() throws Exception {
 		String token = String.valueOf(System.currentTimeMillis());
 		return getSSHAuthData(token);
 	}
 
-	protected SSHKey getSSHAuthData(String token) throws Exception {
+	protected IAuthCallback getSSHAuthData(String token) throws Exception {
 		File keyFile = null;
 		boolean haveAgent = SSHAgent.isAgentAvailable();
 		int numKeys = 0;

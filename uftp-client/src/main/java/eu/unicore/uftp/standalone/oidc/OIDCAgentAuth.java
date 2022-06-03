@@ -1,14 +1,13 @@
 package eu.unicore.uftp.standalone.oidc;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
+import org.apache.http.HttpMessage;
 import org.json.JSONObject;
 
-import eu.unicore.uftp.authserver.authenticate.AuthData;
+import eu.unicore.services.rest.client.IAuthCallback;
 
-public class OIDCAgentAuth implements AuthData {
+public class OIDCAgentAuth implements IAuthCallback {
 	
 	private String account;
 
@@ -19,10 +18,9 @@ public class OIDCAgentAuth implements AuthData {
 	public OIDCAgentAuth(String account) {
 		this.account = account;
 	}
-	
-	
+
 	@Override
-	public Map<String,String>getHttpHeaders() {
+	public void addAuthenticationHeaders(HttpMessage httpMessage) {
 		if(token==null) {
 			try{
 				retrieveToken();
@@ -30,9 +28,7 @@ public class OIDCAgentAuth implements AuthData {
 				throw new RuntimeException(ex);
 			}
 		}
-		Map<String,String> res = new HashMap<String, String>();
-		res.put("Authorization","Bearer "+token);
-		return res;
+		httpMessage.setHeader("Authorization","Bearer "+token);
 	}
 	
 	protected void retrieveToken() throws Exception {

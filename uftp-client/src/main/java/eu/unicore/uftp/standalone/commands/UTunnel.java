@@ -8,10 +8,11 @@ import org.apache.http.HttpResponse;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import eu.unicore.services.rest.client.BaseClient;
 import eu.unicore.uftp.client.TunnelClient;
 import eu.unicore.uftp.dpc.Utils;
 import eu.unicore.uftp.standalone.ClientFacade;
-import eu.unicore.uftp.standalone.util.BaseClient;
+import eu.unicore.util.httpclient.DefaultClientConfiguration;
 
 /**
  * tunneling client: establish a tunnel via UFTPD and start local listening socket
@@ -56,7 +57,7 @@ public class UTunnel extends Command {
 		BaseClient bc = getClient(url, client);
 		JSONObject request = createRequest(host, remotePort);
 		System.out.println("Sending tunneling request:" + request);
-		HttpResponse httpResponse = bc.post(request,url);
+		HttpResponse httpResponse = bc.post(request);
 		bc.checkError(httpResponse);
 		JSONObject response = bc.asJSON(httpResponse);
 		InetAddress localSrv = InetAddress.getByName("localhost");// TODO
@@ -86,7 +87,7 @@ public class UTunnel extends Command {
 	}
 	
 	protected BaseClient getClient(String url, ClientFacade client) throws Exception {	
-		return new BaseClient(url, client.getConnectionManager().getAuthData());
+		return new BaseClient(url, new DefaultClientConfiguration(), client.getConnectionManager().getAuthData());
 	}
 	
 	protected JSONObject createRequest(String target, int port) throws JSONException {
