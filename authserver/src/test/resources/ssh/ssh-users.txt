@@ -1,3 +1,1 @@
-demouser:fake key 1 data:CN=Demo User, O=UNICORE, C=EU
-demouser:fake key 2 data:CN=Demo User, O=UNICORE, C=EU
-otheruser:otheruser's key data:CN=Other User, O=UNICORE, C=EU
+demouser:ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINd06p4Qxway9+MeVG+rwW3kkvEp8vfp5UWIhlRjbxYe some-comment:CN=Demo User, O=UNICORE, C=EU

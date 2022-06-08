@@ -1,16 +1,20 @@
 package eu.unicore.uftp.authserver;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.Logger;
 
 import eu.unicore.services.ExternalSystemConnector;
 import eu.unicore.services.Kernel;
+import eu.unicore.services.rest.security.UserPublicKeyCache.UserInfoSource;
 import eu.unicore.services.utils.Utilities;
+import eu.unicore.uftp.server.requests.UFTPGetUserInfoRequest;
 import eu.unicore.util.Log;
 import eu.unicore.util.configuration.ConfigurationException;
 import eu.unicore.util.configuration.PropertyGroupHelper;
@@ -22,7 +26,7 @@ import eu.unicore.util.configuration.PropertyGroupHelper;
  *
  * @author schuller
  */
-public class LogicalUFTPServer implements ExternalSystemConnector {
+public class LogicalUFTPServer implements ExternalSystemConnector, UserInfoSource {
 
 	public static final Logger log = Log.getLogger(Log.SERVICES, LogicalUFTPServer.class);
     
@@ -164,5 +168,26 @@ public class LogicalUFTPServer implements ExternalSystemConnector {
 			c++;
 		}
 		throw new IOException("None of the configured UFTPD servers is available!");
+	}
+	
+	@Override
+	public List<String> getAcceptedKeys(String requestedUserName){
+		List<String>acceptedKeys = new ArrayList<>();
+		try {
+			UFTPDInstance uftpd = getUFTPDInstance();
+			UFTPGetUserInfoRequest req = new UFTPGetUserInfoRequest(requestedUserName);
+			String response = uftpd.sendRequest(req);
+			for(String line: IOUtils.readLines(new StringReader(response))){
+				if(line.startsWith("Accepted key")){
+					try{
+						acceptedKeys.add(line.split(":",2)[1]);
+					}catch(Exception ex) {}
+				}
+			}
+		}catch(Exception ex) {
+			log.debug("Error getting public keys for {} from UFTPD {}: {}", 
+					requestedUserName, serverName, Log.createFaultMessage("", ex));
+		}
+		return acceptedKeys;
 	}
 }

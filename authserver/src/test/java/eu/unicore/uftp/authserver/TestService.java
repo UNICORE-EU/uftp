@@ -1,20 +1,15 @@
 package eu.unicore.uftp.authserver;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
 import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
 import org.json.JSONObject;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -26,14 +21,16 @@ import com.google.gson.GsonBuilder;
 import eu.unicore.services.Kernel;
 import eu.unicore.services.admin.AdminAction;
 import eu.unicore.services.admin.AdminActionResult;
+import eu.unicore.services.rest.client.BaseClient;
 import eu.unicore.services.rest.client.IAuthCallback;
 import eu.unicore.services.rest.client.UsernamePassword;
+import eu.unicore.services.rest.security.sshkey.Password;
+import eu.unicore.services.rest.security.sshkey.SSHKey;
 import eu.unicore.services.server.JettyServer;
 import eu.unicore.uftp.authserver.admin.ShowUserInfo;
 import eu.unicore.uftp.authserver.messages.AuthRequest;
 import eu.unicore.uftp.authserver.messages.CreateTunnelRequest;
 import eu.unicore.uftp.server.UFTPServer;
-import eu.unicore.util.httpclient.HttpUtils;
 
 public class TestService {
 
@@ -41,65 +38,38 @@ public class TestService {
 	public void testAuthService() throws Exception {
 		// do a get to find the configured servers
 		JettyServer server=k.getServer();
-		String url = server.getUrls()[0].toExternalForm()+"/rest";
-		HttpClient client = HttpUtils.createClient(url, k.getClientConfiguration());
-		String resource  = url+"/auth";
-		HttpGet get=new HttpGet(resource);
-		String userName = "demouser";
-		String password = "test123";
-		IAuthCallback auth = new UsernamePassword(userName, password);
-		auth.addAuthenticationHeaders(get);
-		HttpResponse response=client.execute(get);
-		int status=response.getStatusLine().getStatusCode();
-		assertEquals("got "+response.getStatusLine(),200, status);
-		String reply=IOUtils.toString(response.getEntity().getContent(), "UTF-8");
-		System.out.println("Service reply: "+reply);
-		JSONObject o = new JSONObject(reply);
-		JSONObject s = o.getJSONObject("TEST");
-		assertNotNull(s.getString("href"));
-		String authUrl = s.getString("href");
+		String url = server.getUrls()[0].toExternalForm()+"/rest/auth";
+		IAuthCallback auth = new UsernamePassword("demouser", "test123");
+		BaseClient client = new BaseClient(url, k.getClientConfiguration(), auth);
+		JSONObject o = client.getJSON();
+		System.out.println("Service reply: "+o.toString(2));
 
+		JSONObject serverInfo = o.getJSONObject("TEST");
+		String authUrl = serverInfo.getString("href");
+		client.setURL(authUrl);
 		// now do an actual authn post
-		HttpPost post=new HttpPost(authUrl);
-		auth.addAuthenticationHeaders(post);
 		Gson gson = new GsonBuilder().create();
 		AuthRequest req = new AuthRequest();
 		req.serverPath="/tmp/foo";
-		post.setEntity(new StringEntity(gson.toJson(req), ContentType.APPLICATION_JSON));
-		response=client.execute(post);
-		status=response.getStatusLine().getStatusCode();
+		HttpResponse response = client.post(new JSONObject(gson.toJson(req)));
+		int status = response.getStatusLine().getStatusCode();
 		assertEquals("got "+response.getStatusLine(),200, status);
-		reply=IOUtils.toString(response.getEntity().getContent(), "UTF-8");
+		String reply = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
 		System.out.println("Service reply: "+reply);
-	
-		url = server.getUrls()[0].toExternalForm()+"/rest";
-		resource  = url+"/auth";
-		get=new HttpGet(resource);
-		auth.addAuthenticationHeaders(get);
-		response=client.execute(get);
-		status=response.getStatusLine().getStatusCode();
-		assertEquals("got "+response.getStatusLine(),200, status);
-		reply=IOUtils.toString(response.getEntity().getContent(), "UTF-8");
-		System.out.println("Service reply: "+reply);
-		o = new JSONObject(reply);
-		s = o.getJSONObject("TEST");
-		assertNotNull(s.getString("href"));
-		authUrl = s.getString("href")+"/tunnel";
 
-		post=new HttpPost(authUrl);
-		auth.addAuthenticationHeaders(post);
+		authUrl = serverInfo.getString("href")+"/tunnel";
+		client.setURL(authUrl);
 		CreateTunnelRequest req2 = new CreateTunnelRequest();
 		req2.targetHost = "localhost";
 		req2.targetPort = 9001;
-		post.setEntity(new StringEntity(gson.toJson(req2), ContentType.APPLICATION_JSON));
-		response=client.execute(post);
+		response = client.post(new JSONObject(gson.toJson(req)));
 		status=response.getStatusLine().getStatusCode();
 		assertEquals("got "+response.getStatusLine(),200, status);
 		reply=IOUtils.toString(response.getEntity().getContent(), "UTF-8");
 		System.out.println("Service reply: "+reply);
 	}
-	
-	
+
+
 	@Test
 	public void testAdminShowUserInfo() {
 		AdminAction a = new ShowUserInfo();
@@ -111,11 +81,32 @@ public class TestService {
 		System.out.println(res.getResults());
 	}
 
+	@Test
+	public void testSSHKeyAuthentication() throws Exception {
+		// static public key from file
+		IAuthCallback auth = new SSHKey("demouser", new File("src/test/resources/ssh/id_ed25519"),
+				new Password("test123".toCharArray()));
+		JettyServer server=k.getServer();
+		String url = server.getUrls()[0].toExternalForm()+"/rest/auth";
+		BaseClient client = new BaseClient(url, k.getClientConfiguration(), auth);
+		JSONObject o = client.getJSON();
+		assertEquals("CN=Demo User, O=UNICORE, C=EU", o.getJSONObject("client").getString("dn"));
+		assertEquals("user", o.getJSONObject("client").getJSONObject("role").getString("selected"));
+
+		// public key loaded via UserInfoSource class in defined in container.properties
+		auth = new SSHKey("demouser-dyn", new File("src/test/resources/ssh/id_ed25519"),
+				new Password("test123".toCharArray()));
+		client = new BaseClient(url, k.getClientConfiguration(), auth);
+		o = client.getJSON();
+		assertEquals("CN=demouser-dyn, OU=ssh-local-users", o.getJSONObject("client").getString("dn"));
+		assertEquals("user", o.getJSONObject("client").getJSONObject("role").getString("selected"));
+	}
+
 	protected static UFTPServer server;
 	static int cmdPort = 63321;
 	static int listenPort = 63320;
 	protected static Kernel k;
-	
+
 	@BeforeClass
 	public static void startUFTPD() throws Exception {
 		InetAddress host = InetAddress.getByName("localhost");
