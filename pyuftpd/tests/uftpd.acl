@@ -15,3 +15,9 @@ CN=UNICOREX,O=UNICORE,C=EU
 
 CN=AUTH,O=UNICORE,C=EU
 
+cn=Another server,C=de
+
+CN=some.host,OU=Unit1,OU=Unit2
+
+# buggy line
+NOSUCHRDN=some.host,O=Nope Inc.

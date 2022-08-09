@@ -51,7 +51,7 @@ def update_acl(configuration, LOG):
     else:
         LOG.info("ACL file '%s'" % acl_file)
     configuration["_last_acl_file_check"] = now
-    with open(configuration.get('ACL'), "r") as f:
+    with open(acl_file, "r") as f:
         lines = f.readlines()
         acl = []
         configuration['uftpd.acl'] = acl
@@ -64,7 +64,7 @@ def update_acl(configuration, LOG):
                 LOG.info("Allowing access for <%s>" % line)
                 acl.append(dn)
             except Exception as e:
-                LOG.error("ACL entry could not be parsed: %s %s" % (line, e))
+                LOG.error("ACL entry '%s' could not be parsed: %s" % (line, e))
 
 def setup_cmd_server_socket(configuration, LOG: Log):
     """

@@ -46,11 +46,10 @@ rdn_map = {"C": "countryName",
 
 def convert_rdn(rdn):
     split = rdn.split("=")
-    translated = rdn_map.get(split[0])
+    translated = rdn_map.get(split[0].upper())
     if translated is None:
-        return None
-    val = split[1]
-    return translated, val
+        raise Exception("Unknown element in DN: '%s'" % split[0])
+    return translated, split[1]
 
 
 def convert_dn(dn):
@@ -60,17 +59,14 @@ def convert_dn(dn):
     elements = [x.strip() for x in re.split(r"[,]", dn)]
     for element in elements:
         if element != '':
-            rdn = convert_rdn(element)
-            if rdn is None:
-                pass
-            converted.append(rdn)
+            converted.append(convert_rdn(element))
     return converted
 
 
 def match_rdn(rdn, subject):
     for x in subject:
         for y in x:
-            if str(y[0]) == str(rdn[0]) and str(y[1]) == str(rdn[1]):
+            if str(y[0]).lower() == str(rdn[0]).lower() and str(y[1]).lower() == str(rdn[1]).lower():
                 return True
     return False
 
@@ -90,6 +86,16 @@ def match(subject, acl):
             return True
     return False
 
+def get_common_name(subject):
+    """ returns the CN / commonName part of the subject """
+    try:
+        for x in subject:
+            for y in x:
+                if str(y[0]) == "commonName":
+                    return "CN="+str(y[1])
+    except:
+        pass
+    return "n/a"
 
 def verify_peer(config, socket, LOG):
     """ check that the peer is OK by comparing the DN to our ACL """
@@ -97,4 +103,4 @@ def verify_peer(config, socket, LOG):
     subject = socket.getpeercert()['subject']
     LOG.debug("Verify Auth server certificate with subject %s" % str(subject))
     if not match(subject, acl):
-        raise EnvironmentError("Connection not allowed by ACL")
+        raise EnvironmentError("Connection (from: %s) not allowed by ACL" % get_common_name(subject))
