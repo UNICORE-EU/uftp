@@ -1,0 +1,11 @@
+[Unit]
+Description=UNICORE UFTPD
+
+[Service]
+Type=forking
+ExecStart=/usr/sbin/unicore-uftpd-start.sh
+ExecStop=/usr/sbin//unicore-uftpd-stop.sh
+PIDFile=/var/run/unicore/uftpd.pid
+
+[Install]
+WantedBy=multi-user.target

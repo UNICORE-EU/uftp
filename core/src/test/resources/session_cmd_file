@@ -1,0 +1,3 @@
+GET "src/test/resources/session_cmd_file" "target/foo_1"
+PUT "src/test/resources/session_cmd_file" "target/foo_2"
+PWD

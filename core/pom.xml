@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>eu.unicore.uftp</groupId>
+  <artifactId>uftp-core</artifactId>
+  <version>2.13.0</version>
+  <packaging>jar</packaging>
+  <name>UNICORE UFTP core library and Java UFTPD server</name>
+
+  <parent>
+    <groupId>eu.unicore.uftp</groupId>
+    <artifactId>uftp-parent</artifactId>
+    <version>2.13.0</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
+
+  <properties>
+    <package.version>${project.version}</package.version>
+    <package.release>1</package.release>
+    <docman.enabled/>
+    <doc.src>src/main/doc/uftp-manual.txt</doc.src>
+    <doc.target>uftp-manual</doc.target>
+    <doc.template>plain</doc.template>
+    <doc.includeBundle>file:src/main/doc/security.properties</doc.includeBundle>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>commons-cli</groupId>
+      <artifactId>commons-cli</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>commons-codec</groupId>
+      <artifactId>commons-codec</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>eu.unicore.security</groupId>
+      <artifactId>securityLibrary</artifactId>
+      <exclusions>
+	<exclusion>
+	  <groupId>com.fasterxml.woodstox</groupId>
+	  <artifactId>woodstox-core</artifactId>
+	</exclusion>
+	<exclusion>
+	  <groupId>org.apache.xmlbeans</groupId>
+	  <artifactId>xmlbeans-jdk8</artifactId>
+	</exclusion>
+	<exclusion>
+	  <groupId>io.imunity.samly</groupId>
+	  <artifactId>samly2</artifactId>
+	</exclusion>
+	<exclusion>
+	  <groupId>org.apache.logging.log4j</groupId>
+	  <artifactId>log4j-jcl</artifactId>
+	</exclusion>
+	<exclusion>
+	  <groupId>org.apache.logging.log4j</groupId>
+	  <artifactId>log4j-jul</artifactId>
+	</exclusion>
+	<exclusion>
+	  <groupId>org.slf4j</groupId>
+	  <artifactId>slf4j-api</artifactId>
+	</exclusion>
+	<exclusion>
+	  <groupId>org.apache.logging.log4j</groupId>
+	  <artifactId>log4j-slf4j-impl</artifactId>
+	</exclusion>
+	<exclusion>
+	  <groupId>org.apache.santuario</groupId>
+	  <artifactId>xmlsec</artifactId>
+	</exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-compress</artifactId>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <excludes>
+            <exclude>**/functional/**</exclude>
+            <exclude>**/*$*</exclude>
+            <exclude>**/Mock*</exclude>
+          </excludes>
+          <forkMode>pertest</forkMode>
+          <useSystemClassloader>true</useSystemClassloader>
+        </configuration>
+      </plugin>
+     </plugins>
+  </build>
+
+</project>

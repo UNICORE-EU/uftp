@@ -1,0 +1,88 @@
+Buildroot: %{_builddir}/%{name}-root
+Name: unicore-@component-name@
+Version: @component-version@
+Release: @component-release@@component-disttag@
+Summary: UNICORE UFTP Server
+License: BSD
+Distribution: RedHat
+Group: System Environment/Daemons
+URL: http://www.unicore.eu
+Requires: java-1.@java-main-version@.0-openjdk
+AutoReqProv: no
+BuildArch: x86_64
+Packager: Bernd Schuller unicore-support@lists.sourceforge.net
+@preamble@
+
+%description
+UNICORE (Uniform Interface to Computing Resources) offers a
+ready-to-run Grid system including client and server software.
+UNICORE makes distributed computing and data resources available
+in a seamless and secure way in intranets and the internet.
+
+This package contains the UFTPD server, which offers
+high-performance file upload and download with dynamic firewall 
+port opening.
+
+
+%changelog
+* Wed Dec 11 2013 Bernd Schuller <unicore-support@lists.sourceforge.net> 
+-Updated for v2.0.0
+
+* Wed Dec 14 2011 Bernd Schuller <unicore-support@lists.sourceforge.net> 
+-Updated for v1.2.0
+
+* Fri Oct 07 2011 Bernd Schuller <unicore-support@lists.sourceforge.net> 
+-Updated for v1.1.0
+
+* Mon Jun 06 2011 Bernd Schuller <unicore-support@lists.sourceforge.net> 
+-Initial rpm package
+
+@install_command@
+
+%files
+%defattr(755, root, root, -)
+
+#
+# Config files
+#
+%dir %attr(0750 unicore unicore) "/etc/unicore/uftpd/"
+%config %attr(0600 root root) "/etc/unicore/uftpd/uftpd.conf"
+%config %attr(0600 root root) "/etc/unicore/uftpd/uftpd-ssl.conf"
+%config %attr(0600 root root) "/etc/unicore/uftpd/uftpd.acl"
+#%config %attr(0600 root root) "/etc/unicore/uftpd/uftpd.jks"
+%config %attr(0660 root root) "/etc/unicore/uftpd/logging.properties"
+%config %attr(0644 root root) "/usr/lib/systemd/system/unicore-uftpd.service"
+
+%attr(0755 root root) "/usr/sbin/unicore-uftpd-start.sh"
+%attr(0755 root root) "/usr/sbin/unicore-uftpd-stop.sh"
+%attr(0755 root root) "/usr/sbin/unicore-uftpd-status.sh"
+
+%attr(0755 root root) "/usr/bin/uftp-job.sh"
+%attr(0755 root root) "/usr/bin/uftp.sh"
+
+%docdir "/usr/share/doc/unicore/uftpd/"
+"/usr/share/doc/unicore/uftpd/*"
+
+%dir "/usr/share/unicore/uftpd/lib"
+"/usr/share/unicore/uftpd/lib/*.jar"
+"/usr/share/unicore/uftpd/lib/libuftp-unix.so"
+
+%dir %attr(0775 unicore unicore) "/var/log/unicore/uftpd"
+%dir %attr(0775 unicore unicore) "/var/run/unicore"
+
+
+%pre
+/usr/sbin/groupadd -r unicore 2>/dev/null || :
+/usr/sbin/useradd -c "UNICORE" -g unicore \
+    -s /sbin/nologin -r -d /usr/share/unicore unicore 2>/dev/null || :
+    
+
+%post
+/usr/bin/systemctl enable unicore-uftpd.service
+
+%preun
+if [ "$1" = "0" ]; then
+    /usr/bin/systemctl stop unicore-uftpd.service  >/dev/null 2>&1
+    /usr/bin/systemctl disable unicore-uftpd.service
+fi
+
