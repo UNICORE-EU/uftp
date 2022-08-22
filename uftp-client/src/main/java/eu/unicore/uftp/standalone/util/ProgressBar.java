@@ -21,6 +21,8 @@ public class ProgressBar implements UFTPProgressListener2, Closeable {
 	private static final Logger logger = Log.getLogger(Log.CLIENT, ProgressBar.class);
 
 	private Terminal terminal=null;
+	private int width = 0;
+
 	private long size=-1;
 	private long have=0;
 	private long startedAt=0;
@@ -46,6 +48,7 @@ public class ProgressBar implements UFTPProgressListener2, Closeable {
 		startedAt=System.currentTimeMillis();
 		try{
 			terminal = TerminalBuilder.terminal();
+			width=terminal.getWidth();
 			setTransferSize(size);
 		}catch(Exception ex){
 			logger.error("Cannot setup progress bar!",ex);
@@ -69,6 +72,8 @@ public class ProgressBar implements UFTPProgressListener2, Closeable {
 		rate=1000*(double)have/(System.currentTimeMillis()-startedAt);
 	}
 
+	private int lastOutputLength=0;
+
 	protected void output(){
 		StringBuilder sb=new StringBuilder();
 		if(size>0){
@@ -81,19 +86,18 @@ public class ProgressBar implements UFTPProgressListener2, Closeable {
 			index++;
 			if(index==x.length)index=0;
 		}
-
-		//append rate
 		if(rate>0){
 			sb.append(String.format("%sB/s", rateParser.getHumanReadable(rate)));
 		}
-
 		//compute maximum with of identifier printout
-		int w=getTerminalWidth();
-		int max=w-sb.length()-5;
-		if(max>0){
-			sb.insert(0, String.format("%-"+max+"s ", identifier));
+		int max=width-sb.length()-5;
+		if(max<0)max=8;
+		sb.insert(0, String.format("%-"+max+"s ", identifier));
+		int fill = lastOutputLength - sb.length();
+		if(fill>0) {
+			for(int i=0; i<fill; i++)sb.append(" ");
 		}
-
+		lastOutputLength = sb.length();
 		try {
 			terminal.puts(Capability.carriage_return);
 			terminal.writer().write(sb.toString());
@@ -103,15 +107,6 @@ public class ProgressBar implements UFTPProgressListener2, Closeable {
 			logger.error("Could not output to jline console",e);
 			terminal = null;
 		}
-	}
-
-	private int width=0;
-
-	private int getTerminalWidth(){
-		if(width==0){
-			width=terminal.getWidth();
-		}
-		return width;
 	}
 
 	public boolean isCancelled() {
