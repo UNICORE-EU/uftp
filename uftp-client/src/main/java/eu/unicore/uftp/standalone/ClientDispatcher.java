@@ -17,7 +17,7 @@ import eu.unicore.uftp.standalone.commands.ICommand;
  */
 public final class ClientDispatcher {
 
-	private final Map<String, ICommand> cmds = new HashMap<String, ICommand>();
+	private final Map<String, ICommand> cmds = new HashMap<>();
 
 	public ClientDispatcher(){
 		findCommands();
@@ -40,7 +40,9 @@ public final class ClientDispatcher {
 	 * @param args - first arg is expected to be the command name
 	 * @throws Exception
 	 */
-	public static void main(String[] args) throws Exception {        
+	public static void main(String[] args) throws Exception {   
+		System.setProperty("java.util.logging.manager", 
+				"org.apache.logging.log4j.jul.LogManager");
 		int returnCode = new ClientDispatcher().dispatch(args);
 		System.exit(returnCode);
 	}

@@ -52,6 +52,10 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>eu.unicore.services</groupId>
+      <artifactId>use-restclient</artifactId>
+    </dependency>	  
+    <dependency>
       <groupId>org.json</groupId>
       <artifactId>json</artifactId>
       <version>20220320</version>

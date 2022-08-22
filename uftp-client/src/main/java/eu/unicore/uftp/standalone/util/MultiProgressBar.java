@@ -4,6 +4,8 @@ import java.io.Closeable;
 
 import org.apache.logging.log4j.Logger;
 import org.jline.terminal.Terminal;
+import org.jline.terminal.TerminalBuilder;
+import org.jline.utils.InfoCmp.Capability;
 
 import eu.unicore.uftp.client.UFTPProgressListener2;
 import eu.unicore.util.Log;
@@ -45,8 +47,7 @@ public class MultiProgressBar implements UFTPProgressListener2, Closeable {
 		this.sizeDisplay = new String[numThreads];
 
 		try{
-			terminal = TerminalFactory.get();
-			reader = new ConsoleReader();
+			terminal = TerminalBuilder.terminal();
 			width = terminal.getWidth();
 		}catch(Exception ex){
 			logger.error("Cannot setup progress bar!",ex);
@@ -106,6 +107,8 @@ public class MultiProgressBar implements UFTPProgressListener2, Closeable {
 		rate[i]=1000*(double)have[i]/(System.currentTimeMillis()-startedAt[i]);
 	}
 
+	private int lastOutputLength=0;
+
 	protected void output(){
 		StringBuilder sb=new StringBuilder();
 		double totalRate = 0;
@@ -120,16 +123,15 @@ public class MultiProgressBar implements UFTPProgressListener2, Closeable {
 			}
 		}
 		sb.append(String.format(" total %sB/s", rateParser.getHumanReadable(totalRate)));
-		int max = width-sb.length()-5;
-		if(max>0){
-			sb.append(String.format("%-"+max+"s", " "));
+		
+		if(sb.length()<lastOutputLength) {
+			for(int i=0; i<lastOutputLength-sb.length(); i++)sb.append(" ");
 		}
+		lastOutputLength = sb.length();
 		try {
-			reader.getCursorBuffer().clear();
-			reader.getCursorBuffer().write(sb.toString());
-			reader.setCursorPosition(width);
-			reader.redrawLine();
-			reader.flush();
+			terminal.puts(Capability.carriage_return);
+			terminal.writer().write(sb.toString());
+			terminal.flush();
 		}
 		catch (Exception e) {
 			logger.error("Could not output to jline console",e);
@@ -158,14 +160,11 @@ public class MultiProgressBar implements UFTPProgressListener2, Closeable {
 			StringBuilder sb = new StringBuilder();
 			sb.append(getStatus(i));
 			int max = width-sb.length()-5;
-			if(max>0){
-				sb.insert(0, String.format("%-"+max+"s", identifiers[i]));
-			}
-			reader.getCursorBuffer().clear();
-			reader.getCursorBuffer().write(sb.toString());
-			reader.setCursorPosition(width);
-			reader.redrawLine();
-			reader.flush();
+			if(max<0)max=8;
+			sb.insert(0, String.format("%-"+max+"s", identifiers[i]));
+			terminal.puts(Capability.carriage_return);
+			terminal.writer().write(sb.toString());
+			terminal.flush();
 		}catch(Exception ex){}
 		System.out.println();
 		identifiers[i] = null;
@@ -178,7 +177,9 @@ public class MultiProgressBar implements UFTPProgressListener2, Closeable {
 
 	public void close(){
 		System.out.println();
-		if(reader != null) reader.shutdown();
+		try{
+			if(terminal!=null)terminal.close();
+		}catch(Exception ex) {}
 	}
 
 }

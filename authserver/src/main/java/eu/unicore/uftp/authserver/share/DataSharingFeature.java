@@ -14,6 +14,11 @@ public class DataSharingFeature extends FeatureImpl {
 
 	public DataSharingFeature() {
 		this.name = "DataSharing";
+	}
+	
+	@Override
+	public void setKernel(Kernel kernel) {
+		super.setKernel(kernel);
 		services.add(new ShareSD(kernel));
 		services.add(new AccessSD(kernel));
 	}

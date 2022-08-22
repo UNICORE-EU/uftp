@@ -84,7 +84,12 @@
       <dependency>
 	<groupId>eu.unicore.services</groupId>
 	<artifactId>use-rest</artifactId>
-      <version>${use.version}</version>
+	<version>${use.version}</version>
+      </dependency>
+      <dependency>
+	<groupId>eu.unicore.services</groupId>
+	<artifactId>use-restclient</artifactId>
+	<version>${use.version}</version>
       </dependency>
       <dependency>
 	<groupId>eu.unicore.services</groupId>

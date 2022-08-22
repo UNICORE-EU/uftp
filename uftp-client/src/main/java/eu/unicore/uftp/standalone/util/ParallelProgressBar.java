@@ -4,12 +4,12 @@ import java.io.Closeable;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.logging.log4j.Logger;
+import org.jline.terminal.Terminal;
+import org.jline.terminal.TerminalBuilder;
+import org.jline.utils.InfoCmp.Capability;
 
 import eu.unicore.uftp.client.UFTPProgressListener2;
 import eu.unicore.util.Log;
-import jline.Terminal;
-import jline.TerminalFactory;
-import jline.console.ConsoleReader;
 
 /**
  * Track progress from multiple threads when transferring a single file
@@ -21,7 +21,6 @@ public class ParallelProgressBar implements UFTPProgressListener2, Closeable {
 	private static final Logger logger = Log.getLogger(Log.CLIENT, ParallelProgressBar.class);
 
 	private Terminal terminal=null;	
-	private ConsoleReader reader=null;
 	private int width;
 	private long size;
 	
@@ -38,7 +37,7 @@ public class ParallelProgressBar implements UFTPProgressListener2, Closeable {
 	private final long[] threadIds;
 	
 	private final AtomicInteger activeThreads;
-	
+
 	public ParallelProgressBar(String identifier,long size, int numThreads) {
 		this.threadCount = numThreads;
 		this.threadIds = new long[numThreads];
@@ -48,9 +47,8 @@ public class ParallelProgressBar implements UFTPProgressListener2, Closeable {
 		this.identifier=identifier;
 		startedAt=System.currentTimeMillis();
 		try{
-			terminal = TerminalFactory.create();
-			reader = new ConsoleReader();
-			width =	terminal.getWidth();
+			terminal = TerminalBuilder.terminal();
+			width = terminal.getWidth();
 			doSetTransferSize(size);
 		}catch(Exception ex){
 			logger.error("Cannot setup progress bar!",ex);
@@ -102,6 +100,8 @@ public class ParallelProgressBar implements UFTPProgressListener2, Closeable {
 		output(total);
 	}
 	
+	private int lastOutputLength=0;
+	
 	protected synchronized void output(long total){
 		StringBuilder sb=new StringBuilder();
 		long progress=total*100/size;
@@ -122,14 +122,17 @@ public class ParallelProgressBar implements UFTPProgressListener2, Closeable {
 		sb.append(String.format(" %sB/s", rateParser.getHumanReadable(totalRate)));
 		//compute maximum width of identifier printout
 		int max = width-sb.length()-5;
-		if(max>0){
-			sb.insert(0, String.format("%-"+max+"s ", identifier));
+		if (max<0)max=8;
+		sb.insert(0, String.format("%-"+max+"s ", identifier));
+		
+		if(sb.length()<lastOutputLength) {
+			for(int i=0; i<lastOutputLength-sb.length(); i++)sb.append(" ");
 		}
+		lastOutputLength = sb.length();
 		try {
-			reader.getCursorBuffer().clear();
-			reader.getCursorBuffer().write(sb.toString());
-			reader.redrawLine();
-			reader.flush();
+			terminal.puts(Capability.carriage_return);
+			terminal.writer().write(sb.toString());
+			terminal.flush();
 		}
 		catch (Exception e) {
 			logger.error("Could not output to jline console",e);
@@ -141,7 +144,7 @@ public class ParallelProgressBar implements UFTPProgressListener2, Closeable {
 		return false;
 	}
 
-	public void close(){
+	public void close() {
 		if(activeThreads.decrementAndGet()>0)return;
 		
 		if(size>0){
@@ -151,7 +154,9 @@ public class ParallelProgressBar implements UFTPProgressListener2, Closeable {
 			output(0);
 		}
 		System.out.println();
-		if(reader != null) reader.shutdown();
+		try{
+			if(terminal!=null)terminal.close();
+		}catch(Exception ex) {}
 	}
 
 }

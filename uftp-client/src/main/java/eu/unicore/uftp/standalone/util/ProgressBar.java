@@ -1,8 +1,8 @@
 package eu.unicore.uftp.standalone.util;
 
-import jline.Terminal;
-import jline.TerminalFactory;
-import jline.console.ConsoleReader;
+import org.jline.terminal.Terminal;
+import org.jline.terminal.TerminalBuilder;
+import org.jline.utils.InfoCmp.Capability;
 
 import java.io.Closeable;
 
@@ -20,8 +20,7 @@ public class ProgressBar implements UFTPProgressListener2, Closeable {
 
 	private static final Logger logger = Log.getLogger(Log.CLIENT, ProgressBar.class);
 
-	private Terminal terminal=null;	
-	private ConsoleReader reader=null;
+	private Terminal terminal=null;
 	private long size=-1;
 	private long have=0;
 	private long startedAt=0;
@@ -46,8 +45,7 @@ public class ProgressBar implements UFTPProgressListener2, Closeable {
 		this.identifier=identifier;
 		startedAt=System.currentTimeMillis();
 		try{
-			terminal = TerminalFactory.get();
-			reader = new ConsoleReader();
+			terminal = TerminalBuilder.terminal();
 			setTransferSize(size);
 		}catch(Exception ex){
 			logger.error("Cannot setup progress bar!",ex);
@@ -97,12 +95,9 @@ public class ProgressBar implements UFTPProgressListener2, Closeable {
 		}
 
 		try {
-			reader.getCursorBuffer().clear();
-			reader.getCursorBuffer().write(sb.toString());
-			reader.setCursorPosition(w);
-			reader.redrawLine();
-			reader.flush();
-
+			terminal.puts(Capability.carriage_return);
+			terminal.writer().write(sb.toString());
+			terminal.flush();
 		}
 		catch (Exception e) {
 			logger.error("Could not output to jline console",e);
@@ -132,7 +127,9 @@ public class ProgressBar implements UFTPProgressListener2, Closeable {
 		}
 		output();
 		System.out.println();
-		if(reader != null) reader.shutdown();
+		try{
+			if(terminal!=null)terminal.close();
+		}catch(Exception ex){}
 	}
 
 
