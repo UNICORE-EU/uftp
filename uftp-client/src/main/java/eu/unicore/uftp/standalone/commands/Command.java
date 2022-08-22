@@ -10,9 +10,9 @@ import java.util.Enumeration;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.GnuParser;
+import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.OptionBuilder;
+import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.http.HttpMessage;
@@ -59,87 +59,58 @@ public abstract class Command implements ICommand {
 
 	protected String clientIP;
 
-	@SuppressWarnings("static-access")
 	protected Options getOptions() {
 		Options options = new Options();
-
-		options.addOption(
-				OptionBuilder.withLongOpt("help")
-				.withDescription("Show help / usage information")
-				.isRequired(false)
-				.create("h")
-				);
-
-		options.addOption(
-				OptionBuilder.withLongOpt("user")
-				.withDescription("Use username[:password] for authentication")
-				.isRequired(false)
+		options.addOption(Option.builder("h").longOpt("help")
+				.desc("Show help / usage information")
+				.required(false)
+				.build());
+		options.addOption(Option.builder("u").longOpt("user")
+				.desc("Username for username[:password] or key-based authentication")
+				.required(false)
 				.hasArg()
-				.create("u")
-				);
-
-		options.addOption(
-				OptionBuilder.withLongOpt("group")
-				.withDescription("Requested group membership to be used")
-				.isRequired(false)
+				.build());
+		options.addOption(Option.builder("g").longOpt("group")
+				.desc("Requested group membership to be used")
+				.required(false)
 				.hasArg()
-				.create("g")
-				);
-
-		options.addOption(
-				OptionBuilder.withLongOpt("auth")
-				.withDescription("Authorization header value for authentication")
-				.isRequired(false)
+				.build());
+		options.addOption(Option.builder("A").longOpt("auth")
+				.desc("Authorization header value for authentication")
+				.required(false)
 				.hasArg()
-				.create("A")
-				);
-
-		options.addOption(
-				OptionBuilder.withLongOpt("oidc-agent")
-				.withDescription("Use oidc-agent with the specified account")
-				.isRequired(false)
+				.build());
+		options.addOption(Option.builder("O").longOpt("oidc-agent")
+				.desc("Use oidc-agent with the specified account")
+				.required(false)
 				.hasArg()
-				.create("O")
-				);
-
-		
-		options.addOption(
-				OptionBuilder.withLongOpt("password")
-				.withDescription("Interactively query for a missing password")
-				.isRequired(false)
-				.create("P")
-				);
-
-		options.addOption(
-				OptionBuilder.withLongOpt("identity")
-				.withDescription("Identity file (private key) to use with SSH auth")
-				.isRequired(false)
+				.build());
+		options.addOption(Option.builder("P").longOpt("password")
+				.desc("Interactively query for a missing password")
+				.required(false)
 				.hasArg()
-				.create("i")
-				);
-
-		options.addOption(
-				OptionBuilder.withLongOpt("client")
-				.withDescription("Client IP address: AUTO|ALL|address-list")
-				.withArgName("client")
+				.build());
+		options.addOption(Option.builder("i").longOpt("identity")
+				.desc("Identity file (private key) for key-based authentication")
+				.required(false)
 				.hasArg()
-				.isRequired(false)
-				.create("I")
-				);
-
-		options.addOption(
-				OptionBuilder.withLongOpt("verbose")
-				.withDescription("Be verbose")
-				.isRequired(false)
-				.create("v")
-				);
+				.build());
+		options.addOption(Option.builder("I").longOpt("client")
+				.desc("Client IP address: AUTO|ALL|address-list")
+				.required(false)
+				.hasArg()
+				.build());
+		options.addOption(Option.builder("v").longOpt("verbose")
+				.desc("Be verbose")
+				.required(false)
+				.build());
 		return options;
 	}
 
 	@Override
 	public void parseOptions(String[] args) throws ParseException {
 		Options options = getOptions();
-		CommandLineParser parser = new GnuParser();
+		CommandLineParser parser = new DefaultParser();
 		line = parser.parse(options, args);
 		fileArgs = line.getArgs();
 		if (line.hasOption('v')){

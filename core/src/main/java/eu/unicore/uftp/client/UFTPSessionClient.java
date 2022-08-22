@@ -16,7 +16,7 @@ import java.util.List;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.GnuParser;
+import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.logging.log4j.Logger;
@@ -227,7 +227,7 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 		if(size>-1) {
 			runCommand("ALLO " + size);
 		}
-		runCommand("APPE " + size);
+		runCommand("APPE " + remoteFile);
 		preparePut(localSource);
 		return moveData(size);
 	}
@@ -702,7 +702,7 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 	 */
 	public static UFTPSessionClient create(String[] args) throws UnknownHostException, FileNotFoundException {
 		Options options = ClientFactory.createOptions();
-		CommandLineParser parser = new GnuParser();
+		CommandLineParser parser = new DefaultParser();
 		CommandLine line = null;
 		try {
 			line = parser.parse(options, args);

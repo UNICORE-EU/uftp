@@ -1,6 +1,6 @@
 package eu.unicore.uftp.standalone.commands;
 
-import org.apache.commons.cli.OptionBuilder;
+import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.http.HttpResponse;
@@ -22,16 +22,12 @@ public class Info extends Command {
 		return "info";
 	}
 
-	@SuppressWarnings("static-access")
 	protected Options getOptions() {
 		Options options = super.getOptions();
-		options.addOption(
-				OptionBuilder.withLongOpt("raw")
-				.withDescription("Show raw response from server")
-				.isRequired(false)
-				.create("R")
-				);
-		
+		options.addOption(Option.builder("R").longOpt("raw")
+				.desc("Show JSON response from server")
+				.required(false)
+				.build());
 		return options;
 	}
 	

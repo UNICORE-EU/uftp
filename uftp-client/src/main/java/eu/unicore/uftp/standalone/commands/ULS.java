@@ -4,7 +4,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
-import org.apache.commons.cli.OptionBuilder;
+import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
@@ -16,16 +16,12 @@ public class ULS extends Command {
 
 	boolean humanReadable = false;
 
-	@SuppressWarnings("static-access")
 	protected Options getOptions() {
 		Options options = super.getOptions();
-		options.addOption(
-				OptionBuilder.withLongOpt("human-readable")
-				.withDescription("Show file sizes with units like k, M, G, ...")
-				.isRequired(false)
-				.create("H")
-				);
-
+		options.addOption(Option.builder("H").longOpt("human-readable")
+				.desc("Show file sizes with units like k, M, G, ...")
+				.required(false)
+				.build());
 		return options;
 	}
 

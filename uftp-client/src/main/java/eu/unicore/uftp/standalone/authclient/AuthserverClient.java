@@ -2,7 +2,6 @@ package eu.unicore.uftp.standalone.authclient;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.Iterator;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
@@ -101,15 +100,12 @@ public class AuthserverClient implements AuthClient {
 	static String crlf = System.getProperty("line.separator");
 	
 	@Override
-	@SuppressWarnings("unchecked")
 	public String parseInfo(JSONObject info) throws JSONException {
 		StringBuilder sb = new StringBuilder();
 		sb.append("Client identity:    ").append(getID(info)).append(crlf);
 		sb.append("Client auth method: ").append(authData.getType()).append(crlf);
 		sb.append("Auth server type:   AuthServer").append(crlf);
-		Iterator<String>keys = info.sortedKeys();
-		while(keys.hasNext()) {
-			String key = keys.next();
+		for(String key: info.keySet()) {
 			if("client".equals(key) || "server".equals(key))continue;
 			JSONObject server = info.getJSONObject(key);
 			sb.append("Server: ").append(key).append(crlf);

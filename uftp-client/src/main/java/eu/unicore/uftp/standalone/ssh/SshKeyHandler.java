@@ -7,8 +7,8 @@ import java.security.GeneralSecurityException;
 import org.apache.commons.codec.binary.Base64;
 
 import eu.emi.security.authn.x509.helpers.PasswordSupplier;
-import eu.unicore.uftp.authserver.authenticate.sshkey.SSHKeyUC;
-import eu.unicore.uftp.authserver.authenticate.sshkey.SSHUtils;
+import eu.unicore.services.rest.security.sshkey.SSHKeyUC;
+import eu.unicore.services.rest.security.sshkey.SSHUtils;
 import eu.unicore.uftp.dpc.Utils;
 import eu.unicore.uftp.standalone.util.ConsoleUtils;
 

@@ -1,6 +1,6 @@
 package eu.unicore.uftp.standalone.commands;
 
-import org.apache.commons.cli.OptionBuilder;
+import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
@@ -54,55 +54,39 @@ public class UCP extends DataTransferCommand {
 		return "Copy file(s). Wildcards '*' are supported.";
 	}
 
-	@SuppressWarnings("static-access")
 	protected Options getOptions() {
 		Options options = super.getOptions();
-		options.addOption(
-				OptionBuilder.withLongOpt("bytes")
-				.withDescription("Byte range")
-				.withArgName("Range")
+		options.addOption(Option.builder("B").longOpt("bytes")
+				.desc("Byte range")
+				.required(false)
 				.hasArg()
-				.isRequired(false)
-				.create("B")
-				);
-		options.addOption(
-				OptionBuilder.withLongOpt("resume")
-				.withDescription("Check existing target file(s) and try to resume")
-				.isRequired(false)
-				.create("R")
-				);
-		options.addOption(
-				OptionBuilder.withLongOpt("recurse")
-				.withDescription("Recurse into subdirectories, if applicable")
-				.isRequired(false)
-				.create("r")
-				);
-		options.addOption(
-				OptionBuilder.withLongOpt("preserve")
-				.withDescription("Preserve file modification timestamp")
-				.isRequired(false)
-				.create("p")
-				);
-		options.addOption(
-				OptionBuilder.withLongOpt("threads")
-				.withDescription("Use specified number of UFTP connections (threads)")
-				.isRequired(false)
+				.build());
+		options.addOption(Option.builder("R").longOpt("resume")
+				.desc("Check existing target file(s) and try to resume")
+				.required(false)
+				.build());
+		options.addOption(Option.builder("r").longOpt("recurse")
+				.desc("Recurse into subdirectories, if applicable")
+				.required(false)
+				.build());
+		options.addOption(Option.builder("p").longOpt("preserve")
+				.desc("Preserve file modification timestamp")
+				.required(false)
+				.build());
+		options.addOption(Option.builder("t").longOpt("threads")
+				.desc("Use specified number of UFTP connections (threads)")
+				.required(false)
 				.hasArg()
-				.create("t")
-				);
-		options.addOption(
-				OptionBuilder.withLongOpt("split-threshold")
-				.withDescription("Minimum size for files to be transferred using multiple threads (with 't')")
-				.isRequired(false)
+				.build());
+		options.addOption(Option.builder("T").longOpt("split-threshold")
+				.desc("Minimum size for files to be transferred using multiple threads (with 't')")
+				.required(false)
 				.hasArg()
-				.create("T")
-				);
-		options.addOption(
-				OptionBuilder.withLongOpt("archive")
-				.withDescription("Tell server to interpret data as tar/zip stream and unpack it")
-				.isRequired(false)
-				.create("a")
-				);
+				.build());
+		options.addOption(Option.builder("a").longOpt("archive")
+				.desc("Tell server to interpret data as tar/zip stream and unpack it")
+				.required(false)
+				.build());
 		return options;
 	}
 

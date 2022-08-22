@@ -1,14 +1,13 @@
 package eu.unicore.uftp.standalone.commands;
 
-import java.io.IOException;
-
-import org.apache.commons.cli.OptionBuilder;
+import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.jline.reader.LineReader;
+import org.jline.reader.LineReaderBuilder;
 
 import eu.unicore.uftp.standalone.ClientFacade;
 import eu.unicore.uftp.standalone.lists.FileCrawler.RecursivePolicy;
-import jline.console.ConsoleReader;
 
 public class URM extends Command {
 
@@ -16,20 +15,16 @@ public class URM extends Command {
 
 	private boolean recurse = false;
 
-	@SuppressWarnings("static-access")
 	protected Options getOptions() {
 		Options options = super.getOptions();
-		options.addOption(OptionBuilder.withLongOpt("quiet")
-				.withDescription("do not ask for confirmation")
-				.isRequired(false)
-				.create("q")
-				);
-		options.addOption(
-				OptionBuilder.withLongOpt("recurse")
-				.withDescription("Delete (sub)directories, if applicable")
-				.isRequired(false)
-				.create("r")
-				);
+		options.addOption(Option.builder("q").longOpt("quiet")
+				.desc("Quiet mode, don't ask for confirmation")
+				.required(false)
+				.build());
+		options.addOption(Option.builder("r").longOpt("recurse")
+				.desc("Delete (sub)directories, if applicable")
+				.required(false)
+				.build());
 		return options;
 	}
 	
@@ -78,16 +73,17 @@ public class URM extends Command {
 	}
 
 	protected boolean confirm(String file){
-		ConsoleReader r = null;
+		LineReader r = null;
 		try{
-			r = new ConsoleReader();
-			String line=r.readLine("This will delete a remote file '"+file+"', are you sure? [Y]");
+			r = LineReaderBuilder.builder().build();
+			String line = r.readLine("This will delete a remote file/directory '"
+					+file+"', are you sure? [Y]");
 			return line.length()==0  || line.startsWith("y") || line.startsWith("Y");
-		}catch(IOException igored){}
-		finally{
-			if(r!=null) r.shutdown();
+		}finally{
+			try{
+				if(r!=null) r.getTerminal().close();
+			}catch(Exception e) {}
 		}
-		
-		return false;
 	}
+	
 }

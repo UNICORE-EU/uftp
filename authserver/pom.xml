@@ -16,7 +16,7 @@
   </parent>
 
   <properties>
-    <uftp.version>2.12.0</uftp.version>
+    <uftp.version>2.13.0</uftp.version>
     <datashare.version>0.6.0</datashare.version>
     
     <package.version>${project.version}</package.version>
@@ -49,11 +49,6 @@
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
     </dependency>
-    <!--dependency>
-      <groupId>org.apache.santuario</groupId>
-      <artifactId>xmlsec</artifactId>
-      <version>2.3.0</version>
-    </dependency-->
     <dependency>
       <groupId>eu.unicore.uftp</groupId>
       <artifactId>uftp-core</artifactId>
@@ -102,16 +97,6 @@
     <dependency>
       <groupId>eu.unicore.services</groupId>
       <artifactId>use-pdp</artifactId>
-      <exclusions>
-	<exclusion>
-	  <groupId>eu.unicore.services</groupId>
-	  <artifactId>use-wsrfclient</artifactId>	  
-	</exclusion>
-	<exclusion>
-          <groupId>xerces</groupId>
-          <artifactId>xercesImpl</artifactId>
-	</exclusion>
-      </exclusions>	
     </dependency>    
   </dependencies>
 </project>

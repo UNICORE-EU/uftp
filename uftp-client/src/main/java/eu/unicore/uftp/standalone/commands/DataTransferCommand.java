@@ -1,7 +1,7 @@
 package eu.unicore.uftp.standalone.commands;
 
 import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.OptionBuilder;
+import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
@@ -25,37 +25,26 @@ public abstract class DataTransferCommand extends Command {
 	protected boolean encrypt;
 	protected byte[] key;
 
-	@SuppressWarnings("static-access")
 	protected Options getOptions() {
 		Options options = super.getOptions();
-		options.addOption(
-				OptionBuilder.withLongOpt("streams")
-				.withDescription("Number of tcp streams per connection/thread")
-				.withArgName("Streams")
-				.hasArg()
-				.isRequired(false)
-				.create("n")
-				);
-		options.addOption(
-				OptionBuilder.withLongOpt("encrypt")
-				.withDescription("Encrypt data connections")
-				.isRequired(false)
-				.create("E")
-				);
-		options.addOption(
-				OptionBuilder.withLongOpt("compress")
-				.withDescription("Compress data for transfer")
-				.isRequired(false)
-				.create("C")
-				);
-		options.addOption(
-				OptionBuilder.withLongOpt("bandwithlimit")
-				.withDescription("Limit bandwith per FTP connection (bytes per second)")
-				.withArgName("bandwithLimit")
-				.hasArg()
-				.isRequired(false)
-				.create("K")
-				);
+		options.addOption(Option.builder("n").longOpt("streams")
+				.desc("Number of TCP streams per connection/thread")
+				.required(false)
+				.hasArg().argName("Streams")
+				.build());
+		options.addOption(Option.builder("E").longOpt("encrypt")
+				.desc("Encrypt data connections")
+				.required(false)
+				.build());
+		options.addOption(Option.builder("C").longOpt("compress")
+				.desc("Compress data for transfer")
+				.required(false)
+				.build());
+		options.addOption(Option.builder("K").longOpt("bandwithlimit")
+				.desc("Limit bandwith per FTP connection (bytes per second)")
+				.required(false)
+				.hasArg().argName("BandwithLimit")
+				.build());
 		return options;
 	}
 	

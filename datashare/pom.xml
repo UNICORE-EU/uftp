@@ -14,7 +14,7 @@
   </parent>
 
   <properties>
-    <uftp.version>2.12.0</uftp.version>
+    <uftp.version>2.13.0</uftp.version>
   </properties>
       
   <dependencies>

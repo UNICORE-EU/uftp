@@ -8,8 +8,8 @@ import org.apache.commons.io.FileUtils;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import eu.unicore.uftp.authserver.authenticate.sshkey.SSHKeyUC;
-import eu.unicore.uftp.authserver.authenticate.sshkey.SSHUtils;
+import eu.unicore.services.rest.security.sshkey.SSHKeyUC;
+import eu.unicore.services.rest.security.sshkey.SSHUtils;
 
 /**
  * functional test that tests the agent support using real keys

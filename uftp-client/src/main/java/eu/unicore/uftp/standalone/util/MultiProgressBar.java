@@ -3,12 +3,11 @@ package eu.unicore.uftp.standalone.util;
 import java.io.Closeable;
 
 import org.apache.logging.log4j.Logger;
+import org.jline.terminal.Terminal;
 
 import eu.unicore.uftp.client.UFTPProgressListener2;
 import eu.unicore.util.Log;
-import jline.Terminal;
-import jline.TerminalFactory;
-import jline.console.ConsoleReader;
+
 
 /**
  * Track progress when transferring multiple file
@@ -20,7 +19,6 @@ public class MultiProgressBar implements UFTPProgressListener2, Closeable {
 	private static final Logger logger = Log.getLogger(Log.CLIENT, MultiProgressBar.class);
 
 	private Terminal terminal=null;	
-	private ConsoleReader reader=null;
 	private int width;
 
 	private final UnitParser rateParser=UnitParser.getCapacitiesParser(1);

@@ -96,8 +96,6 @@
             <exclude>**/*$*</exclude>
             <exclude>**/Mock*</exclude>
           </excludes>
-          <forkMode>pertest</forkMode>
-          <useSystemClassloader>true</useSystemClassloader>
         </configuration>
       </plugin>
      </plugins>

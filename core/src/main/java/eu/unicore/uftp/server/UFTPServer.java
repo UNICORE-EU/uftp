@@ -16,9 +16,9 @@ import java.util.concurrent.RejectedExecutionException;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.GnuParser;
+import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.OptionBuilder;
+import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.io.IOUtils;
@@ -222,7 +222,7 @@ public class UFTPServer implements Runnable {
 	 */
 	public static void main(String[] args) {
 		Options options = createOptions();
-		CommandLineParser parser = new GnuParser();
+		CommandLineParser parser = new DefaultParser();
 		CommandLine line = null;
 		try {
 			line = parser.parse(options, args);
@@ -280,76 +280,57 @@ public class UFTPServer implements Runnable {
 		return pm;
 	}
 
-	@SuppressWarnings("static-access")
 	public static Options createOptions() {
 		Options options = new Options();
-
-		options.addOption(
-				OptionBuilder.withLongOpt("listen-host")
-				.withDescription("Hostname of the listen socket")
-				.withArgName("Listen host")
-				.hasArg()
-				.isRequired(true)
-				.create("l"));
-		options.addOption(OptionBuilder
-				.withLongOpt("advertise-host")
-				.withDescription(
-						"Host to advertise in place of listen-host. Useful for servers behind NAT.")
-				.withArgName("Advertise host").hasArg().isRequired(false)
-				.create("a"));
-		options.addOption(OptionBuilder.withLongOpt("listen-port")
-				.withDescription("Port of the listen socket")
-				.withArgName("Listen port")
-				.hasArg()
-				.isRequired(true)
-				.create("L"));
-		options.addOption(
-				OptionBuilder.withLongOpt("command-host")
-				.withDescription("Hostname of the command socket")
-				.withArgName("Command host")
-				.hasArg()
-				.isRequired(true)
-				.create("c"));
-		options.addOption(
-				OptionBuilder.withLongOpt("command-port")
-				.withDescription("Port of the command socket")
-				.withArgName("Command port")
-				.hasArg()
-				.isRequired(true)
-				.create("p"));
-		options.addOption(
-				OptionBuilder.withLongOpt("max-connections")
-				.withDescription("Limit on the number of connections per client IP (default: 32)")
-				.withArgName("Control connections")
-				.hasArg()
-				.isRequired(false)
-				.create("m"));
-		options.addOption(
-				OptionBuilder.withLongOpt("max-streams")
-				.withDescription("Limit on the number of parallel data streams per client (default: 8)")
-				.withArgName("Stream limit")
-				.hasArg()
-				.isRequired(false)
-				.create("s"));
-		options.addOption(
-				OptionBuilder.withLongOpt("buffersize")
-				.withDescription("Buffer size in kbytes for reading/writing files (default: 128)")
-				.withArgName("bufferSize")
-				.hasArg()
-				.isRequired(false)
-				.create("b"));
-		options.addOption(
-				OptionBuilder.withLongOpt("portrange")
-				.withDescription("Port range for data connections in the form 'lower:upper' (default: any port can be used)")
-				.withArgName("portRange")
-				.hasArg()
-				.isRequired(false)
-				.create("P"));
-		options.addOption(
-				OptionBuilder.withLongOpt("no-check-client-ip")
-				.withDescription("Disable check if client's IP matches the requested one")
-				.isRequired(false)
-				.create("I"));
+		options.addOption(Option.builder("l").longOpt("listen-host")
+				.desc("Hostname of the listen socket")
+				.required(true)
+				.hasArg().argName("Listen host")
+				.build());
+		options.addOption(Option.builder("L").longOpt("listen-port")
+				.desc("Post of the listen socket")
+				.required(true)
+				.hasArg().argName("Listen port")
+				.build());
+		options.addOption(Option.builder("a").longOpt("advertise-host")
+				.desc("Host to advertise in place of listen-host. Useful for servers behind NAT")
+				.required(false)
+				.hasArg().argName("Advertise host")
+				.build());
+		options.addOption(Option.builder("c").longOpt("command-host")
+				.desc("Hostname of the command socket")
+				.required(true)
+				.hasArg().argName("Command host")
+				.build());
+		options.addOption(Option.builder("p").longOpt("command-port")
+				.desc("Post of the command socket")
+				.required(true)
+				.hasArg().argName("Command port")
+				.build());
+		options.addOption(Option.builder("m").longOpt("max-connections")
+				.desc("Limit on the number of connections per client IP (default: 32)")
+				.required(false)
+				.hasArg().argName("Max connections")
+				.build());
+		options.addOption(Option.builder("s").longOpt("max-streams")
+				.desc("Limit on the number of parallel data streams per client (default: 8)")
+				.required(false)
+				.hasArg().argName("Stream limit")
+				.build());
+		options.addOption(Option.builder("b").longOpt("buffersize")
+				.desc("Buffer size in kbytes for reading/writing files (default: 128))")
+				.required(false)
+				.hasArg().argName("Buffer size")
+				.build());
+		options.addOption(Option.builder("P").longOpt("portrange")
+				.desc("Port range for data connections in the form 'lower:upper' (default: any port can be used)")
+				.required(false)
+				.hasArg().argName("Port range")
+				.build());
+		options.addOption(Option.builder("I").longOpt("no-check-client-ip")
+				.desc("Disable check if client's IP matches the requested one")
+				.required(false)
+				.build());
 		return options;
 	}
 

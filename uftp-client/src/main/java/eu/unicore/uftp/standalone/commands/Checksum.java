@@ -1,6 +1,6 @@
 package eu.unicore.uftp.standalone.commands;
 
-import org.apache.commons.cli.OptionBuilder;
+import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
@@ -39,30 +39,22 @@ public class Checksum extends Command {
 		return "Compute checksums for remote file(s)";
 	}
 	
-	@SuppressWarnings("static-access")
 	protected Options getOptions() {
 		Options options = super.getOptions();
-		options.addOption(
-				OptionBuilder.withLongOpt("recurse")
-				.withDescription("Recurse into subdirectories, if applicable")
-				.isRequired(false)
-				.create("r")
-				);
-		options.addOption(
-				OptionBuilder.withLongOpt("algorithm")
-				.withDescription("Hash algorithm to use. One of: MD5(default), SHA-1, SHA-256, SHA-512")
-				.isRequired(false)
+		options.addOption(Option.builder("r").longOpt("recurse")
+				.desc("Recurse into subdirectories, if applicable")
+				.required(false)
+				.build());
+		options.addOption(Option.builder("a").longOpt("algorithm")
+				.desc("Hash algorithm to use. One of: MD5(default), SHA-1, SHA-256, SHA-512")
+				.required(false)
 				.hasArg()
-				.create("a")
-				);
-		options.addOption(
-				OptionBuilder.withLongOpt("bytes")
-				.withDescription("Byte range")
-				.withArgName("Range")
+				.build());
+		options.addOption(Option.builder("B").longOpt("bytes")
+				.desc("Byte range")
+				.required(false)
 				.hasArg()
-				.isRequired(false)
-				.create("B")
-				);
+				.build());
 		return options;
 	}
 

@@ -4,9 +4,9 @@ import java.net.InetAddress;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.GnuParser;
+import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.OptionBuilder;
+import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.logging.log4j.Logger;
@@ -18,7 +18,7 @@ public class ClientFactory {
 
 	public static AbstractUFTPClient create(String[] args)throws Exception {
 		Options options=ClientFactory.createOptions();
-		CommandLineParser parser = new GnuParser();
+		CommandLineParser parser = new DefaultParser();
 		CommandLine line;
 		try{
 			line = parser.parse(options, args);
@@ -70,119 +70,68 @@ public class ClientFactory {
 	/**
 	 * helper to create commandline options understood by UFTP clients
 	 */
-	@SuppressWarnings("static-access")
 	public static Options createOptions(){
 		Options options=new Options();
-
-		options.addOption(
-				OptionBuilder.withLongOpt("startSession")
-				.withDescription("Connect to a UFTP session")
-				.hasArg(false)
-				.isRequired(false)
-				.create("S")
-				);
-		
-		options.addOption(
-				OptionBuilder.withLongOpt("commandFile")
-				.withDescription("(Session mode only) Commands file name")
-				.withArgName("Cmdfile")
+		options.addOption(Option.builder("S").longOpt("startSession")
+				.desc("Connect to a UFTP session")
+				.required(false)
+				.build());
+		options.addOption(Option.builder("c").longOpt("commandFile")
+				.desc("(Session mode only) Commands file name")
+				.required(true)
 				.hasArg()
-				.isRequired(true)
-				.create("c")
-				);
-		
-		options.addOption(
-				OptionBuilder.withLongOpt("send")
-				.withDescription("Send data")
-				.withArgName("Send")
-				.isRequired(false)
-				.create("s")
-				);
-		
-		options.addOption(
-				OptionBuilder.withLongOpt("receive")
-				.withDescription("Receive data")
-				.withArgName("Receive")
-				.isRequired(false)
-				.create("r")
-				);
-		options.addOption(
-				OptionBuilder.withLongOpt("listen-host")
-				.withDescription("Hostname of the server socket")
-				.withArgName("Server host")
-				.hasArg()
-				.isRequired(true)
-				.create("l")
-				);
-		
-		options.addOption(
-				OptionBuilder.withLongOpt("listen-port")
-				.withDescription("Port of the server socket")
-				.withArgName("Server port")
-				.hasArg()
-				.isRequired(true)
-				.create("L")
-				);
-		
-		options.addOption(
-				OptionBuilder.withLongOpt("secret")
-				.withDescription("Authorisation secret")
-				.withArgName("Secret")
-				.hasArg()
-				.isRequired(true)
-				.create("x")
-				);
-		
-		options.addOption(
-				OptionBuilder.withLongOpt("streams")
-				.withDescription("Number of streams")
-				.withArgName("Streams")
-				.hasArg()
-				.isRequired(false)
-				.create("n")
-				);
-		
-		options.addOption(
-				OptionBuilder.withLongOpt("encryption-key")
-				.withDescription("Encryption key, Base64-encoded")
-				.isRequired(false)
-				.withArgName("base64Key")
-				.hasArg()
-				.create("E")
-				);
-		
-		options.addOption(
-				OptionBuilder.withLongOpt("buffersize")
-				.withDescription("Buffer size in kbytes for reading/writing files (default 128)")
-				.withArgName("bufferSize")
-				.hasArg()
-				.isRequired(false)
-				.create("b")
-				);
-		
-		options.addOption(
-				OptionBuilder.withLongOpt("file")
-				.withDescription("Local file name")
-				.withArgName("File name")
-				.hasArg()
-				.isRequired(false)
-				.create("f")
-				);
-		
-		options.addOption(
-				OptionBuilder.withLongOpt("append")
-				.withDescription("Append to an existing file")
-				.isRequired(false)
-				.create("a")
-				);
-		
-		options.addOption(
-				OptionBuilder.withLongOpt("compress")
-				.withDescription("Compress data")
-				.isRequired(false)
-				.create("z")
-				);
-		
+				.build());
+		options.addOption(Option.builder("s").longOpt("send")
+				.desc("Send data")
+				.required(false)
+				.build());
+		options.addOption(Option.builder("r").longOpt("receive")
+				.desc("Receive data")
+				.required(false)
+				.build());
+		options.addOption(Option.builder("l").longOpt("listen-host")
+				.desc("Hostname of the server socket")
+				.required(true)
+				.hasArg().argName("Server host")
+				.build());
+		options.addOption(Option.builder("L").longOpt("listen-port")
+				.desc("Post of the server socket")
+				.required(true)
+				.hasArg().argName("Server port")
+				.build());
+		options.addOption(Option.builder("x").longOpt("secret")
+				.desc("Authorisation secret")
+				.required(true)
+				.hasArg().argName("Secret")
+				.build());
+		options.addOption(Option.builder("n").longOpt("streams")
+				.desc("Number of streams")
+				.required(false)
+				.hasArg().argName("Streams")
+				.build());
+		options.addOption(Option.builder("E").longOpt("encryption-key")
+				.desc("Encryption key, Base64-encoded")
+				.required(false)
+				.hasArg().argName("base64Key")
+				.build());	
+		options.addOption(Option.builder("b").longOpt("buffersize")
+				.desc("Buffer size in kbytes for reading/writing files (default 128)")
+				.required(false)
+				.hasArg().argName("base64Key")
+				.build());
+		options.addOption(Option.builder("f").longOpt("file")
+				.desc("Local file name")
+				.required(false)
+				.hasArg().argName("File name")
+				.build());
+		options.addOption(Option.builder("a").longOpt("append")
+				.desc("Append to an existing file")
+				.required(false)
+				.build());
+		options.addOption(Option.builder("z").longOpt("compress")
+				.desc("Compress data for transfer")
+				.required(false)
+				.build());
 		return options;
 	}
 

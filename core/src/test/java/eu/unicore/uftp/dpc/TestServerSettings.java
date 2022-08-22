@@ -11,6 +11,7 @@ import java.net.InetAddress;
 import java.util.UUID;
 
 import org.apache.commons.io.FileUtils;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -20,6 +21,7 @@ import eu.unicore.uftp.server.UFTPCommands;
 import eu.unicore.uftp.server.requests.UFTPPingRequest;
 import eu.unicore.uftp.server.requests.UFTPTransferRequest;
 import eu.unicore.uftp.server.workers.UFTPWorker;
+import eu.unicore.util.Log;
 
 public class TestServerSettings extends ClientServerTestBase {
 	
@@ -32,6 +34,7 @@ public class TestServerSettings extends ClientServerTestBase {
 	
 	@Test
 	public void testConnect() throws Exception {
+		server.setCheckClientIP(true);
 		String secret = UUID.randomUUID().toString();
 		UFTPTransferRequest job = new UFTPTransferRequest(client_host, "nobody", secret,
 				new File(".",UFTPWorker.sessionModeTag), true);
@@ -41,8 +44,12 @@ public class TestServerSettings extends ClientServerTestBase {
 		try(UFTPSessionClient client=new UFTPSessionClient(host, srvPort)){
 			client.setSecret(secret);
 			client.connect();
+			Assert.fail("Expected exception due to failing IP check");
 		}catch(IOException e) {
-			// expected
+			System.out.println("Got as expected: "+Log.createFaultMessage("", e));
+		}
+		catch(Exception e) {
+			System.out.println("Got wrong exception type: "+e.getClass().getName());
 		}
 		server.setCheckClientIP(false);
 		try(UFTPSessionClient client=new UFTPSessionClient(host, srvPort)){

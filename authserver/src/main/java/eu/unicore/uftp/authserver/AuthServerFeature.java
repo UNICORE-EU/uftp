@@ -1,10 +1,7 @@
 package eu.unicore.uftp.authserver;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
-import eu.unicore.services.DeploymentDescriptor;
 import eu.unicore.services.Kernel;
 import eu.unicore.services.rest.RestService;
 import eu.unicore.services.rest.security.UserPublicKeyCache;
@@ -19,27 +16,16 @@ import eu.unicore.services.utils.deployment.FeatureImpl;
  */
 public class AuthServerFeature extends FeatureImpl {
 
-	public AuthServerFeature(Kernel kernel) {
-		this();
-		setKernel(kernel);
-	}
-	
 	public AuthServerFeature() {
 		this.name = "AuthServer";
 	}
 
 	public void setKernel(Kernel kernel) {
 		super.setKernel(kernel);
+		services.add(new AuthSD(kernel));
 		getStartupTasks().add(new AuthServerStartup(kernel));
 	}
-	
-	public List<DeploymentDescriptor> getServices(){
-		List<DeploymentDescriptor> services = new ArrayList<>();
-		services.add(new AuthSD(kernel));		
-		return services;
-	}
-	
-	
+
 	public static class AuthSD extends DeploymentDescriptorImpl {
 
 		public AuthSD(Kernel kernel){

@@ -2,7 +2,7 @@ package eu.unicore.uftp.standalone.commands;
 
 import java.net.InetAddress;
 
-import org.apache.commons.cli.OptionBuilder;
+import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.http.HttpResponse;
 import org.json.JSONException;
@@ -30,17 +30,14 @@ public class UTunnel extends Command {
 		return "tunnel";
 	}
 	
-	@SuppressWarnings("static-access")
 	protected Options getOptions() {
 		Options options = super.getOptions();
-
-		options.addOption(
-				OptionBuilder.withLongOpt("listen")
-				.withDescription("port:remote_host:remote_port")
-				.isRequired(true)
-				.hasArg()
-				.create("L")
-				);
+		options.addOption(Option.builder("L")
+			.longOpt("listen")
+			.desc("port:remote_host:remote_port")
+			.required(true)
+			.hasArg()
+			.build());
 		return options;
 	}
 

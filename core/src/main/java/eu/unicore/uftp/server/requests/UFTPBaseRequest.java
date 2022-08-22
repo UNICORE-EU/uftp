@@ -104,26 +104,14 @@ public abstract class UFTPBaseRequest {
         }
     }
 
-    /**
-     * utility method to send this job to a socket
-     * 
-     * @param s socket to send the job to
-     * @return server response
-     * @throws java.io.IOException
-     */
-	public String sendTo(Socket s) throws IOException {
-		if(logger.isDebugEnabled())logger.debug("Sending " + getRequestType() + " to " + s.getInetAddress().getHostAddress() + ":" + s.getPort()
-				+ " : " + this);
-		try {
-			writeEncoded(s.getOutputStream());
-			String res = readResponse(s.getInputStream());
-			logger.debug("Finished sending request, got response '" + res + "'");
-			return res;
-		} finally {
-			s.close();
-		}
-	}
-
+    public String sendTo(Socket s) throws IOException {
+    	logger.debug("Sending {} to {}:{} : {}", getRequestType(), s.getInetAddress().getHostAddress(), s.getPort(), this);
+		writeEncoded(s.getOutputStream());
+		String res = readResponse(s.getInputStream());
+		logger.debug("Finished sending request, got response '{}'", res);
+		return res;
+    }
+    
     protected String readResponse(InputStream is) throws IOException {
     	StringBuilder sb = new StringBuilder();
         BufferedReader br = new BufferedReader(new InputStreamReader(is, "UTF-8"));

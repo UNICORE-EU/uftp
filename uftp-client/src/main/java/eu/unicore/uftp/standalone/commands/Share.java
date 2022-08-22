@@ -2,7 +2,7 @@ package eu.unicore.uftp.standalone.commands;
 
 import java.io.File;
 
-import org.apache.commons.cli.OptionBuilder;
+import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.http.HttpResponse;
 import org.json.JSONException;
@@ -33,43 +33,31 @@ public class Share extends Command {
 	public String getName() {
 		return "share";
 	}
-	
-	@SuppressWarnings("static-access")
+
 	protected Options getOptions() {
 		Options options = super.getOptions();
-
-		options.addOption(
-				OptionBuilder.withLongOpt("list")
-				.withDescription("List shares")
-				.isRequired(false)
-				.create("l")
-				);
-		options.addOption(
-				OptionBuilder.withLongOpt("server")
-				.withDescription("URL to the share service e.g. <https://host:port/SITE/rest/share/NAME> .")
-				.isRequired(false)
+		options.addOption(Option.builder("l").longOpt("list")
+				.desc("List shares")
+				.required(false)
+				.build());
+		options.addOption(Option.builder("s").longOpt("server")
+				.desc("URL to the share service e.g. <https://host:port/SITE/rest/share/NAME>")
+				.required(false)
 				.hasArg()
-				.create("s")
-				);
-		options.addOption(
-				OptionBuilder.withLongOpt("access")
-				.withDescription("Allow access for the specified user.")
-				.isRequired(false)
+				.build());
+		options.addOption(Option.builder("a").longOpt("access")
+				.desc("Allow access for the specified user")
+				.required(false)
 				.hasArg()
-				.create("a")
-				);
-		options.addOption(
-				OptionBuilder.withLongOpt("write")
-				.withDescription("Allow write access to the shared path.")
-				.isRequired(false)
-				.create("w")
-				);
-		options.addOption(
-				OptionBuilder.withLongOpt("delete")
-				.withDescription("Delete access to the shared path.")
-				.isRequired(false)
-				.create("d")
-				);
+				.build());
+		options.addOption(Option.builder("w").longOpt("write")
+				.desc("Allow write access to the shared path")
+				.required(false)
+				.build());
+		options.addOption(Option.builder("d").longOpt("delete")
+				.desc("Delete access to the shared path")
+				.required(false)
+				.build());
 		return options;
 	}
 
