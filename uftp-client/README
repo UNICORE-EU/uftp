@@ -18,7 +18,7 @@ or UNICORE/X server.
 Prerequisites
 *************
 
- * Java 8 (OpenJDK, Oracle, IBM) or later
+ * Java 11 (OpenJDK, Oracle, IBM) or later
 
  * Access to a UFTP authentication service and the corresponding UFTPD
    server. To use the client, you need to know the address of the
@@ -48,4 +48,6 @@ be written into the URL, for example:
 If not given on the command line, the password will be queried interactively.
 
 For detailed usage instructions and examples, refer to the
-manual available in the doc directory or online.
+manual available online at
+https://uftp-docs.readthedocs.io/en/latest/user-docs/uftp-client/index.html
+

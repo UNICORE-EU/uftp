@@ -1,7 +1,11 @@
 # UNICORE File transfer (UFTP)
 
-This repository contains server and client components for the UNICORE
-FTP high-performance file transfer toolkit.
+This repository contains the source code for various
+server and client components for the UNICORE FTP
+high-performance file transfer toolkit.
+
+WORKING BINARIES can be downloaded from SourceForge
+https://sourceforge.net/projects/unicore/files/
 
  * core - contains the core Java library, as well as a
    reference implementation of the 'uftpd' server, which
