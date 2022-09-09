@@ -3,10 +3,16 @@ Changelog
 The UFTP issue tracker is at
 https://sourceforge.net/p/unicore/uftp-issues
 
+Full documentation is at: https://uftp-docs.readthedocs.io
+
 UFTPD 3.1.3 (released MMM DD, 2022)
 -----------------------------------
- - fix: ignore upper/lower case when parsing ACL and matching DNs
  - fix: server could hang when ACL contains typos
+ - fix: ignore upper/lower case when parsing ACL and matching DNs
+ - fix: cleaner handling of session's initial and base directories
+ - fix: LIST reply is always "ls-style" for use with other FTP tools
+ - fix: MLST/MLSD response "facts" part was missing the final ";"
+   and used the wrong permission indicators for directories
  - fix: log common name of connecting server when access is denied
 
 UFTPD 3.1.2 (released Dec 16, 2021)

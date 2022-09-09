@@ -14,10 +14,13 @@ class FileInfo(object):
         else:
             return "file"
 
-    def _perm(self, empty=""):
+    def _perm(self, empty="", mlst=False):
         perm = ""
         if os.access(self.path, os.R_OK):
-            perm+="r"
+            if mlst and self.is_dir():
+                perm+="l"
+            else:
+                perm+="r"
         else:
             perm+=empty
         if os.access(self.path, os.W_OK):
@@ -25,7 +28,10 @@ class FileInfo(object):
         else:
             perm+=empty
         if os.access(self.path, os.X_OK):
-            perm+="x"
+            if mlst and self.is_dir():
+                perm+="e"
+            else:
+                perm+="x"
         else:
             perm+=empty
         return perm
@@ -51,15 +57,15 @@ class FileInfo(object):
             p = self.path
         else:
             p = basename(self.path)
-        return "size=%s;modify=%s;type=%s;perm=%s %s" % (st.st_size,
+        return "size=%s;modify=%s;type=%s;perm=%s; %s" % (st.st_size,
            strftime("%Y%m%d%H%M%S", localtime(st.st_mtime)),
            self._type(),
-           self._perm(),
+           self._perm(mlst=True),
            p
         )
 
     def list(self):
-        """ Linux style ('-a' in LIST command) """
+        """ Linux "ls" style """
         st = os.stat(self.path)
         if isdir(self.path):
             d = "d"

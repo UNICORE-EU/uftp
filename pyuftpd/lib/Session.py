@@ -32,11 +32,11 @@ class Session(object):
 
     _FEATURES = [ "PASV", "EPSV",
               "RANG STREAM", "REST STREAM"
-              "MFMT", "MLSD", "APPE",
+              "MFMT", "MLSD", "MLST", "APPE",
               "KEEP-ALIVE",
               "ARCHIVE",
               "RESTRICTED_SESSION",
-              "DPC2_LOGIN_OK"
+              "DPC2_LOGIN_OK", "UTF-8"
     ]
 
     def __init__(self, connector: Connector, job, LOG: Logger):
@@ -51,20 +51,19 @@ class Session(object):
         if not os.path.isdir(_home):
             _home = "/"
         if _dirname=='':
-            # no base dir set - default to HOME and
-            # allow client to use absolute paths
-            self.allow_absolute_paths = True
-            _dirname = _home
+            # no base dir set - start in HOME and
+            # allow client to "escape" to higher levels
+            self.basedir = "/"
+            self.current_dir = _home
         else:
-            # explicit base directory is set - make sure
-            # session does not allow to "escape" it
-            self.allow_absolute_paths = False
+            # explicit base directory is set -
+            # clients won't be able to go "up" from there
             if not os.path.isabs(_dirname):
                 _dirname = os.path.join(_home, _dirname)
-        if not os.path.isdir(_dirname):
-            raise IOError("No such directory: %s" % _dirname)
-        self.basedir = os.path.normpath(_dirname)
-        self.current_dir = self.basedir
+            self.basedir = os.path.normpath(_dirname)
+            self.current_dir = self.basedir
+        if not os.path.isdir(self.current_dir):
+            raise IOError("No such directory: %s" % self.current_dir)
         os.chdir(self.basedir)
         self.access_level = self.MODE_FULL
         self.data_connectors = []
@@ -154,15 +153,11 @@ class Session(object):
         raise Exception("Forbidden: %s not included in  %s" % (path, str(self.includes)))
 
     def makeabs(self, path):
-        if os.path.isabs(path):
-            p = os.path.normpath(path)
-            while p.startswith("//"):
-                p = p[1:]
-            if not self.allow_absolute_paths:
-                if not p.startswith(self.basedir):
-                    raise Exception("Forbidden: %s not in %s"%(p, self.basedir))
-        else:
-            p = os.path.normpath(self.current_dir+"/"+path)
+        if not os.path.isabs(path):
+            path = self.current_dir+"/"+path
+        p = os.path.normpath(path)
+        if not p.startswith(self.basedir):
+            raise Exception("Forbidden: %s not in %s"%(p, self.basedir))
         return p
 
     def shutdown(self, params):
@@ -322,12 +317,10 @@ class Session(object):
         path = "."
         if params:
             path = params
-        linux_mode = False
         if path=="-a":
             path = "."
-            linux_mode = True
         path = self.makeabs(path)
-        return self.send_directory_listing(path, False, linux_mode)
+        return self.send_directory_listing(path, ls_style=True)
 
     def mlsd(self, params):
         self.assert_permission(Session.MODE_INFO)
@@ -338,7 +331,7 @@ class Session(object):
         path = self.makeabs(path)
         return self.send_directory_listing(path, mlsd=True)
 
-    def send_directory_listing(self, path, mlsd=False, linux_mode=False):
+    def send_directory_listing(self, path, mlsd=False, ls_style=False):
         fi = FileInfo(path)
         if not fi.exists() or not fi.is_dir():
             self.control.write_message("500 Directory does not exist.")
@@ -354,7 +347,7 @@ class Session(object):
                 fi = FileInfo(os.path.normpath(os.path.join(path,p)))
                 if mlsd:
                     self.data.write_message(fi.as_mlist())
-                elif linux_mode:
+                elif ls_style:
                     self.data.write_message(fi.list())
                 else:
                     self.data.write_message(fi.simple_list())
@@ -395,7 +388,7 @@ class Session(object):
     def mlst(self,params):
         self.assert_permission(Session.MODE_INFO)
         if params is None:
-            params = ""
+            params = "."
         path = self.makeabs(params)
         fi = FileInfo(path)
         if not fi.exists():
@@ -750,10 +743,10 @@ class Session(object):
             _lim = "%s MB/sec" % int(self.rate_limit/(1024*1024))
         else:
             _lim = "no"
-        self.LOG.info("Processing UFTP session for <%s : %s : %s>, basedir=%s, allow_absolute_paths=%s, encrypted=%s, compress=%s, ratelimit=%s" % (
+        self.LOG.info("Processing UFTP session for <%s : %s : %s>, initial_dir='%s', base='%s', encrypted=%s, compress=%s, ratelimit=%s" % (
             self.job['user'], self.job['group'],
             self.control.client_ip(),
-            self.basedir, self.allow_absolute_paths,
+            self.current_dir, self.basedir,
             self.key is not None, self.compress, _lim
         ))
         while True:
