@@ -29,6 +29,7 @@ public class ConnectionInfoManager {
     }
 
     public void init(String uri) throws URISyntaxException {
+	if(!isRemote(uri))throw new URISyntaxException(uri, "Not a valid server URL");
         this.uri = uri;
         this.extracted = extractConnectionParameters(uri);
     }
@@ -88,7 +89,7 @@ public class ConnectionInfoManager {
         return parameters;
     }
 
-    private static final String[]remote = new String[]{"uftp://", "https://", "http://"};
+    private static final String[]remote = new String[]{"https://", "http://"};
     
     private static boolean checkRemote(String what){
     	for(String r: remote){

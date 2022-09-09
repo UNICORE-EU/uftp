@@ -21,11 +21,6 @@
     
     <package.version>${project.version}</package.version>
     <package.release>1</package.release>
-
-    <docman.enabled/>
-    <doc.src>src/main/docs/authserver-manual.txt</doc.src>
-    <doc.target>authserver-manual</doc.target>
-    <doc.template>plain</doc.template>
   </properties>
 
   <repositories>
@@ -36,18 +31,26 @@
     </repository>
   </repositories>
 
-  <distributionManagement>
-    <!-- where the website is deployed -->
-    <site>
-      <id>unicore.eu</id>
-      <url>dav:https://unicore-dev.zam.kfa-juelich.de/documentation/authserver-${project.version}</url>
-    </site>
-  </distributionManagement>
-
   <dependencies>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>eu.unicore.services</groupId>
+      <artifactId>use-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>eu.unicore.services</groupId>
+      <artifactId>use-rest</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>eu.unicore.services</groupId>
+      <artifactId>use-aip</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>eu.unicore.services</groupId>
+      <artifactId>use-pdp</artifactId>
     </dependency>
     <dependency>
       <groupId>eu.unicore.uftp</groupId>
@@ -59,44 +62,5 @@
       <artifactId>uftp-datashare</artifactId>
       <version>${datashare.version}</version>
     </dependency>
-    <dependency>
-      <groupId>eu.unicore.security</groupId>
-      <artifactId>securityLibrary</artifactId>
-      <version>${seclib.version}</version>
-      <exclusions>
-	<exclusion>
-          <groupId>org.apache.xmlbeans</groupId>
-          <artifactId>xmlbeans</artifactId>
-        </exclusion>
-	<exclusion>
-          <groupId>com.sun.xml.ws</groupId>
-          <artifactId>jaxws-ri</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>eu.unicore.services</groupId>
-      <artifactId>use-rest</artifactId>
-      <exclusions>
-	<exclusion>
-          <groupId>xerces</groupId>
-          <artifactId>xercesImpl</artifactId>
-	</exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>eu.unicore.services</groupId>
-      <artifactId>use-aip</artifactId>
-      <exclusions>
-	<exclusion>
-          <groupId>xerces</groupId>
-          <artifactId>xercesImpl</artifactId>
-	</exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>eu.unicore.services</groupId>
-      <artifactId>use-pdp</artifactId>
-    </dependency>    
   </dependencies>
 </project>

@@ -3,16 +3,27 @@ Changelog
 The UFTP issue tracker is at
 https://sourceforge.net/p/unicore/uftp-issues
 
+Full documentation is at: https://uftp-docs.readthedocs.io
+
+
 ***
 ***  see README-UPGRADE.txt for how to update
 ***
 
 Auth Server 2.7.0 (released mmm dd, 2022)
 -----------------------------------------
+
+*** H2 DATABASE NOTE (if you use the data share feature and the H2 database)
+
+   This release includes the new H2 v2 engine, which is unfortunately
+   not directly backwards compatible to the one used in previous versions.
+   If you want to keep existing data during the update, you'll
+   need to convert the databases, or use the old H2 v1 version
+
+
  - update to UNICORE 9.0 base libs
- - validate JWT user authentication tokens with
-   keys obtained via UFTP (instead of / in addition to
-   "homegrown" SSH key authentication)
+ - SSH key based authentication now uses JWT
+   ("homegrown" SSH key authentication is still supported)
  - new feature: shares can have a lifetime
    and a "onetime" property
 

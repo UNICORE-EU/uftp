@@ -83,6 +83,11 @@
       </dependency>
       <dependency>
 	<groupId>eu.unicore.services</groupId>
+	<artifactId>use-core</artifactId>
+	<version>${use.version}</version>
+      </dependency>
+      <dependency>
+	<groupId>eu.unicore.services</groupId>
 	<artifactId>use-rest</artifactId>
 	<version>${use.version}</version>
       </dependency>
@@ -101,7 +106,6 @@
 	<artifactId>use-pdp</artifactId>
 	<version>${use.version}</version>
       </dependency>
-
     </dependencies>
   </dependencyManagement>
   
