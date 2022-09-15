@@ -193,11 +193,8 @@ public class Utils {
 	}
 	
 	public static void writeToFile(String content, File target) throws IOException {
-		FileOutputStream o = new FileOutputStream(target);
-		try {
+		try(FileOutputStream o = new FileOutputStream(target)){
 			o.write(content.getBytes());
-		} finally {
-			o.close();
 		}
 	}
 
@@ -206,19 +203,19 @@ public class Utils {
 	}
 
 	public static MessageDigest digest(File file, String algo) throws Exception {
-		FileInputStream fis = new FileInputStream(file);
-		byte[] buf = new byte[1024];
-		int r = 0;
-		MessageDigest md = MessageDigest.getInstance(algo);
-		while (true) {
-			r = fis.read(buf);
-			if (r < 0) {
-				break;
+		try(FileInputStream fis = new FileInputStream(file)){
+			byte[] buf = new byte[1024];
+			int r = 0;
+			MessageDigest md = MessageDigest.getInstance(algo);
+			while (true) {
+				r = fis.read(buf);
+				if (r < 0) {
+					break;
+				}
+				md.update(buf, 0, r);
 			}
-			md.update(buf, 0, r);
+			return md;
 		}
-		fis.close();
-		return md;
 	}
 
 	/**

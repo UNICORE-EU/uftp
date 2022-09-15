@@ -186,7 +186,7 @@ public class FileInfo {
 		info.append(";modify=").append(toTimeVal(lastModified));
 		info.append(";type=").append(isDirectory?"dir":"file");
 		info.append(";perm=").append(getUnixPermissions(""));
-		info.append(" ").append(path);
+		info.append("; ").append(path);
 		return info.toString();
 	}
 
