@@ -25,11 +25,11 @@ public class ACLStorage {
 	// this is shared by all the users!
 	private static Persist<ShareDAO> storage;
 
-	public ACLStorage(String name, Properties p) throws PersistenceException {
+	public ACLStorage(String name, Properties p) throws Exception {
 		init(name, p);
 	}
 
-	private synchronized void init(String name, Properties p) throws PersistenceException{
+	private synchronized void init(String name, Properties p) throws Exception{
 		if(storage!=null)return;
 		PersistenceProperties pp = new PersistenceProperties(p);
 		PersistenceFactory pf = PersistenceFactory.get(pp);
@@ -38,7 +38,7 @@ public class ACLStorage {
 		storage = pf.getPersist(ShareDAO.class, pd);
 	}
 	
-	public void deleteAccess(String path, Target target, Owner owner) throws PersistenceException {
+	public void deleteAccess(String path, Target target, Owner owner) throws Exception {
 		Collection<ShareDAO> grants = readAll(path, false, owner);
 		for(ShareDAO grant: grants) {
 			if(target==null || target.getID().equals(target.getID())) {
@@ -47,7 +47,7 @@ public class ACLStorage {
 		}
 	}
 	
-	public String grant(AccessType accessType, String path, Target target, Owner owner, long expiry, boolean onetime) throws PersistenceException, InterruptedException {
+	public String grant(AccessType accessType, String path, Target target, Owner owner, long expiry, boolean onetime) throws Exception {
 		Collection<ShareDAO> grants = readAll(path, false, owner);
 		ShareDAO grant = null;
 		if(grants.size()>0){
@@ -87,16 +87,16 @@ public class ACLStorage {
 		return null;
 	}
 	
-	public ShareDAO read(String uniqueID) throws PersistenceException {
+	public ShareDAO read(String uniqueID) throws Exception {
 		return getPersist().read(uniqueID);
 	}
 
 
-	public Collection<ShareDAO>readAll(String path) throws PersistenceException {
+	public Collection<ShareDAO>readAll(String path) throws Exception {
 		return readAll(path, true);
 	}
 
-	public Collection<ShareDAO>readAll(String path, boolean recurse, Owner owner) throws PersistenceException {
+	public Collection<ShareDAO>readAll(String path, boolean recurse, Owner owner) throws Exception {
 		Collection<ShareDAO> result = new ArrayList<>();
 		File f = new File(path);
 		Collection<String> ids = storage.getIDs("path", path);
@@ -117,11 +117,11 @@ public class ACLStorage {
 		return result;
 	}
 	
-	public Collection<ShareDAO>readAll(String path, boolean recurse) throws PersistenceException {
+	public Collection<ShareDAO>readAll(String path, boolean recurse) throws Exception {
 		return readAll(path, recurse, null);
 	}
 	
-	public List<ShareDAO>readAll(Target target) throws PersistenceException {
+	public List<ShareDAO>readAll(Target target) throws Exception {
 		List<ShareDAO> result = new ArrayList<>();
 		Collection<String> ids = storage.getIDs("target", target.getID());
 		for(String id: ids){
@@ -131,7 +131,7 @@ public class ACLStorage {
 		return result;
 	}
 	
-	public Collection<ShareDAO>readAll(Owner owner) throws PersistenceException {
+	public Collection<ShareDAO>readAll(Owner owner) throws Exception {
 		Collection<ShareDAO> result = new ArrayList<>();
 		Collection<String> ids = storage.getIDs("owner", owner.getName());
 		for(String id: ids){
@@ -148,7 +148,7 @@ public class ACLStorage {
 		return result;
 	}
 	
-	public void delete(String id) throws PersistenceException {
+	public void delete(String id) throws Exception {
 		getPersist().remove(id);
 	}
 	
@@ -156,7 +156,7 @@ public class ACLStorage {
 	 * Deletes the DB content. Be careful. Be very careful.
 	 * @throws PersistenceException
 	 */
-	public void deleteAllData()throws PersistenceException {
+	public void deleteAllData()throws Exception {
 		getPersist().removeAll();
 	}
 	

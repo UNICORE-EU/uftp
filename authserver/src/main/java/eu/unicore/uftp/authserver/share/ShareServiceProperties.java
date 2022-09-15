@@ -1,13 +1,11 @@
 package eu.unicore.uftp.authserver.share;
 
-import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
 import org.apache.logging.log4j.Logger;
 
-import de.fzj.unicore.persist.PersistenceException;
 import eu.unicore.uftp.authserver.share.IdentityExtractor.IdentityType;
 import eu.unicore.uftp.datashare.db.ACLStorage;
 import eu.unicore.util.Log;
@@ -102,15 +100,15 @@ public class ShareServiceProperties extends PropertiesHelper {
 				ACLStorage server = configure(s);
 				if(server != null){
 					dbMap.put(s, server);
-					propsLogger.info("Configured sharing for server: "+s);
+					propsLogger.info("Configured sharing for server <{}>", s);
 				}
-			}catch(PersistenceException pe){
-				throw new ConcurrentModificationException(pe);
+			}catch(Exception pe){
+				throw new ConfigurationException("Error configuring data sharing for server <"+s+">", pe);
 			}
 		}
 	}
 
-	protected ACLStorage configure(String name) throws PersistenceException {
+	protected ACLStorage configure(String name) throws Exception {
 		Properties p = new Properties();
 		p.putAll(rawProperties);
 		ACLStorage a = new ACLStorage(name, p);
