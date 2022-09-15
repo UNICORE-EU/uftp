@@ -50,4 +50,3 @@ If not given on the command line, the password will be queried interactively.
 For detailed usage instructions and examples, refer to the
 manual available online at
 https://uftp-docs.readthedocs.io/en/latest/user-docs/uftp-client/index.html
-

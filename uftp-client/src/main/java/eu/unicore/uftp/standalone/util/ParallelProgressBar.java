@@ -101,7 +101,7 @@ public class ParallelProgressBar implements UFTPProgressListener2, Closeable {
 	}
 	
 	private int lastOutputLength=0;
-	
+
 	protected synchronized void output(long total){
 		StringBuilder sb=new StringBuilder();
 		long progress=total*100/size;
@@ -124,7 +124,7 @@ public class ParallelProgressBar implements UFTPProgressListener2, Closeable {
 		int max = width-sb.length()-5;
 		if (max<0)max=8;
 		sb.insert(0, String.format("%-"+max+"s ", identifier));
-		
+
 		int fill = lastOutputLength - sb.length();
 		if(fill>0) {
 			for(int i=0; i<fill; i++)sb.append(" ");

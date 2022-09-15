@@ -148,7 +148,6 @@ public class ConnectionInfoManagerTest {
     public void testWrongLocal() {
         assertFalse(ConnectionInfoManager.isLocal("http://some"));
         assertFalse(ConnectionInfoManager.isLocal("https://some"));
-        assertFalse(ConnectionInfoManager.isLocal("uftp://some"));
     }
 
     @Test
@@ -162,13 +161,6 @@ public class ConnectionInfoManagerTest {
         expResult = false;
         result = ConnectionInfoManager.isRemote(argument);
         assertEquals(expResult, result);
-    }
-
-    @Test
-    public void testUftpRemote() {
-        String argument = remoteUri.replace("http", "uftp");
-        boolean result = ConnectionInfoManager.isRemote(argument);
-        assertTrue(result);
     }
 
     @Test

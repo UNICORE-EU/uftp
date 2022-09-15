@@ -123,7 +123,7 @@ public class MultiProgressBar implements UFTPProgressListener2, Closeable {
 			}
 		}
 		sb.append(String.format(" total %sB/s", rateParser.getHumanReadable(totalRate)));
-		
+
 		int fill = lastOutputLength - sb.length();
 		if(fill>0) {
 			for(int i=0; i<fill; i++)sb.append(" ");

@@ -16,7 +16,7 @@ import eu.unicore.services.rest.security.sshkey.SSHUtils;
  */
 public class TestAgent {
 	
-	@Test 
+	@Test
 	@Ignore
 	public void testSigningUsingAgent() throws Exception {
 		String token = "test123";
