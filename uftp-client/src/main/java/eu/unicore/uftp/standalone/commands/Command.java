@@ -88,7 +88,6 @@ public abstract class Command implements ICommand {
 		options.addOption(Option.builder("P").longOpt("password")
 				.desc("Interactively query for a missing password")
 				.required(false)
-				.hasArg()
 				.build());
 		options.addOption(Option.builder("i").longOpt("identity")
 				.desc("Identity file (private key) for key-based authentication")
