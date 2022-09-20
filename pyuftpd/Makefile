@@ -44,6 +44,9 @@ $(TESTS):
 prepare:
 	mkdir -p target
 	rm -rf build/*
+	@find -name "*~" -delete
+	@find -name "*.pyc" -delete
+	@find -name "__pycache__" -delete
 	mkdir -p build/lib
 	cp -R docs build-tools/* build/
 	cp lib/* build/lib

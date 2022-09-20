@@ -8,7 +8,7 @@ Distribution: RedHat
 Group: System Environment/Daemons
 URL: https://www.unicore.eu
 AutoReqProv: no
-BuildArch: x86_64
+BuildArch: noarch
 Packager: Bernd Schuller unicore-support@lists.sourceforge.net
 @preamble@
 
