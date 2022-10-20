@@ -54,6 +54,9 @@ public class ACLStorage {
 			grant = filter(grants, target);
 		}
 		if(grant==null){
+			if(AccessType.NONE==accessType) {
+				return null;
+			}
 			grant = new ShareDAO();
 			grant.setPath(path);
 			grant.setOwnerID(owner.getName());
@@ -63,7 +66,7 @@ public class ACLStorage {
 			grant.setDirectory(path.endsWith("/"));
 		}
 		else{
-			if(grant!=null && AccessType.NONE==accessType){
+			if(AccessType.NONE==accessType){
 				storage.remove(grant.getID());
 				return null;
 			}

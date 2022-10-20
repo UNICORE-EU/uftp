@@ -28,7 +28,6 @@ fi
 # setup classpath
 #
 CP=.$(@cdRoot@find "$LIB" -name "*.jar" -exec printf ":{}" \;)
-CP=$CP:@etc¢
 
 echo $CP | grep jar > /dev/null
 if [ $? != 0 ] 
@@ -37,8 +36,7 @@ then
   exit 1
 fi
 
-
-PARAM=$*
+MAIN_CONFIG=${MAIN_CONFIG:-"${CONF}/container.properties"}
 
 #
 # go
@@ -46,6 +44,8 @@ PARAM=$*
 
 CLASSPATH=$CP; export CLASSPATH
 
-nohup $JAVA ${MEM} ${OPTS} ${DEFS} de.fzj.unicore.wsrflite.USEContainer $CONF/container.properties ${1+"$@"} AUTHSERVER > ${STARTLOG} 2>&1  & echo $! > ${PID}
+SERVERNAME=${SERVERNAME:-"AUTHSERVER"}
 
-echo "UFTP AuthServer starting"
+nohup $JAVA ${MEM} ${OPTS} ${DEFS} eu.unicore.services.USEContainer ${MAIN_CONFIG} ${SERVERNAME} > ${STARTLOG} 2>&1  & echo $! > ${PID}
+
+echo "UFTP ${SERVERNAME} starting"

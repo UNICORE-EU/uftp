@@ -9,6 +9,7 @@
    If you want to keep existing data during the update, you'll
    need to convert the databases, or use the old H2 v1 version
 
+   An update tool is available in the UNICORE Core Server 9.0.0 release!
 
 ***
 ***  Update procedure

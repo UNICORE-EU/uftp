@@ -11,6 +11,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -26,6 +27,7 @@ import eu.unicore.uftp.authserver.UFTPDInstance;
 import eu.unicore.uftp.authserver.UserAttributes;
 import eu.unicore.uftp.authserver.messages.AuthRequest;
 import eu.unicore.uftp.authserver.messages.AuthResponse;
+import eu.unicore.uftp.client.FileInfo;
 import eu.unicore.uftp.client.UFTPSessionClient;
 import eu.unicore.uftp.datashare.AccessType;
 import eu.unicore.uftp.datashare.SharingUser;
@@ -85,23 +87,30 @@ public abstract class ShareServiceBase extends ServiceBase {
 			TransferRequest transferRequest = new TransferRequest(authRequest, ua, clientIP);
 			AuthResponse response = new TransferInitializer().initTransfer(transferRequest,uftp);            
 			InetAddress[] server = new InetAddress[]{InetAddress.getByName(response.serverHost)};
-			PipedOutputStream src = new PipedOutputStream();
-			PipedInputStream pin = new PipedInputStream(src);
-
+			
 			final Range range = new Range(rangeHeader);
 			final String remoteFile = new File(share.getPath()).getName();
+			final UFTPSessionClient uc = new UFTPSessionClient(server, response.serverPort);
+			uc.setSecret(transferRequest.getSecret());
+			uc.connect();
+			FileInfo fi = uc.stat(remoteFile);
+			if(fi.isDirectory())throw new Exception("Can't download a directory");
+			PipedOutputStream sink = new PipedOutputStream();
+			PipedInputStream pin = new PipedInputStream(sink);
 			final Runnable task = new Runnable() {
 				public void run() {
-					try(final UFTPSessionClient uc = new UFTPSessionClient(server, response.serverPort)){
-						uc.setSecret(transferRequest.getSecret());
-						uc.connect();
+					try{
 						if(range.haveRange) {
-							uc.get(remoteFile, range.offset, range.length, src);
+							uc.get(remoteFile, range.offset, range.length, sink);
 						} else {
-							uc.get(remoteFile, src);
+							uc.get(remoteFile, sink);
 						}
 					}catch(Exception ex) {
 						Log.logException("Error downloading", ex, logger);
+					}
+					finally {
+						IOUtils.closeQuietly(uc);
+						IOUtils.closeQuietly(sink);
 					}
 				}
 			};

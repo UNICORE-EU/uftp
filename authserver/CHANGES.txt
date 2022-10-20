@@ -20,12 +20,15 @@ Auth Server 2.7.0 (released mmm dd, 2022)
    If you want to keep existing data during the update, you'll
    need to convert the databases, or use the old H2 v1 version
 
+   A converter tool is available in the Core server 9.0.0 release!
 
  - update to UNICORE 9.0 base libs
  - SSH key based authentication now uses JWT
-   ("homegrown" SSH key authentication is still supported)
- - new feature: shares can have a lifetime
-   and a "onetime" property
+   (the previous type of SSH key authentication is still supported)
+ - new feature: shares can have a lifetime and a "onetime" property
+ - fix: trying to download non-existent file from a shared directory
+   hangs instead of failing properly
+ - fix: better handle share deletion
 
 Auth Server 2.6.0 (released Dec 15, 2021)
 ------------------------------------------

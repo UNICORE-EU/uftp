@@ -7,7 +7,7 @@ high-performance file transfer toolkit.
 WORKING BINARIES can be
 [downloaded from SourceForge](https://sourceforge.net/projects/unicore/files)
 
-DOCUMENTATION for End-users and administrators can be found att
+DOCUMENTATION for users and administrators can be found at
 [UFTP-Docs](https://uftp-docs.readthedocs.io)
 
  * core - contains the core Java library, as well as a
@@ -17,9 +17,9 @@ DOCUMENTATION for End-users and administrators can be found att
  * pyuftpd - contains the production version of the uftpd server,
    written in Python
 
- * Auth server -  a set of services providing authentication for UFTP as well
+ * authserver -  a set of services providing authentication for UFTP as well
    as data sharing features
 
- * UFTP client - the standalone "uftp" client application
+ * uftp-client - the standalone "uftp" client application
 
- * Datashare - library containing support code for the data sharing feature
+ * datashare - library containing support code for the data sharing feature
