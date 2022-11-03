@@ -36,7 +36,7 @@ public class TransferInitializer {
         }
         AuthResponse ret = null;
         String status = split[0];
-        //response = "OK::"+String.valueOf(serverThread.getPort());
+        //response is "OK::<serverPort>;
         if (status.startsWith("OK")) {
             int port = Integer.parseInt(split[1].trim());
             ret = new AuthResponse(true, "", server.getHost(), port, "");

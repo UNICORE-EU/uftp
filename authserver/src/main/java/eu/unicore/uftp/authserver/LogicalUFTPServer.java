@@ -69,15 +69,15 @@ public class LogicalUFTPServer implements ExternalSystemConnector, UserInfoSourc
 				num++;
 			}
 		}
-		log.info("Configured <"+instances.size()+"> UFTPD server(s) as "+name);
+		log.info("Configured <{}> UFTPD server(s) as {}", instances.size(), name);
 	}
 	
 	private UFTPDInstance createUFTPD(String name, String prefix, Properties properties) {
 		UFTPDInstance server = new UFTPDInstance(name, kernel);
 		mapSettings(server, prefix, properties);
-		if(server.getHost()==null)throw new ConfigurationException("Property 'host' not set!");
+		if(server.getHost()==null)throw new ConfigurationException("Property 'host' not set for UFTPD server '"+name+"'");
 		kernel.getExternalSystemConnectors().add(server);
-		log.info("Configured "+name+": "+server);
+		log.info("Configured {}: {}", name, server);
 		return server;
 	}
 
@@ -112,11 +112,11 @@ public class LogicalUFTPServer implements ExternalSystemConnector, UserInfoSourc
 	}
 
 	public String toString(){
-		return "[UFTP Server '"+serverName+"' "+getConnectionStatusMessage()+"]";
+		return "[UFTPD Server '"+serverName+"' "+getConnectionStatusMessage()+"]";
 	}
 
 	public String getExternalSystemName(){
-		return "UFTP Server '"+serverName+"'";
+		return "UFTPD Server '"+serverName+"'";
 	}
 
 	public boolean isUFTPAvailable(){
@@ -129,20 +129,15 @@ public class LogicalUFTPServer implements ExternalSystemConnector, UserInfoSourc
 		int avail = 0;
 		
 		for(UFTPDInstance i: instances){
+			String state = "DOWN";
 			if(i.isUFTPAvailable()) {
 				status = Status.OK;
+				state = "UP";
 				avail++;
-				if(log.isDebugEnabled()) {
-					log.debug("UFTP server "+i.getCommandHost()+":"+i.getCommandPort()+" is UP: "
-						+i.getConnectionStatusMessage());
-				}
 			}
-			else {
-				if(log.isDebugEnabled()) {
-					log.debug("UFTP server "+i.getCommandHost()+":"+i.getCommandPort()+" is DOWN: "
-						+i.getConnectionStatusMessage());
-				}
-			}
+			log.debug("UFTPD server {}:{} is {}: {}",
+					i.getCommandHost(), i.getCommandPort(), state, i.getConnectionStatusMessage());
+		
 		}
 		if(instances.size()>1) {
 			statusMessage = "OK ["+avail+" of "+instances.size()+" UFTPD servers available]";
@@ -160,9 +155,6 @@ public class LogicalUFTPServer implements ExternalSystemConnector, UserInfoSourc
 			index++;
 			if(index==instances.size())index=0;
 			if(i.isUFTPAvailable()) {
-				if(log.isDebugEnabled()) {
-					log.debug("Using "+index+": "+i);
-				}
 				return i;
 			}
 			c++;

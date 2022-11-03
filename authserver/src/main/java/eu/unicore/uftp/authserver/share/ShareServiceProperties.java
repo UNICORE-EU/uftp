@@ -74,7 +74,7 @@ public class ShareServiceProperties extends PropertiesHelper {
 		configure();
 	}
 
-	private final Map<String, ACLStorage>dbMap = new HashMap<String, ACLStorage>();
+	private final Map<String, ACLStorage>dbMap = new HashMap<>();
 
 	public ACLStorage getDB(String name){
 		return dbMap.get(name);

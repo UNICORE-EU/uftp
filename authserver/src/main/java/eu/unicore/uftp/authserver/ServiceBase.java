@@ -57,7 +57,7 @@ public abstract class ServiceBase extends ApplicationBaseResource implements Ker
 				excludes = a.getValue();
 			}
 			else if(a.getName().startsWith(base)){
-				logger.warn("Attribute <"+a.getName()+"> for "+base+" not known.");
+				logger.warn("Attribute <{}> for {} not known.", a.getName(), base);
 			}
 		}
 		UserAttributes ua = new UserAttributes(uid, gid, groups);
@@ -82,8 +82,7 @@ public abstract class ServiceBase extends ApplicationBaseResource implements Ker
 	
 	@Override
 	protected Map<String, Object> getProperties() throws Exception {
-		 Map<String, Object>res = new HashMap<>();
-		 return res;
+		 return new HashMap<>();
 	}
 
 }

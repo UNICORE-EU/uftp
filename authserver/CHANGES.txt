@@ -10,8 +10,8 @@ Full documentation is at: https://uftp-docs.readthedocs.io
 ***  see README-UPGRADE.txt for how to update
 ***
 
-Auth Server 2.7.0 (released mmm dd, 2022)
------------------------------------------
+Auth Server 2.7.0 (released Nov 3, 2022)
+----------------------------------------
 
 *** H2 DATABASE NOTE (if you use the data share feature and the H2 database)
 

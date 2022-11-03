@@ -81,11 +81,11 @@ public class AuthServiceProperties extends PropertiesHelper {
 			return;
 		}
 		String[] servers = serversProp.split(" +");
-		propsLogger.info("Will configure servers: "+Arrays.asList(servers));
+		propsLogger.info("Will configure servers: {}", Arrays.asList(servers));
 		for(String s: servers){
 			LogicalUFTPServer server = configure(s);
 			serverMap.put(s, server);
-			propsLogger.info("Configured server: "+server);
+			propsLogger.info("Configured server: {}", server);
 		}
 	}
 	

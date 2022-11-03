@@ -47,7 +47,7 @@ public class AuthServiceImpl extends ServiceBase {
 			throw new WebApplicationException(Status.UNAUTHORIZED);
 		}
 		String clientIP = AuthZAttributeStore.getTokens().getClientIP();
-		if(logger.isDebugEnabled())logger.debug("Incoming request from: "+clientIP+" "+json);
+		logger.debug("Incoming request from: {} {}", clientIP, json);
 
 		AuthServiceProperties props = kernel.getAttribute(AuthServiceProperties.class);
 		LogicalUFTPServer server = props.getServer(serverName);
@@ -96,7 +96,7 @@ public class AuthServiceImpl extends ServiceBase {
 		}
 
 		String clientIP = AuthZAttributeStore.getTokens().getClientIP();
-		if(logger.isDebugEnabled())logger.debug("Incoming tunnel request from: "+clientIP+" "+json);
+		logger.debug("Incoming tunnel request from: {} {}", clientIP, json);
 
 		UserAttributes authData = null;
 		CreateTunnelRequest tunnelRequest = gson.fromJson(json, CreateTunnelRequest.class);
