@@ -117,4 +117,10 @@ public class ShareDAO {
 	public String toString(){
 		return path+(isDirectory?" [D]" :"")+": owner="+ownerID+":"+uid+":"+gid+" target="+targetID+" : "+access;
 	}
+	
+	public boolean isExpired() {
+		long now = System.currentTimeMillis()/1000;
+		return expires>0 && expires<now;
+	}
+	
 }

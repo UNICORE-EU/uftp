@@ -109,6 +109,9 @@ public class ShareServiceImpl extends ShareServiceBase {
 				AuthResponse response = new TransferInitializer().initTransfer(transferRequest,uftp);            
 				response.secret = transferRequest.getSecret();
 				r = Response.ok().entity(gson.toJson(response)).build();
+				if(share.isOneTime()) {
+					shareDB.delete(share.getID());
+				}
 				logUsage(write, path, share);
 			}
 		}catch(Exception ex){
@@ -150,10 +153,7 @@ public class ShareServiceImpl extends ShareServiceBase {
 			if(AccessType.WRITE.equals(accessType)&&!getShareServiceProperties().isWriteAllowed()){
 				return handleError(401, "Writable shares not allowed", null, logger);
 			}
-			String path = json.getString("path");
-			if(!accessType.equals(AccessType.NONE)){
-				path = validate(uftp, path, ua, accessType);
-			}
+			String path = validate(uftp, json.getString("path"), ua, accessType);
 			String user = json.getString("user");
 			Target target = new SharingUser(normalize(user));
 			Owner owner = new Owner(getNormalizedCurrentUserName(), ua.uid, ua.gid);
