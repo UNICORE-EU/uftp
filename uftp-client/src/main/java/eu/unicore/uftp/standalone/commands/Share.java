@@ -59,6 +59,15 @@ public class Share extends Command {
 				.desc("Delete access to the shared path")
 				.required(false)
 				.build());
+		options.addOption(Option.builder("1").longOpt("one-time")
+				.desc("Allow only one access to a share (one-time share)")
+				.required(false)
+				.build());
+		options.addOption(Option.builder("L").longOpt("lifetime")
+				.desc("Limit lifetime of share (in seconds)")
+				.required(false)
+				.hasArg()
+				.build());
 		return options;
 	}
 
@@ -107,8 +116,9 @@ public class Share extends Command {
 			file = new File(System.getProperty("user.dir"), file.getPath());
 		}
 		path = file.getPath();
-			
-		JSONObject req = createRequest(accessType, target, path);
+		boolean onetime = line.hasOption("1");
+		long lifetime = Long.parseLong(line.getOptionValue("L", "0"));
+		JSONObject req = createRequest(accessType, target, path, onetime, lifetime);
 		BaseClient bc = getClient(url, client);
 		HttpResponse res = bc.post(req);
 		bc.checkError(res);
@@ -147,12 +157,18 @@ public class Share extends Command {
 		return new BaseClient(url, sec, client.getConnectionManager().getAuthData());
 	}
 	
-	protected JSONObject createRequest(String access, String target, String path) throws JSONException {
+	protected JSONObject createRequest(String access, String target, String path, boolean onetime, long lifetime) throws JSONException {
 		JSONObject o = new JSONObject();
 		AccessType t = AccessType.valueOf(access);
 		o.put("path", path);
 		o.put("user", target);
 		o.put("access", t.toString());
+		if(onetime) {
+			o.put("onetime", "true");
+		}
+		if(lifetime>0) {
+			o.put("lifetime", String.valueOf(lifetime));
+		}
 		return o;
 	}
 	

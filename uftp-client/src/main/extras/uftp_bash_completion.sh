@@ -19,16 +19,16 @@ _uftp()
   # looking for arguments matching to command
   case "${COMP_WORDS[1]}" in
     authenticate)
-    opts="$global_opts --streams --bandwithlimit --encrypt --compress"
+    opts="$global_opts --bandwithlimit --compress --encrypt --streams"
     ;;
     checksum)
-    opts="$global_opts --recurse --algorithm --bytes"
+    opts="$global_opts --algorithm --bytes --recurse"
     ;;
     cp)
-    opts="$global_opts --split-threshold --threads --encrypt --compress --preserve --recurse --bytes --streams --archive --bandwithlimit --resume"
+    opts="$global_opts --archive --bandwithlimit --bytes --compress --encrypt --preserve --recurse --resume --split-threshold --streams --threads"
     ;;
     get-share)
-    opts="$global_opts --streams --bandwithlimit --encrypt --compress"
+    opts="$global_opts --bandwithlimit --compress --encrypt --streams"
     ;;
     info)
     opts="$global_opts --raw"
@@ -40,16 +40,16 @@ _uftp()
     opts="$global_opts "
     ;;
     put-share)
-    opts="$global_opts --streams --bandwithlimit --encrypt --compress"
+    opts="$global_opts --bandwithlimit --compress --encrypt --streams"
     ;;
     rm)
-    opts="$global_opts --recurse --quiet"
+    opts="$global_opts --quiet --recurse"
     ;;
     share)
-    opts="$global_opts --delete --access --server --write --list"
+    opts="$global_opts --access --delete --lifetime --list --one-time --server --write"
     ;;
     sync)
-    opts="$global_opts --streams --bandwithlimit --encrypt --compress"
+    opts="$global_opts --bandwithlimit --compress --encrypt --streams"
     ;;
     tunnel)
     opts="$global_opts --listen"

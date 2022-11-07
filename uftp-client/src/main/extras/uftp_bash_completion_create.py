@@ -54,7 +54,8 @@ case_body = ""
 for command in commands:
 
     opts = find_options(command)
-    opts = set(opts) - set(global_opts)
+    opts = list(set(opts) - set(global_opts))
+    opts.sort()
     s = '    %s)\n    opts="$global_opts %s"\n    ;;\n' % (command,
                                                            " ".join(opts))
     case_body += s
