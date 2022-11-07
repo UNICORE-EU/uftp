@@ -88,7 +88,7 @@ public class ClientPool implements Closeable {
 	public void close() throws IOException{
 		logger.info("Shutting down client pool");
 		es.shutdown();
-		logger.info("Have "+tasks.size()+" tasks");
+		logger.debug("Have {} tasks", tasks.size());
 		for(Future<?>f: tasks){
 			try{
 				f.get();
@@ -107,7 +107,7 @@ public class ClientPool implements Closeable {
 	}
 	
 	public void get(final String remotePath, final String localName, final FileInfo fi,  final long size, final long offset, final boolean preserveAttributes){
-		Callable<Boolean> r = new Callable<Boolean>(){
+		Callable<Boolean> r = new Callable<>(){
 			public Boolean call() throws Exception {
 				File file = new File(localName);
 				
@@ -141,28 +141,23 @@ public class ClientPool implements Closeable {
 	public void getChunked(final String remotePath, final String local, final FileInfo remoteInfo, long start, long total){
 		int numChunks = computeNumChunks(total);
 		long chunkSize = total / numChunks;
-		if(logger.isDebugEnabled()) {
-			logger.debug("Downloading: '"+remotePath+"' --> '"+local
-					+"', length="+total+" numChunks="+numChunks+" chunkSize="+chunkSize);
-		}
+		logger.debug("Downloading: '{}' --> '{}', length={} numChunks={} chunkSize={}",
+					remotePath, local, total, numChunks, chunkSize);
 		final ParallelProgressBar pb = verbose? new ParallelProgressBar(local, total, numChunks) : null;
 		for(int i = 0; i<numChunks; i++){
 			final int j = i;
 			final long first = start;
 			final long end = i<numChunks-1 ? first + chunkSize : total-1;
-			Callable<Boolean> r = new Callable<Boolean>(){
+			Callable<Boolean> r = new Callable<>(){
 				public Boolean call() throws Exception {
 					UFTPClientThread t =(UFTPClientThread)Thread.currentThread();
 					UFTPSessionClient sc = t.getClient();
 					sc.setProgressListener(pb);
 					try{
-						if(logger.isDebugEnabled()) {
-							logger.debug("\nChunk <"+j+"> for '"+local+"' startByte="+first+" endbyte="+end);
-						}
+						logger.debug("Chunk <{}> for '{}' startByte={} endByte={}",
+								j, local, first, end);
 						clientFacade.downloadFileChunk(remotePath, local, first, end, sc, remoteInfo);
-						if(logger.isDebugEnabled()) {
-							logger.debug("\nChunk <"+j+"> for '"+local+"' DONE");
-						}
+						logger.debug("Chunk <{}> for '{}' DONE", j, local);
 						return Boolean.TRUE;
 					}catch(Exception ex){
 						logger.error("Error getting chunk ["+first+":"+end+"] <"+remotePath+">",ex);
@@ -183,14 +178,12 @@ public class ClientPool implements Closeable {
 	}
 	
 	public void put(final File local, final String remotePath, final long size, final long offset, final boolean preserveAttributes){
-		Callable<Boolean> r = new Callable<Boolean>(){
+		Callable<Boolean> r = new Callable<>(){
 			public Boolean call() throws Exception {
-				RandomAccessFile raf = null;
-				InputStream fis = null;
-				try{
-					String localPath = local.getPath();
-					raf = new RandomAccessFile(localPath, "r");
-					fis = Channels.newInputStream(raf.getChannel());
+				String localPath = local.getPath();
+				try(RandomAccessFile raf = new RandomAccessFile(localPath, "r");
+					InputStream fis = Channels.newInputStream(raf.getChannel()))
+				{
 					raf.seek(offset);
 					UFTPClientThread t =(UFTPClientThread)Thread.currentThread();
 					UFTPSessionClient sc = t.getClient();
@@ -206,8 +199,6 @@ public class ClientPool implements Closeable {
 					}
 					return Boolean.TRUE;
 				}finally{
-					closeQuietly(fis);
-					closeQuietly(raf);
 					if(verbose)progressBar.closeSingle();
 				}
 			}
@@ -220,12 +211,9 @@ public class ClientPool implements Closeable {
 		int numChunks = computeNumChunks(total);
 		long chunkSize = total / numChunks;
 		long last = total-1;
-		if(logger.isDebugEnabled()) {
-			logger.debug("Uploading: '"+local.getPath()+"' --> '"+remotePath
-					+"', length="+total+" numChunks="+numChunks+" chunkSize="+chunkSize);
-		}
+		logger.debug("Uploading: '{}' --> '{}', length={} numChunks={} chunkSize={}", 
+					local.getPath(), remotePath, total, numChunks, chunkSize);
 		final ParallelProgressBar pb = verbose? new ParallelProgressBar(local.getName(), total, numChunks) : null;
-
 		for(int i = 0; i<numChunks; i++){
 			final int j = i;
 			final long end = last;
@@ -236,13 +224,10 @@ public class ClientPool implements Closeable {
 					UFTPSessionClient sc = t.getClient();
 					sc.setProgressListener(pb);
 					try{
-						if(logger.isDebugEnabled()) {
-							logger.debug("\nChunk <"+j+"> for '"+local.getPath()+"' startByte="+first+" endbyte="+end);
-						}
+						logger.debug("Chunk <{}> for '{}' startByte={} endByte={}",
+									j, local.getPath(), first, end);
 						clientFacade.uploadFileChunk(remotePath, local.getPath(), first, end, sc);
-						if(logger.isDebugEnabled()) {
-							logger.debug("\nChunk <"+j+"> for '"+local.getPath()+"' DONE.");
-						}
+						logger.debug("Chunk <{}> for '{}' DONE.", j, local.getPath());
 						return Boolean.TRUE;
 					}catch(Exception ex){
 						logger.error("Error getting chunk ["+first+":"+end+"] <"+remotePath+">",ex);

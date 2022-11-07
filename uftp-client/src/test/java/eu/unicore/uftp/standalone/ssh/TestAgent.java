@@ -24,7 +24,7 @@ public class TestAgent {
 		File privKey = new File(System.getProperty("user.home")+"/.ssh/id_rsa");
 		SshKeyHandler handler = new SshKeyHandler(privKey, user, token);
 		handler.selectIdentity();
-		SSHKeyUC authData = handler.getAuthData();
+		SSHKeyUC authData = (SSHKeyUC)handler.getAuthData();
 		String pubKey = FileUtils.readFileToString(new File(System.getProperty("user.home")+"/.ssh/id_rsa.pub"), "UTF-8");
 		boolean success = SSHUtils.validateAuthData(authData, pubKey);
 		assertTrue("Signature validation failed!",success);
@@ -39,7 +39,7 @@ public class TestAgent {
 		SshKeyHandler handler = new SshKeyHandler(privKey, user, token);
 		handler.setVerbose(true);
 		handler.selectIdentity();
-		SSHKeyUC authData = handler.getAuthData();
+		SSHKeyUC authData = (SSHKeyUC)handler.getAuthData();
 		String pubKey = FileUtils.readFileToString(new File(System.getProperty("user.home")+"/.ssh/id_ed25519.pub"), "UTF-8");
 		boolean success = SSHUtils.validateAuthData(authData, pubKey);
 		assertTrue("Signature validation failed!",success);

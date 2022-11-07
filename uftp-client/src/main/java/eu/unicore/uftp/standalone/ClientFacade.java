@@ -376,7 +376,8 @@ public class ClientFacade {
 		logger.debug("checksum {}", fileSpec);
 		Map<String, String> params = connectionManager.extractConnectionParameters(fileSpec);
 		String path = params.get("path");
-		FileCrawler fileList = new RemoteFileCrawler(path, "./dummy/", sc);
+		RemoteFileCrawler fileList = new RemoteFileCrawler(path, "./dummy/", sc);
+		fileList.setCreateLocalDirs(false);
 		if (fileList.isSingleFile(path)) {
 				doChecksum(path, algorithm);
 		}

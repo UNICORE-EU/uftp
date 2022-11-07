@@ -7,6 +7,9 @@ import java.security.GeneralSecurityException;
 import org.apache.commons.codec.binary.Base64;
 
 import eu.emi.security.authn.x509.helpers.PasswordSupplier;
+import eu.unicore.services.rest.client.IAuthCallback;
+import eu.unicore.services.rest.security.sshkey.Password;
+import eu.unicore.services.rest.security.sshkey.SSHKey;
 import eu.unicore.services.rest.security.sshkey.SSHKeyUC;
 import eu.unicore.services.rest.security.sshkey.SSHUtils;
 import eu.unicore.uftp.dpc.Utils;
@@ -32,10 +35,13 @@ public class SshKeyHandler implements PasswordSupplier {
 	// will use agent with a user-selected identity
 	private boolean selectIdentity = false;
 
+	private boolean preferJWT = false;
+
 	public SshKeyHandler(File privateKey, String userName, String token) {
 		this.privateKey = privateKey;
 		this.userName = userName;
 		this.token = token;
+		this.preferJWT = Boolean.parseBoolean(Utils.getProperty("UFTP_SSH_PREFER_JWT", "false"));
 	}
 	
 	public void setVerbose(boolean verbose) {
@@ -47,8 +53,8 @@ public class SshKeyHandler implements PasswordSupplier {
 		return ConsoleUtils.readPassword("Enter passphrase for '"+privateKey.getAbsolutePath()+"': ").toCharArray();
 	}
 	
-	public SSHKeyUC getAuthData() throws Exception {
-		SSHKeyUC result = null;
+	public IAuthCallback getAuthData() throws Exception {
+		IAuthCallback result = null;
 		if(SSHAgent.isAgentAvailable()){
 			try{
 				result = useAgent();
@@ -65,7 +71,11 @@ public class SshKeyHandler implements PasswordSupplier {
 		this.selectIdentity = true;
 	}
 	
-	protected SSHKeyUC create() throws GeneralSecurityException, IOException {
+	public void preferJWT() {
+		this.preferJWT = true;
+	}
+	
+	protected IAuthCallback create() throws GeneralSecurityException, IOException {
 		if(privateKey == null || !privateKey.exists()){
 	                 throw new IOException("No private key found!");
 		}
@@ -75,12 +85,25 @@ public class SshKeyHandler implements PasswordSupplier {
 				return getPassword();
 			}
 		};
-		SSHKeyUC sshauth = SSHUtils.createAuthData(privateKey, pf , token);
-		sshauth.username = userName;
-		return sshauth;
+		IAuthCallback result = null;
+		if(preferJWT) {
+			// TODO SSHKey should use PasswordSupplier
+			Password pw = new Password(null) {
+				@Override
+				public char[] getPassword(){
+					return getPassword();
+				}};
+			result = new SSHKey(userName, privateKey, pw);
+		}
+		else {
+			SSHKeyUC sshauth = SSHUtils.createAuthData(privateKey, pf , token);
+			sshauth.username = userName;
+			result = sshauth;
+		}
+		return result;
 	}
 
-	protected SSHKeyUC useAgent() throws Exception {
+	protected IAuthCallback useAgent() throws Exception {
 		SSHAgent agent = new SSHAgent();
 		agent.setVerbose(verbose);
 		if(selectIdentity) {
@@ -90,7 +113,6 @@ public class SshKeyHandler implements PasswordSupplier {
 				return null;
 			}
 		}
-		
 		byte[] signature = agent.sign(token);
 		SSHKeyUC authData = new SSHKeyUC();
 		authData.signature = new String(Base64.encodeBase64(signature));

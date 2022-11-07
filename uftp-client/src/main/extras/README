@@ -28,7 +28,7 @@ Add the following lines to your .bashrc:
   fi
 
 Of course, change the lines so that they point to the correct location
-of your ucc.bash_completion.sh.
+of your uftp_bash_completion.sh.
 
 If you now start a new shell, the completion for ucc options should
 work, e.g. typing

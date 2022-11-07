@@ -25,7 +25,7 @@ public class Info extends Command {
 	protected Options getOptions() {
 		Options options = super.getOptions();
 		options.addOption(Option.builder("R").longOpt("raw")
-				.desc("Show JSON response from server")
+				.desc("Print the JSON response from server")
 				.required(false)
 				.build());
 		return options;
@@ -52,12 +52,13 @@ public class Info extends Command {
 		}
 		else{
 			String s = EntityUtils.toString(res.getEntity());
-			if(raw) {
-				System.out.println(s);
-				System.out.println();
-			}
 			JSONObject j = new JSONObject(s);
-			System.out.println(auth.parseInfo(j));
+			if(raw) {
+				System.out.println(j.toString(2));
+			}
+			else {
+				System.out.println(auth.parseInfo(j));
+			}
 		}
 	}
 	

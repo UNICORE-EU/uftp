@@ -8,6 +8,7 @@ import org.apache.http.HttpResponse;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import eu.emi.security.authn.x509.helpers.BinaryCertChainValidator;
 import eu.unicore.security.Client;
 import eu.unicore.services.rest.client.BaseClient;
 import eu.unicore.uftp.datashare.AccessType;
@@ -138,8 +139,12 @@ public class Share extends Command {
 		return "Create, update and delete shares.";
 	}
 	
-	protected BaseClient getClient(String url, ClientFacade client) throws Exception {	
-		return new BaseClient(url, new DefaultClientConfiguration(), client.getConnectionManager().getAuthData());
+	protected BaseClient getClient(String url, ClientFacade client) throws Exception {
+		DefaultClientConfiguration sec = new DefaultClientConfiguration();
+		sec.setValidator(new BinaryCertChainValidator(true));
+        sec.setSslAuthn(true);
+        sec.setSslEnabled(true);
+		return new BaseClient(url, sec, client.getConnectionManager().getAuthData());
 	}
 	
 	protected JSONObject createRequest(String access, String target, String path) throws JSONException {

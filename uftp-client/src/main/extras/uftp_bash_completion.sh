@@ -5,8 +5,8 @@ _uftp()
   COMPREPLY=()
   cur=`_get_cword`
   prev="${COMP_WORDS[COMP_CWORD-1]}"
-  commands="cp get info ls mkdir put rm share sync tunnel"
-  global_opts="--auth --group --identity --oidc-agent --password --user --verbose --help"
+  commands="authenticate checksum cp get-share info ls mkdir put-share rm share sync tunnel"
+  global_opts="--auth --group --help --identity --client --oidc-agent --password --user --verbose --help"
 
 
   # parsing for uftp command word (2nd word in commandline.
@@ -18,35 +18,41 @@ _uftp()
 
   # looking for arguments matching to command
   case "${COMP_WORDS[1]}" in
-    cp)
-    opts="$global_opts --bytes --threads --encrypt --client --resume --archive --recurse --compress --bandwithlimit --preserve --streams --split-threshold"
+    authenticate)
+    opts="$global_opts --streams --bandwithlimit --encrypt --compress"
     ;;
-    get)
-    opts="$global_opts --compress --streams --bandwithlimit --encrypt --client"
+    checksum)
+    opts="$global_opts --recurse --algorithm --bytes"
+    ;;
+    cp)
+    opts="$global_opts --split-threshold --threads --encrypt --compress --preserve --recurse --bytes --streams --archive --bandwithlimit --resume"
+    ;;
+    get-share)
+    opts="$global_opts --streams --bandwithlimit --encrypt --compress"
     ;;
     info)
     opts="$global_opts --raw"
     ;;
     ls)
-    opts="$global_opts --streams --client --human-readable --bandwithlimit --compress --encrypt"
+    opts="$global_opts --human-readable"
     ;;
     mkdir)
-    opts="$global_opts --compress --streams --bandwithlimit --encrypt --client"
+    opts="$global_opts "
     ;;
-    put)
-    opts="$global_opts --compress --streams --bandwithlimit --encrypt --client"
+    put-share)
+    opts="$global_opts --streams --bandwithlimit --encrypt --compress"
     ;;
     rm)
-    opts="$global_opts --quiet --encrypt --client --bandwithlimit --compress --streams"
+    opts="$global_opts --recurse --quiet"
     ;;
     share)
-    opts="$global_opts --list --anonymous --delete --write"
+    opts="$global_opts --delete --access --server --write --list"
     ;;
     sync)
-    opts="$global_opts --compress --streams --bandwithlimit --encrypt --client"
+    opts="$global_opts --streams --bandwithlimit --encrypt --compress"
     ;;
     tunnel)
-    opts="$global_opts --streams --client --bandwithlimit --compress --encrypt --listen"
+    opts="$global_opts --listen"
     ;;
 
   esac

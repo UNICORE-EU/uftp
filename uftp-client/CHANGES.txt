@@ -4,8 +4,8 @@ https://sourceforge.net/p/unicore/uftp-issues/
 
 
 
-UFTP Client 1.5.0 (released mmm dd, 2022)
------------------------------------------
+UFTP Client 1.5.0 (released Nov 7, 2022)
+----------------------------------------
 
 *** JAVA VERSION NOTE:
 
@@ -13,6 +13,10 @@ UFTP Client 1.5.0 (released mmm dd, 2022)
 
  - documentation at https://uftp-docs.readthedocs.io
  - update to UNICORE 9.0 libs
+ - improvement: 'info' outputs server version and fixes
+   UFTP server status for UNICORE/X auth endpoints
+ - fix: running "checksum" using wildcards resulted in
+   creation of local "dummy" directories
 
 UFTP Client 1.4.4 (released Feb 03, 2022)
 ----------------------------------------

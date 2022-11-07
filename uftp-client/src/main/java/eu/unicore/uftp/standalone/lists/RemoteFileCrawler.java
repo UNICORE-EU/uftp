@@ -20,6 +20,8 @@ public class RemoteFileCrawler extends FileCrawler {
     private final String path;
 
     private final String localTarget;
+    
+    private boolean createLocalDirs = true;
 
     private final UFTPSessionClient sc;
     
@@ -87,7 +89,7 @@ public class RemoteFileCrawler extends FileCrawler {
         			String newDestination = isDevNull(destination) ? destination :
         				FilenameUtils.separatorsToSystem(FilenameUtils.concat(destination, name));
         			String newSource = FilenameUtils.concat(remoteDir, name);
-        			if(!isDevNull(newDestination))Files.createDirectories(Paths.get(newDestination));
+        			if(createLocalDirs && !isDevNull(newDestination))Files.createDirectories(Paths.get(newDestination));
         			if(recursive){
         				// Unix 'cp' behaviour: when recursing, all subdirectories
         				// are copied
@@ -114,4 +116,7 @@ public class RemoteFileCrawler extends FileCrawler {
         return !name.contains("*") && !name.contains("?");
     }
 
+    public void setCreateLocalDirs(boolean createLocalDirs) {
+    	this.createLocalDirs = createLocalDirs;
+    }
 }

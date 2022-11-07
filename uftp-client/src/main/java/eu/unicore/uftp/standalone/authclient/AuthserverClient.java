@@ -2,6 +2,7 @@ package eu.unicore.uftp.standalone.authclient;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.Formatter;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
@@ -102,23 +103,24 @@ public class AuthserverClient implements AuthClient {
 	@Override
 	public String parseInfo(JSONObject info) throws JSONException {
 		StringBuilder sb = new StringBuilder();
-		sb.append("Client identity:    ").append(getID(info)).append(crlf);
-		sb.append("Client auth method: ").append(authData.getType()).append(crlf);
-		sb.append("Auth server type:   AuthServer").append(crlf);
-		for(String key: info.keySet()) {
-			if("client".equals(key) || "server".equals(key))continue;
-			JSONObject server = info.getJSONObject(key);
-			sb.append("Server: ").append(key).append(crlf);
-			sb.append("  URL base:         ").append(infoURL).append("/").append(key).append(":").append(crlf);
-			sb.append("  Description:      ").append(server.optString("description", "N/A")).append(crlf);
-			sb.append("  Remote user info: ").append(getUserInfo(server)).append(crlf);
-			sb.append("  Sharing support:  ").append(getSharingSupport(server)).append(crlf);
-			try {
-				String serverStatus = getServerStatus(server);
-				sb.append("  Server status:    ").append(serverStatus).append(crlf);
-			}catch(JSONException e) {}
+		try(Formatter f = new Formatter(sb, null)){
+			f.format("Client identity:    %s%s", getID(info),crlf);
+			f.format("Client auth method: %s%s", authData.getType(),crlf);
+			f.format("Auth server type:   AuthServer v%s%s", getServerVersion(info), crlf);
+			for(String key: info.keySet()) {
+				if("client".equals(key) || "server".equals(key))continue;
+				JSONObject server = info.getJSONObject(key);
+				f.format("Server: %s%s", key, crlf);
+				f.format("  URL base:         %s/%s:%s", infoURL, key, crlf);
+				f.format("  Description:      %s%s", server.optString("description", "N/A"), crlf);
+				f.format("  Remote user info: %s%s", getUserInfo(server), crlf);
+				f.format("  Sharing support:  %s%s", getSharingSupport(server), crlf);
+				try {
+					String serverStatus = getServerStatus(server);
+					f.format("  Server status:    %s%s", serverStatus, crlf);
+				}catch(JSONException e) {}
+			}
 		}
-		
 		return sb.toString();
 	}
 
@@ -138,7 +140,11 @@ public class AuthserverClient implements AuthClient {
 	private String getServerStatus(JSONObject info) throws JSONException {
 		return info.optString("status", "N/A");
 	}
-	
+
+	private String getServerVersion(JSONObject info) throws JSONException {
+		return info.getJSONObject("server").optString("version", "???");
+	}
+
 	private String getSharingSupport(JSONObject info) throws JSONException {
 		boolean enabled = Boolean.parseBoolean(info.getJSONObject("dataSharing").optString("enabled", "N/A"));
 		return enabled? "enabled" : "not available";

@@ -2,6 +2,7 @@ package eu.unicore.uftp.standalone.authclient;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.Formatter;
 import java.util.Random;
 
 import org.apache.commons.io.IOUtils;
@@ -100,14 +101,16 @@ public class UNICOREStorageAuthClient implements AuthClient {
 	@Override
 	public String parseInfo(JSONObject info) throws JSONException {
 		StringBuilder sb = new StringBuilder();
-		sb.append("Client identity:    ").append(getID(info)).append(crlf);
-		sb.append("Client auth method: ").append(authData.getType()).append(crlf);
-		sb.append("Auth server type:   UNICORE/X").append(crlf);
-		sb.append("Remote user info:   ").append(getUserInfo(info)).append(crlf);
-		try {
-			String serverStatus = getServerStatus(info);
-			sb.append("UFTP Server status: ").append(serverStatus).append(crlf);
-		}catch(JSONException e) {}
+		try(Formatter f = new Formatter(sb, null)){
+			f.format("Client identity:    %s%s", getID(info),crlf);
+			f.format("Client auth method: %s%s", authData.getType(),crlf);
+			f.format("Auth server type:   UNICORE/X v%s%s", getServerVersion(info), crlf);
+			f.format("Remote user info:   %s%s", getUserInfo(info), crlf);
+			try {
+				String serverStatus = getServerStatus(info);
+				f.format("UFTP Server status: %s%s", serverStatus, crlf);
+			}catch(JSONException e) {}
+		}
 		return sb.toString();
 	}
 
@@ -130,9 +133,16 @@ public class UNICOREStorageAuthClient implements AuthClient {
 
 	private String getServerStatus(JSONObject info) throws JSONException {
 		JSONObject status = info.getJSONObject("server").getJSONObject("externalConnections");
-		return status.optString("UFTPD Server", "N/A");
+		for(String key: status.keySet()) {
+			if(!key.startsWith("UFTPD"))continue;
+			return status.getString(key);
+		}
+		return "N/A";
 	}
-	
+
+	private String getServerVersion(JSONObject info) throws JSONException {
+		return info.getJSONObject("server").optString("version", "???");
+	}
 	
 	public static String makeInfoURL(String url) {
 		return url.split("/rest/core")[0]+"/rest/core";
