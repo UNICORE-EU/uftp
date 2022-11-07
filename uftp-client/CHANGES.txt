@@ -13,8 +13,8 @@ UFTP Client 1.5.0 (released Nov 7, 2022)
 
  - documentation at https://uftp-docs.readthedocs.io
  - update to UNICORE 9.0 libs
- - improvement: 'info' outputs server version and fixes
-   UFTP server status for UNICORE/X auth endpoints
+ - 'share': add options for one-time and limited lifetime shares
+ - 'info' : show server version and improve status output
  - fix: running "checksum" using wildcards resulted in
    creation of local "dummy" directories
 
