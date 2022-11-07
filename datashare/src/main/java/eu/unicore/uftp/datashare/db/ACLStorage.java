@@ -91,9 +91,13 @@ public class ACLStorage {
 	}
 	
 	public ShareDAO read(String uniqueID) throws Exception {
-		return getPersist().read(uniqueID);
+		ShareDAO d = getPersist().read(uniqueID);
+		if(d!=null && d.isExpired()) {
+			delete(uniqueID);
+			d = null;
+		}
+		return d;
 	}
-
 
 	public Collection<ShareDAO>readAll(String path) throws Exception {
 		return readAll(path, true);
@@ -112,7 +116,8 @@ public class ACLStorage {
 		for(String id: ids){
 			ShareDAO d = storage.read(id);
 			if(d!=null) {
-				if(owner==null || owner.getName().equals(d.getOwnerID())) {
+				if(d.isExpired())delete(id);
+				else if(owner==null || owner.getName().equals(d.getOwnerID())) {
 					result.add(d);
 				}
 			}
@@ -129,7 +134,14 @@ public class ACLStorage {
 		Collection<String> ids = storage.getIDs("target", target.getID());
 		for(String id: ids){
 			ShareDAO d = storage.read(id);
-			if(d!=null)result.add(d);
+			if(d!=null) {
+				if(d.isExpired()) {
+					delete(id);
+				}
+				else {
+					result.add(d);
+				}
+			}
 		}
 		return result;
 	}
@@ -139,13 +151,13 @@ public class ACLStorage {
 		Collection<String> ids = storage.getIDs("owner", owner.getName());
 		for(String id: ids){
 			ShareDAO d = storage.read(id);
-			long now = System.currentTimeMillis() / 1000;
 			if(d!=null) {
-				long expires = d.getExpires();
-				if(expires>0 && expires<now) {
+				if(d.isExpired()) {
 					delete(id);
 				}
-				result.add(d);
+				else {
+					result.add(d);
+				}
 			}
 		}
 		return result;

@@ -69,6 +69,9 @@ public class AccessServiceImpl extends ShareServiceBase {
 				handlePath(path, share);
 				logUsage(false, path, share);
 				r = doDownload(share, uftp, clientIP, range);
+				if(share.isOneTime()) {
+					shareDB.delete(uniqueID);
+				}
 			}else{
 				throw new WebApplicationException(Status.UNAUTHORIZED);
 			}
@@ -143,6 +146,9 @@ public class AccessServiceImpl extends ShareServiceBase {
 				handlePath(path, share);
 				logUsage(true, path, share);
 				r = doUpload(content, share, uftp, clientIP);
+				if(share.isOneTime()) {
+					shareDB.delete(uniqueID);
+				}
 			}else{
 				throw new WebApplicationException(Status.UNAUTHORIZED);
 			}

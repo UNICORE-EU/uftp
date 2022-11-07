@@ -17,8 +17,7 @@
 
   <properties>
     <uftp.version>2.13.0</uftp.version>
-    <datashare.version>0.6.0</datashare.version>
-    
+    <datashare.version>0.7.0</datashare.version>
     <package.version>${project.version}</package.version>
     <package.release>1</package.release>
   </properties>
