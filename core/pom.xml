@@ -3,14 +3,14 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>eu.unicore.uftp</groupId>
   <artifactId>uftp-core</artifactId>
-  <version>2.13.0</version>
+  <version>2.14.0</version>
   <packaging>jar</packaging>
   <name>UFTP core library and Java UFTPD server</name>
 
   <parent>
     <groupId>eu.unicore.uftp</groupId>
     <artifactId>uftp-parent</artifactId>
-    <version>2.13.0</version>
+    <version>2.14.0</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
@@ -60,10 +60,6 @@
 	<exclusion>
 	  <groupId>org.apache.logging.log4j</groupId>
 	  <artifactId>log4j-jcl</artifactId>
-	</exclusion>
-	<exclusion>
-	  <groupId>org.apache.logging.log4j</groupId>
-	  <artifactId>log4j-jul</artifactId>
 	</exclusion>
 	<exclusion>
 	  <groupId>org.slf4j</groupId>

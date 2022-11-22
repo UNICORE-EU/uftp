@@ -16,7 +16,7 @@ import eu.unicore.uftp.dpc.Utils;
 
 public class ClientFactory {
 
-	public static AbstractUFTPClient create(String[] args)throws Exception {
+	public static Runnable create(String[] args)throws Exception {
 		Options options=ClientFactory.createOptions();
 		CommandLineParser parser = new DefaultParser();
 		CommandLine line;
@@ -143,7 +143,7 @@ public class ClientFactory {
 
 	 public static void main(String[] args) throws Exception {
 		 try {
-			 AbstractUFTPClient client = ClientFactory.create(args);
+			 Runnable client = ClientFactory.create(args);
 			 client.run();
 			 System.exit(0);
 		 } catch (Exception ex) {

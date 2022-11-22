@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -30,6 +31,7 @@ import eu.unicore.uftp.rsync.Slave;
 import eu.unicore.uftp.rsync.SocketMasterChannel;
 import eu.unicore.uftp.rsync.SocketSlaveChannel;
 import eu.unicore.uftp.server.UFTPCommands;
+import eu.unicore.util.Pair;
 
 /**
  * Client class for managing a UFTP session. A UFTP session supports multiple
@@ -37,7 +39,7 @@ import eu.unicore.uftp.server.UFTPCommands;
  *
  * @author schuller
  */
-public class UFTPSessionClient extends AbstractUFTPClient {
+public class UFTPSessionClient extends AbstractUFTPClient implements Runnable {
 
 	private static final Logger logger = Utils.getLogger(Utils.LOG_CLIENT, UFTPSessionClient.class);
 	 
@@ -85,8 +87,8 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 		try {
 			logger.info("Connecting...");
 			connect();
-			BufferedReader localReader = new BufferedReader(new FileReader(commandFile));
-			try {
+			try (BufferedReader localReader = new BufferedReader(new FileReader(commandFile)))
+			{
 				String line;
 				do {
 					line = localReader.readLine();
@@ -105,8 +107,6 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 						cmd.run();
 					}
 				} while (true);
-			} finally {
-				Utils.closeQuietly(localReader);
 			}
 			logger.info("Exiting UFTP session.");
 		} catch (AuthorizationFailureException ex) {
@@ -152,6 +152,31 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 	 */
 	public long get(String remoteFile, long offset, long length, OutputStream localTarget)
 			throws IOException {
+		long size = prepareGet(remoteFile, offset, length, localTarget);
+		return moveData(size);
+	}
+	
+	/**
+	 * negotiate a download of the given (part of a) file with the server, 
+	 * and return the connected SocketChannel ready for use with a selector
+	 *
+	 * @param remoteFile - the remote file
+	 * @param offset - the first byte to read, starting at "0"
+	 * @param length - the number of bytes to read
+	 * @return a Pair containing the socket channel and the number of bytes to read from that channel
+	 * @throws IOException
+	 */
+	public Pair<SocketChannel, Long> prepareAsyncGet(String remoteFile, long offset, long length)
+			throws IOException {
+		assert numcons ==1: "async mode requires single TCP stream per connection - numConnections must be 1";
+		long size = prepareGet(remoteFile, offset, length, null);
+		SocketChannel channel = socket.getChannel();
+		channel.configureBlocking(false);
+		return new Pair<>(channel, size);
+	}
+
+	protected long prepareGet(String remoteFile, long offset, long length, OutputStream localTarget)
+			throws IOException {
 		checkConnected();
 		openDataConnection();
 		if(offset>=0 && length>0) sendRangeCommand(offset, length);
@@ -161,10 +186,29 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 		if(progressListener!=null && progressListener instanceof UFTPProgressListener2){
 			((UFTPProgressListener2)progressListener).setTransferSize(size);
 		}
-		prepareGet(localTarget);
-		return moveData(size);
+		setupForGet(localTarget);
+		return size;
 	}
 
+	/**
+	 * negotiate upload to of the given (part of a) file with the server, 
+	 * and return the connected SocketChannel ready for use with a selector
+	 *
+	 * @param remoteFile - the remote file
+	 * @param size - number of bytes to write
+	 * @param offset - the offset to start writing the remote file at
+	 * @return number of bytes written
+	 * @throws IOException
+	 */
+	public Pair<SocketChannel, Long> prepareAsyncPut(String remoteFile, long size, Long offset)
+			throws IOException {
+		assert numcons ==1: "async mode requires single TCP stream per connection - numConnections must be 1";
+		preparePut(remoteFile, size, offset, null);
+		SocketChannel channel = socket.getChannel();
+		channel.configureBlocking(false);
+		return new Pair<>(channel, size);
+	}
+	
 	/**
 	 * write data to a remote file
 	 *
@@ -176,11 +220,16 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 	 * @throws IOException
 	 */
 	public long put(String remoteFile, long size, Long offset, InputStream localSource) throws IOException {
+		preparePut(remoteFile, size, offset, localSource);
+		return moveData(size);
+	}
+	
+	protected void preparePut(String remoteFile, long size, Long offset, InputStream localSource)
+	throws IOException {
 		checkConnected();
 		openDataConnection();
 		sendStoreCommand(remoteFile, size, offset);
-		preparePut(localSource);
-		return moveData(size);
+		setupForPut(localSource);
 	}
 
 	/**
@@ -205,10 +254,7 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 	 * @throws IOException
 	 */
 	public long writeAll(String remoteFile, InputStream localSource, boolean closeDataWhenDone) throws IOException {
-		checkConnected();
-		openDataConnection();
-		sendStoreCommand(remoteFile);
-		preparePut(localSource);
+		preparePut(remoteFile, -1, null, localSource);
 		return moveData(-1, closeDataWhenDone);
 	}
 	
@@ -228,7 +274,7 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 			runCommand("ALLO " + size);
 		}
 		runCommand("APPE " + remoteFile);
-		preparePut(localSource);
+		setupForPut(localSource);
 		return moveData(size);
 	}
 	
@@ -555,6 +601,9 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 		return total;
 	}
 	
+	public String readControl() throws IOException {
+		return client.readControl();
+	}
 
 	//sleep time to bring down rate
 	private long sleepTime = 0;
@@ -583,7 +632,7 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 		Thread.sleep(sleepTime);
 	}
 
-	private Reply runCommand(String command) throws IOException {
+	public Reply runCommand(String command) throws IOException {
 		client.sendControl(command);
 		Reply reply = Reply.read(client);
 		if (reply.isError()) {
@@ -623,10 +672,6 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 			runCommand("ALLO " + size);
 		}
 		runCommand("STOR " + remoteFile);
-	}
-	
-	private void sendStoreCommand(String remoteFile) throws IOException {
-		sendStoreCommand(remoteFile, -1, null);
 	}
 
 	private void enableKeepAlive() throws IOException {

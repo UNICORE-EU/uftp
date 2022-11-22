@@ -31,6 +31,7 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.Logger;
 
 import eu.unicore.uftp.server.DefaultFileAccess;
@@ -369,6 +370,7 @@ public class Utils {
 	}
 
 	public static void closeQuietly(Closeable x) {
+		IOUtils.closeQuietly(x);
 		try {
 			if(x!=null)x.close();
 		} catch (IOException ex) {}

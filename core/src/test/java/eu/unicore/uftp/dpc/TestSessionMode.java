@@ -790,13 +790,10 @@ public class TestSessionMode extends ClientServerTestBase{
 	}
 
 	private void makeTestFile2(File file, int lines) throws IOException {
-		FileOutputStream fos = new FileOutputStream(file);
-		try {
+		try(FileOutputStream fos = new FileOutputStream(file)) {
 			for (int i = 0; i < lines; i++) {
 				fos.write( (i+": test1 test2 test3\n").getBytes());
 			}
-		} finally {
-			fos.close();
 		}
 	}
 	

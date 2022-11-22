@@ -44,7 +44,7 @@ import eu.unicore.uftp.server.workers.ForwardThread;
  * 
  * @author bjoernh
  */
-public class TunnelClient extends AbstractUFTPClient {
+public class TunnelClient extends AbstractUFTPClient implements Runnable {
 
 	private final ServerSocket tunnelSvrSocket;
 

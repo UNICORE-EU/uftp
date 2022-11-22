@@ -18,7 +18,7 @@ import eu.unicore.uftp.jparss.PSocket;
  *
  * @author schuller
  */
-public abstract class AbstractUFTPClient implements Runnable, Closeable {
+public abstract class AbstractUFTPClient implements Closeable {
 
 	/**
 	 * Errorcodes
@@ -105,7 +105,7 @@ public abstract class AbstractUFTPClient implements Runnable, Closeable {
 	 *            local output stream
 	 * @throws IOException
 	 */
-	protected void prepareGet(OutputStream localTarget) throws IOException {
+	protected void setupForGet(OutputStream localTarget) throws IOException {
 		if (numcons == 1) {
 			if (key != null) {
 				reader = Utils.getDecryptStream(socket.getInputStream(), key);
@@ -129,7 +129,7 @@ public abstract class AbstractUFTPClient implements Runnable, Closeable {
 	 *            local input source
 	 * @throws IOException
 	 */
-	protected void preparePut(InputStream localSource) throws IOException {
+	protected void setupForPut(InputStream localSource) throws IOException {
 		writer = socket.getOutputStream();
 		if (numcons == 1) {
 			if (key != null) {
