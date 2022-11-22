@@ -15,7 +15,7 @@
   </parent>
 
   <properties>
-    <auth.version>2.7.0</auth.version>
+    <auth.version>2.8.0</auth.version>
     <core.version>2.14.0</core.version>
     <jsch.version>0.0.9</jsch.version>
     <jnr.version>0.38.19</jnr.version>

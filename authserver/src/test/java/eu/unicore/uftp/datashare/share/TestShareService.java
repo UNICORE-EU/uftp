@@ -12,10 +12,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.entity.ContentType;
-import org.apache.http.util.EntityUtils;
+import org.apache.hc.core5.http.ClassicHttpResponse;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.After;
@@ -119,9 +118,7 @@ public class TestShareService {
 		o.put("user","CN=Other User, O=Testing");
 		o.put("group","hpc1");
 		bc.setURL(resource);
-		HttpResponse response = bc.post(o);
-		String loc = response.getFirstHeader("Location").getValue();
-		cleanup(response);
+		String loc = bc.create(o);
 		System.out.println(loc);
 		// check we have an entry
 		ACLStorage acl = k.getAttribute(ShareServiceProperties.class).getDB("TEST");
@@ -199,11 +196,8 @@ public class TestShareService {
 		o.put("access",access);
 		o.put("user",user);
 		bc.setURL(resource);
-		HttpResponse response = bc.post(o);
-		String shareLink = response.getFirstHeader("Location").getValue();
+		String shareLink = bc.create(o);
 		System.out.println(shareLink);
-		cleanup(response);
-		
 		bc.setURL(shareLink);
 		return bc.getJSON();
 	}
@@ -236,10 +230,9 @@ public class TestShareService {
 		}
 		// download the file
 		bc.setURL(shareLink);
-		HttpResponse r = bc.get(null, headers);
-		String s = EntityUtils.toString(r.getEntity());
-		cleanup(r);
-		return s;
+		try(ClassicHttpResponse r = bc.get(null, headers)){
+			return EntityUtils.toString(r.getEntity());
+		}
 	}
 
 	private void checkUpload() throws Exception {
@@ -254,12 +247,9 @@ public class TestShareService {
 		// upload file
 		ByteArrayInputStream content = new ByteArrayInputStream("some content".getBytes());
 		bc.setURL(shareLink+"/test.txt");
-		HttpResponse r = bc.put(content, ContentType.APPLICATION_OCTET_STREAM);
-		cleanup(r);
-		
+		bc.putQuietly(content, ContentType.APPLICATION_OCTET_STREAM);
 		// check it
 		assertTrue(FileUtils.readFileToString(new File(f, "test.txt"), "UTF-8").contains("some content"));
-		
 		// delete share via URL
 		// bc.delete(shareLink);
 	}
@@ -293,12 +283,5 @@ public class TestShareService {
 	@AfterClass
 	public static void stopUFTPD() throws Exception {
 		server.stop();
-	}
-
-	private void cleanup(HttpResponse response) throws Exception {
-		EntityUtils.consume(response.getEntity());
-		if(response instanceof CloseableHttpResponse){
-			((CloseableHttpResponse)response).close();
-		}
 	}
 }

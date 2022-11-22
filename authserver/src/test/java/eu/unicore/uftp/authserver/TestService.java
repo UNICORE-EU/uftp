@@ -8,8 +8,8 @@ import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpResponse;
+import org.apache.hc.core5.http.ClassicHttpResponse;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.json.JSONObject;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -24,7 +24,7 @@ import eu.unicore.services.admin.AdminActionResult;
 import eu.unicore.services.rest.client.BaseClient;
 import eu.unicore.services.rest.client.IAuthCallback;
 import eu.unicore.services.rest.client.UsernamePassword;
-import eu.unicore.services.rest.security.sshkey.Password;
+import eu.unicore.services.rest.security.sshkey.PasswordSupplierImpl;
 import eu.unicore.services.rest.security.sshkey.SSHKey;
 import eu.unicore.services.server.JettyServer;
 import eu.unicore.uftp.authserver.admin.ShowUserInfo;
@@ -51,22 +51,17 @@ public class TestService {
 		Gson gson = new GsonBuilder().create();
 		AuthRequest req = new AuthRequest();
 		req.serverPath="/tmp/foo";
-		HttpResponse response = client.post(new JSONObject(gson.toJson(req)));
-		int status = response.getStatusLine().getStatusCode();
-		assertEquals("got "+response.getStatusLine(),200, status);
-		String reply = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
-		System.out.println("Service reply: "+reply);
-
+		try(ClassicHttpResponse response = client.post(new JSONObject(gson.toJson(req)))){
+			System.out.println("Service reply: " + EntityUtils.toString(response.getEntity()));
+		}
 		authUrl = serverInfo.getString("href")+"/tunnel";
 		client.setURL(authUrl);
 		CreateTunnelRequest req2 = new CreateTunnelRequest();
 		req2.targetHost = "localhost";
 		req2.targetPort = 9001;
-		response = client.post(new JSONObject(gson.toJson(req)));
-		status=response.getStatusLine().getStatusCode();
-		assertEquals("got "+response.getStatusLine(),200, status);
-		reply=IOUtils.toString(response.getEntity().getContent(), "UTF-8");
-		System.out.println("Service reply: "+reply);
+		try(ClassicHttpResponse response = client.post(new JSONObject(gson.toJson(req)))){
+			System.out.println("Service reply: " + EntityUtils.toString(response.getEntity()));
+		}
 	}
 
 
@@ -85,7 +80,7 @@ public class TestService {
 	public void testSSHKeyAuthentication() throws Exception {
 		// static public key from file
 		IAuthCallback auth = new SSHKey("demouser", new File("src/test/resources/ssh/id_ed25519"),
-				new Password("test123".toCharArray()));
+				new PasswordSupplierImpl("test123".toCharArray()));
 		JettyServer server=k.getServer();
 		String url = server.getUrls()[0].toExternalForm()+"/rest/auth";
 		BaseClient client = new BaseClient(url, k.getClientConfiguration(), auth);
@@ -95,7 +90,7 @@ public class TestService {
 
 		// public key loaded via UserInfoSource class in defined in container.properties
 		auth = new SSHKey("demouser-dyn", new File("src/test/resources/ssh/id_ed25519"),
-				new Password("test123".toCharArray()));
+				new PasswordSupplierImpl("test123".toCharArray()));
 		client = new BaseClient(url, k.getClientConfiguration(), auth);
 		o = client.getJSON();
 		assertEquals("CN=demouser-dyn, OU=ssh-local-users", o.getJSONObject("client").getString("dn"));
