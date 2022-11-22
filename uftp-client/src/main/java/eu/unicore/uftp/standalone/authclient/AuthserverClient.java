@@ -1,20 +1,21 @@
 package eu.unicore.uftp.standalone.authclient;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.Formatter;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.StatusLine;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.ResponseHandler;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
+import org.apache.hc.client5.http.ClientProtocolException;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.protocol.HttpClientContext;
+import org.apache.hc.core5.http.ClassicHttpResponse;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.HttpException;
+import org.apache.hc.core5.http.io.HttpClientResponseHandler;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.apache.hc.core5.http.io.entity.StringEntity;
+import org.apache.hc.core5.http.message.StatusLine;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -88,13 +89,20 @@ public class AuthserverClient implements AuthClient {
 
 	String infoURL;
 	
-	public HttpResponse getInfo() throws Exception {
+	public JSONObject getInfo() throws Exception {
 		infoURL = makeInfoURL(uri);
 		HttpClient client = HttpClientFactory.getClient(infoURL);
 		HttpGet getRequest = new HttpGet(infoURL);
 		authData.addAuthenticationHeaders(getRequest);
 		getRequest.addHeader("Accept", "application/json");
-		return client.execute(getRequest);
+		try(ClassicHttpResponse res = client.executeOpen(null, getRequest, HttpClientContext.create())){
+			if(res.getCode()!=200){
+				throw new Exception("Error getting info: "+new StatusLine(res));
+			}
+			else{
+				return new JSONObject(EntityUtils.toString(res.getEntity()));
+			}
+		}
 	}
 	
 
@@ -173,25 +181,19 @@ public class AuthserverClient implements AuthClient {
 		return authData;
 	}
 
-	class AuthResponseResponseHandler implements ResponseHandler<AuthResponse> {
+	class AuthResponseResponseHandler implements HttpClientResponseHandler<AuthResponse> {
 
 		@Override
-		public AuthResponse handleResponse(HttpResponse hr) throws ClientProtocolException, IOException {
-			StatusLine statusLine = hr.getStatusLine();
+		public AuthResponse handleResponse(ClassicHttpResponse hr) throws HttpException, IOException {
 			HttpEntity entity = hr.getEntity();
-			String reply = null;
-			if (statusLine.getStatusCode() == 200) {
+			if (hr.getCode() == 200) {
 				if (entity == null) {
 					throw new ClientProtocolException("Invalid server response: Entity empty");
 				}
-				ContentType contentType = ContentType.getOrDefault(entity);
-				Charset charset = contentType.getCharset();
-				reply = IOUtils.toString(entity.getContent(), charset);
-				return gson.fromJson(reply, AuthResponse.class);
+				return gson.fromJson(EntityUtils.toString(entity), AuthResponse.class);
 			}
-			String msg = "Unable to authenticate (error code: "
-						+ statusLine.getStatusCode()+" "+statusLine.getReasonPhrase()+") ";
-			int code = statusLine.getStatusCode();
+			String msg = "Unable to authenticate (error code: "+ new StatusLine(hr)+")";
+			int code = hr.getCode();
 			if (code == 401 || code==403) {
 				msg += "==> Please check your user name and/or credentials!";
 			}
@@ -200,10 +202,7 @@ public class AuthserverClient implements AuthClient {
 			}
 			else  {
 				try {
-					ContentType contentType = ContentType.getOrDefault(entity);
-					Charset charset = contentType.getCharset();
-					reply = IOUtils.toString(entity.getContent(), charset);
-					JSONObject err = new JSONObject(reply);
+					JSONObject err = new JSONObject(EntityUtils.toString(entity));
 					msg += err.optString("errorMessage", "");
 				}catch(Exception ex) {}
 			}

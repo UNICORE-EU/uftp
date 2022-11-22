@@ -1,21 +1,22 @@
 package eu.unicore.uftp.standalone.authclient;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.Formatter;
 import java.util.Random;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.StatusLine;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.ResponseHandler;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
+import org.apache.hc.client5.http.ClientProtocolException;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.protocol.HttpClientContext;
+import org.apache.hc.core5.http.ClassicHttpResponse;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.HttpException;
+import org.apache.hc.core5.http.io.HttpClientResponseHandler;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.apache.hc.core5.http.io.entity.StringEntity;
+import org.apache.hc.core5.http.message.StatusLine;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -54,7 +55,6 @@ public class UNICOREStorageAuthClient implements AuthClient {
 
 	private AuthResponse do_connect(String path, boolean send, boolean append, boolean persistent) throws Exception {
 		HttpClient httpClient = HttpClientFactory.getClient(uri);
-
 		HttpPost postRequest = new HttpPost(uri);
 		authData.addAuthenticationHeaders(postRequest);
 		postRequest.addHeader("Accept", "application/json");
@@ -86,13 +86,20 @@ public class UNICOREStorageAuthClient implements AuthClient {
 	}
 
 	@Override
-	public HttpResponse getInfo() throws Exception {
+	public JSONObject getInfo() throws Exception {
 		String infoURL = makeInfoURL(uri);
 		HttpClient client = HttpClientFactory.getClient(infoURL);
 		HttpGet getRequest = new HttpGet(infoURL);
 		authData.addAuthenticationHeaders(getRequest);
 		getRequest.addHeader("Accept", "application/json");
-		return client.execute(getRequest);
+		try(ClassicHttpResponse res = client.executeOpen(null, getRequest, HttpClientContext.create())){
+			if(res.getCode()!=200){
+				throw new Exception("Error getting info: "+new StatusLine(res));
+			}
+			else{
+				return new JSONObject(EntityUtils.toString(res.getEntity()));
+			}
+		}
 	}
 	
 	static String crlf = System.getProperty("line.separator");
@@ -177,21 +184,19 @@ public class UNICOREStorageAuthClient implements AuthClient {
 	}
 
 
-	class UNICOREResponseHandler implements ResponseHandler<AuthResponse> {
+	class UNICOREResponseHandler implements HttpClientResponseHandler<AuthResponse> {
 
 		@Override
-		public AuthResponse handleResponse(HttpResponse hr) throws ClientProtocolException, IOException {
-			StatusLine statusLine = hr.getStatusLine();
+		public AuthResponse handleResponse(ClassicHttpResponse hr) throws HttpException, IOException {
 			HttpEntity entity = hr.getEntity();
+			int statusCode = hr.getCode();
 			JSONObject reply = null;
-			if (statusLine.getStatusCode() == 200) {
+			if (statusCode == 200) {
 				if (entity == null) {
 					throw new ClientProtocolException("Invalid server response: Entity empty");
 				}
-				ContentType contentType = ContentType.getOrDefault(entity);
-				Charset charset = contentType.getCharset();
 				try{
-					reply = new JSONObject(IOUtils.toString(entity.getContent(), charset));
+					reply = new JSONObject(EntityUtils.toString(entity));
 					AuthResponse response = new AuthResponse(true, "OK");
 					response.serverHost = reply.getString("uftp.server.host");
 					response.serverPort = Integer.parseInt(reply.getString("uftp.server.port"));
@@ -201,19 +206,17 @@ public class UNICOREStorageAuthClient implements AuthClient {
 				}
 			}
 			String msg = "Unable to authenticate (error code: "
-					+ statusLine.getStatusCode()+" "+statusLine.getReasonPhrase()+") ";
-			int code = statusLine.getStatusCode();
-			if (code == 401 || code==403) {
+					+ new StatusLine(hr)+") ";
+			
+			if (statusCode == 401 || statusCode==403) {
 				msg += "==> Please check your user name and/or credentials!";
 			}
-			else if (code == 404) {
+			else if (statusCode == 404) {
 				msg += "==> Please check the server URL!";
 			}
 			else  {
 				try {
-					ContentType contentType = ContentType.getOrDefault(entity);
-					Charset charset = contentType.getCharset();
-					reply = new JSONObject(IOUtils.toString(entity.getContent(), charset));
+					reply = new JSONObject(EntityUtils.toString(entity));
 					msg += reply.optString("errorMessage", "");
 				}catch(Exception ex) {}
 			}

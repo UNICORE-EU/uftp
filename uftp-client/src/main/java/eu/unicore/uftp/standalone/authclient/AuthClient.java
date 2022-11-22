@@ -1,7 +1,6 @@
 
 package eu.unicore.uftp.standalone.authclient;
 
-import org.apache.http.HttpResponse;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -28,7 +27,7 @@ public interface AuthClient {
     /** create session in the given base directory **/
     AuthResponse createSession(String baseDir, boolean persistent) throws Exception;
     
-    HttpResponse getInfo() throws Exception;
+    JSONObject getInfo() throws Exception;
     
     default String parseInfo(JSONObject obj) throws JSONException {
     	return "";

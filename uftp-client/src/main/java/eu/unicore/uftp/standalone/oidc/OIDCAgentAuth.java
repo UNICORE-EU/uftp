@@ -2,7 +2,7 @@ package eu.unicore.uftp.standalone.oidc;
 
 import java.io.IOException;
 
-import org.apache.http.HttpMessage;
+import org.apache.hc.core5.http.HttpMessage;
 import org.json.JSONObject;
 
 import eu.unicore.services.rest.client.IAuthCallback;

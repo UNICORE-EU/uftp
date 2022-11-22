@@ -4,7 +4,7 @@ import java.net.InetAddress;
 
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
-import org.apache.http.HttpResponse;
+import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -54,14 +54,15 @@ public class UTunnel extends Command {
 		BaseClient bc = getClient(url, client);
 		JSONObject request = createRequest(host, remotePort);
 		System.out.println("Sending tunneling request:" + request);
-		HttpResponse httpResponse = bc.post(request);
-		bc.checkError(httpResponse);
-		JSONObject response = bc.asJSON(httpResponse);
+		JSONObject response = null;
+		try(ClassicHttpResponse httpResponse = bc.post(request)){
+			response = bc.asJSON(httpResponse);
+		}
 		InetAddress localSrv = InetAddress.getByName("localhost");// TODO
 		InetAddress[] servers = Utils.parseInetAddresses(response.getString("serverHost"), null);
 		int uftpPort = Integer.parseInt(response.getString("serverPort"));
 		String secret = response.getString("secret");
-		
+
 		try(TunnelClient tc = new TunnelClient(localSrv, localPort, servers, uftpPort)){
 			tc.setSecret(secret);
 			tc.connect();

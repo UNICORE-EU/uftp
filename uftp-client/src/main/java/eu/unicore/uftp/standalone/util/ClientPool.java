@@ -19,6 +19,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.Logger;
 
 import eu.unicore.uftp.client.FileInfo;
@@ -97,9 +98,9 @@ public class ClientPool implements Closeable {
 			}
 		}
 		for(UFTPSessionClient s: clients){
-			closeQuietly(s);
+			IOUtils.closeQuietly(s);
 		}
-		closeQuietly(progressBar);
+		IOUtils.closeQuietly(progressBar);
 	}
 	
 	public void get(final String remotePath, final String localName, final FileInfo fi, final boolean preserveAttributes){
@@ -117,7 +118,7 @@ public class ClientPool implements Closeable {
 					raf.seek(offset);
 					UFTPClientThread t =(UFTPClientThread)Thread.currentThread();
 					UFTPSessionClient sc = t.getClient();
-					logger.info("Downloading <"+remotePath+">");
+					logger.info("Downloading <{}>", remotePath);
 					if(verbose){
 						progressBar.registerNew(localName, size);
 						sc.setProgressListener(progressBar);
@@ -164,7 +165,7 @@ public class ClientPool implements Closeable {
 						throw new RuntimeException(ex);
 					}
 					finally {
-						closeQuietly(pb);
+						IOUtils.closeQuietly(pb);
 					}
 				}
 			};
@@ -234,7 +235,7 @@ public class ClientPool implements Closeable {
 						throw new RuntimeException(ex);
 					}
 					finally{
-						closeQuietly(pb);
+						IOUtils.closeQuietly(pb);
 					}
 				}
 			};
@@ -257,12 +258,6 @@ public class ClientPool implements Closeable {
 
 	private boolean isDevNull(String dest) {
 		return "/dev/null".equals(dest);
-	}
-
-	private void closeQuietly(Closeable c) {
-		if(c!=null)try {
-			c.close();
-		}catch(Exception e) {}
 	}
 
 

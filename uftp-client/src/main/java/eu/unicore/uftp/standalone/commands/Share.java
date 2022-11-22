@@ -4,7 +4,6 @@ import java.io.File;
 
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
-import org.apache.http.HttpResponse;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -120,14 +119,10 @@ public class Share extends Command {
 		long lifetime = Long.parseLong(line.getOptionValue("L", "0"));
 		JSONObject req = createRequest(accessType, target, path, onetime, lifetime);
 		BaseClient bc = getClient(url, client);
-		HttpResponse res = bc.post(req);
-		bc.checkError(res);
-		if(!delete) {
-			String location = res.getFirstHeader("Location").getValue();
-			if(location!=null){
-				bc.setURL(location);
-				showNewShareInfo(bc.getJSON());
-			}
+		String location = bc.create(req);
+		if(!delete && location!=null){
+			bc.setURL(location);
+			showNewShareInfo(bc.getJSON());
 		}
 	}
 	

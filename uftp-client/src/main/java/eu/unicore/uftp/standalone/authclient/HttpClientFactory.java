@@ -1,7 +1,7 @@
 
 package eu.unicore.uftp.standalone.authclient;
 
-import org.apache.http.client.HttpClient;
+import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.logging.log4j.Logger;
 
 import eu.emi.security.authn.x509.helpers.BinaryCertChainValidator;
@@ -21,10 +21,10 @@ public class HttpClientFactory {
     
     public static HttpClient getClient(String url) {
     	// TODO should have "-k" option to choose non-validation of TLS certs 
-        return buiLdClient(url);
+        return buildClient(url);
     }
 
-    private static HttpClient buiLdClient(String url){
+    private static HttpClient buildClient(String url){
         LOG.info("Not verifying any TLS certs.");
         DefaultClientConfiguration security = new DefaultClientConfiguration();
         security.setValidator(new BinaryCertChainValidator(true));

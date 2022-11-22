@@ -47,6 +47,16 @@ public class ACLStorage {
 		}
 	}
 	
+	/**
+	 * @param accessType
+	 * @param path
+	 * @param target
+	 * @param owner
+	 * @param expiry - expiry time (System date in seconds!)
+	 * @param onetime
+	 * @return
+	 * @throws Exception
+	 */
 	public String grant(AccessType accessType, String path, Target target, Owner owner, long expiry, boolean onetime) throws Exception {
 		Collection<ShareDAO> grants = readAll(path, false, owner);
 		ShareDAO grant = null;

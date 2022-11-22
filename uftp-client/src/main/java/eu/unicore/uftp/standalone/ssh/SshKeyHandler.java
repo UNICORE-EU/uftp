@@ -8,7 +8,6 @@ import org.apache.commons.codec.binary.Base64;
 
 import eu.emi.security.authn.x509.helpers.PasswordSupplier;
 import eu.unicore.services.rest.client.IAuthCallback;
-import eu.unicore.services.rest.security.sshkey.Password;
 import eu.unicore.services.rest.security.sshkey.SSHKey;
 import eu.unicore.services.rest.security.sshkey.SSHKeyUC;
 import eu.unicore.services.rest.security.sshkey.SSHUtils;
@@ -87,13 +86,7 @@ public class SshKeyHandler implements PasswordSupplier {
 		};
 		IAuthCallback result = null;
 		if(preferJWT) {
-			// TODO SSHKey should use PasswordSupplier
-			Password pw = new Password(null) {
-				@Override
-				public char[] getPassword(){
-					return getPassword();
-				}};
-			result = new SSHKey(userName, privateKey, pw);
+			result = new SSHKey(userName, privateKey, pf);
 		}
 		else {
 			SSHKeyUC sshauth = SSHUtils.createAuthData(privateKey, pf , token);

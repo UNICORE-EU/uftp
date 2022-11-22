@@ -3,8 +3,6 @@ package eu.unicore.uftp.standalone.commands;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.apache.http.HttpResponse;
-import org.apache.http.util.EntityUtils;
 import org.json.JSONObject;
 
 import eu.unicore.uftp.standalone.ClientFacade;
@@ -46,19 +44,12 @@ public class Info extends Command {
 		String uri = fileArgs[0];
 		mgr.init(uri+":/");
 		AuthClient auth = mgr.getAuthClient(client);
-		HttpResponse res = auth.getInfo();
-		if(res.getStatusLine().getStatusCode()!=200){
-			System.out.println("Error: "+res.getStatusLine());
+		JSONObject j = auth.getInfo();
+		if(raw) {
+			System.out.println(j.toString(2));
 		}
-		else{
-			String s = EntityUtils.toString(res.getEntity());
-			JSONObject j = new JSONObject(s);
-			if(raw) {
-				System.out.println(j.toString(2));
-			}
-			else {
-				System.out.println(auth.parseInfo(j));
-			}
+		else {
+			System.out.println(auth.parseInfo(j));
 		}
 	}
 	
