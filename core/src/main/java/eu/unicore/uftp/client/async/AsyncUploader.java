@@ -8,6 +8,7 @@ import java.nio.channels.Selector;
 import java.nio.channels.WritableByteChannel;
 import java.util.ArrayList;
 import java.util.Deque;
+import java.util.Iterator;
 import java.util.List;
 
 import org.apache.logging.log4j.Logger;
@@ -48,7 +49,12 @@ public class AsyncUploader implements Runnable {
 			logger.info("Starting.");
 			while(!stopped) {
 				selector.select(50);
-				selector.selectedKeys().forEach(key -> tryWrite(key));
+				Iterator<SelectionKey> iter = selector.selectedKeys().iterator();
+				while(iter.hasNext()) {
+					SelectionKey key = iter.next();
+					if(key.isValid())tryWrite(key);
+					iter.remove();
+				}
 			}
 		}catch(Exception ex) {
 			logger.error("Error running downloader: ",ex);

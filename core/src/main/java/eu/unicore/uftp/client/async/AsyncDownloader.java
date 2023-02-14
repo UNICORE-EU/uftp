@@ -9,6 +9,7 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.WritableByteChannel;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import org.apache.logging.log4j.Logger;
@@ -53,7 +54,12 @@ public class AsyncDownloader implements Runnable {
 			logger.info("Starting.");
 			while(!stopped) {
 				selector.select(50);
-				selector.selectedKeys().forEach(key -> dataAvailable(key));
+				Iterator<SelectionKey> iter = selector.selectedKeys().iterator();
+				while(iter.hasNext()) {
+					SelectionKey key = iter.next();
+					if(key.isValid())dataAvailable(key);
+					iter.remove();
+				}
 			}
 		}catch(Exception ex) {
 			logger.error("Error running downloader: ",ex);

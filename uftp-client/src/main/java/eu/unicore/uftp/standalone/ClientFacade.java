@@ -1,6 +1,5 @@
 package eu.unicore.uftp.standalone;
 
-import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -16,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.Logger;
 
 import eu.unicore.uftp.authserver.messages.AuthResponse;
@@ -379,12 +379,12 @@ public class ClientFacade {
 		RemoteFileCrawler fileList = new RemoteFileCrawler(path, "./dummy/", sc);
 		fileList.setCreateLocalDirs(false);
 		if (fileList.isSingleFile(path)) {
-				doChecksum(path, algorithm);
+				executeSingleFileChecksum(path, algorithm);
 		}
 		else{
 			Command cmd = new Command() {
 				public void execute(String path, String dummy) throws IOException{
-					doChecksum(path, algorithm);
+					executeSingleFileChecksum(path, algorithm);
 				}
 			};
 			fileList.crawl(cmd, policy);
@@ -393,7 +393,7 @@ public class ClientFacade {
 
 	private boolean haveSetAlgorithm = false;
 	
-	private void doChecksum(String path, String algorithm) throws IOException{
+	private void executeSingleFileChecksum(String path, String algorithm) throws IOException{
 		if(algorithm!=null && !haveSetAlgorithm) {
 			String reply = sc.setHashAlgorithm(algorithm);
 			haveSetAlgorithm = true;
@@ -414,7 +414,7 @@ public class ClientFacade {
 	}
 	
 
-	private void uploadFile(String local, String remotePath, ClientPool pool) throws FileNotFoundException, URISyntaxException, IOException {
+	private void executeSingleFileUpload(String local, String remotePath, ClientPool pool) throws FileNotFoundException, URISyntaxException, IOException {
 		logger.debug("Uploading file {} -> {}", local, remotePath);
 
 		ProgressBar pb = null;
@@ -477,7 +477,7 @@ public class ClientFacade {
 			}
 		}
 		finally{
-			closeQuietly(pb);
+			IOUtils.closeQuietly(pb);
 			sc.setProgressListener(null);
 		}
 	}
@@ -505,7 +505,7 @@ public class ClientFacade {
 		try(ClientPool pool = new ClientPool(numClients, this, remote, verbose, largeFileThreshold)){
 			FileCrawler fileList = new RemoteFileCrawler(path, destination, sc);
 			if (fileList.isSingleFile(path)) {
-				downloadFile(path, destination, pool);
+				executeSingleFileDownload(path, destination, pool);
 			}
 			else{
 				Command cmd = getDownloadCommand(preserveAttributes, pool);
@@ -514,7 +514,7 @@ public class ClientFacade {
 		}
 	}
 
-	private void downloadFile(String remotePath, String local, ClientPool pool) 
+	private void executeSingleFileDownload(String remotePath, String local, ClientPool pool)
 			throws FileNotFoundException, URISyntaxException, IOException {
 		String dest = getFullLocalDestination(remotePath, local);
 		logger.debug("Downloading file {} -> {}", remotePath, dest);
@@ -586,9 +586,9 @@ public class ClientFacade {
 			}
 		}
 		finally{
-			closeQuietly(fos);
-			closeQuietly(raf);
-			closeQuietly(pb);
+			IOUtils.closeQuietly(fos);
+			IOUtils.closeQuietly(raf);
+			IOUtils.closeQuietly(pb);
 			sc.setProgressListener(null);
 		}
 	}
@@ -598,9 +598,7 @@ public class ClientFacade {
 		logger.debug("Downloading [{}:{}] from {} to {}", start, end, remotePath, dest);
 		File file = new File(dest);
 		OutputStream fos = null;
-		RandomAccessFile raf = null;
-		try{
-			raf = new RandomAccessFile(file, "rw");
+		try(RandomAccessFile raf = new RandomAccessFile(file, "rw")){
 			if(rangeMode==RangeMode.READ_WRITE){
 				raf.seek(start);
 			}
@@ -615,8 +613,7 @@ public class ClientFacade {
 				}
 			}
 		}finally{
-			closeQuietly(fos);
-			closeQuietly(raf);
+			IOUtils.closeQuietly(fos);
 			sc.setProgressListener(null);
 		}
 	}
@@ -649,41 +646,38 @@ public class ClientFacade {
 	}
 
 	private Command getDownloadCommand(final boolean preserveAttributes, final ClientPool pool) {
-		Command downloadCommand = new Command() {
+		return new Command() {
 			@Override
 			public void execute(String source, String destination) throws IOException {
 				try {
-					downloadFile(source, destination, pool);
+					executeSingleFileDownload(source, destination, pool);
 				} catch (URISyntaxException|IOException ex) {
 					throw new IOException("Error downloading file "+source+" to "+destination, ex);
 				}
 			}		
 		};
-		return downloadCommand;
 	}
 
 	private Command getUploadCommand(final boolean preserveAttributes, final ClientPool pool) {
-		Command downloadCommand = new Command() {
+		return new Command() {
 			@Override
 			public void execute(String source, String destination) throws IOException {
 				try {
-					uploadFile(source, destination, pool);
+					executeSingleFileUpload(source, destination, pool);
 				} catch (URISyntaxException|IOException ex) {
 					throw new IOException("Error uploading file "+source+" to "+destination, ex);
 				}
 			}
 		};
-		return downloadCommand;
 	}
 
 	private Command getRemoveCommand() {
-		Command removeCommand = new Command() {
+		return new Command() {
 			@Override
 			public void execute(String source, String destination) throws IOException {
 				sc.rm(source);
 			}		
 		};
-		return removeCommand;
 	}
 
 	/**
@@ -803,9 +797,4 @@ public class ClientFacade {
 		this.verbose = verbose;
 	}
 
-	private void closeQuietly(Closeable c) {
-		if(c!=null)try {
-			c.close();
-		}catch(Exception e) {}
-	}
 }

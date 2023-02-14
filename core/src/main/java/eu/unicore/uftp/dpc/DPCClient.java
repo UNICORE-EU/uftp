@@ -260,9 +260,8 @@ public class DPCClient implements Closeable{
 				if(229==code){
 					int port = Integer.parseInt(m.group(2));
 					SocketChannel sChannel = SocketChannel.open();
-
 					sChannel.connect(new InetSocketAddress(controlSocket.getInetAddress(), port));
-					Socket s =sChannel.socket();
+					Socket s = sChannel.socket();
 					if(so_buffer_size>0) {
 						try {
 							s.setSendBufferSize(so_buffer_size);
@@ -296,13 +295,14 @@ public class DPCClient implements Closeable{
 	private Socket pasv() throws IOException {
 		sendControl(UFTPCommands.PASV);
 		String inputLine = readControl();
-
 		String[] inputString = inputLine.split(" ")[4].substring(1).split(",");	//"i1,i2,i3,i4,p1,p2)".split(",")
 		InetAddress dataAddress = InetAddress.getByName(inputString[0] + "." + inputString[1] + "." + inputString[2]
 				+ "." + inputString[3]);
 		int dataPort = Integer.parseInt(inputString[4]) * 256 + //get control port (p1 * 256 + p2) 
 				Integer.parseInt(inputString[5].substring(0, inputString[5].length() - 1));
-		return new Socket(dataAddress, dataPort);
+		SocketChannel sChannel = SocketChannel.open();
+		sChannel.connect(new InetSocketAddress(dataAddress, dataPort));
+		return sChannel.socket();
 	}
 
 	/**
