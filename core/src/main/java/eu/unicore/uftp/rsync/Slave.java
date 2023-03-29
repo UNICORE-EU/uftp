@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -136,20 +138,27 @@ public class Slave implements Callable<RsyncStats>{
 		
 	}
 
-	protected void computeChecksums()throws IOException{
+	protected void computeChecksums()throws IOException, NoSuchAlgorithmException {
+		MessageDigest md = MessageDigest.getInstance("MD5");
 		file.seek(0);
-		long size=file.length();
-		long offset=0;
-		byte[]buf=new byte[blocksize];
-		long remaining=size;
-		int c=0;
-		int len=blocksize;
-		while(true){
-			if(remaining<blocksize)len=(int)remaining;
+		long size = file.length();
+		long offset = 0;
+		byte[]buf = new byte[blocksize];
+		long remaining = size;
+		int c = 0;
+		int len = blocksize;
+		while(remaining>0){
+			if(remaining<blocksize) {
+				len = (int)remaining;
+				buf = new byte[len];
+			}
 			c=file.read(buf,0,len);
 			if(c<0)break;
-			weakChecksums.add(Checksum.checksum(buf, offset, len-1));
-			strongChecksums.add(Checksum.md5(buf));
+			remaining -= c;
+			weakChecksums.add(Checksum.checksum(buf, offset, offset+len-1));
+			md.reset();
+			strongChecksums.add(md.digest(buf));
+			offset+=len;
 		}
 		file.seek(0);
 	}

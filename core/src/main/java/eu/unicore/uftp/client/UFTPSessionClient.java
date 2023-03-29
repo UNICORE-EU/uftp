@@ -441,7 +441,7 @@ public class UFTPSessionClient extends AbstractUFTPClient implements Runnable {
 	 * @param localSlave - the local file (out of date)
 	 */
 	public RsyncStats syncLocalFile(String remoteMaster, File localSlave) throws Exception {
-		runCommand("SYNC-MASTER " + remoteMaster);
+		runCommand("SYNC-TO-CLIENT " + remoteMaster);
 		Slave slave = new Slave(localSlave, new SocketSlaveChannel(socket), localSlave.getAbsolutePath());
 		return slave.call();
 	}
@@ -454,7 +454,7 @@ public class UFTPSessionClient extends AbstractUFTPClient implements Runnable {
 	 * @return RsyncStats info about the rsync process
 	 */
 	public RsyncStats syncRemoteFile(File localMaster, String remoteSlave) throws Exception {
-		runCommand("SYNC-SLAVE " + remoteSlave);
+		runCommand("SYNC-TO-SERVER " + remoteSlave);
 		Master master = new Master(localMaster, new SocketMasterChannel(socket), localMaster.getAbsolutePath());
 		return master.call();
 	}

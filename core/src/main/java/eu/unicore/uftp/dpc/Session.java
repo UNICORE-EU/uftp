@@ -63,9 +63,9 @@ public class Session {
 
 	public static final int ACTION_STORE = 2;
 
-	public static final int ACTION_SYNC_MASTER = 3;
+	public static final int ACTION_SYNC_TO_CLIENT = 3;
 
-	public static final int ACTION_SYNC_SLAVE = 4;
+	public static final int ACTION_SYNC_TO_SERVER = 4;
 
 	public static final int ACTION_OPEN_SOCKET = 5;
 
@@ -219,14 +219,14 @@ public class Session {
 			return ok ? ACTION_STORE : ACTION_NONE;
 		}
 		
-		else if (chk.startsWith("SYNC-MASTER ")) {
+		else if (chk.startsWith("SYNC-TO-CLIENT")) {
 			boolean ok = setupSyncFile(cmd);
-			return ok ? ACTION_SYNC_MASTER : ACTION_NONE;
+			return ok ? ACTION_SYNC_TO_CLIENT: ACTION_NONE;
 		}
 
-		else if (chk.startsWith("SYNC-SLAVE ")) {
+		else if (chk.startsWith("SYNC-TO-SERVER ")) {
 			boolean ok = setupSyncFile(cmd);
-			return ok ? ACTION_SYNC_SLAVE : ACTION_NONE;
+			return ok ? ACTION_SYNC_TO_SERVER : ACTION_NONE;
 		}
 
 		else if (chk.startsWith("RNFR ")) {

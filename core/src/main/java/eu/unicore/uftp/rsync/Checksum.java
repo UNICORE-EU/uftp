@@ -1,13 +1,11 @@
 package eu.unicore.uftp.rsync;
 
-import java.security.MessageDigest;
-
 /**
  * Helper class for dealing with the checksums used in rsync <br/>
  * 
  * Based on Andrew Tridgell's 'rsync' as described in  
- * http://cs.anu.edu.au/techreports/1996/TR-CS-96-05.pdf
- * 
+ * https://www.andrew.cmu.edu/course/15-749/READINGS/required/cas/tridgell96.pdf
+ *
  * @author schuller
  */
 public class Checksum {
@@ -41,11 +39,11 @@ public class Checksum {
 	}
 	
 	public static long sum(long a, long b){
-		return a + b << 16 ;
+		return a + (b << 16) ;
 	}
 
 	/**
-	 * compute the checksum for the given data block
+	 * computes the (weak) checksum for the given data block
 	 * 
 	 * @param block - data
 	 * @param start - start index of the block in the complete data
@@ -54,22 +52,6 @@ public class Checksum {
 	 */
 	public static long checksum(byte[]block, long start, long finish){
 		return sum( a(block), b(block, start, finish) ); 
-	}
-	
-	private static MessageDigest md;
-	static{
-		try{
-			md=MessageDigest.getInstance("MD5");
-		}
-		catch(Exception ex){
-			throw new RuntimeException(ex);
-		}
-	}
-	
-	public static byte[] md5(byte[]block){
-		md.reset();
-		md.update(block);
-		return md.digest();
 	}
 
 }

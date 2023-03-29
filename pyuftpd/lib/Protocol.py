@@ -13,7 +13,7 @@ def login(cmd: str, connector: Connector):
         pwd_line = connector.read_line()
         if pwd_line.startswith("USER ") or pwd_line.startswith("PASS "):
             password = pwd_line.split(" ", 1)[1]
-            if password is not "anonymous":
+            if password != "anonymous":
                 secret = password
     if not secret:
         connector.write_message("500 Client login does not comply with protocol.")

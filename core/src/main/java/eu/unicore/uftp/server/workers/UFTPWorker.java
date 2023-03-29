@@ -150,11 +150,11 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 					readData(session);
 					break;
 
-				case Session.ACTION_SYNC_MASTER:
+				case Session.ACTION_SYNC_TO_CLIENT:
 					syncMaster(session);
 					break;
 
-				case Session.ACTION_SYNC_SLAVE:
+				case Session.ACTION_SYNC_TO_SERVER:
 					syncSlave(session);
 					break;
 

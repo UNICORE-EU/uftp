@@ -3,6 +3,8 @@ package eu.unicore.uftp.rsync;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -61,8 +63,10 @@ public class Master implements Callable<RsyncStats> {
         return stats;
     }
 
-    protected void findMatches() throws IOException {
+    protected void findMatches() throws IOException, NoSuchAlgorithmException {
         RollingChecksum rollingChecksum = new RollingChecksum();
+        MessageDigest md = MessageDigest.getInstance("MD5");
+		
         long indexOfLastMatch = 0;
         long total = file.length();
         long k = 0;
@@ -91,7 +95,8 @@ public class Master implements Callable<RsyncStats> {
             int index = weakCheck(checkSum);
             if (index >= 0) {
                 stats.weakMatches++;
-                byte[] strong = Checksum.md5(block);
+                md.reset();
+                byte[] strong = md.digest(block);
                 if (Arrays.equals(strong, strongChecksums.get(index))) {
                     foundMatch = true;
                 }

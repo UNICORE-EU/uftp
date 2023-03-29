@@ -21,6 +21,7 @@ set -e
 case "$1" in
     configure)
         mkdir -p /var/run/unicore
+	chown unicore:unicore /etc/unicore/uftpd
 	chmod 700 /etc/unicore/uftpd
     ;;
 

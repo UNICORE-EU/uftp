@@ -17,6 +17,8 @@ class Session(object):
     ACTION_CONTINUE = 0
     ACTION_RETRIEVE = 1
     ACTION_STORE = 2
+    ACTION_SYNC_MASTER = 3;
+    ACTION_SYNC_SLAVE = 4;
     ACTION_OPEN_SOCKET = 5
     ACTION_CLOSE_DATA = 7
     ACTION_SEND_HASH = 8
@@ -135,6 +137,8 @@ class Session(object):
             "KEEP-ALIVE": self.set_keep_alive,
             "OPTS": self.opts,
             "HASH": self.hash,
+            "SYNC-TO-CLIENT": self.sync_master,
+            "SYNC-TO-SERVER": self.sync_slave
         }
 
     def assert_permission(self, requested):
@@ -514,6 +518,28 @@ class Session(object):
         self.file_path = path
         return Session.ACTION_SEND_HASH
 
+    def sync_to_client(self, params):
+        self.assert_permission(Session.MODE_READ)
+        path = self.makeabs(params)
+        fi = FileInfo(path)
+        if not fi.can_read():
+            self.control.write_message("500 Directory/file does not exist or cannot be accessed!")
+            return Session.ACTION_CONTINUE
+        self.file_path = path
+        self.control.write_message("200 OK")
+        return Session.ACTION_SYNC_MASTER
+
+    def sync_to_server(self, params):
+        self.assert_permission(Session.MODE_WRITE)
+        path = self.makeabs(params)
+        fi = FileInfo(path)
+        if not fi.can_read():
+            self.control.write_message("500 Directory/file does not exist or cannot be accessed!")
+            return Session.ACTION_CONTINUE
+        self.file_path = path
+        self.control.write_message("200 OK")
+        return Session.ACTION_SYNC_SLAVE
+
     def set_file_mtime(self, params):
         self.assert_permission(Session.MODE_WRITE)
         mtime, target = params.split(" ", 2)
@@ -780,6 +806,11 @@ class Session(object):
                         self.close_data()
                     elif mode==Session.ACTION_SEND_HASH:
                         self.send_hash()
+                    elif mode==Session.ACTION_SYNC_MASTER:
+                        self.do_sync_master()
+                    elif mode==Session.ACTION_SYNC_SLAVE:
+                        self.do_sync_slave()
+                            
                     elif mode==Session.ACTION_END:
                         break
                 except Exception as e:

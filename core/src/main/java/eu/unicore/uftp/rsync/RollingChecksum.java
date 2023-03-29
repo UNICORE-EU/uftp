@@ -4,8 +4,8 @@ package eu.unicore.uftp.rsync;
  * Compute the rolling checksum.<br/>
  *  
  * Based on Andrew Tridgell's 'rsync' as described in  
- * http://cs.anu.edu.au/techreports/1996/TR-CS-96-05.pdf
- * 
+ * https://www.andrew.cmu.edu/course/15-749/READINGS/required/cas/tridgell96.pdf
+ *
  * @author schuller
  */
 public class RollingChecksum {
