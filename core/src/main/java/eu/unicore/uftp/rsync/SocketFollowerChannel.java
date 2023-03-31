@@ -8,16 +8,16 @@ import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.util.List;
 
-public class SocketSlaveChannel implements SlaveChannel {
+public class SocketFollowerChannel implements FollowerChannel {
 
 	private final Socket socket;
 	
-	public SocketSlaveChannel(Socket socket){
+	public SocketFollowerChannel(Socket socket){
 		this.socket=socket;
 	}
 
 	@Override
-	public void sendToMaster(List<Long> weakChecksums,
+	public void sendToLeader(List<Long> weakChecksums,
 			List<byte[]> strongChecksums, int blocksize) throws IOException {
 		DataOutputStream dos=new DataOutputStream(socket.getOutputStream());
 		dos.writeInt(blocksize);

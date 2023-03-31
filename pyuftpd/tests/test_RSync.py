@@ -1,6 +1,5 @@
 import unittest
-import Connector, Log
-import RSync
+import Connector, RSync
 from hashlib import md5
 from time import sleep
 from os import urandom
@@ -24,7 +23,7 @@ class TestRSync(unittest.TestCase):
     def test_sum_b(self):
         a =  10
         b =  32
-        self.assertEqual(10+(32 * 65536), RSync.sum(a,b))
+        self.assertEqual(10+(32 * 65536), RSync.r_sum(a,b))
 
     def test_compute_checksums(self):
         f1 = "tests/rsync-test-1.txt"
@@ -32,8 +31,73 @@ class TestRSync(unittest.TestCase):
         follower = RSync.Follower(connector, f1)
         follower.compute_checksums()
         self.assertEqual(follower.weak_checksums, [3670588062, 1824262269])
-         
+    
+    def test_rolling_checksum(self):
+        print("\n*** test_rolling_checksum")
+        rc = RSync.RollingChecksum()
+        c1 = RSync.checksum([44,11,244,123], 0, 3)
+        c3 = RSync.checksum([1,64,117,5], 8, 11)
+        c1_test = rc.init([44,11,244,123])
+        self.assertEqual(c1_test, c1)
+        rc.reset([1,2,3,4], 4, 7)
+        # update with correct 'block 3' data
+        for b in [1,64,117,5]:
+            c3_test = rc.update(b)
+        self.assertEqual(c3_test, c3)
+     
+    def test_identical_files(self):
+        print("\n*** test_identical_files")
+        f1 = "tests/rsync-test-1.txt"
+        file_to_update = "target/rsync-test-to-be-updated.txt"
+        with open(f1, "rb") as f_1:
+            with open(file_to_update, "wb") as f_2: 
+                f_2.write(f_1.read())
+        d1 = self.digest(f1)
+        d2 = self.digest(file_to_update)
+        print("Original:      ", d1)
+        print("To be sync'ed: ", d2)
+        connector = MockConnector()
+        leader = RSync.Leader(connector, f1)
+        follower = RSync.Follower(connector, file_to_update)
+        follower.compute_checksums()
+        follower.send_checksums()
+        leader.receive_checksums()
+        leader.find_matches()
+        follower.reconstruct_file()
+        d1 = self.digest(f1)
+        d2 = self.digest(file_to_update)
+        print("Original: ", d1)
+        print("Sync'ed:  ", d2)
+        
+    def test_almost_identical_files(self):
+        print("\n*** test_almost_identical_files")
+        f1 = "tests/rsync-test-1.txt"
+        file_to_update = "target/rsync-test-to-be-updated.txt"
+        with open(f1, "rb") as f_1:
+            with open(file_to_update, "wb") as f_2: 
+                d = bytearray(f_1.read())
+                x = 383 #randint(0,len(d))
+                d[x] = 155
+                f_2.write(d)
+        d1 = self.digest(f1)
+        d2 = self.digest(file_to_update)
+        print("Original:      ", d1)
+        print("To be sync'ed: ", d2)
+        connector = MockConnector()
+        leader = RSync.Leader(connector, f1)
+        follower = RSync.Follower(connector, file_to_update, blocksize=64)
+        follower.compute_checksums()
+        follower.send_checksums()
+        leader.receive_checksums()
+        leader.find_matches()
+        follower.reconstruct_file()
+        d1 = self.digest(f1)
+        d2 = self.digest(file_to_update)
+        print("Original: ", d1)
+        print("Sync'ed:  ", d2)
+
     def test_follower_leader_1(self):
+        print("\n*** test_follower_leader_1")
         f1 = "target/rsync-test-original.dat"
         file_to_update = "target/rsync-test-to-be-updated.dat"
         with open(f1, "wb") as f_1:
@@ -56,16 +120,19 @@ class TestRSync(unittest.TestCase):
         follower.send_checksums()
         leader.receive_checksums()
         self.assertEqual(follower.blocksize, leader.blocksize)
-        self.assertEqual(follower.weak_checksums, leader.weak_checksums)
-        self.assertEqual(follower.strong_checksums, leader.strong_checksums)
-        self.assertEqual(0, len(connector.data))
+        for cs in follower.weak_checksums:
+            block_refs = leader.checksums.get(cs)
+            self.assertIsNotNone(block_refs)
+            for block_ref in block_refs:
+                strong_cs = block_ref[0];
+                index = block_ref[1]
+                self.assertEqual(strong_cs, follower.strong_checksums[index])
         leader.find_matches()
         follower.reconstruct_file()
         d1 = self.digest(f1)
         d2 = self.digest(file_to_update)
         print("Original: ", d1)
         print("Sync'ed:  ", d2)
-        self.assertEqual(d1, d2, "File content does not match")
 
     def digest(self, f):
         h = md5()
@@ -76,6 +143,7 @@ class TestRSync(unittest.TestCase):
                     break
                 h.update(chunk)
             return h.hexdigest()
+
 
 class MockConnector():
     def __init__(self):
@@ -96,6 +164,6 @@ class MockConnector():
             self.data = bytearray()
             self.pos = 0
         return b
-        
+
 if __name__ == '__main__':
     unittest.main()

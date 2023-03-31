@@ -16,61 +16,57 @@ import eu.unicore.uftp.server.DefaultFileAccess;
 import eu.unicore.uftp.server.UserFileAccess;
 
 /**
- * the slave has an out-of-date copy of a file which should be
- * synchronized with the master copy.
+ * the Follower has an out-of-date copy of a file which should be
+ * synchronized with the Leader's copy.
  * 
  * @author schuller
  */
-public class Slave implements Callable<RsyncStats>{
+public class Follower implements Callable<RsyncStats>{
 
 	private final RandomAccessFile file;
 
 	private final String fileName;
 
-	private final SlaveChannel channel;
+	private final FollowerChannel channel;
 
 	private final int blocksize;
 
-	private final List<Long>weakChecksums=new ArrayList<Long>();
+	private final List<Long>weakChecksums=new ArrayList<>();
 
-	private final List<byte[]>strongChecksums=new ArrayList<byte[]>();
+	private final List<byte[]>strongChecksums=new ArrayList<>();
 
 	public static final int DEFAULT_BLOCKSIZE=512;
 
 	private UserFileAccess fileAccess = new UserFileAccess(new DefaultFileAccess(), "", "");
 	
-	public Slave(File file, SlaveChannel channel, String name)throws FileNotFoundException{
-		this(new RandomAccessFile(file, "r"), channel, name, reasonableBlockSize(file));
-	}
-
 	/**
-	 * using the default blocksize
-	 * @param file - local file that should be synchronized with the master
-	 * @param channel - communication to the master
+	 * @param file - local file that should be synchronized with the Leader
+	 * @param channel - communication to the leader
 	 * @param name - file name
-	 */
-	public Slave(RandomAccessFile file, SlaveChannel channel, String name){
-		this(file,channel,name,DEFAULT_BLOCKSIZE);
-	}
-
-	/**
-	 * @param file - local file that should be synchronized with the master
-	 * @param channel - communication to the master
 	 * @param blocksize
 	 */
-	public Slave(RandomAccessFile file, SlaveChannel channel, String name, int blocksize){
+	public Follower(RandomAccessFile file, FollowerChannel channel, String name, int blocksize){
 		this.file=file;
 		this.channel=channel;
 		this.blocksize=blocksize;
 		this.fileName=name;
 	}
 
+	public Follower(File file, FollowerChannel channel, String name)throws FileNotFoundException{
+		this(new RandomAccessFile(file, "r"), channel, name, reasonableBlockSize(file));
+	}
+
+	public Follower(RandomAccessFile file, FollowerChannel channel, String name){
+		this(file,channel,name,DEFAULT_BLOCKSIZE);
+	}
+
 	public RsyncStats call()throws Exception{
+		long start = System.currentTimeMillis();
 		RsyncStats stats=new RsyncStats(fileName);
 		stats.blocksize=blocksize;
-		long start=System.currentTimeMillis();
 		computeChecksums();
-		channel.sendToMaster(weakChecksums, strongChecksums, blocksize);
+		stats.blocks = weakChecksums.size();
+		channel.sendToLeader(weakChecksums, strongChecksums, blocksize);
 		stats.transferred=weakChecksums.size()*20+4;
 		if(!dryRun)reconstructFile();
 		stats.duration=System.currentTimeMillis()-start;
@@ -95,8 +91,6 @@ public class Slave implements Callable<RsyncStats>{
 		byte[] buf2=new byte[blocksize];
 		do{
 			masterData=channel.receive();
-			if(masterData.isShutDown())break;
-
 			// first write literal data			
 			long remaining=masterData.bytes;
 			int len;
@@ -121,6 +115,10 @@ public class Slave implements Callable<RsyncStats>{
 				buf.put(buf2,0,len);
 				buf.flip();
 				reconstruct.write(buf);
+			}
+			else {
+				// leader sent -1 as block number - terminate
+				break;
 			}
 		}while(true);
 
@@ -163,7 +161,7 @@ public class Slave implements Callable<RsyncStats>{
 		file.seek(0);
 	}
 
-	public SlaveChannel getChannel() {
+	public FollowerChannel getChannel() {
 		return channel;
 	}
 

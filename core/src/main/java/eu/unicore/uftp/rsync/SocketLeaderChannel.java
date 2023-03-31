@@ -8,11 +8,13 @@ import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
 import java.util.ArrayList;
 
-public class SocketMasterChannel implements MasterChannel{
+import eu.unicore.uftp.rsync.Checksum.ChecksumHolder;
+
+public class SocketLeaderChannel implements LeaderChannel{
 
 	private final Socket socket;
 	
-	public SocketMasterChannel(Socket socket){
+	public SocketLeaderChannel(Socket socket){
 		this.socket=socket;
 	}
 
@@ -22,8 +24,8 @@ public class SocketMasterChannel implements MasterChannel{
 		ChecksumHolder res=new ChecksumHolder();
 		res.blocksize=dis.readInt();
 		int numBlocks=dis.readInt();
-		res.weakChecksums=new ArrayList<Long>();
-		res.strongChecksums=new ArrayList<byte[]>();
+		res.weakChecksums=new ArrayList<>();
+		res.strongChecksums=new ArrayList<>();
 		for(int i=0; i<numBlocks; i++){
 			res.weakChecksums.add(dis.readLong());
 			byte[]cs=new byte[16];

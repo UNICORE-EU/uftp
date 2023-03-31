@@ -1,5 +1,7 @@
 package eu.unicore.uftp.rsync;
 
+import java.util.List;
+
 /**
  * Helper class for dealing with the checksums used in rsync <br/>
  * 
@@ -31,7 +33,7 @@ public class Checksum {
 	public static long b(byte[]block, long k, long l){
 		long sum=0;
 		long i=k;
-		for(byte b: block){
+		for(int b: block){
 			sum+=(l-i+1)*(b & 0xFF);
 			i++;
 		}
@@ -52,6 +54,28 @@ public class Checksum {
 	 */
 	public static long checksum(byte[]block, long start, long finish){
 		return sum( a(block), b(block, start, finish) ); 
+	}
+
+	public static class ChecksumHolder {
+
+		int blocksize;
+		
+		List<Long> weakChecksums;
+		
+		List<byte[]> strongChecksums;
+		
+	}
+	
+	public static class BlockReference {
+		
+		final int index;
+	
+		final byte[] strongChecksum;
+		
+		public BlockReference(int index, byte[]strongChecksum) {
+			this.index = index;
+			this.strongChecksum = strongChecksum;
+		}
 	}
 
 }

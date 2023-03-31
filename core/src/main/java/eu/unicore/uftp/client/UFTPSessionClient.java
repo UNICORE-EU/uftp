@@ -25,11 +25,11 @@ import org.apache.logging.log4j.Logger;
 import eu.unicore.uftp.dpc.AuthorizationFailureException;
 import eu.unicore.uftp.dpc.Reply;
 import eu.unicore.uftp.dpc.Utils;
-import eu.unicore.uftp.rsync.Master;
+import eu.unicore.uftp.rsync.Leader;
 import eu.unicore.uftp.rsync.RsyncStats;
-import eu.unicore.uftp.rsync.Slave;
-import eu.unicore.uftp.rsync.SocketMasterChannel;
-import eu.unicore.uftp.rsync.SocketSlaveChannel;
+import eu.unicore.uftp.rsync.Follower;
+import eu.unicore.uftp.rsync.SocketLeaderChannel;
+import eu.unicore.uftp.rsync.SocketFollowerChannel;
 import eu.unicore.uftp.server.UFTPCommands;
 import eu.unicore.util.Pair;
 
@@ -442,7 +442,7 @@ public class UFTPSessionClient extends AbstractUFTPClient implements Runnable {
 	 */
 	public RsyncStats syncLocalFile(String remoteMaster, File localSlave) throws Exception {
 		runCommand("SYNC-TO-CLIENT " + remoteMaster);
-		Slave slave = new Slave(localSlave, new SocketSlaveChannel(socket), localSlave.getAbsolutePath());
+		Follower slave = new Follower(localSlave, new SocketFollowerChannel(socket), localSlave.getAbsolutePath());
 		return slave.call();
 	}
 
@@ -455,7 +455,7 @@ public class UFTPSessionClient extends AbstractUFTPClient implements Runnable {
 	 */
 	public RsyncStats syncRemoteFile(File localMaster, String remoteSlave) throws Exception {
 		runCommand("SYNC-TO-SERVER " + remoteSlave);
-		Master master = new Master(localMaster, new SocketMasterChannel(socket), localMaster.getAbsolutePath());
+		Leader master = new Leader(localMaster, new SocketLeaderChannel(socket), localMaster.getAbsolutePath());
 		return master.call();
 	}
 

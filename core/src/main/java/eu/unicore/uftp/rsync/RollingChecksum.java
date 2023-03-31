@@ -1,5 +1,7 @@
 package eu.unicore.uftp.rsync;
 
+import java.util.Arrays;
+
 /**
  * Compute the rolling checksum.<br/>
  *  
@@ -10,17 +12,20 @@ package eu.unicore.uftp.rsync;
  */
 public class RollingChecksum {
 
-	//last data value
-	private long lastX;
+	//last data value at position 'k'
+	private int Xk;
 	
 	//last function values
-	private long lastA;
-	private long lastB;
+	private long A_kl;
+	private long B_kl;
 	
-	//last index values for consistency checking
-	private long lastK;
-	private long lastL;
+	//last index values
+	private long k;
+	private long l;
 	
+	private byte[] data;
+	private int position=0;
+
 	/**
 	 * initialise the checksum
 	 * 
@@ -34,41 +39,48 @@ public class RollingChecksum {
 	 * reset the checksum using the given block data
 	 * 
 	 * @param data - data block
-	 * @param k - start position
-	 * @param l - end position
+	 * @param k . start index of the block in the full data
+	 * @param l - end index of the block in the full data
 	 * @return the checksum of the given block
 	 */
 	public long reset(byte[] data, long k, long l){
-		lastX=data[0] & 0xFF ;
-		lastK=k;
-		lastL=l;
-		lastA=Checksum.a(data);
-		lastB=Checksum.b(data, k, l);
-		
-		return Checksum.sum(lastA,lastB);
+		this.k = k;
+		this.l = l;
+		A_kl = Checksum.a(data);
+		B_kl = Checksum.b(data, k, l);
+		this.data = Arrays.copyOf(data, data.length);
+		this.Xk = data[0] & 0xFF;
+		this.position = 0;
+		return Checksum.sum(A_kl, B_kl);
 	}
 
 	/**
-	 * compute the rolling checksum for the given parameters
+	 * update the rolling checksum with the next byte of data
 	 * 
-	 * @param k - start index
-	 * @param l - end index
-	 * @param X_k - the data value at position 'k'
-	 * @param X_l - the data value at position 'l'
-	 * @return checksum value for the block from 'k' to 'l'
+	 * @param Xk     - the data value at position 'k'
+	 * @param nextX - the data value at position 'l+1'
+	 * @return checksum value for the block from 'k+1' to 'l+1'
 	 */
-	public long update(long k, long l, byte X_k, byte X_l){
-		if(k==0 || k!=lastK+1 || l!=lastL+1){
-			throw new IllegalStateException();
-		}
-		//recurrence relations
-		lastA=( lastA - lastX + (X_l & 0xFF) ) & 0xFFFF ;
-		lastB=( lastB - (l-k+1)*lastX + lastA ) & 0xFFFF ;
-		lastK++;
-		lastL++;
-		lastX =  X_k & 0xFF ;
-		
-		return Checksum.sum(lastA,lastB);
+	public long update(byte nextX){
+		// recurrence relations
+		long A = ( A_kl - Xk + (nextX & 0xff)) & 0xFFFF ;
+		long B = ( B_kl - (l-k+1)*Xk + A ) & 0xFFFF ;
+		// store values for the next update()
+		k++;
+		l++;
+		A_kl=A;
+		B_kl=B;
+		data[position] = nextX;
+		position++;
+		if(position==data.length)position=0;
+		Xk =  data[position] & 0xFF;
+		return Checksum.sum(A, B);
 	}
 
+	public long getK() {
+		return k;
+	}
+	public long getL() {
+		return l;
+	}
 }

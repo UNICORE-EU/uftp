@@ -3,13 +3,15 @@ package eu.unicore.uftp.rsync;
 import java.io.IOException;
 import java.nio.channels.ByteChannel;
 
+import eu.unicore.uftp.rsync.Checksum.ChecksumHolder;
+
 
 /**
  * Master-to-Slave communication
  * 
  * @author schuller
  */
-public interface MasterChannel {
+public interface LeaderChannel {
 
 	/**
 	 * receives checksums from the Slave

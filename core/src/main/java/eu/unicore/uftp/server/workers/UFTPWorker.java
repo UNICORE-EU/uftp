@@ -22,13 +22,13 @@ import eu.unicore.uftp.dpc.Session;
 import eu.unicore.uftp.dpc.UFTPConstants;
 import eu.unicore.uftp.dpc.Utils;
 import eu.unicore.uftp.jparss.PSocket;
-import eu.unicore.uftp.rsync.Master;
-import eu.unicore.uftp.rsync.MasterChannel;
+import eu.unicore.uftp.rsync.Leader;
+import eu.unicore.uftp.rsync.LeaderChannel;
 import eu.unicore.uftp.rsync.RsyncStats;
-import eu.unicore.uftp.rsync.Slave;
-import eu.unicore.uftp.rsync.SlaveChannel;
-import eu.unicore.uftp.rsync.SocketMasterChannel;
-import eu.unicore.uftp.rsync.SocketSlaveChannel;
+import eu.unicore.uftp.rsync.Follower;
+import eu.unicore.uftp.rsync.FollowerChannel;
+import eu.unicore.uftp.rsync.SocketLeaderChannel;
+import eu.unicore.uftp.rsync.SocketFollowerChannel;
 import eu.unicore.uftp.server.ServerThread;
 import eu.unicore.uftp.server.requests.UFTPTransferRequest;
 
@@ -151,11 +151,11 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 					break;
 
 				case Session.ACTION_SYNC_TO_CLIENT:
-					syncMaster(session);
+					syncToClient(session);
 					break;
 
 				case Session.ACTION_SYNC_TO_SERVER:
-					syncSlave(session);
+					syncToServer(session);
 					break;
 
 				case Session.ACTION_END:
@@ -545,19 +545,19 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 		logUsage(operation, total, millis, connection.getAddress(), -1);
 	}
 	
-	protected void syncMaster(Session session) throws Exception {
-		MasterChannel channel = new SocketMasterChannel(socket);
+	protected void syncToClient(Session session) throws Exception {
+		LeaderChannel channel = new SocketLeaderChannel(socket);
 		String name = session.getLocalFile().getAbsolutePath();
-		Master master = new Master(session.getLocalRandomAccessFile(), channel, name);
+		Leader master = new Leader(session.getLocalRandomAccessFile(), channel, name);
 		RsyncStats stats = master.call();
 		logger.info(stats);
 	}
 
-	protected void syncSlave(Session session) throws Exception {
-		SlaveChannel channel = new SocketSlaveChannel(socket);
+	protected void syncToServer(Session session) throws Exception {
+		FollowerChannel channel = new SocketFollowerChannel(socket);
 		String name = session.getLocalFile().getAbsolutePath();
-		int blockSize = Slave.reasonableBlockSize(session.getLocalFile());
-		Slave slave = new Slave(session.getLocalRandomAccessFile(), channel, name, blockSize);
+		int blockSize = Follower.reasonableBlockSize(session.getLocalFile());
+		Follower slave = new Follower(session.getLocalRandomAccessFile(), channel, name, blockSize);
 		slave.setFileAccess(session.getFileAccess());
 		RsyncStats stats = slave.call();
 		logger.info(stats);

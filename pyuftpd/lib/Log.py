@@ -3,6 +3,7 @@
 #
 from sys import stdout
 from syslog import closelog, openlog, syslog, LOG_DEBUG, LOG_ERR, LOG_INFO
+import traceback
 
 class Logger(object):
 
@@ -40,3 +41,9 @@ class Logger(object):
             syslog(LOG_DEBUG, str(message))
         else:
             self.out("[DEBUG] %s" % str(message))
+            
+    def log_exception(self):
+        if not self.verbose:
+            return
+        self.debug(traceback.format_exc())
+        

@@ -4,21 +4,19 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- * Slave-to-Master communication
- * 
  * @author schuller
  */
-public interface SlaveChannel {
+public interface FollowerChannel {
 
 	/**
-	 * sends the Slave's checksums to the Master
+	 * sends the Follower's checksums to the Leader
 	 * 
 	 * @param weakChecksums
 	 * @param strongChecksums
 	 * @param blocksize
 	 * @throws IOException
 	 */
-	public void sendToMaster(List<Long>weakChecksums, List<byte[]>strongChecksums, int blocksize)
+	public void sendToLeader(List<Long>weakChecksums, List<byte[]>strongChecksums, int blocksize)
 	throws IOException;
 	
 	/**

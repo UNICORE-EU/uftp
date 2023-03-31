@@ -7,10 +7,12 @@ import java.nio.channels.ReadableByteChannel;
 import java.util.List;
 import java.util.concurrent.SynchronousQueue;
 
+import eu.unicore.uftp.rsync.Checksum.ChecksumHolder;
+
 /**
  * for testing: direct channel between Slave and Master
  */
-public class LocalChannel implements SlaveChannel, MasterChannel {
+public class LocalChannel implements FollowerChannel, LeaderChannel {
 
 	private final boolean dryRun;
 	
@@ -23,7 +25,7 @@ public class LocalChannel implements SlaveChannel, MasterChannel {
 	// slave channel
 	
 	@Override
-	public void sendToMaster(List<Long> weakChecksums, List<byte[]> strongChecksums, int blocksize)throws IOException{
+	public void sendToLeader(List<Long> weakChecksums, List<byte[]> strongChecksums, int blocksize)throws IOException{
 		holder=new ChecksumHolder();
 		holder.blocksize=blocksize;
 		holder.weakChecksums=weakChecksums;
@@ -82,12 +84,9 @@ public class LocalChannel implements SlaveChannel, MasterChannel {
 		}
 	}
 
-	protected boolean closed=false;
-	
 	@Override
 	public void shutdown() throws IOException {
-		sendData(-1, null, -1);
-		closed=true;
+		sendData(0, null, -1);
 	}
 
 	public static class ByteArrayChannel implements ReadableByteChannel{

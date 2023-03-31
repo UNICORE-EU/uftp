@@ -35,7 +35,7 @@ public class TestRsyncViaSocket {
 	
 	@Test
 	public void testWritingFiles()throws Exception{
-		doTest(Slave.DEFAULT_BLOCKSIZE);
+		doTest(Follower.DEFAULT_BLOCKSIZE);
 	//	doTest(2*Slave.DEFAULT_BLOCKSIZE);
 	//	doTest(4*Slave.DEFAULT_BLOCKSIZE);
 	}
@@ -53,11 +53,11 @@ public class TestRsyncViaSocket {
 		Socket server=getServerSock.get();
 		System.out.println("Client "+client.getLocalAddress()+" port "+client.getLocalPort());
 		System.out.println("Server "+server.getLocalAddress()+" port "+server.getLocalPort());
-		SocketSlaveChannel slaveChannel=new SocketSlaveChannel(client);
-		SocketMasterChannel masterChannel=new SocketMasterChannel(server);
+		SocketFollowerChannel slaveChannel=new SocketFollowerChannel(client);
+		SocketLeaderChannel masterChannel=new SocketLeaderChannel(server);
 		
-		Slave slave=new Slave(new RandomAccessFile(slaveFile, "r"),slaveChannel,slaveFile.getAbsolutePath());
-		Master master=new Master(new RandomAccessFile(masterFile,"r"),masterChannel,masterFile.getAbsolutePath());
+		Follower slave=new Follower(new RandomAccessFile(slaveFile, "r"),slaveChannel,slaveFile.getAbsolutePath());
+		Leader master=new Leader(new RandomAccessFile(masterFile,"r"),masterChannel,masterFile.getAbsolutePath());
 		Future<RsyncStats> f=Utils.getExecutor().submit(slave);
 		RsyncStats masterStats=master.call();
 		RsyncStats slaveStats=f.get();

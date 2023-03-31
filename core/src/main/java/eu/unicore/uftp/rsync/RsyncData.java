@@ -31,7 +31,4 @@ public class RsyncData {
 		this.blockNumber=blockNumber;
 	}
 
-	public boolean isShutDown(){
-		return bytes<0 && blockNumber <0;
-	}
 }

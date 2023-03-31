@@ -18,6 +18,10 @@ public class RsyncStats {
 	
 	public int matches=-1;
 	
+	public int misses=-1;
+	
+	public int blocks;
+	
 	public int blocksize;
 	
 	public RsyncStats(String fileName){
@@ -27,9 +31,11 @@ public class RsyncStats {
 	public String toString(){
 		StringBuilder sb=new StringBuilder();
 		sb.append("'"+fileName+"' : "+duration+"ms, transferred: "+transferred);
-		sb.append(" block size: "+blocksize);
-		if(matches>=0)sb.append(" block matches: "+matches);
-		if(weakMatches>=0)sb.append(" weak matches: "+weakMatches);
+		sb.append("\n blocks: ").append(blocks);
+		sb.append(" size: ").append(blocksize);
+		if(matches>=0)sb.append("\n matches: "+matches);
+		if(weakMatches>=0)sb.append(", weak : "+weakMatches);
+		if(misses>=0)sb.append(", misses: "+misses);
 		return sb.toString();
 	}
 

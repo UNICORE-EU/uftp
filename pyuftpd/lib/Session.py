@@ -3,12 +3,13 @@ import os.path
 from pathlib import Path
 from sys import maxsize
 from time import mktime, sleep, strptime, time
+from traceback import print_last
 import hashlib
 
 from Connector import Connector
 from FileInfo import FileInfo
 from Log import Logger
-import GzipConnector, PConnector, Protocol, Server
+import GzipConnector, PConnector, Protocol, RSync, Server
 
 
 class Session(object):
@@ -17,8 +18,8 @@ class Session(object):
     ACTION_CONTINUE = 0
     ACTION_RETRIEVE = 1
     ACTION_STORE = 2
-    ACTION_SYNC_MASTER = 3;
-    ACTION_SYNC_SLAVE = 4;
+    ACTION_SYNC_TO_CLIENT = 3;
+    ACTION_SYNC_TO_SERVER = 4;
     ACTION_OPEN_SOCKET = 5
     ACTION_CLOSE_DATA = 7
     ACTION_SEND_HASH = 8
@@ -137,8 +138,8 @@ class Session(object):
             "KEEP-ALIVE": self.set_keep_alive,
             "OPTS": self.opts,
             "HASH": self.hash,
-            "SYNC-TO-CLIENT": self.sync_master,
-            "SYNC-TO-SERVER": self.sync_slave
+            "SYNC-TO-CLIENT": self.sync_to_client,
+            "SYNC-TO-SERVER": self.sync_to_server
         }
 
     def assert_permission(self, requested):
@@ -527,7 +528,7 @@ class Session(object):
             return Session.ACTION_CONTINUE
         self.file_path = path
         self.control.write_message("200 OK")
-        return Session.ACTION_SYNC_MASTER
+        return Session.ACTION_SYNC_TO_CLIENT
 
     def sync_to_server(self, params):
         self.assert_permission(Session.MODE_WRITE)
@@ -538,7 +539,7 @@ class Session(object):
             return Session.ACTION_CONTINUE
         self.file_path = path
         self.control.write_message("200 OK")
-        return Session.ACTION_SYNC_SLAVE
+        return Session.ACTION_SYNC_TO_SERVER
 
     def set_file_mtime(self, params):
         self.assert_permission(Session.MODE_WRITE)
@@ -737,6 +738,16 @@ class Session(object):
             if limit_rate:
                 self.control_rate(total, start_time)
         return total
+    
+    def do_sync_to_client(self):
+        stats = RSync.Leader(self.data, self.file_path).run()
+        msg = "USAGE [sync-to-client] [%s] [%s]" % (stats, self.job['user'])
+        self.LOG.info(msg)
+        
+    def do_sync_to_server(self):
+        stats = RSync.Follower(self.data, self.file_path).run()   
+        msg = "USAGE [sync-to-server] [%s] [%s]" % (stats, self.job['user'])
+        self.LOG.info(msg)
 
     def control_rate(self, total, start_time):
         interval = int(time()*1000 - start_time) + 1
@@ -806,14 +817,15 @@ class Session(object):
                         self.close_data()
                     elif mode==Session.ACTION_SEND_HASH:
                         self.send_hash()
-                    elif mode==Session.ACTION_SYNC_MASTER:
-                        self.do_sync_master()
-                    elif mode==Session.ACTION_SYNC_SLAVE:
-                        self.do_sync_slave()
+                    elif mode==Session.ACTION_SYNC_TO_CLIENT:
+                        self.do_sync_to_client()
+                    elif mode==Session.ACTION_SYNC_TO_SERVER:
+                        self.do_sync_to_server()
                             
                     elif mode==Session.ACTION_END:
                         break
                 except Exception as e:
                     self.control.write_message("500 Error processing command: %s" % str(e))
+                    self.LOG.log_exception()
             else:
                 self.control.write_message("500 Command not implemented.")
