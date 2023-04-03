@@ -1,11 +1,13 @@
-import unittest
+import os, unittest
 import Connector, RSync
 from hashlib import md5
 from time import sleep
-from os import urandom
 from random import randint
 
 class TestRSync(unittest.TestCase):
+
+    def setUp(self):
+        os.makedirs("./target/testdata", exist_ok=True)
 
     def test_func_a(self):
         block = [1,2,3,4,5,6,7,8,9,10]
@@ -31,24 +33,11 @@ class TestRSync(unittest.TestCase):
         follower = RSync.Follower(connector, f1)
         follower.compute_checksums()
         self.assertEqual(follower.weak_checksums, [3670588062, 1824262269])
-    
-    def test_rolling_checksum(self):
-        print("\n*** test_rolling_checksum")
-        rc = RSync.RollingChecksum()
-        c1 = RSync.checksum([44,11,244,123], 0, 3)
-        c3 = RSync.checksum([1,64,117,5], 8, 11)
-        c1_test = rc.init([44,11,244,123])
-        self.assertEqual(c1_test, c1)
-        rc.reset([1,2,3,4], 4, 7)
-        # update with correct 'block 3' data
-        for b in [1,64,117,5]:
-            c3_test = rc.update(b)
-        self.assertEqual(c3_test, c3)
      
     def test_identical_files(self):
         print("\n*** test_identical_files")
         f1 = "tests/rsync-test-1.txt"
-        file_to_update = "target/rsync-test-to-be-updated.txt"
+        file_to_update = "target/testdata/rsync-test-to-be-updated.txt"
         with open(f1, "rb") as f_1:
             with open(file_to_update, "wb") as f_2: 
                 f_2.write(f_1.read())
@@ -103,7 +92,7 @@ class TestRSync(unittest.TestCase):
         with open(f1, "wb") as f_1:
             with open(file_to_update, "wb") as f_2: 
                 for i in range(0,32):
-                    data = bytearray(urandom(1024))
+                    data = bytearray(os.urandom(1024))
                     f_1.write(data)
                     x = randint(0,1023)
                     data[x]=0

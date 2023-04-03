@@ -26,7 +26,7 @@ def b(block, k, l):
         l - integer
     """
     const = l - k + 1
-    return (const*sum(block) - sum([b*i for i, b in enumerate(block)]))& 0xFFFF
+    return (const*sum(block) - sum([i*b for i, b in enumerate(block)]))& 0xFFFF
 
 def r_sum(a, b):
     return a + (b << 16)
@@ -43,70 +43,17 @@ def checksum(block, start, finish):
     """
     return r_sum( a(block), b(block, start, finish) ) 
 
+def update(Ak, Bk, k, l, Xk, X):
+    """ update the rolling checksum """
+    A = ( Ak - Xk + X ) & 0xFFFF
+    B = ( Bk - (l-k+1)*Xk + A ) & 0xFFFF
+    return A + (B<<16), A, B
 
-class RollingChecksum():
-    
-    def __init__(self):
-        # last data value at position 'k'
-        self.Xk=0
-        # last function values
-        self.A_kl=0
-        self.B_kl=0
-        # last index values
-        self.k=0
-        self.l=0
-        self.data = None
-        self.position = 0
-
-    def init(self, data):
-        """
-        initialise the checksum
-        Args:
-           data - initial data block
-        Returns the checksum of the given initial block
-        """
-        return self.reset(data, 0, len(data)-1);
-    
-    def reset(self, data, k, l):
-        """
-        reset the checksum using the given block data
-        Args:     
-            Data - data block
-            k - start position
-            l - end position
-        Returns the checksum of the given block
-        """
-        self.k=k
-        self.l=l
-        self.A_kl=a(data)
-        self.B_kl=b(data, k, l)
-        self.data = bytearray(data)
-        self.Xk=data[0]
-        self.position = 0
-        return r_sum(self.A_kl,self.B_kl);
-    
-    def update(self, X):
-        """
-        Update the rolling checksum with the next data value
-        Args:
-            X - the data value at position 'l+1'
-        Returns the checksum value for the block from 'k+1' to 'l+1'
-        """
-        # recurrence relations
-        A = ( self.A_kl - self.Xk + X ) & 0xFFFF
-        B = ( self.B_kl - (self.l-self.k+1)*self.Xk + A ) & 0xFFFF
-        # store for next update
-        self.k += 1
-        self.l += 1
-        self.A_kl = A
-        self.B_kl = B
-        self.data[self.position] = X
-        self.position += 1
-        if self.position==len(self.data):
-            self.position=0
-        self.Xk = self.data[self.position]
-        return r_sum(A, B)
-
+def reset(data, k, l):
+    """ reset the rolling checksum """
+    A = a(data)
+    B = b(data, k, l)
+    return A + (B<<16), A, B, data[0], bytearray(data)
 
 class Stats():
     def __init__(self):
@@ -209,23 +156,32 @@ class Leader(_Sync):
         self.stats.sent += num_bytes+4
 
     def find_matches(self):
-        logged = False
         end_of_last_match = 0
         total = os.stat(self.file_path).st_size
+        end = total - self.blocksize
+        # for the rolling checksum
+        A = 0
+        B = 0
         k = 0
         l = self.blocksize - 1
-        rolling_checksum = RollingChecksum()
+        Xk = 0
+        X = 0
+        _data = None
+        _buf = None
+        _position=0
+        _max_pos=0
         
-        with open(self.file_path, "rb") as f:
+        with open(self.file_path, "rb", buffering=self._READ_BUFSIZE) as f:
             data = f.read(self.blocksize)
-            if total<self.blocksize or len(data)<self.blocksize:
+            if total<self.blocksize:
                 self.send_data(len(data), data, -1)
                 self.shutdown()
                 return
-            weak_checksum = rolling_checksum.init(data)
+            checksum, A, B, Xk, _data = reset(data, k, l)
+            _max_pos = len(data) 
             while l < total:
-                index = -1
-                block_refs = self.checksums.get(weak_checksum, None)
+                index = None
+                block_refs = self.checksums.get(checksum)
                 if block_refs:
                     if data is None:
                         f.seek(k)
@@ -235,7 +191,7 @@ class Leader(_Sync):
                         if strong_checksum==block_ref[0]:
                             index = block_ref[1]
                             break
-                if index>=0:
+                if index:
                     num_bytes = k - end_of_last_match
                     if num_bytes>0:
                         f.seek(end_of_last_match)
@@ -248,17 +204,24 @@ class Leader(_Sync):
                     if num_bytes>0:
                         f.seek(k);
                     data = f.read(self.blocksize);
-                    l = k-1+len(data)
-                    if len(data)>0:
-                       weak_checksum = rolling_checksum.reset(data, k, l);
-                elif l < total-self.blocksize:
-                    data = None
-                    # set read position to next block start
-                    k += 1
-                    l += 1
-                    checksum = rolling_checksum.update(f.read(1)[0])
+                    _max_pos = len(data)
+                    l = k-1+_max_pos
+                    if _max_pos >0:
+                       checksum, A, B, Xk, _data = reset(data, k, l);
+                elif l < end:
+                    # search byte-by-byte for a next match
+                    if _position==0:
+                        data = None
+                        _buf = f.read(_max_pos)
+                    X = _buf[_position]
+                    checksum, A, B = update(A, B, k, l, Xk, X)
+                    _data[_position] = X
+                    _position += 1
+                    if _position==_max_pos:
+                        _position=0
+                    k, l, Xk = k+1, l+1, _data[_position]
                 else:
-                    break;
+                    break
             # finally, we need to send any remaining data
             num_bytes = total - end_of_last_match
             if num_bytes>0:
