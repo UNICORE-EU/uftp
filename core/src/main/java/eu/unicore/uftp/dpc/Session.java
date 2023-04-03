@@ -781,14 +781,11 @@ public class Session {
 		}
 	}
 
-
 	private void handleSystem(String cmd) throws IOException {
-		assertMode(Mode.INFO);
 		connection.sendControl("215 Unix Type: L8");
 	}
 
 	private void handleFeatures(String cmd) throws IOException {
-		assertMode(Mode.INFO);
 		String featureReply = UFTPCommands.FEATURES_REPLY_LONG;
 		Collection<String>features = connection.getFeatures();
 		connection.sendControl(featureReply);

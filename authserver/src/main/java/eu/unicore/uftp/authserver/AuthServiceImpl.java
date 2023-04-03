@@ -1,8 +1,6 @@
 package eu.unicore.uftp.authserver;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -19,8 +17,6 @@ import org.apache.logging.log4j.Logger;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import eu.unicore.security.Client;
-import eu.unicore.security.Role;
 import eu.unicore.security.SecurityException;
 import eu.unicore.services.security.util.AuthZAttributeStore;
 import eu.unicore.uftp.authserver.messages.AuthRequest;
@@ -154,17 +150,7 @@ public class AuthServiceImpl extends ServiceBase {
 				server.put("dataSharing",getShareServiceInfo(name));
 				o.put(name, server);
 			}
-			JSONObject cl = new JSONObject();
-			Client c = AuthZAttributeStore.getClient();
-			cl.put("dn", c.getDistinguishedName());
-			Role role = c.getRole();
-			if(role!=null){
-				Map<String,Object>rProps = new HashMap<String, Object>();
-				rProps.put("selected",role.getName());
-				rProps.put("availableRoles",role.getValidRoles());
-				cl.put("role",rProps);
-			}
-			o.put("client", cl);
+			o.put("client", renderClientProperties());
 			o.put("server", renderServerProperties());
 			r = Response.ok().entity(o.toString(2)).build();
 		}catch(Exception ex){

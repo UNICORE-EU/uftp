@@ -18,8 +18,8 @@
   <properties>
     <compiler.fork>false</compiler.fork>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <use.version>4.5.0</use.version>
-    <seclib.version>6.0.1</seclib.version>
+    <use.version>4.5.2</use.version>
+    <seclib.version>6.0.6</seclib.version>
   </properties>
 
   <scm>

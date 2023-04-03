@@ -10,6 +10,12 @@ Full documentation is at: https://uftp-docs.readthedocs.io
 ***  see README-UPGRADE.txt for how to update
 ***
 
+
+Auth Server 2.8.0 (released MMM DD, 2023)
+-----------------------------------------
+ - update to UNICORE 9.2.1 base libs
+
+
 Auth Server 2.7.0 (released Nov 7, 2022)
 ----------------------------------------
 

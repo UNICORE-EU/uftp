@@ -17,6 +17,7 @@ import org.apache.commons.compress.archivers.ArchiveInputStream;
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
 import org.apache.logging.log4j.Logger;
 
+import eu.unicore.uftp.dpc.AuthorizationFailureException;
 import eu.unicore.uftp.dpc.DPCServer.Connection;
 import eu.unicore.uftp.dpc.Session;
 import eu.unicore.uftp.dpc.UFTPConstants;
@@ -31,6 +32,7 @@ import eu.unicore.uftp.rsync.SocketLeaderChannel;
 import eu.unicore.uftp.rsync.SocketFollowerChannel;
 import eu.unicore.uftp.server.ServerThread;
 import eu.unicore.uftp.server.requests.UFTPTransferRequest;
+import eu.unicore.util.Log;
 
 /**
  * A UFTPWorker processes a single Job
@@ -128,8 +130,12 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 			connection.setControlTimeout(0);
 
 			while (session.isAlive()) {
-				action = session.getNextAction();
-
+				try {
+					action = session.getNextAction();
+				} catch(AuthorizationFailureException afe) {
+					connection.sendError(500, Log.createFaultMessage("", afe));
+					continue;
+				}
 				switch (action) {
 
 				case Session.ACTION_OPEN_SOCKET:
