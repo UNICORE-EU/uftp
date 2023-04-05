@@ -19,6 +19,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -78,7 +79,7 @@ public class ShareServiceImpl extends ShareServiceBase {
 			AuthRequest authRequest = gson.fromJson(json, AuthRequest.class);
 			UserAttributes ua = assembleAttributes(serverName, null);
 			String targetID = getNormalizedCurrentUserName();
-			String path = authRequest.serverPath;
+			String path = FilenameUtils.normalize(authRequest.serverPath, true);
 			Target target = new SharingUser(targetID);
 			Collection<ShareDAO> shares = shareDB.readAll(path);
 			if(shares.size()==0){

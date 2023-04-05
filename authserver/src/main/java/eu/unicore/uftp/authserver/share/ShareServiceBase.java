@@ -6,6 +6,7 @@ import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.net.InetAddress;
 import java.util.Collection;
+import java.util.List;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
@@ -94,7 +95,9 @@ public abstract class ShareServiceBase extends ServiceBase {
 			uc.setSecret(transferRequest.getSecret());
 			uc.connect();
 			FileInfo fi = uc.stat(remoteFile);
-			if(fi.isDirectory())throw new Exception("Can't download a directory");
+			if(fi.isDirectory()) {
+				return getListing(share, uftp, clientIP);
+			}
 			PipedOutputStream sink = new PipedOutputStream();
 			PipedInputStream pin = new PipedInputStream(sink);
 			final Runnable task = new Runnable() {
@@ -158,6 +161,36 @@ public abstract class ShareServiceBase extends ServiceBase {
 		return r;
 	}
 
+	protected Response getListing(ShareDAO share, UFTPDInstance uftp, String clientIP){
+		Response r = null;
+		try{
+			AuthRequest authRequest = new AuthRequest();
+			authRequest.send = true;
+			authRequest.serverPath = new File(new File(share.getPath()).getParentFile(), 
+					"/"+UFTPConstants.sessionModeTag).getPath();
+			UserAttributes ua = new UserAttributes(share.getUid(), share.getGid(), null);
+			TransferRequest transferRequest = new TransferRequest(authRequest, ua, clientIP);
+			AuthResponse response = new TransferInitializer().initTransfer(transferRequest,uftp);            
+			InetAddress[] server = new InetAddress[]{InetAddress.getByName(response.serverHost)};
+			final String remoteFile = new File(share.getPath()).getName();
+			try(UFTPSessionClient uc = new UFTPSessionClient(server, response.serverPort)){
+				uc.setSecret(transferRequest.getSecret());
+				uc.connect();
+				FileInfo fi = uc.stat(remoteFile);
+				if(!fi.isDirectory())throw new Exception("Not a directory");
+				List<String> fileList = uc.getFileList(remoteFile);
+				StringBuilder sb = new StringBuilder();
+				for(String f: fileList) {
+					sb.append(f).append("\n");
+				}
+				ResponseBuilder rb = Response.ok(sb.toString());
+				r = rb.build();
+			}
+		}catch(Exception ex){
+			r = handleError(500, "", ex, logger);
+		}
+		return r;
+	}
 	protected ACLStorage getShareDB(String serverName){
 		return kernel.getAttribute(ShareServiceProperties.class).getDB(serverName);
 	}
