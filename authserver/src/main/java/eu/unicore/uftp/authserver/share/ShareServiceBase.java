@@ -178,10 +178,10 @@ public abstract class ShareServiceBase extends ServiceBase {
 				uc.connect();
 				FileInfo fi = uc.stat(remoteFile);
 				if(!fi.isDirectory())throw new Exception("Not a directory");
-				List<String> fileList = uc.getFileList(remoteFile);
+				List<FileInfo> fileList = uc.getFileInfoList(remoteFile);
 				StringBuilder sb = new StringBuilder();
-				for(String f: fileList) {
-					sb.append(f).append("\n");
+				for(FileInfo f: fileList) {
+					sb.append(f.getLISTFormat());
 				}
 				ResponseBuilder rb = Response.ok(sb.toString());
 				r = rb.build();
