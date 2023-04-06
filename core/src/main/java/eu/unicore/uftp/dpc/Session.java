@@ -79,8 +79,6 @@ public class Session {
 
 	private File currentDirectory;
 
-	private final boolean allowAbsolutePaths;
-
 	// allowed file patterns
 	private String[]includes = {};
 
@@ -118,23 +116,25 @@ public class Session {
 		this.includes = parsePathlist(job.getIncludes());
 		this.excludes = parsePathlist(job.getExcludes());
 		this.defaultExcludes = parsePathlist(Utils.getProperty(UFTPConstants.ENV_UFTP_NO_WRITE, null));
-		File requested = job.getBaseDirectory();
-		if (requested!= null) {
-			allowAbsolutePaths = false;
-			if(!requested.isDirectory()) {
-				requested = requested.getParentFile();
-			}
-			if(requested.isAbsolute()) {
-				baseDirectory = requested;
-			}else {
-				baseDirectory = new File(new File(fileAccess.getHome(job.getUser())), requested.getPath());
-			}
+		File _dir = new File(job.getBaseDirectory());
+		if(!_dir.isDirectory()) {
+			_dir = _dir.getParentFile();
+		}
+		String _dirname = _dir!=null? _dir.getPath():null;
+		File _home = new File(fileAccess.getHome(job.getUser()));
+		if (_dirname==null || _dirname.isEmpty()) {
+			// no base dir set - start in HOME and
+	        // allow client to "escape" to higher levels
+			baseDirectory = new File("/");
+			currentDirectory =  _home;
 		}
 		else {
-			baseDirectory = new File(fileAccess.getHome(job.getUser()));
-			allowAbsolutePaths = true;
+			if (!new File(_dirname).isAbsolute()) {
+                _dir = new File(_home, _dirname);
+            }
+            baseDirectory = _dir;
+            currentDirectory = baseDirectory;
 		}
-		currentDirectory = baseDirectory;
 		this.maxParCons = maxParCons;
 		this.accessLevel = job.getAccessPermissions();
 	}
@@ -298,7 +298,7 @@ public class Session {
 	}
 
 	private File getFile(String pathname) throws IOException {
-		String path = (pathname.startsWith("/") && allowAbsolutePaths)?
+		String path = pathname.startsWith("/") ?
 			          FilenameUtils.normalize(pathname) :
 			          FilenameUtils.normalize(new File(currentDirectory, pathname).getPath());
 		return fileAccess.getFile(path);
@@ -579,23 +579,18 @@ public class Session {
 
 	private void handleCDUP() throws IOException {
 		assertMode(Mode.FULL);
-		if (!allowAbsolutePaths && currentDirectory.getAbsolutePath().equals(baseDirectory.getAbsolutePath())){
-			connection.sendError("Can't cd up, already at base directory");
+		currentDirectory = currentDirectory.getParentFile();
+		if (currentDirectory==null) {
+			currentDirectory = new File("/");
 		}
-		else {
-			currentDirectory = currentDirectory.getParentFile();
-			if (currentDirectory==null) {
-				currentDirectory = new File("/");
-			}
-			connection.sendControl(UFTPCommands.OK);
-		}
+		connection.sendControl(UFTPCommands.OK);
 	}
 
 	private void handleCWD(String cmd) throws IOException {
 		assertMode(Mode.FULL);
 		String dir = cmd.split(" ", 2)[1];
 		File newDir = new File(dir);
-		File newWD = allowAbsolutePaths && newDir.isAbsolute() ? newDir :
+		File newWD = newDir.isAbsolute() ? newDir :
 					new File(baseDirectory, dir);
 		if (!(newWD.exists() && newWD.isDirectory())) {
 			connection.sendError("Can't cd to " + newWD.getAbsolutePath());
@@ -1096,7 +1091,6 @@ public class Session {
 		StringBuilder sb = new StringBuilder();
 		sb.append("Session for ").append(getClientDescription());
 		sb.append(" base_directory=\"").append(getBaseDirectory()).append("\"");
-		sb.append(" allow_abspaths=").append(allowAbsolutePaths);
 		sb.append(" access_level=").append(String.valueOf(accessLevel));
 		if(includes!=null)sb.append(" include=").append(Arrays.asList(includes));
 		if(excludes!=null)sb.append(" exclude=").append(Arrays.asList(excludes));

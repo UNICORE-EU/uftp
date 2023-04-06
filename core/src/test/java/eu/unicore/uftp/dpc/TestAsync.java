@@ -33,7 +33,7 @@ public class TestAsync extends ClientServerTestBase{
 		Utils.writeToFile("this is a test for the session client", realSource);
 		String target = "target/testdata/testfile-" + System.currentTimeMillis();
 		String secret = String.valueOf(System.currentTimeMillis());
-		File cwd=new File(".").getAbsoluteFile();
+		String cwd=new File(".").getAbsolutePath();
 		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret, cwd);
 		job.sendTo(host[0], jobPort);
 		Thread.sleep(1000);
@@ -65,7 +65,7 @@ public class TestAsync extends ClientServerTestBase{
 		Utils.writeToFile("this is a test for the session client", realSource);
 
 		String secret = String.valueOf(System.currentTimeMillis());
-		File cwd=dataDir.getAbsoluteFile();
+		String cwd = dataDir.getAbsolutePath();
 		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret, cwd);
 		job.sendTo(host[0], jobPort);
 		Thread.sleep(1000);

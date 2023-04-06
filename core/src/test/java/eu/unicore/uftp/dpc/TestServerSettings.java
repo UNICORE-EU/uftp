@@ -35,8 +35,7 @@ public class TestServerSettings extends ClientServerTestBase {
 	public void testConnect() throws Exception {
 		server.setCheckClientIP(true);
 		String secret = UUID.randomUUID().toString();
-		UFTPSessionRequest job = new UFTPSessionRequest(client_host, "nobody", secret,
-				new File("."));
+		UFTPSessionRequest job = new UFTPSessionRequest(client_host, "nobody", secret, ".");
 		job.sendTo(host[0], jobPort);
 		Thread.sleep(1000);
 
@@ -68,7 +67,7 @@ public class TestServerSettings extends ClientServerTestBase {
 	@Test
 	public void testRejectDuplicateSecret() throws Exception {
 		UFTPSessionRequest job = new UFTPSessionRequest(client_host, "nobody", "test123",
-				new File("./foo"));
+				"");
 		job.sendTo(host[0], jobPort);
 		String reply = job.sendTo(host[0], jobPort);
 		System.out.println(reply);
@@ -84,7 +83,7 @@ public class TestServerSettings extends ClientServerTestBase {
 		
 		String secret = UUID.randomUUID().toString();
 		UFTPSessionRequest job = new UFTPSessionRequest(client_host, "nobody", secret,
-				dataDir.getAbsoluteFile());
+				dataDir.getAbsolutePath());
 		job.sendTo(host[0], jobPort);
 		Thread.sleep(1000);
 		server.setRFCRangeMode(false);
@@ -100,7 +99,7 @@ public class TestServerSettings extends ClientServerTestBase {
 		
 		secret = UUID.randomUUID().toString();
 		job = new UFTPSessionRequest(client_host, "nobody", secret,
-				dataDir.getAbsoluteFile());
+				dataDir.getAbsolutePath());
 		job.sendTo(host[0], jobPort);
 		Thread.sleep(1000);
 		server.setRFCRangeMode(true);

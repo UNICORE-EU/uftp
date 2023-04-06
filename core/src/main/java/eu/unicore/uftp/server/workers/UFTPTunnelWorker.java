@@ -31,7 +31,6 @@
  ********************************************************************************/
 package eu.unicore.uftp.server.workers;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -40,9 +39,9 @@ import java.net.UnknownHostException;
 
 import org.apache.logging.log4j.Logger;
 
+import eu.unicore.uftp.dpc.DPCServer.Connection;
 import eu.unicore.uftp.dpc.Session;
 import eu.unicore.uftp.dpc.Utils;
-import eu.unicore.uftp.dpc.DPCServer.Connection;
 import eu.unicore.uftp.server.ServerThread;
 import eu.unicore.uftp.server.requests.UFTPSessionRequest;
 import eu.unicore.uftp.server.requests.UFTPTunnelRequest;
@@ -66,7 +65,7 @@ public class UFTPTunnelWorker extends UFTPWorker {
 
 	private static UFTPSessionRequest convert(UFTPTunnelRequest job){
 		UFTPSessionRequest t = new UFTPSessionRequest(job.getClient(),job.getUser(),
-				job.getSecret(), new File("."));
+				job.getSecret(), ".");
 		return t;
 	}
 	

@@ -1,6 +1,5 @@
 package eu.unicore.uftp.authserver;
 
-import java.io.File;
 import java.util.Random;
 
 import eu.unicore.uftp.authserver.messages.AuthRequest;
@@ -27,7 +26,7 @@ public final class TransferRequest extends UFTPSessionRequest {
 
     public TransferRequest(AuthRequest authRequest, UserAttributes authData, String clientIp) {
         super(Utils.parseInetAddresses(clientIp, logger), authData.uid, generateSecret(), 
-              new File(authRequest.serverPath));
+              authRequest.serverPath);
         
         setStreams(authRequest.streamCount);
         setGroup(authData.gid);

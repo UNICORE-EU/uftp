@@ -92,13 +92,13 @@ public class ConnectionInfoManagerTest {
         assertFalse(result);
 
         String sameHostDifferentPath = String.format(uriFormatingString, scheme,
-                userName, password, host, port, "/some/other/path");
+                userName, password, host, port, "/foo/bar/some/other/path");
         result = instance.isSameServer(sameHostDifferentPath);
         assertTrue(result);
 
         //no  credentials:        
         String noCredentials = String.format(uriFormatingString, scheme, userName,
-                password, host, port, "/some/other/path").replaceFirst(userName + ":" + password, "");
+                password, host, port, path).replaceFirst(userName + ":" + password, "");
         result = instance.isSameServer(noCredentials);
         assertTrue(result);
 

@@ -25,7 +25,7 @@ public class UFTPSessionRequest extends UFTPBaseRequest {
     /**
      * base directory of the session
      */
-    private final File baseDirectory;
+    private final String baseDirectory;
 
     /**
      * number of parallel data streams
@@ -80,16 +80,16 @@ public class UFTPSessionRequest extends UFTPBaseRequest {
      * @param secret - one-time password to use
      * @param baseDirectory - the base directory of the session
      */
-    public UFTPSessionRequest(InetAddress[] client,  String user, String secret, File baseDirectory) {
+    public UFTPSessionRequest(InetAddress[] client,  String user, String secret, String baseDirectory) {
         super(client, user, secret);
         // for backwards compatibility
-        if(baseDirectory.getPath().equals(_sessionModeTag)) {
-            baseDirectory = new File("");
+        if(_sessionModeTag.equals(baseDirectory)) {
+            baseDirectory = "";
         }
-        else if(baseDirectory.getName().equals(_sessionModeTag)) {
-            baseDirectory = baseDirectory.getParentFile();
+        else if(new File(baseDirectory).getName().equals(_sessionModeTag)) {
+            baseDirectory = new File(baseDirectory).getParent();
             if (baseDirectory==null) {
-                baseDirectory = new File(".");
+                baseDirectory = ".";
             }
         }
         this.baseDirectory = baseDirectory;
@@ -107,7 +107,7 @@ public class UFTPSessionRequest extends UFTPBaseRequest {
     	super(Utils.parseInetAddresses(properties.getProperty("client-ip"),logger), 
     			properties.getProperty("user"),
         		properties.getProperty("secret"));
-        baseDirectory = new File(properties.getProperty("file"));
+        baseDirectory = properties.getProperty("file");
         append = Boolean.parseBoolean(properties.getProperty("append"));
         compress = Boolean.parseBoolean(properties.getProperty("compress"));
         streams = Integer.parseInt(properties.getProperty("streams", "2"));
@@ -132,7 +132,7 @@ public class UFTPSessionRequest extends UFTPBaseRequest {
      */
     public void writeEncoded(OutputStream os) throws IOException {
         super.writeEncoded(os);
-        String dir = baseDirectory.getPath();
+        String dir = baseDirectory;
         if(dir.length()>0 && !dir.endsWith("/"))dir+="/";
         os.write(("file=" + dir + "\n").getBytes());
         os.write(("append=" + String.valueOf(append) + "\n").getBytes());
@@ -168,7 +168,7 @@ public class UFTPSessionRequest extends UFTPBaseRequest {
         return "UFTPSessionRequest <" + getJobID()
 	    + "> user=" + getUser() + " group=" + group
 	    +" clientIP(s)=" + Arrays.asList(getClient())
-	    + " baseDirectory=" + baseDirectory.getPath()
+	    + " baseDirectory=" + baseDirectory
 	    + " streams=" + streams
 	    + " compress=" + compress
 	    + " encrypted=" + (key != null);
@@ -184,7 +184,7 @@ public class UFTPSessionRequest extends UFTPBaseRequest {
     	return REQUEST_TYPE.equals(reqType);
     }
 
-	public File getBaseDirectory() {
+	public String getBaseDirectory() {
 		return baseDirectory;
 	}
 

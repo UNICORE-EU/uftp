@@ -44,7 +44,7 @@ public class TestSessionMode extends ClientServerTestBase{
 
 		String target = "target/testdata/testfile-" + System.currentTimeMillis();
 		String secret = String.valueOf(System.currentTimeMillis());
-		File cwd=new File(".").getAbsoluteFile();
+		String cwd = new File(".").getAbsolutePath();
 		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret, cwd);
 		job.sendTo(host[0], jobPort);
 		Thread.sleep(1000);
@@ -103,7 +103,7 @@ public class TestSessionMode extends ClientServerTestBase{
 
 		String target = "target/testdata/testfile-" + System.currentTimeMillis();
 		String secret = String.valueOf(System.currentTimeMillis());
-		File cwd=new File(".").getAbsoluteFile();
+		String cwd = new File(".").getAbsolutePath();
 		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret, cwd);
 		job.setCompress(true);
 		job.sendTo(host[0], jobPort);
@@ -150,7 +150,7 @@ public class TestSessionMode extends ClientServerTestBase{
 		Utils.writeToFile("this is a test for the session client", realSource);
 
 		String secret = String.valueOf(System.currentTimeMillis());
-		File cwd=dataDir.getAbsoluteFile();
+		String cwd=dataDir.getAbsolutePath();
 
 		//initiate session mode
 		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret, cwd);
@@ -189,7 +189,7 @@ public class TestSessionMode extends ClientServerTestBase{
 		Utils.writeToFile(testString, realSource);
 
 		String secret = String.valueOf(System.currentTimeMillis());
-		File cwd=dataDir.getAbsoluteFile();
+		String cwd=dataDir.getAbsolutePath();
 
 		//initiate session mode
 		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret, cwd);
@@ -237,7 +237,7 @@ public class TestSessionMode extends ClientServerTestBase{
 		Utils.writeToFile("this is a test for the session client", realSource);
 
 		String secret = String.valueOf(System.currentTimeMillis());
-		File cwd=dataDir.getAbsoluteFile();
+		String cwd = dataDir.getAbsolutePath();
 
 		//initiate session mode
 		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret, cwd);
@@ -278,7 +278,7 @@ public class TestSessionMode extends ClientServerTestBase{
 		Utils.writeToFile(testString, realSource);
 
 		String secret = String.valueOf(System.currentTimeMillis());
-		File cwd=dataDir.getAbsoluteFile();
+		String cwd = dataDir.getAbsolutePath();
 
 		//initiate session mode
 		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret, cwd);
@@ -328,7 +328,7 @@ public class TestSessionMode extends ClientServerTestBase{
 		TestRsync.writeTextFiles(masterFile, slaveFile, 500, 3);
 		assertNotSame(Utils.md5(masterFile),Utils.md5(slaveFile));
 		String secret = String.valueOf(System.currentTimeMillis());
-		File cwd=dataDir.getAbsoluteFile();
+		String cwd = dataDir.getAbsolutePath();
 		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret, cwd);
 		job.sendTo(host[0], jobPort);
 		Thread.sleep(1000);
@@ -349,13 +349,13 @@ public class TestSessionMode extends ClientServerTestBase{
 
 	@Test
 	public void testClientGetCmd() throws Exception {
-		String realSourceName="target/testdata/source-"+System.currentTimeMillis();
-		File realSource=new File(realSourceName);
+		String realSourceName="source-"+System.currentTimeMillis();
+		File realSource=new File("target/testdata/"+realSourceName);
 		Utils.writeToFile("this is a test for the session client", realSource);
 
 		String target = "target/testdata/"+realSource.getName();
 		String secret = String.valueOf(System.currentTimeMillis());
-		File cwd=new File(".").getAbsoluteFile();
+		String cwd = dataDir.getAbsolutePath();
 		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret, cwd);
 		job.sendTo(host[0], jobPort);
 		Thread.sleep(1000);
@@ -390,14 +390,14 @@ public class TestSessionMode extends ClientServerTestBase{
 		FileUtils.deleteQuietly(target);
 		FileUtils.deleteQuietly(target2);
 		String secret = String.valueOf(System.currentTimeMillis());
-		File cwd=new File(".").getAbsoluteFile();
-		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret, cwd);
+		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret,
+				new File(".").getAbsolutePath());
 		job.sendTo(host[0], jobPort);
 		Thread.sleep(1000);
 
 		UFTPSessionClient client = new UFTPSessionClient(host, srvPort);
 		client.setSecret(secret);
-		client.setBaseDirectory(cwd);
+		client.setBaseDirectory(new File("."));
 		client.setCommandFile(commandFile.getAbsolutePath());
 		client.run();
 		// check that file exists and has correct content
@@ -414,7 +414,7 @@ public class TestSessionMode extends ClientServerTestBase{
 		File realSource=new File(realSourceName);
 		Utils.writeToFile("this is a test for the session client", realSource);
 		String secret = String.valueOf(System.currentTimeMillis());
-		File cwd=dataDir.getAbsoluteFile();
+		String cwd = dataDir.getAbsolutePath();
 		//initiate session mode
 		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret, cwd);
 		job.sendTo(host[0], jobPort);
@@ -505,12 +505,12 @@ public class TestSessionMode extends ClientServerTestBase{
 
 	@Test
 	public void testRename() throws Exception {
-		String originalName = "target/testdata/source-"+System.currentTimeMillis();
-		File originalFile = new File(originalName);
+		File originalFile = new File("target/testdata/source-"+System.currentTimeMillis());
+		String originalName = originalFile.getName();		
 		Utils.writeToFile("this is a test for the session client", originalFile);
 
 		String secret = String.valueOf(System.currentTimeMillis());
-		File cwd = new File(".").getAbsoluteFile();
+		String cwd = dataDir.getAbsolutePath();
 
 		//initiate session mode
 		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret, cwd);
@@ -521,9 +521,9 @@ public class TestSessionMode extends ClientServerTestBase{
 		client.setSecret(secret);
 		client.connect();
 
-		String newName = "target/testdata/source-"+System.currentTimeMillis();
+		String newName = "source-"+System.currentTimeMillis();
 		client.rename(originalName, newName);
-		File newFile = new File(newName);
+		File newFile = new File("target/testdata/"+newName);
 		assertTrue(newFile.exists());
 
 		client.close();
@@ -531,12 +531,12 @@ public class TestSessionMode extends ClientServerTestBase{
 
 	@Test
 	public void testRename2() throws Exception {
-		String originalName = "target/testdata/source-"+System.currentTimeMillis();
-		File originalFile = new File(originalName);
+		String originalName = "testdata/source-"+System.currentTimeMillis();
+		File originalFile = new File("target/"+originalName);
 		Utils.writeToFile("this is a test for the session client", originalFile);
 
 		String secret = String.valueOf(System.currentTimeMillis());
-		File cwd = new File(".").getAbsoluteFile();
+		String cwd = dataDir.getParentFile().getAbsolutePath();
 
 		//initiate session mode
 		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret, cwd);
@@ -548,9 +548,9 @@ public class TestSessionMode extends ClientServerTestBase{
 		client.connect();
 
 		new File("target/testdata2").mkdirs();
-		String newName = "target/testdata2/source-"+System.currentTimeMillis();
+		String newName = "testdata2/source-"+System.currentTimeMillis();
 		client.rename(originalName, newName);
-		File newFile = new File(newName);
+		File newFile = new File("target/"+newName);
 		assertTrue(newFile.length()>0);
 
 		client.close();
@@ -558,12 +558,12 @@ public class TestSessionMode extends ClientServerTestBase{
 
 	@Test
 	public void testSetModificationTime() throws Exception {
-		String originalName = "target/testdata/source-"+System.currentTimeMillis();
-		File originalFile = new File(originalName);
+		String originalName = "source-"+System.currentTimeMillis();
+		File originalFile = new File("target/testdata/"+originalName);
 		Utils.writeToFile("this is a test for the session client", originalFile);
 
 		String secret = String.valueOf(System.currentTimeMillis());
-		File cwd = new File(".").getAbsoluteFile();
+		String cwd = dataDir.getAbsolutePath();
 
 		//initiate session mode
 		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret, cwd);
@@ -577,7 +577,7 @@ public class TestSessionMode extends ClientServerTestBase{
 		Calendar time = Calendar.getInstance();
 		String setTo = new SimpleDateFormat("yyyyMMddhhmmss").format(time.getTime());
 		client.setModificationTime(originalName, time);
-		String now = new SimpleDateFormat("yyyyMMddhhmmss").format(new Date(new File(originalName).lastModified()));
+		String now = new SimpleDateFormat("yyyyMMddhhmmss").format(new Date(originalFile.lastModified()));
 		assertEquals(setTo,now);
 		client.close();
 	}
@@ -589,7 +589,7 @@ public class TestSessionMode extends ClientServerTestBase{
 		Utils.writeToFile("this is a test for the session client", realSource);
 
 		String secret = UUID.randomUUID().toString();
-		File cwd=new File(".").getAbsoluteFile();
+		String cwd = dataDir.getAbsolutePath();
 		UFTPSessionRequest job = new UFTPSessionRequest(new InetAddress[0], "nobody", secret, cwd);
 		job.sendTo(host[0], jobPort);
 		Thread.sleep(1000);
@@ -620,7 +620,7 @@ public class TestSessionMode extends ClientServerTestBase{
 		File realSource=new File(realSourceName);
 
 		String secret = String.valueOf(System.currentTimeMillis());
-		File cwd=dataDir.getAbsoluteFile();
+		String cwd = dataDir.getAbsolutePath();
 
 		//initiate session mode
 		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret, cwd);
@@ -652,7 +652,7 @@ public class TestSessionMode extends ClientServerTestBase{
 	public void testRestrictSession() throws Exception {
 		
 		String secret = String.valueOf(System.currentTimeMillis());
-		File cwd = new File(".").getAbsoluteFile();
+		String cwd = dataDir.getAbsolutePath();
 
 		//initiate session mode
 		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret, cwd);
@@ -693,7 +693,7 @@ public class TestSessionMode extends ClientServerTestBase{
 
 		// send job to server...
 		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", "secretCode",
-				sourceFile.getParentFile().getAbsoluteFile());
+				sourceFile.getParentFile().getAbsolutePath());
 		job.setKey(key);
 		job.setCompress(compress);
 		job.setStreams(numCon);
@@ -721,11 +721,11 @@ public class TestSessionMode extends ClientServerTestBase{
 
 	@Test
 	public void testHashing() throws Exception {
-		String fileName = "target/testdata/source-"+System.currentTimeMillis();
-		File dataFile = new File(fileName);
+		String fileName = "source-"+System.currentTimeMillis();
+		File dataFile = new File("target/testdata/"+fileName);
 		makeTestFile(dataFile, 32768, 10);
 		String secret = String.valueOf(System.currentTimeMillis());
-		File cwd = new File(".").getAbsoluteFile();
+		String cwd = dataDir.getAbsolutePath();
 		//initiate session mode
 		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret, cwd);
 		job.sendTo(host[0], jobPort);
