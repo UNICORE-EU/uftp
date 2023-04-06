@@ -35,11 +35,7 @@ def establish_connection(connector: Connector, config):
             if not secret:
                 return None
             job_map = config['job_map']
-            job = job_map.get(secret, None)
-            if not job:
-                connector.write_message("530 Not logged in")
-                connector.close()
-            return job
+            return job_map.get(secret, None)
         elif chk.startswith("SYST"):
             cmds.remove("SYST")
             connector.write_message("215 Unix Type: L8")

@@ -21,8 +21,8 @@ class TestRSync(unittest.TestCase):
 
     def test_1(self):
         print("*** profiled run of rsync checksumming")
-        f1 = "target/rsync-perftest1.dat"
-        f2 = "target/rsync-perftest2.dat"
+        f1 = "target/testdata/rsync-perftest1.dat"
+        f2 = "target/testdata/rsync-perftest2.dat"
         try:
             os.remove(f2)
         except:

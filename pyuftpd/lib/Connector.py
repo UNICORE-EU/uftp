@@ -24,7 +24,7 @@ class Connector(object):
         return self.client.getsockname()[0]
 
     def info(self):
-        return "%s connection from %s" % (self.conntype, self.client.getpeername())
+        return "%s connection with %s" % (self.conntype, self.client.getpeername())
         
     def read_request(self):
         """ reads lines until 'END' """

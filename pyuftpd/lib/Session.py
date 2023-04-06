@@ -1,15 +1,9 @@
-from fnmatch import fnmatch
-import os.path
-from pathlib import Path
-from sys import maxsize
-from time import mktime, sleep, strptime, time
-from traceback import print_last
-import hashlib
+import hashlib, fnmatch, os.path, pathlib, shlex, sys, time
 
 from Connector import Connector
 from FileInfo import FileInfo
 from Log import Logger
-import GzipConnector, PConnector, Protocol, RSync, Server
+import GzipConnector, PConnector, Protocol, RSync, Server, Transfer
 
 
 class Session(object):
@@ -23,6 +17,9 @@ class Session(object):
     ACTION_OPEN_SOCKET = 5
     ACTION_CLOSE_DATA = 7
     ACTION_SEND_HASH = 8
+    ACTION_START_RCP_SEND_FILE=9
+    ACTION_START_RCP_RECEIVE_FILE=10
+
     ACTION_END = 99
 
     MODE_NONE = 0
@@ -38,8 +35,8 @@ class Session(object):
               "MFMT", "MLSD", "MLST", "APPE",
               "KEEP-ALIVE",
               "ARCHIVE",
-              "RESTRICTED_SESSION",
-              "DPC2_LOGIN_OK", "UTF-8"
+              "DPC2_LOGIN_OK",
+              "UTF-8"
     ]
 
     def __init__(self, connector: Connector, job, LOG: Logger):
@@ -69,6 +66,11 @@ class Session(object):
             raise IOError("No such directory: %s" % self.current_dir)
         os.chdir(self.basedir)
         self.access_level = self.MODE_FULL
+        _acc = job.get("access-permissions", "FULL")
+        for (i, acc) in enumerate(["NONE", "INFO", "READ", "WRITE"]):
+            if acc==_acc:
+                self.access_level = i
+                break
         self.data_connectors = []
         self.data = None
         self.portrange = job.get("PORTRANGE", (0, -1, -1))
@@ -79,7 +81,7 @@ class Session(object):
         self.num_streams = 1
         self.max_streams = job.get('MAX_STREAMS', 1)
         self.mlsd_directory = None
-        for f in job['UFTP_NOWRITE']:
+        for f in job.get('UFTP_NOWRITE', []):
             if len(f)>0:
                 self.excludes.append(os.environ['HOME'] + "/" + f)
         for f in job.get("excludes", "").split(":"):
@@ -139,7 +141,9 @@ class Session(object):
             "OPTS": self.opts,
             "HASH": self.hash,
             "SYNC-TO-CLIENT": self.sync_to_client,
-            "SYNC-TO-SERVER": self.sync_to_server
+            "SYNC-TO-SERVER": self.sync_to_server,
+            "SEND-FILE": self.rcp_send_file,
+            "RECEIVE-FILE": self.rcp_receive_file
         }
 
     def assert_permission(self, requested):
@@ -148,19 +152,20 @@ class Session(object):
 
     def assert_access(self, path):
         for excl in self.excludes:
-            if fnmatch(path, excl):
+            if fnmatch.fnmatch(path, excl):
                 raise Exception("Forbidden: %s excluded via %s" % (path, str(self.excludes)))
         if len(self.includes)==0:
             return
         for incl in self.includes:
-            if fnmatch(path, incl):
+            if fnmatch.fnmatch(path, incl):
                 return
         raise Exception("Forbidden: %s not included in  %s" % (path, str(self.includes)))
 
     def makeabs(self, path):
-        if not os.path.isabs(path):
-            path = self.current_dir+"/"+path
-        p = os.path.normpath(path)
+        _p = path.strip()
+        if not os.path.isabs(_p):
+            _p = self.current_dir+"/"+_p
+        p = os.path.normpath(_p)
         if not p.startswith(self.basedir):
             raise Exception("Forbidden: %s not in %s"%(p, self.basedir))
         return p
@@ -204,7 +209,7 @@ class Session(object):
 
     def cwd(self, params):
         self.assert_permission(Session.MODE_INFO)
-        path = self.makeabs(params.strip())
+        path = self.makeabs(params)
         self.assert_access(path)
         os.chdir(path)
         self.current_dir = path
@@ -226,8 +231,8 @@ class Session(object):
         return Session.ACTION_CONTINUE
 
     def mkdir(self, params):
-        self.assert_permission(Session.MODE_FULL)
-        path = self.makeabs(params.strip())
+        self.assert_permission(Session.MODE_WRITE)
+        path = self.makeabs(params)
         try:
             os.mkdir(path)
             self.control.write_message("257 \"%s\" directory created" % path)
@@ -237,7 +242,7 @@ class Session(object):
 
     def rm(self, params):
         self.assert_permission(Session.MODE_FULL)
-        _path = self.makeabs(params.strip())
+        _path = self.makeabs(params)
         try:
             self.assert_access(_path)
             os.unlink(_path)
@@ -248,7 +253,7 @@ class Session(object):
 
     def rmdir(self, params):
         self.assert_permission(Session.MODE_FULL)
-        _path = self.makeabs(params.strip())
+        _path = self.makeabs(params)
         try:
             self.assert_access(_path)
             os.rmdir(_path)
@@ -259,7 +264,7 @@ class Session(object):
 
     def rename_from(self, params):
         self.assert_permission(Session.MODE_WRITE)
-        _path = self.makeabs(params.strip())
+        _path = self.makeabs(params)
         try:
             self.assert_access(_path)
             self.rename_from_path = _path
@@ -270,7 +275,7 @@ class Session(object):
 
     def rename_to(self, params):
         self.assert_permission(Session.MODE_WRITE)
-        _path = self.makeabs(params.strip())
+        _path = self.makeabs(params)
         try:
             if self.rename_from_path is None:
                 raise Exception("Illegal sequence of FTP commands - must send RNFR first")
@@ -482,9 +487,9 @@ class Session(object):
         self.assert_access(path)
         
         if self.number_of_bytes is None:
-            self.number_of_bytes = maxsize
+            self.number_of_bytes = sys.maxsize
         self.file_path = path
-        Path(path).touch()
+        pathlib.Path(path).touch()
         self.control.write_message("150 OK")
         return Session.ACTION_STORE
 
@@ -494,7 +499,7 @@ class Session(object):
         self.assert_access(path)
 
         if self.number_of_bytes is None:
-            self.number_of_bytes = maxsize
+            self.number_of_bytes = sys.maxsize
         try:
             self.offset = os.stat(path)['st_size']
         except:
@@ -541,12 +546,42 @@ class Session(object):
         self.control.write_message("200 OK")
         return Session.ACTION_SYNC_TO_SERVER
 
+    def rcp_send_file(self, params):
+        self.assert_permission(Session.MODE_READ)
+        try:
+            path, remote_file, server_spec, passwd = shlex.split(params)
+        except ValueError:
+            self.control.write_message("500 Wrong parameter count for SEND-FILE")
+            return Session.ACTION_CONTINUE
+        path = self.makeabs(path)
+        fi = FileInfo(path)
+        if not fi.can_read():
+            self.control.write_message("500 Directory/file does not exist or cannot be accessed!")
+            return Session.ACTION_CONTINUE
+        self.file_path = path
+        self.remote_file_spec = (remote_file, server_spec, passwd)
+        self.control.write_message("200 OK")
+        return Session.ACTION_START_RCP_SEND_FILE
+
+    def rcp_receive_file(self, params):
+        self.assert_permission(Session.MODE_WRITE)
+        try:
+            path, remote_file, server_spec, passwd = shlex.split(params)
+        except ValueError:
+            self.control.write_message("500 Wrong parameter count for RECEIVE-FILE")
+            return Session.ACTION_CONTINUE
+        path = self.makeabs(path)
+        self.file_path = path
+        self.remote_file_spec = (remote_file, server_spec, passwd)
+        self.control.write_message("200 OK")
+        return Session.ACTION_START_RCP_RECEIVE_FILE
+
     def set_file_mtime(self, params):
         self.assert_permission(Session.MODE_WRITE)
         mtime, target = params.split(" ", 2)
         path = self.makeabs(target)
         self.assert_access(path)
-        st_time = mktime(strptime(mtime, "%Y%m%d%H%M%S"))
+        st_time = time.mktime(time.strptime(mtime, "%Y%m%d%H%M%S"))
         os.utime(path, (st_time,st_time))
         self.control.write_message("213 Modify=%s %s" % (mtime, target))
         return Session.ACTION_CONTINUE
@@ -600,7 +635,7 @@ class Session(object):
             f.seek(self.offset)
             to_send = self.number_of_bytes
             total = 0
-            start_time = int(time())
+            start_time = int(time.time())
             interval_start = start_time
             md = self.hash_algorithms[self.hash_algorithm]
             while total<to_send:
@@ -610,17 +645,17 @@ class Session(object):
                     break
                 total = total + len(data)
                 md.update(data)
-                if (int(time())-interval_start)>30:
+                if (int(time.time())-interval_start)>30:
                     # keep client entertained
                     self.control.write_message("213-")
-                    interval_start = int(time())
+                    interval_start = int(time.time())
             last_byte = max(0,  self.offset+self.number_of_bytes-1)
             msg = "213 %s %s-%s %s %s" % (self.hash_algorithm,
                     self.offset, last_byte,
                     md.hexdigest(), self.file_path)
             self.control.write_message(msg)
             self.post_transfer(send226=False)
-            duration = int(time()) - start_time
+            duration = int(time.time()) - start_time
             self.log_usage(True, total, duration, 1, self.hash_algorithm)
 
     def send_data(self):
@@ -629,7 +664,7 @@ class Session(object):
             f.seek(self.offset)
             to_send = self.number_of_bytes
             total = 0
-            start_time = int(time())
+            start_time = int(time.time())
             encrypt = self.key is not None
             while total<to_send:
                 length = min(self.BUFFER_SIZE, to_send-total)
@@ -645,7 +680,7 @@ class Session(object):
             self.post_transfer()
             if not self.KEEP_ALIVE:
                 self.close_data()
-            duration = int(time()) - start_time
+            duration = int(time.time()) - start_time
             self.log_usage(True, total, duration)
 
     def recv_data(self):
@@ -661,18 +696,18 @@ class Session(object):
                 f.truncate(0)
             f.seek(self.offset)
             reader = self.get_reader()
-            start_time = int(time())
+            start_time = int(time.time())
             total = self.copy_data(reader, f, self.number_of_bytes)
         if not self.KEEP_ALIVE:
             self.close_data()
-        duration = int(time()) - start_time
+        duration = int(time.time()) - start_time
         self.post_transfer()
         self.log_usage(False, total, duration)
 
     def recv_archive_data(self):
         import tarfile
         reader = self.get_reader()
-        start_time = int(time())
+        start_time = int(time.time())
         tar = tarfile.TarFile.open(mode="r|", fileobj=reader)
         counter = 0
         total = 0
@@ -694,12 +729,12 @@ class Session(object):
                     # TBD handle links and such?
                     self.LOG.debug("No file returned for %s" % entry.name)
                 else:
-                    total += self.copy_data(entry_reader, f, maxsize)
+                    total += self.copy_data(entry_reader, f, sys.maxsize)
             counter+=1
         self.post_transfer()
         if not self.KEEP_ALIVE:
             self.close_data()
-        duration = int(time()) - start_time
+        duration = int(time.time()) - start_time
         self.log_usage(False, total, duration, num_files=counter)
 
     def close_data(self):
@@ -713,13 +748,13 @@ class Session(object):
 
     def get_reader(self):
         if self.key is not None:
-            self.number_of_bytes = maxsize
+            self.number_of_bytes = sys.maxsize
         return self.data
 
     def copy_data(self, reader, target, num_bytes):
         total = 0
         limit_rate = self.rate_limit > 0
-        start_time = int(time()*1000)
+        start_time = int(time.time()*1000)
         
         while total<num_bytes:
             length = min(self.BUFFER_SIZE, num_bytes-total)
@@ -750,13 +785,13 @@ class Session(object):
         self.LOG.info(msg)
 
     def control_rate(self, total, start_time):
-        interval = int(time()*1000 - start_time) + 1
+        interval = int(time.time()*1000 - start_time) + 1
         current_rate = 1000 * total / interval
         if current_rate < self.rate_limit:
             self.sleep_time = int(0.5 * self.sleep_time)
         else:
             self.sleep_time = self.sleep_time + 5
-            sleep(0.001*self.sleep_time)
+            time.sleep(0.001*self.sleep_time)
 
     def log_usage(self, send, size, duration, num_files = 1, operation=None):
         if operation is None:
@@ -821,7 +856,10 @@ class Session(object):
                         self.do_sync_to_client()
                     elif mode==Session.ACTION_SYNC_TO_SERVER:
                         self.do_sync_to_server()
-                            
+                    elif mode==Session.ACTION_START_RCP_SEND_FILE:
+                        Transfer.launch_transfer(self.remote_file_spec, self.file_path, mode="send")
+                    elif mode==Session.ACTION_START_RCP_RECEIVE_FILE:
+                        Transfer.launch_transfer(self.remote_file_spec, self.file_path, mode="receive")
                     elif mode==Session.ACTION_END:
                         break
                 except Exception as e:

@@ -5,11 +5,14 @@ https://sourceforge.net/p/unicore/uftp-issues
 
 Full documentation is at: https://uftp-docs.readthedocs.io
 
-UFTPD 3.2.0 (released mmm dd, 2023)
+UFTPD 3.2.0 (released Apr dd, 2023)
 -----------------------------------
  - new feature: implement SYNC-TO-CLIENT and SYNC-TO-SERVER for
    synchronising a file between client and server
    (requires uftp client 1.6.0 or later)
+ - new feature: initial version of server-to-server transfer
+ - fix: output of stat(".") in directory '/' was missing the path
+ - fix: duplicate "530 Not logged in" response
  
 UFTPD 3.1.3 (released Sep 20, 2022)
 -----------------------------------

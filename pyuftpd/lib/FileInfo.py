@@ -93,5 +93,7 @@ class FileInfo(object):
             p = self.path
         else:
             p = basename(self.path)
+        if len(p)==0:
+            p = "."
         return "%s%s %s %s %s" % (d, self._perm("-"), st.st_size,
            1000*int(st.st_mtime),  p)
