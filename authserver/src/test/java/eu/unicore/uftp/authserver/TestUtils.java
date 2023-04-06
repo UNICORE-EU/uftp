@@ -1,12 +1,15 @@
 package eu.unicore.uftp.authserver;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import org.junit.Test;
 
 import eu.unicore.uftp.authserver.share.IdentityExtractor.EmailExtractor;
+import eu.unicore.uftp.authserver.share.ShareServiceBase;
+import eu.unicore.uftp.datashare.AccessType;
 
 public class TestUtils {
 
@@ -48,6 +51,12 @@ public class TestUtils {
 		String x = "OU=x,CN=foo,C=EU";
 		assertEquals("failed for input <"+x+">", x, EmailExtractor.extractEmail(x));
 		
+	}
+
+	@Test
+	public void testAccessLevels() {
+		assertTrue(ShareServiceBase.checkAccess(AccessType.READ, AccessType.WRITE));
+		assertFalse(ShareServiceBase.checkAccess(AccessType.WRITE, AccessType.READ));
 	}
 
 }

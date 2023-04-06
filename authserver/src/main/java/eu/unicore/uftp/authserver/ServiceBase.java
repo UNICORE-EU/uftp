@@ -85,4 +85,7 @@ public abstract class ServiceBase extends ApplicationBaseResource implements Ker
 		 return new HashMap<>();
 	}
 
+    // used only for backwards compatibility
+    protected static final String _tag = "___UFTP___MULTI___FILE___SESSION___MODE___";
+
 }

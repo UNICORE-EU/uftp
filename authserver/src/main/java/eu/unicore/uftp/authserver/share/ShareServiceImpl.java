@@ -1,11 +1,8 @@
 package eu.unicore.uftp.authserver.share;
 
-import java.io.File;
 import java.net.InetAddress;
 import java.net.URI;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -19,7 +16,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -41,9 +37,6 @@ import eu.unicore.uftp.datashare.SharingUser;
 import eu.unicore.uftp.datashare.Target;
 import eu.unicore.uftp.datashare.db.ACLStorage;
 import eu.unicore.uftp.datashare.db.ShareDAO;
-import eu.unicore.uftp.dpc.Session.Mode;
-import eu.unicore.uftp.dpc.UFTPConstants;
-import eu.unicore.uftp.server.workers.UFTPWorker;
 import eu.unicore.util.Log;
 
 /**
@@ -55,74 +48,6 @@ public class ShareServiceImpl extends ShareServiceBase {
 	private static final Logger logger = Log.getLogger(Log.SERVICES,ShareServiceImpl.class);
 
 	/**
-	 * authenticate a transfer of a shared file using the current client's attributes
-	 */
-	@POST
-	@Path("/{serverName}/auth")
-	@Produces(MediaType.APPLICATION_JSON)
-	@Consumes(MediaType.APPLICATION_JSON)
-	public Response auth(@PathParam("serverName") String serverName, String json) {
-		if(AuthZAttributeStore.getTokens()==null){
-			throw new WebApplicationException(Status.UNAUTHORIZED);
-		}
-		Response r = null;
-		ACLStorage shareDB = getShareDB(serverName);
-		if(shareDB==null || !haveServer(serverName)){
-			return handleError(404, "No sharing for / no server '"+serverName+"', please check your URL", null, logger);
-		}
-
-		String clientIP = AuthZAttributeStore.getTokens().getClientIP();
-		
-		try{
-			UFTPDInstance uftp = getServer(serverName);
-			
-			AuthRequest authRequest = gson.fromJson(json, AuthRequest.class);
-			UserAttributes ua = assembleAttributes(serverName, null);
-			String targetID = getNormalizedCurrentUserName();
-			String path = FilenameUtils.normalize(authRequest.serverPath, true);
-			Target target = new SharingUser(targetID);
-			Collection<ShareDAO> shares = shareDB.readAll(path);
-			if(shares.size()==0){
-				return handleError(404, "No such share '"+path+"', please check your URL", null, logger);
-			}
-			ShareDAO share = shareDB.filter(shares, target);
-			if(share==null){
-				return handleError(401, "Not allowed to access '"+path+"'", null, logger);
-			}
-			else{
-				AccessType access = AccessType.valueOf(share.getAccess());
-				boolean write = !authRequest.send;
-				if(write && access.compareTo(AccessType.WRITE)<0){
-					return handleError(401, "Not allowed to write to '"+path+"'", null, logger);
-				}
-				File requested = new File(path);
-				String parent = requested.getParent();
-				String file = requested.getName();
-				authRequest.serverPath = parent + "/"+UFTPConstants.sessionModeTag;
-				ua.uid = share.getUid();
-				ua.gid = share.getGid();
-				ua.excludes = null;
-				ua.includes = file;
-				TransferRequest transferRequest = new TransferRequest(authRequest, ua, clientIP);
-				// limit UFTP session to read/write the specified path
-				transferRequest.setAccessPermissions(write ? Mode.WRITE : Mode.READ);
-				
-				AuthResponse response = new TransferInitializer().initTransfer(transferRequest,uftp);            
-				response.secret = transferRequest.getSecret();
-				r = Response.ok().entity(gson.toJson(response)).build();
-				if(share.isOneTime()) {
-					shareDB.delete(share.getID());
-				}
-				logUsage(write, path, share);
-			}
-		}catch(Exception ex){
-			r = handleError(500, "", ex, logger);
-		}
-		return r;
-	}
-
-
-	/**
 	 * create or update a share
 	 */
 	@POST
@@ -130,9 +55,6 @@ public class ShareServiceImpl extends ShareServiceBase {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response share(@PathParam("serverName") String serverName, String jsonString) {
-		if(AuthZAttributeStore.getTokens()==null){
-			throw new WebApplicationException(Status.UNAUTHORIZED);
-		}
 		ACLStorage shareDB = getShareDB(serverName);
 		if(shareDB==null || !haveServer(serverName)){
 			return handleError(404, "No sharing for '"+serverName+"', please check your URL", null, logger);
@@ -154,27 +76,26 @@ public class ShareServiceImpl extends ShareServiceBase {
 			if(AccessType.WRITE.equals(accessType)&&!getShareServiceProperties().isWriteAllowed()){
 				return handleError(401, "Writable shares not allowed", null, logger);
 			}
-			String path = validate(uftp, json.getString("path"), ua, accessType);
 			String user = json.getString("user");
 			Target target = new SharingUser(normalize(user));
 			Owner owner = new Owner(getNormalizedCurrentUserName(), ua.uid, ua.gid);
-
-			long expires = 0;
-			long lifetime = json.optLong("lifetime", 0);
-			if(lifetime > 0) {
-				expires = lifetime + System.currentTimeMillis()/1000;
+			if(accessType.equals(AccessType.NONE)) {
+				handleDelete(json.getString("path"), owner, shareDB);
+				return Response.ok().build();
 			}
-			boolean onetime= json.optBoolean("onetime", false);
+			else {
+				String path = validate(uftp, json.getString("path"), ua, accessType);
+				long expires = 0;
+				long lifetime = json.optLong("lifetime", 0);
+				if(lifetime > 0) {
+					expires = lifetime + System.currentTimeMillis()/1000;
+				}
+				boolean onetime= json.optBoolean("onetime", false);
 
-			String unique = shareDB.grant(accessType, path, target, owner, expires, onetime);
-			Response r = null;
-			if(accessType.equals(AccessType.NONE)){
-				r = Response.ok().build();
-			}else{
+				String unique = shareDB.grant(accessType, path, target, owner, expires, onetime);
 				String location = getBaseURL()+"/"+serverName+"/"+unique;
-				r = Response.created(new URI(location)).build();
+				return Response.created(new URI(location)).build();
 			}
-			return r;
 		}catch(JSONException je){
 			return handleError(400, "Could not process share", je, logger);
 		}
@@ -183,12 +104,20 @@ public class ShareServiceImpl extends ShareServiceBase {
 		}
 	}
 
-	@Override
-	protected Map<String, Object> getProperties() throws Exception {
-		Map<String, Object>res = new HashMap<>();
-		return res;
+	private void handleDelete(String path, Owner owner,ACLStorage shareDB) throws Exception {
+		Collection<ShareDAO> shares = shareDB.readAll(path, false, owner);
+		if(shares.size()==0) {
+			// try again with '/' appended or removed
+			if(path.endsWith("/"))path=path.substring(0, path.length()-1);
+			else path = path +"/";
+			if(path.length()==0)return;
+			shares = shareDB.readAll(path, false, owner);
+		}
+		for(ShareDAO share: shares) {
+			shareDB.delete(share.getID());
+			logger.debug("Deleted share: <{}> <{}>", path, owner);
+		}
 	}
-
 
 	/**
 	 * list all shares and accessible files for the current user
@@ -221,7 +150,7 @@ public class ShareServiceImpl extends ShareServiceBase {
 			return handleError(500, "", ex, logger);
 		}
 	}
-	
+
 	/**
 	 * get info about a particular share for the current user
 	 */
@@ -253,9 +182,8 @@ public class ShareServiceImpl extends ShareServiceBase {
 			return handleError(500, "", ex, logger);
 		}
 	}
-	
-	
-	
+
+
 	/**
 	 * GET info about the configured servers
 	 */
@@ -283,7 +211,7 @@ public class ShareServiceImpl extends ShareServiceBase {
 			return handleError(500, "", ex, logger);
 		}
 	}
-	
+
 
 	/**
 	 * delete a share
@@ -299,6 +227,12 @@ public class ShareServiceImpl extends ShareServiceBase {
 			throw new WebApplicationException(Status.UNAUTHORIZED);
 		}
 		try{
+			ShareDAO d = shareDB.read(uniqueID);
+			if(d!=null) {
+				if(!d.getOwnerID().equals(getNormalizedCurrentUserName())){
+					return handleError(401, "", null, logger);
+				}
+			}
 			shareDB.delete(uniqueID);
 			return Response.ok().build();
 		}catch(Exception ex){
@@ -313,7 +247,7 @@ public class ShareServiceImpl extends ShareServiceBase {
 		ShareServiceProperties spp = kernel.getAttribute(ShareServiceProperties.class);
 		String clientIP = spp.getClientIP();
 		AuthRequest authRequest = new AuthRequest();
-		authRequest.serverPath = "/"+UFTPWorker.sessionModeTag;
+		authRequest.serverPath = "/";
 		TransferRequest transferRequest = new TransferRequest(authRequest, ua, clientIP);
 		AuthResponse response = new TransferInitializer().initTransfer(transferRequest,uftp);            
 		if(!response.success){

@@ -45,6 +45,7 @@
         <Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:string-bag">
           <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">GET</AttributeValue>
 	  <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">PUT</AttributeValue>
+	  <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">POST</AttributeValue>
         </Apply>
       </Apply>
     </Condition>

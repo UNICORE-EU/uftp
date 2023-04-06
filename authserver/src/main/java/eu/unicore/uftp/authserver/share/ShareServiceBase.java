@@ -35,7 +35,7 @@ import eu.unicore.uftp.datashare.SharingUser;
 import eu.unicore.uftp.datashare.Target;
 import eu.unicore.uftp.datashare.db.ACLStorage;
 import eu.unicore.uftp.datashare.db.ShareDAO;
-import eu.unicore.uftp.dpc.UFTPConstants;
+import eu.unicore.uftp.dpc.Session.Mode;
 import eu.unicore.util.Log;
 
 /**
@@ -82,10 +82,12 @@ public abstract class ShareServiceBase extends ServiceBase {
 
 			AuthRequest authRequest = new AuthRequest();
 			authRequest.send = true;
-			authRequest.serverPath = new File(new File(share.getPath()).getParentFile(), 
-					"/"+UFTPConstants.sessionModeTag).getPath();
+			File targetFile = new File(share.getPath());
+			authRequest.serverPath = targetFile.getParentFile().getPath();
 			UserAttributes ua = new UserAttributes(share.getUid(), share.getGid(), null);
 			TransferRequest transferRequest = new TransferRequest(authRequest, ua, clientIP);
+			transferRequest.setAccessPermissions(Mode.WRITE);
+			transferRequest.setIncludes(targetFile.getName());
 			AuthResponse response = new TransferInitializer().initTransfer(transferRequest,uftp);            
 			InetAddress[] server = new InetAddress[]{InetAddress.getByName(response.serverHost)};
 			
@@ -142,8 +144,7 @@ public abstract class ShareServiceBase extends ServiceBase {
 		try{
 			AuthRequest authRequest = new AuthRequest();
 			authRequest.send = false;
-			authRequest.serverPath = new File(new File(share.getPath()).getParentFile(), 
-					"/"+UFTPConstants.sessionModeTag).getPath();
+			authRequest.serverPath = new File(share.getPath()).getParentFile().getPath();
 			String fileName = new File(share.getPath()).getName();
 			UserAttributes ua = new UserAttributes(share.getUid(), share.getGid(), null);
 			TransferRequest transferRequest = new TransferRequest(authRequest, ua, clientIP);
@@ -166,8 +167,7 @@ public abstract class ShareServiceBase extends ServiceBase {
 		try{
 			AuthRequest authRequest = new AuthRequest();
 			authRequest.send = true;
-			authRequest.serverPath = new File(new File(share.getPath()).getParentFile(), 
-					"/"+UFTPConstants.sessionModeTag).getPath();
+			authRequest.serverPath = new File(share.getPath()).getParentFile().getPath();
 			UserAttributes ua = new UserAttributes(share.getUid(), share.getGid(), null);
 			TransferRequest transferRequest = new TransferRequest(authRequest, ua, clientIP);
 			AuthResponse response = new TransferInitializer().initTransfer(transferRequest,uftp);            
@@ -191,6 +191,7 @@ public abstract class ShareServiceBase extends ServiceBase {
 		}
 		return r;
 	}
+
 	protected ACLStorage getShareDB(String serverName){
 		return kernel.getAttribute(ShareServiceProperties.class).getDB(serverName);
 	}
@@ -236,7 +237,7 @@ public abstract class ShareServiceBase extends ServiceBase {
 		o.put("onetime", share.isOneTime());
 		String url = (baseURL+"/"+serverName+"/"+share.getID()).replaceFirst("/rest/share/", "/rest/access/");
 		o.put("http", url);
-		String auth = baseURL+"/"+serverName+"/auth:"+share.getPath();
+		String auth = (baseURL+"/"+serverName+":"+share.getPath()).replaceFirst("/rest/share/", "/rest/access/");
 		o.put("uftp", auth);
 	}
 	
@@ -254,16 +255,29 @@ public abstract class ShareServiceBase extends ServiceBase {
 	}
 	
 	
-	protected void logUsage(boolean write, String path, ShareDAO share){
+	protected void logUsage(String type, String path, ShareDAO share){
 		if(!logger.isInfoEnabled())return;
 		String uid = share.getUid();
 		String gid = share.getGid()!=null?share.getGid():"NONE";
 		String clientDN = AuthZAttributeStore.getClient().getDistinguishedName();
 		String clientIP = AuthZAttributeStore.getTokens().getClientIP();
-		String access = write? "WRITE" : "READ";
-		String msg = String.format("USAGE [%s][%s][%s:%s][%s] %s", 
-				clientDN, clientIP, uid, gid, access, path);
+		String msg = String.format("USAGE [SHARE via %s] [%s][%s][%s:%s] %s",
+				type, clientDN, clientIP, uid, gid, path.replace(_tag, ""));
 		logger.info(msg);
+	}
+
+	/**
+	 * check access
+	 * @param want - desired access
+	 * @param allowed - allowed access
+	 * @return true of wanted access is allowed
+	 */
+	public static boolean checkAccess(AccessType want, AccessType allowed) {
+		return want.compareTo(allowed)<=0;
+	}
+
+	public static boolean checkAccess(AccessType want, String allowed) {
+		return checkAccess(want, AccessType.valueOf(allowed));
 	}
 
 	public static class Range {

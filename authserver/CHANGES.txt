@@ -14,10 +14,13 @@ Full documentation is at: https://uftp-docs.readthedocs.io
 Auth Server 2.8.0 (released Apr DD, 2023)
 -----------------------------------------
  - update to UNICORE 9.2.1 base libs
- - new feature: share service returns a directory
-   listing as needed
- - fix: clean-up and normalize path before accessing shared
-   files
+ - new feature: share service returns a directory listing as needed
+ - move endpoint for share access via UFTP to /rest/access/{serverName}
+ - fix: clean-up and normalize path before accessing shared files
+ - fix: when accessing shared data, choose the most specific share
+ - fix: access control policy for the "/rest/access" endpoint now allows
+   POST for uftp-protocol authentication
+
 
 Auth Server 2.7.0 (released Nov 7, 2022)
 ----------------------------------------

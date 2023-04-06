@@ -168,7 +168,7 @@ public class TestShareService {
 
 		// as target user, authenticate a transfer
 		bc = new BaseClient(url, k.getClientConfiguration(), getTargetUserAuth());
-		resource  = url+"/share/TEST/auth";
+		resource  = url+"/access/TEST";
 		AuthRequest req = new AuthRequest();
 		req.serverPath="/tmp/foo";
 		req.send = true;
