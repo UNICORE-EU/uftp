@@ -1,6 +1,9 @@
 package eu.unicore.uftp.datashare;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -8,6 +11,7 @@ import org.junit.Test;
 import de.fzj.unicore.persist.Persist;
 import de.fzj.unicore.persist.PersistenceProperties;
 import de.fzj.unicore.persist.impl.H2Persist;
+import eu.unicore.uftp.datashare.db.ACLStorage;
 import eu.unicore.uftp.datashare.db.ShareDAO;
 
 
@@ -68,4 +72,18 @@ public class TestDao {
 		
 		p.shutdown();
 	}
+	
+	@Test
+	public void testCompare() {
+		ShareDAO d1 = new ShareDAO();
+		d1.setPath("/data");
+		ShareDAO d2 = new ShareDAO();
+		d2.setPath("/data/myfile");
+		List<ShareDAO> l = new ArrayList<>();
+		l.add(d1);
+		l.add(d2);
+		Collections.sort(l, ACLStorage.MostSpecificPath);
+		Assert.assertEquals(d2.getPath(), l.get(0).getPath());
+	}
+	
 }

@@ -3,6 +3,8 @@ package eu.unicore.uftp.datashare.db;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Properties;
 
@@ -113,8 +115,8 @@ public class ACLStorage {
 		return readAll(path, true);
 	}
 
-	public Collection<ShareDAO>readAll(String path, boolean recurse, Owner owner) throws Exception {
-		Collection<ShareDAO> result = new ArrayList<>();
+	public List<ShareDAO>readAll(String path, boolean recurse, Owner owner) throws Exception {
+		List<ShareDAO> result = new ArrayList<>();
 		File f = new File(path);
 		Collection<String> ids = storage.getIDs("path", path);
 		if(recurse){
@@ -132,10 +134,11 @@ public class ACLStorage {
 				}
 			}
 		}
+		Collections.sort(result, MostSpecificPath);
 		return result;
 	}
 	
-	public Collection<ShareDAO>readAll(String path, boolean recurse) throws Exception {
+	public List<ShareDAO>readAll(String path, boolean recurse) throws Exception {
 		return readAll(path, recurse, null);
 	}
 	
@@ -189,4 +192,11 @@ public class ACLStorage {
 		return storage;
 	}
 
+	public static Comparator<ShareDAO> MostSpecificPath = new Comparator<>(){
+		@Override
+		public int compare(ShareDAO o1, ShareDAO o2) {
+			return o2.getPath().length()-o1.getPath().length();
+		}	
+	};
+	
 }

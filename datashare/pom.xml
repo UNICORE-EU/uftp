@@ -4,7 +4,7 @@
   <artifactId>uftp-datashare</artifactId>
   <packaging>jar</packaging>
   <name>UFTP Datasharing</name>
-  <version>0.8.0</version>
+  <version>0.9.0</version>
 
   <parent>
     <groupId>eu.unicore.uftp</groupId>
