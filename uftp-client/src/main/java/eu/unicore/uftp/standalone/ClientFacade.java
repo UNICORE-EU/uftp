@@ -205,6 +205,44 @@ public class ClientFacade {
 		throw new IllegalArgumentException(error);
 	}
 
+	public void rcp(String source, String target, String onetimePassword, String uftpdAddress,
+			boolean receive) throws Exception {
+		boolean remoteSource = ConnectionInfoManager.isRemote(source);
+		boolean remoteTarget = ConnectionInfoManager.isRemote(target);
+		if(!remoteSource && !remoteTarget){
+			String error = String.format("Unable to handle [%s, %s] combination. "
+					+ "At least one must be a URL.", source, target);
+			throw new IllegalArgumentException(error);
+		}
+		if((onetimePassword==null || uftpdAddress==null) && !(remoteSource && remoteTarget)) {
+			String error = String.format("One-time password and UFTPD address are required");
+			throw new IllegalArgumentException(error);
+		}
+		if(!connected) {
+			sc = receive? doConnect(target) : doConnect(source);
+		}
+		if(onetimePassword==null) {
+			// authenticate the "other" UFTP side
+			AuthResponse auth = remoteSource? authenticate(source):authenticate(target);
+			uftpdAddress = auth.serverHost+":"+auth.serverPort;
+			onetimePassword = auth.secret;
+		}
+		if(remoteSource) {
+			Map<String,String> sourceParams = connectionManager.extractConnectionParameters(source);
+			source = sourceParams.get("path");
+		}
+		if(remoteTarget) {
+			Map<String,String> targetParams = connectionManager.extractConnectionParameters(target);
+			target = targetParams.get("path");
+		}
+		if(receive) {
+			sc.receiveFile(target, source, uftpdAddress, onetimePassword);
+		}
+		else {
+			sc.sendFile(source, target, uftpdAddress, onetimePassword);
+		}
+	}
+	
 	/**
 	 * List content of given directory
 	 *
@@ -213,7 +251,6 @@ public class ClientFacade {
 	 * @throws IOException
 	 */
 	public List<FileInfo> ls(String directory) throws Exception {
-
 		if (!connected) {
 			connect(directory);
 		}
@@ -237,7 +274,7 @@ public class ClientFacade {
 			connect(file);
 		}
 		if (ConnectionInfoManager.isRemote(file)) {
-			file = connectionManager.extractConnectionParameters(file).get("path");
+			file = connectionManager.extractConnectionParameters(file).get("filename");
 		}
 		return sc.stat(file);
 	}
@@ -703,7 +740,7 @@ public class ClientFacade {
 	}
 
 	private AuthResponse initSession(AuthClient authClient) throws Exception {
-		return authClient.createSession();
+		return authClient.createSession(connectionManager.getBasedir());
 	}
 
 	public void setRange(long startByte, long endByte, RangeMode mode){

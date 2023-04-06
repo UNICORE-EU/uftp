@@ -3,6 +3,8 @@ package eu.unicore.uftp.standalone.authclient;
 
 import junit.framework.TestCase;
 
+import java.nio.file.Path;
+
 import org.junit.Test;
 
 import eu.unicore.services.rest.client.IAuthCallback;
@@ -63,4 +65,11 @@ public class AuthClientTest extends TestCase {
     	String u2 = "https://foo:1234/X/rest/auth/TEST:fjslfjlsdf/:/";
     	assertEquals("https://foo:1234/X/rest/auth", AuthserverClient.makeInfoURL(u2));
     }
+    
+    @Test
+    public void testPathHandling() {
+    	Path p1 = Path.of("/foo/bar/.");
+    	System.out.println(p1.getParent());	
+    }
+    
 }

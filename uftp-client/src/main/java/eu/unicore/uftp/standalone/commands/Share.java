@@ -80,7 +80,6 @@ public class Share extends Command {
 			listShares(client);
 			return;
 		}
-		
 		share(client);
 	}
 	

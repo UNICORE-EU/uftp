@@ -32,7 +32,5 @@ public interface AuthClient {
     default String parseInfo(JSONObject obj) throws JSONException {
     	return "";
     }
-    
-	public static final String sessionModeTag = "___UFTP___MULTI___FILE___SESSION___MODE___";
 
 }

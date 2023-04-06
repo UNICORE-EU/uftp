@@ -155,11 +155,11 @@ public class UCP extends DataTransferCommand {
 	@Override
 	protected void run(ClientFacade client) throws Exception {
 		client.setVerbose(verbose);
+		RecursivePolicy policy = recurse ? RecursivePolicy.RECURSIVE:RecursivePolicy.NONRECURSIVE;
 		int len = fileArgs.length-1;
 		for(int i=0; i<len;i++){
 			String source = fileArgs[i];
 			String target = this.target;
-			RecursivePolicy policy = recurse ? RecursivePolicy.RECURSIVE:RecursivePolicy.NONRECURSIVE;
 			client.cp(source, target, policy);
 		}
 		client.resetRange();

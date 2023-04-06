@@ -27,6 +27,7 @@ import eu.unicore.uftp.standalone.UFTPClientFactory;
 import eu.unicore.uftp.standalone.oidc.OIDCAgentAuth;
 import eu.unicore.uftp.standalone.ssh.SSHAgent;
 import eu.unicore.uftp.standalone.ssh.SshKeyHandler;
+import eu.unicore.uftp.standalone.util.Anonymous;
 import eu.unicore.uftp.standalone.util.ConsoleUtils;
 import eu.unicore.util.Log;
 
@@ -214,6 +215,10 @@ public abstract class Command implements ICommand {
 
 
 	protected IAuthCallback getAuthData() throws Exception {
+		if("anonymous".equals(username)) {
+			return new Anonymous();
+		}
+
 		if(enableSSH){
 			return getSSHAuthData();
 		}

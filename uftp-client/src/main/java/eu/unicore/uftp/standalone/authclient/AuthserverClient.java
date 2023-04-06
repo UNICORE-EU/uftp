@@ -84,7 +84,7 @@ public class AuthserverClient implements AuthClient {
 		}
 		if(baseDir==null)baseDir="";
 		LOG.debug("Initalizing session in <{}>", baseDir);
-		return do_connect(baseDir+sessionModeTag, true, true, persistent);
+		return do_connect(baseDir, true, true, persistent);
 	}
 
 	String infoURL;

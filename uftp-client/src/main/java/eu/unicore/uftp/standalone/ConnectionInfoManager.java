@@ -2,6 +2,7 @@ package eu.unicore.uftp.standalone;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -51,6 +52,10 @@ public class ConnectionInfoManager {
     public String getPath() {
         return extracted.get("path");
     }
+    
+    public String getBasedir() {
+        return extracted.get("basedir");
+    }
 
     public int getPort() {
         return Integer.parseInt(extracted.get("port"));
@@ -76,10 +81,16 @@ public class ConnectionInfoManager {
             Map<String, String> params = extractConnectionParameters(uri);
             return (params.get("auth").equals(getAuthURL())
                     && params.get("port").equals(String.valueOf(getPort()))
-                    && params.get("scheme").equals(getScheme()));
+                    && params.get("scheme").equals(getScheme())
+                    && isIncluded(params.get("basedir"))
+            		);
         } catch (URISyntaxException ex) {
             return false;
         }
+    }
+
+    private boolean isIncluded(String directory) {
+    	return directory!=null && directory.startsWith(getBasedir());
     }
 
     Map<String,String> extractConnectionParameters(String uriString) throws URISyntaxException {
@@ -118,6 +129,18 @@ public class ConnectionInfoManager {
         String auth = scheme+"://"+localUri.getHost()+":"+port;
         if(paths.length>1){
         	path=paths[1];
+        	if(path.endsWith("/")) {
+        		parameters.put("basedir", path);
+    			parameters.put("filename", ".");
+        	}
+        	else {
+        		Path p = Path.of(path);
+        		Path dir = p.getParent();
+        		if(dir!=null) {
+        			parameters.put("basedir", dir.toString());
+        			parameters.put("filename", p.getFileName().toString());
+        		}
+        	}
         }
         else {
             path = "";
