@@ -31,7 +31,7 @@ import eu.unicore.uftp.server.requests.UFTPBaseRequest;
 import eu.unicore.uftp.server.requests.UFTPGetUserInfoRequest;
 import eu.unicore.uftp.server.requests.UFTPPingRequest;
 import eu.unicore.uftp.server.requests.UFTPRequestBuilderRegistry;
-import eu.unicore.uftp.server.requests.UFTPTransferRequest;
+import eu.unicore.uftp.server.requests.UFTPSessionRequest;
 import eu.unicore.uftp.server.unix.UnixUser;
 import eu.unicore.util.Log;
 import eu.unicore.util.configuration.ConfigurationException;
@@ -445,7 +445,7 @@ public class UFTPServer implements Runnable {
 				String response = "OK::"+String.valueOf(serverThread.getPort());
 				try {
 					Properties props = UFTPBaseRequest.loadProperties(jobString);
-					String requestType = props.getProperty(PROP_REQUEST_TYPE, UFTPTransferRequest.REQUEST_TYPE);
+					String requestType = props.getProperty(PROP_REQUEST_TYPE, UFTPSessionRequest.REQUEST_TYPE);
 					UFTPRequestBuilder builder = UFTPRequestBuilderRegistry.INSTANCE.getBuilder(requestType);
 					UFTPBaseRequest request = builder.createInstance(props);
 					if(UFTPPingRequest.REQUEST_TYPE.equals(requestType)){

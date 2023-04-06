@@ -40,16 +40,16 @@ import eu.unicore.uftp.server.UFTPRequestBuilder;
 /**
  * @author bjoernh
  */
-public class UFTPTransferRequestBuilder implements UFTPRequestBuilder {
+public class UFTPSessionRequestBuilder implements UFTPRequestBuilder {
 
 	@Override
 	public UFTPBaseRequest createInstance(Properties props) throws UnknownHostException, IOException {
-		return new UFTPTransferRequest(props);
+		return new UFTPSessionRequest(props);
 	}
 
 	@Override
 	public String getRequestType() {
-		return UFTPTransferRequest.REQUEST_TYPE;
+		return UFTPSessionRequest.REQUEST_TYPE;
 	}
 
 }

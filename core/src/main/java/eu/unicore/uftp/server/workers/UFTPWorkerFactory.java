@@ -35,7 +35,7 @@ import eu.unicore.uftp.dpc.DPCServer.Connection;
 import eu.unicore.uftp.server.ServerThread;
 import eu.unicore.uftp.server.WorkerFactory;
 import eu.unicore.uftp.server.requests.UFTPBaseRequest;
-import eu.unicore.uftp.server.requests.UFTPTransferRequest;
+import eu.unicore.uftp.server.requests.UFTPSessionRequest;
 
 /**
  * @author bjoernh
@@ -45,12 +45,12 @@ public class UFTPWorkerFactory implements WorkerFactory {
 	@Override
 	public Thread createWorker(ServerThread server, Connection connection, UFTPBaseRequest job, int maxStreams,
 			int bufferSize) {
-		return new UFTPWorker(server, connection, (UFTPTransferRequest) job, maxStreams, bufferSize);
+		return new UFTPWorker(server, connection, (UFTPSessionRequest) job, maxStreams, bufferSize);
 	}
 
 	@Override
 	public Class<? extends UFTPBaseRequest> getRequestClass() {
-		return UFTPTransferRequest.class;
+		return UFTPSessionRequest.class;
 	}
 
 }

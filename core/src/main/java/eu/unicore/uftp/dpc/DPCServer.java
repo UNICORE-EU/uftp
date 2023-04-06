@@ -23,7 +23,7 @@ import eu.unicore.uftp.server.JobStore;
 import eu.unicore.uftp.server.PortManager;
 import eu.unicore.uftp.server.UFTPCommands;
 import eu.unicore.uftp.server.requests.UFTPBaseRequest;
-import eu.unicore.uftp.server.requests.UFTPTransferRequest;
+import eu.unicore.uftp.server.requests.UFTPSessionRequest;
 
 /**
  * Server allowing parallel data transfer with dynamic port configuration using
@@ -117,7 +117,7 @@ public class DPCServer {
 	 *
 	 * @return control connection - which needs to be established before use
 	 * @throws IOException on IO errors or if the connection is from a client address 
-	 * for which no {@link UFTPTransferRequest} exists
+	 * for which no {@link UFTPSessionRequest} exists
 	 */
 	public Connection accept() throws IOException {
 		serverSocket.setSoTimeout(timeout);
@@ -184,7 +184,7 @@ public class DPCServer {
 		return checkClientIP;
 	}
 	
-	void addJob(UFTPTransferRequest job){
+	void addJob(UFTPSessionRequest job){
 		jobMap.addJob(job);
 	}
 
@@ -203,7 +203,6 @@ public class DPCServer {
 				UFTPCommands.APPE,
 				UFTPCommands.KEEP_ALIVE,
 				UFTPCommands.ARCHIVE,
-				UFTPCommands.RESTRICTED_SESSION,
 		};
 	}
 

@@ -25,14 +25,13 @@ import org.junit.Test;
 
 import eu.unicore.uftp.client.FileInfo;
 import eu.unicore.uftp.client.SessionCommands.Get;
-import eu.unicore.uftp.client.UFTPSessionClient.HashInfo;
 import eu.unicore.uftp.client.UFTPSessionClient;
+import eu.unicore.uftp.client.UFTPSessionClient.HashInfo;
 import eu.unicore.uftp.dpc.Session.Mode;
 import eu.unicore.uftp.rsync.RsyncStats;
 import eu.unicore.uftp.rsync.TestRsync;
 import eu.unicore.uftp.server.ClientServerTestBase;
-import eu.unicore.uftp.server.requests.UFTPTransferRequest;
-import eu.unicore.uftp.server.workers.UFTPWorker;
+import eu.unicore.uftp.server.requests.UFTPSessionRequest;
 import eu.unicore.util.Log;
 
 public class TestSessionMode extends ClientServerTestBase{
@@ -46,7 +45,7 @@ public class TestSessionMode extends ClientServerTestBase{
 		String target = "target/testdata/testfile-" + System.currentTimeMillis();
 		String secret = String.valueOf(System.currentTimeMillis());
 		File cwd=new File(".").getAbsoluteFile();
-		UFTPTransferRequest job = new UFTPTransferRequest(host, "nobody", secret, new File(cwd,UFTPWorker.sessionModeTag), true);
+		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret, cwd);
 		job.sendTo(host[0], jobPort);
 		Thread.sleep(1000);
 		InetAddress[]server=host;
@@ -94,41 +93,6 @@ public class TestSessionMode extends ClientServerTestBase{
 		client.close();
 		// check that file exists and has correct content
 		checkFile(new File(target), expected);
-
-	}
-
-
-	@Test
-	public void testClientReadAbsolutePaths() throws Exception {
-		String realSourceName="target/testdata/source-"+System.currentTimeMillis();
-		File realSource=new File(realSourceName);
-		Utils.writeToFile("this is a test for the session client", realSource);
-
-		String target = "target/testdata/testfile-" + System.currentTimeMillis();
-		String secret = String.valueOf(System.currentTimeMillis());
-		UFTPTransferRequest job = new UFTPTransferRequest(host, "nobody", secret, new File(UFTPWorker.sessionModeTag), true);
-		
-		job.sendTo(host[0], jobPort);
-		Thread.sleep(1000);
-
-		UFTPSessionClient client = new UFTPSessionClient(host, srvPort);
-		client.setSecret(secret);
-
-		client.connect();
-		FileOutputStream fos=new FileOutputStream(target);
-
-		client.get(realSource.getAbsolutePath(), fos);
-
-		// check that file exists and has correct content
-		String expected = Utils.md5(realSource);
-		checkFile(new File(target), expected);
-
-		//delete it
-		client.rm(realSource.getAbsolutePath());
-		assertTrue("File was not deleted", !realSource.exists());
-
-		client.close();
-
 	}
 
 	@Test
@@ -140,7 +104,7 @@ public class TestSessionMode extends ClientServerTestBase{
 		String target = "target/testdata/testfile-" + System.currentTimeMillis();
 		String secret = String.valueOf(System.currentTimeMillis());
 		File cwd=new File(".").getAbsoluteFile();
-		UFTPTransferRequest job = new UFTPTransferRequest(host, "nobody", secret, new File(cwd,UFTPWorker.sessionModeTag), true);
+		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret, cwd);
 		job.setCompress(true);
 		job.sendTo(host[0], jobPort);
 		Thread.sleep(1000);
@@ -189,7 +153,7 @@ public class TestSessionMode extends ClientServerTestBase{
 		File cwd=dataDir.getAbsoluteFile();
 
 		//initiate session mode
-		UFTPTransferRequest job = new UFTPTransferRequest(host, "nobody", secret, new File(cwd,UFTPWorker.sessionModeTag), false);
+		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret, cwd);
 		job.sendTo(host[0], jobPort);
 		Thread.sleep(1000);
 
@@ -228,7 +192,7 @@ public class TestSessionMode extends ClientServerTestBase{
 		File cwd=dataDir.getAbsoluteFile();
 
 		//initiate session mode
-		UFTPTransferRequest job = new UFTPTransferRequest(host, "nobody", secret, new File(cwd,UFTPWorker.sessionModeTag), true);
+		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret, cwd);
 		job.sendTo(host[0], jobPort);
 		Thread.sleep(1000);
 
@@ -276,7 +240,7 @@ public class TestSessionMode extends ClientServerTestBase{
 		File cwd=dataDir.getAbsoluteFile();
 
 		//initiate session mode
-		UFTPTransferRequest job = new UFTPTransferRequest(host, "nobody", secret, new File(cwd,UFTPWorker.sessionModeTag), true);
+		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret, cwd);
 		job.setCompress(true);
 		job.sendTo(host[0], jobPort);
 		Thread.sleep(1000);
@@ -317,7 +281,7 @@ public class TestSessionMode extends ClientServerTestBase{
 		File cwd=dataDir.getAbsoluteFile();
 
 		//initiate session mode
-		UFTPTransferRequest job = new UFTPTransferRequest(host, "nobody", secret, new File(cwd,UFTPWorker.sessionModeTag), true);
+		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret, cwd);
 		job.sendTo(host[0], jobPort);
 		Thread.sleep(1000);
 
@@ -365,7 +329,7 @@ public class TestSessionMode extends ClientServerTestBase{
 		assertNotSame(Utils.md5(masterFile),Utils.md5(slaveFile));
 		String secret = String.valueOf(System.currentTimeMillis());
 		File cwd=dataDir.getAbsoluteFile();
-		UFTPTransferRequest job = new UFTPTransferRequest(host, "nobody", secret, new File(cwd,UFTPWorker.sessionModeTag), false);
+		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret, cwd);
 		job.sendTo(host[0], jobPort);
 		Thread.sleep(1000);
 		UFTPSessionClient client = new UFTPSessionClient(host, srvPort);
@@ -392,7 +356,7 @@ public class TestSessionMode extends ClientServerTestBase{
 		String target = "target/testdata/"+realSource.getName();
 		String secret = String.valueOf(System.currentTimeMillis());
 		File cwd=new File(".").getAbsoluteFile();
-		UFTPTransferRequest job = new UFTPTransferRequest(host, "nobody", secret, new File(cwd,UFTPWorker.sessionModeTag), true);
+		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret, cwd);
 		job.sendTo(host[0], jobPort);
 		Thread.sleep(1000);
 
@@ -427,7 +391,7 @@ public class TestSessionMode extends ClientServerTestBase{
 		FileUtils.deleteQuietly(target2);
 		String secret = String.valueOf(System.currentTimeMillis());
 		File cwd=new File(".").getAbsoluteFile();
-		UFTPTransferRequest job = new UFTPTransferRequest(host, "nobody", secret, new File(cwd,UFTPWorker.sessionModeTag), true);
+		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret, cwd);
 		job.sendTo(host[0], jobPort);
 		Thread.sleep(1000);
 
@@ -452,7 +416,7 @@ public class TestSessionMode extends ClientServerTestBase{
 		String secret = String.valueOf(System.currentTimeMillis());
 		File cwd=dataDir.getAbsoluteFile();
 		//initiate session mode
-		UFTPTransferRequest job = new UFTPTransferRequest(host, "nobody", secret, new File(cwd,UFTPWorker.sessionModeTag), false);
+		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret, cwd);
 		job.sendTo(host[0], jobPort);
 		Thread.sleep(1000);
 		UFTPSessionClient client = new UFTPSessionClient(host, srvPort);
@@ -483,14 +447,14 @@ public class TestSessionMode extends ClientServerTestBase{
 		Properties properties = new Properties();
 		properties.setProperty("client-ip",Utils.encodeInetAddresses(host));
 		properties.setProperty("send","true");
-		properties.setProperty("file",UFTPWorker.sessionModeTag);
+		properties.setProperty("file", ".");
 		properties.setProperty("streams", "1");
 		properties.setProperty("secret",secret);
 		properties.setProperty("user","nobody");
 		properties.setProperty("group","nobody");
 		properties.setProperty("includes","/foo:/bar:*ok*");
 		properties.setProperty("excludes","*forbidden*");
-		UFTPTransferRequest job = new UFTPTransferRequest(properties);
+		UFTPSessionRequest job = new UFTPSessionRequest(properties);
 		Session s = new Session(null,job,Utils.getFileAccess(null),1);
 		assertEquals(3,s.getIncludes().length);
 		assertFalse(s.checkACL(new File("/ham"), Mode.READ));
@@ -508,14 +472,14 @@ public class TestSessionMode extends ClientServerTestBase{
 		Properties properties = new Properties();
 		properties.setProperty("client-ip",Utils.encodeInetAddresses(host));
 		properties.setProperty("send","true");
-		properties.setProperty("file",new File(cwd,UFTPWorker.sessionModeTag).getAbsolutePath());
+		properties.setProperty("file",cwd.getAbsolutePath());
 		properties.setProperty("streams", "1");
 		properties.setProperty("secret",secret);
 		properties.setProperty("user","nobody");
 		properties.setProperty("group","nobody");
 		properties.setProperty("includes","*ok*");
 		properties.setProperty("excludes","*forbidden*:*not*ok*");
-		UFTPTransferRequest job = new UFTPTransferRequest(properties);
+		UFTPSessionRequest job = new UFTPSessionRequest(properties);
 		job.sendTo(host[0], jobPort);
 		Thread.sleep(1000);
 		UFTPSessionClient client = new UFTPSessionClient(host, srvPort);
@@ -549,7 +513,7 @@ public class TestSessionMode extends ClientServerTestBase{
 		File cwd = new File(".").getAbsoluteFile();
 
 		//initiate session mode
-		UFTPTransferRequest job = new UFTPTransferRequest(host, "nobody", secret, new File(cwd,UFTPWorker.sessionModeTag), false);
+		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret, cwd);
 		job.sendTo(host[0], jobPort);
 		Thread.sleep(1000);
 
@@ -575,7 +539,7 @@ public class TestSessionMode extends ClientServerTestBase{
 		File cwd = new File(".").getAbsoluteFile();
 
 		//initiate session mode
-		UFTPTransferRequest job = new UFTPTransferRequest(host, "nobody", secret, new File(cwd,UFTPWorker.sessionModeTag), false);
+		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret, cwd);
 		job.sendTo(host[0], jobPort);
 		Thread.sleep(1000);
 
@@ -602,7 +566,7 @@ public class TestSessionMode extends ClientServerTestBase{
 		File cwd = new File(".").getAbsoluteFile();
 
 		//initiate session mode
-		UFTPTransferRequest job = new UFTPTransferRequest(host, "nobody", secret, new File(cwd,UFTPWorker.sessionModeTag), false);
+		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret, cwd);
 		job.sendTo(host[0], jobPort);
 		Thread.sleep(1000);
 
@@ -626,7 +590,7 @@ public class TestSessionMode extends ClientServerTestBase{
 
 		String secret = UUID.randomUUID().toString();
 		File cwd=new File(".").getAbsoluteFile();
-		UFTPTransferRequest job = new UFTPTransferRequest(new InetAddress[0], "nobody", secret, new File(cwd,UFTPWorker.sessionModeTag), true);
+		UFTPSessionRequest job = new UFTPSessionRequest(new InetAddress[0], "nobody", secret, cwd);
 		job.sendTo(host[0], jobPort);
 		Thread.sleep(1000);
 		InetAddress[]server=host;
@@ -659,7 +623,7 @@ public class TestSessionMode extends ClientServerTestBase{
 		File cwd=dataDir.getAbsoluteFile();
 
 		//initiate session mode
-		UFTPTransferRequest job = new UFTPTransferRequest(host, "nobody", secret, new File(cwd,UFTPWorker.sessionModeTag), false);
+		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret, cwd);
 		job.sendTo(host[0], jobPort);
 		Thread.sleep(1000);
 
@@ -691,7 +655,7 @@ public class TestSessionMode extends ClientServerTestBase{
 		File cwd = new File(".").getAbsoluteFile();
 
 		//initiate session mode
-		UFTPTransferRequest job = new UFTPTransferRequest(host, "nobody", secret, new File(cwd,UFTPWorker.sessionModeTag), false);
+		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret, cwd);
 		job.setAccessPermissions(Session.Mode.NONE);
 		job.sendTo(host[0], jobPort);
 		Thread.sleep(1000);
@@ -705,7 +669,7 @@ public class TestSessionMode extends ClientServerTestBase{
 			System.out.println(Log.createFaultMessage("", ex));
 		}
 		
-		job = new UFTPTransferRequest(host, "nobody", secret, new File(cwd,UFTPWorker.sessionModeTag), false);
+		job = new UFTPSessionRequest(host, "nobody", secret, cwd);
 		job.setAccessPermissions(Session.Mode.INFO);
 		job.sendTo(host[0], jobPort);
 		Thread.sleep(1000);
@@ -728,8 +692,8 @@ public class TestSessionMode extends ClientServerTestBase{
 		String target = "target/testdata/testfile-" + System.currentTimeMillis();
 
 		// send job to server...
-		UFTPTransferRequest job = new UFTPTransferRequest(host, "nobody", "secretCode", 
-				new File(sourceFile.getParentFile().getAbsoluteFile(),UFTPWorker.sessionModeTag), true);
+		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", "secretCode",
+				sourceFile.getParentFile().getAbsoluteFile());
 		job.setKey(key);
 		job.setCompress(compress);
 		job.setStreams(numCon);
@@ -763,7 +727,7 @@ public class TestSessionMode extends ClientServerTestBase{
 		String secret = String.valueOf(System.currentTimeMillis());
 		File cwd = new File(".").getAbsoluteFile();
 		//initiate session mode
-		UFTPTransferRequest job = new UFTPTransferRequest(host, "nobody", secret, new File(cwd,UFTPWorker.sessionModeTag), false);
+		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret, cwd);
 		job.sendTo(host[0], jobPort);
 		Thread.sleep(1000);
 		try(UFTPSessionClient client = new UFTPSessionClient(host, srvPort)){

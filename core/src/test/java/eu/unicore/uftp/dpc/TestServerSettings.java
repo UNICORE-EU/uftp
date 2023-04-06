@@ -19,8 +19,7 @@ import eu.unicore.uftp.client.UFTPSessionClient;
 import eu.unicore.uftp.server.ClientServerTestBase;
 import eu.unicore.uftp.server.UFTPCommands;
 import eu.unicore.uftp.server.requests.UFTPPingRequest;
-import eu.unicore.uftp.server.requests.UFTPTransferRequest;
-import eu.unicore.uftp.server.workers.UFTPWorker;
+import eu.unicore.uftp.server.requests.UFTPSessionRequest;
 import eu.unicore.util.Log;
 
 public class TestServerSettings extends ClientServerTestBase {
@@ -36,8 +35,8 @@ public class TestServerSettings extends ClientServerTestBase {
 	public void testConnect() throws Exception {
 		server.setCheckClientIP(true);
 		String secret = UUID.randomUUID().toString();
-		UFTPTransferRequest job = new UFTPTransferRequest(client_host, "nobody", secret,
-				new File(".",UFTPWorker.sessionModeTag), true);
+		UFTPSessionRequest job = new UFTPSessionRequest(client_host, "nobody", secret,
+				new File("."));
 		job.sendTo(host[0], jobPort);
 		Thread.sleep(1000);
 
@@ -68,7 +67,8 @@ public class TestServerSettings extends ClientServerTestBase {
 	
 	@Test
 	public void testRejectDuplicateSecret() throws Exception {
-		UFTPTransferRequest job = new UFTPTransferRequest(client_host, "nobody", "test123", new File("./foo"), true);
+		UFTPSessionRequest job = new UFTPSessionRequest(client_host, "nobody", "test123",
+				new File("./foo"));
 		job.sendTo(host[0], jobPort);
 		String reply = job.sendTo(host[0], jobPort);
 		System.out.println(reply);
@@ -83,8 +83,8 @@ public class TestServerSettings extends ClientServerTestBase {
 		FileUtils.write(datafile, "0123456789", "UTF-8");
 		
 		String secret = UUID.randomUUID().toString();
-		UFTPTransferRequest job = new UFTPTransferRequest(client_host, "nobody", secret,
-				new File(dataDir.getAbsoluteFile(),UFTPWorker.sessionModeTag), true);
+		UFTPSessionRequest job = new UFTPSessionRequest(client_host, "nobody", secret,
+				dataDir.getAbsoluteFile());
 		job.sendTo(host[0], jobPort);
 		Thread.sleep(1000);
 		server.setRFCRangeMode(false);
@@ -99,8 +99,8 @@ public class TestServerSettings extends ClientServerTestBase {
 		}
 		
 		secret = UUID.randomUUID().toString();
-		job = new UFTPTransferRequest(client_host, "nobody", secret,
-				new File(dataDir.getAbsoluteFile(),UFTPWorker.sessionModeTag), true);
+		job = new UFTPSessionRequest(client_host, "nobody", secret,
+				dataDir.getAbsoluteFile());
 		job.sendTo(host[0], jobPort);
 		Thread.sleep(1000);
 		server.setRFCRangeMode(true);

@@ -44,7 +44,7 @@ import eu.unicore.uftp.dpc.Session;
 import eu.unicore.uftp.dpc.Utils;
 import eu.unicore.uftp.dpc.DPCServer.Connection;
 import eu.unicore.uftp.server.ServerThread;
-import eu.unicore.uftp.server.requests.UFTPTransferRequest;
+import eu.unicore.uftp.server.requests.UFTPSessionRequest;
 import eu.unicore.uftp.server.requests.UFTPTunnelRequest;
 
 /**
@@ -64,15 +64,16 @@ public class UFTPTunnelWorker extends UFTPWorker {
 		this.job = job;
 	}
 
-	private static UFTPTransferRequest convert(UFTPTunnelRequest job){
-		UFTPTransferRequest t = new UFTPTransferRequest(job.getClient(),job.getUser(),job.getSecret(), new File("."), false);
+	private static UFTPSessionRequest convert(UFTPTunnelRequest job){
+		UFTPSessionRequest t = new UFTPSessionRequest(job.getClient(),job.getUser(),
+				job.getSecret(), new File("."));
 		return t;
 	}
 	
 	Socket serverSocket;
 
 	@Override
-	protected void doRunSingle(Session session, File localFile) {
+	protected void runSession(Session session) {
 
 		logger.info("Created tunnel worker for " + job.getTargetHost() + ":" + job.getTargetPort());
 

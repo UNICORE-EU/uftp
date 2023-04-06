@@ -29,15 +29,7 @@ public final class UFTPCommands {
     
     // server can unpack archive data from incoming data stream
     public static final String ARCHIVE = "ARCHIVE";
-    
-    // server supports limited session
-    public static final String RESTRICTED_SESSION = "RESTRICTED_SESSION";
 
-    
-    // pseudo "feature" denoting that server supports protocol version 2 
-    // and has accepted the login using the client secret
-    public static final String PROTOCOL_VER_2_LOGIN_OK = "DPC2_LOGIN_OK";
-    
     // pseudo feature denoting that server expects RFC compliant
     // "RANG startbyte endbyte"
     public static final String FEATURE_RFC_RANG = "RFC_RANG";

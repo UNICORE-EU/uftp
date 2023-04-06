@@ -460,6 +460,40 @@ public class UFTPSessionClient extends AbstractUFTPClient implements Runnable {
 	}
 
 	/**
+	 * Tell the server to send a file to another UFTPD server.
+	 *
+	 * Authentication to the receiving UFTPD has to be done previously
+	 * out-of-band.
+	 *
+	 * @param localFile - file on the sending UFTPD server
+	 * @param remoteFile - filename on the receiving side
+	 * @param remoteServer - address in the form 'host:port' of the receiving UFTPD
+	 * @param password - one-time-password for logging into the receiving UFTPD
+	 * @throws Exception
+	 */
+	public void sendFile(String localFile, String remoteFile, String remoteServer, String password) throws Exception {
+		String cmd = String.format("SEND-FILE '%s' '%s' '%s' '%s'", localFile, remoteFile, remoteServer, password);
+		runCommand(cmd);
+	}
+
+	/**
+	 * Tell the server to download a file from another UFTPD server.
+	 *
+	 * Authentication to the other UFTPD has to be done previously
+	 * out-of-band.
+	 *
+	 * @param localFile - filename on the UFTPD server
+	 * @param remoteFile - filename on the other UFTPD side
+	 * @param remoteServer - address in the form 'host:port' of the other UFTPD
+	 * @param password - one-time-password for logging into the other UFTPD
+	 * @throws Exception
+	 */
+	public void receiveFile(String localFile, String remoteFile, String remoteServer, String password) throws Exception {
+		String cmd = String.format("RECEIVE-FILE '%s' '%s' '%s' '%s'", localFile, remoteFile, remoteServer, password);
+		runCommand(cmd);
+	}
+
+	/**
 	 * set the local base directory
 	 *
 	 * @param base - the base directory

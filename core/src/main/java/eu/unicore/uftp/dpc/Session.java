@@ -24,7 +24,7 @@ import eu.unicore.uftp.dpc.DPCServer.Connection;
 import eu.unicore.uftp.server.FileAccess;
 import eu.unicore.uftp.server.UFTPCommands;
 import eu.unicore.uftp.server.UserFileAccess;
-import eu.unicore.uftp.server.requests.UFTPTransferRequest;
+import eu.unicore.uftp.server.requests.UFTPSessionRequest;
 import eu.unicore.util.Log;
 
 /**
@@ -112,17 +112,20 @@ public class Session {
 
 	private Mode accessLevel = Mode.FULL;
 	
-	public Session(Connection connection, UFTPTransferRequest job, FileAccess fileAccess, int maxParCons) {
+	public Session(Connection connection, UFTPSessionRequest job, FileAccess fileAccess, int maxParCons) {
 		this.connection = connection;
 		this.fileAccess = new UserFileAccess(fileAccess,job.getUser(),job.getGroup());
 		this.includes = parsePathlist(job.getIncludes());
 		this.excludes = parsePathlist(job.getExcludes());
 		this.defaultExcludes = parsePathlist(Utils.getProperty(UFTPConstants.ENV_UFTP_NO_WRITE, null));
-		File requested = job.getFile().getParentFile();
+		File requested = job.getBaseDirectory();
 		if (requested!= null) {
 			allowAbsolutePaths = false;
+			if(!requested.isDirectory()) {
+				requested = requested.getParentFile();
+			}
 			if(requested.isAbsolute()) {
-				baseDirectory = job.getFile().getParentFile();
+				baseDirectory = requested;
 			}else {
 				baseDirectory = new File(new File(fileAccess.getHome(job.getUser())), requested.getPath());
 			}

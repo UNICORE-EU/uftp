@@ -72,10 +72,6 @@ public class ClientProtocol {
 	public  List<String> checkFeatures() throws IOException {
 		 readFeatures();
 		 checkPassiveSupport(features);
-		 // server must acknowledge that the v2 login was OK
-		 if(!features.contains(UFTPCommands.PROTOCOL_VER_2_LOGIN_OK)){
-			 throw new IOException("Unexpected server features: missing protocol v2 support.");
-		 }
 		 return features;
 	}
 	

@@ -8,7 +8,7 @@ import java.util.Collection;
 import eu.unicore.uftp.dpc.DPCServer.Connection;
 import eu.unicore.uftp.server.UFTPCommands;
 import eu.unicore.uftp.server.requests.UFTPBaseRequest;
-import eu.unicore.uftp.server.requests.UFTPTransferRequest;
+import eu.unicore.uftp.server.requests.UFTPSessionRequest;
 
 /**
  * implements the server-side of the UFTP connection protocol
@@ -50,11 +50,8 @@ public class ServerProtocol {
 					connection.close();
 					throw new AuthorizationFailureException("Authorization failed");
 				}
-				if(authZresult instanceof UFTPTransferRequest) {
-					// we can handle SYST & FEAT as part of the session
-					if ( ((UFTPTransferRequest)authZresult).isSession()){
-						break;
-					}
+				if(authZresult instanceof UFTPSessionRequest) {
+					break;
 				}
 			}
 			else if (chk.startsWith("SYST")){
@@ -83,8 +80,8 @@ public class ServerProtocol {
 		return false;
 	}
 
-	protected UFTPTransferRequest sendFeatures() throws IOException {
-		UFTPTransferRequest authZresult = null;
+	protected UFTPSessionRequest sendFeatures() throws IOException {
+		UFTPSessionRequest authZresult = null;
 		String featureReply = UFTPCommands.FEATURES_REPLY_LONG;
 		Collection<String>features = connection.getFeatures();
 		connection.sendControl(featureReply);
@@ -101,22 +98,15 @@ public class ServerProtocol {
 
 	/*
 	 * Establish pseudo-FTP connection<br/>
-	 * 
-	 * If the client sends the secret as password, store it.
-	 * This will also choose protocol version 2.
+	 * Client logs in as "anonymous" with the one-time password
 	 */
 	protected void handleLogin(String userLine) throws IOException {
 		boolean OK = false;
 		if(UFTPCommands.USER_ANON.equals(userLine)){
 			connection.sendControl(UFTPCommands.REQUEST_PASSWORD);
 			String passwordLine = connection.readControl();
-			String password = null;
 			if(passwordLine.startsWith("USER ") || passwordLine.startsWith("PASS ")){
-				password = passwordLine.split(" ",2)[1];
-				if(!"anonymous".equalsIgnoreCase(password)){
-					secret = password;
-					connection.getFeatures().add(UFTPCommands.PROTOCOL_VER_2_LOGIN_OK);
-				}
+				secret = passwordLine.split(" ",2)[1];
 				OK = true;
 			}
 		}

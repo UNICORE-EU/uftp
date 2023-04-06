@@ -414,7 +414,6 @@ public class DPCClient implements Closeable{
 				UFTPCommands.MLSD,
 				UFTPCommands.APPE,
 				UFTPCommands.ARCHIVE,
-				UFTPCommands.RESTRICTED_SESSION,
 		});
 	}
 

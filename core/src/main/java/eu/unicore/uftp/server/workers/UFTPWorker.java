@@ -31,7 +31,7 @@ import eu.unicore.uftp.rsync.FollowerChannel;
 import eu.unicore.uftp.rsync.SocketLeaderChannel;
 import eu.unicore.uftp.rsync.SocketFollowerChannel;
 import eu.unicore.uftp.server.ServerThread;
-import eu.unicore.uftp.server.requests.UFTPTransferRequest;
+import eu.unicore.uftp.server.requests.UFTPSessionRequest;
 import eu.unicore.util.Log;
 
 /**
@@ -54,7 +54,7 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 	/**
 	 * Job for this connection
 	 */
-	private final UFTPTransferRequest job;
+	private final UFTPSessionRequest job;
 
 	/**
 	 * NETWORK send/receive buffer size, this must be the same on client/server
@@ -81,7 +81,7 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 	 * @param maxStreams
 	 * @param bufferSize
 	 */
-	public UFTPWorker(ServerThread server, Connection connection, UFTPTransferRequest job, int maxStreams, int bufferSize) {
+	public UFTPWorker(ServerThread server, Connection connection, UFTPSessionRequest job, int maxStreams, int bufferSize) {
 		this.server = server;
 		this.connection = connection;
 		this.job = job;
@@ -101,19 +101,14 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 	public void run() {
 		Session session = new Session(connection, job, server.getFileAccess(), maxStreams);
 		session.setRFCRangeMode(server.getRFCRangeMode());
-		isSession = job.getFile().getName().endsWith(sessionModeTag);
-		if (isSession) {
-			boolean isPersistent = job.isPersistent();
-			int count = job.newActiveSession();
-			if(isPersistent)logger.info("New session for <"+job.getUser()+"> this is number <"+count+">");
-			runSession(session);
-			count = job.endActiveSession();
-			if(isPersistent)logger.info("Ending session for <"+job.getUser()+"> remaining: "+count
-					+( count==0 ?", request processing finished.":""));
-			if(count==0 && isPersistent)server.invalidateJob(job);
-		} else {
-			runSingle(session, job.getFile());
-		}
+		boolean isPersistent = job.isPersistent();
+		int count = job.newActiveSession();
+		if(isPersistent)logger.info("New session for <"+job.getUser()+"> this is number <"+count+">");
+		runSession(session);
+		count = job.endActiveSession();
+		if(isPersistent)logger.info("Ending session for <"+job.getUser()+"> remaining: "+count
+				+( count==0 ?", request processing finished.":""));
+		if(count==0 && isPersistent)server.invalidateJob(job);
 	}
 
 	/**
@@ -185,80 +180,6 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 			logger.error(msg, ex);
 			cleanup();
 		}
-	}
-
-	/**
-	 * transfer a single file - this is a UFTP-only behaviour not in line with the FTP protocol!
-	 */
-	protected void runSingle(Session session, File localFile) {
-
-		// run session until we have opened the data connections and are ready for sending!
-		try {
-			int action = Session.ACTION_NONE;
-
-			// want to disable control channel read timeouts in session mode
-			connection.setControlTimeout(0);
-
-			while (session.isAlive() && Session.ACTION_OPEN_SOCKET!=action) {
-				action = session.getNextAction();
-
-				switch (action) {
-
-				case Session.ACTION_OPEN_SOCKET:
-					socket = makeSocket(maxStreams, connection);
-					break;
-
-				case Session.ACTION_NONE:
-				}
-			}
-		}catch(Exception ex){}
-
-		doRunSingle(session, localFile);
-		cleanup();
-	}
-
-	protected void doRunSingle(Session session, File localFile) {
-		try {
-
-			long maxBytes = Long.MAX_VALUE;
-
-			boolean send = job.isSend();
-
-
-			String fileName = localFile.getAbsolutePath();
-			boolean canAppend = true;
-			if (fileName.startsWith("/dev/") && fileName.contains("_")) {
-				// special case for performance measurements
-				// file name contains amount of data to send/receive
-				String[] s = fileName.split("_");
-				fileName = s[0];
-				maxBytes = Long.parseLong(s[1]);
-				session.setRange(0, maxBytes);
-				canAppend = false;
-				localFile = new File(fileName);
-			}
-			else if(send){
-				maxBytes = localFile.length() - job.getOffset();
-				session.setRange(job.getOffset(), maxBytes);
-			}
-			session.setupLocalFile(localFile, !send);
-			
-			if (send) {
-				sendData(session);
-			} else {
-				boolean append = job.isAppend() && canAppend;
-				logger.info("Receiving " + (append?"(appending to) ":"") + localFile.getAbsolutePath());
-				if(append){
-					session.setRange(localFile.length(), maxBytes);
-				}
-				readData(session);
-			}
-			
-		} catch (Exception e) {
-			logger.error("Error", e);
-			Utils.closeQuietly(socket);
-		}
-
 	}
 
 	private void cleanup(){
@@ -598,9 +519,9 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 	}
 
 	/**
-	 * @return returns the {@link UFTPTransferRequest} for this connection 
+	 * @return returns the {@link UFTPSessionRequest} for this connection
 	 */
-	public UFTPTransferRequest getJob() {
+	public UFTPSessionRequest getJob() {
 		return job;
 	}
 

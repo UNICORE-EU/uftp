@@ -21,8 +21,7 @@ import eu.unicore.uftp.client.async.AsyncDownloader;
 import eu.unicore.uftp.client.async.AsyncProducer;
 import eu.unicore.uftp.client.async.AsyncUploader;
 import eu.unicore.uftp.server.ClientServerTestBase;
-import eu.unicore.uftp.server.requests.UFTPTransferRequest;
-import eu.unicore.uftp.server.workers.UFTPWorker;
+import eu.unicore.uftp.server.requests.UFTPSessionRequest;
 import eu.unicore.util.Pair;
 
 public class TestAsync extends ClientServerTestBase{
@@ -35,7 +34,7 @@ public class TestAsync extends ClientServerTestBase{
 		String target = "target/testdata/testfile-" + System.currentTimeMillis();
 		String secret = String.valueOf(System.currentTimeMillis());
 		File cwd=new File(".").getAbsoluteFile();
-		UFTPTransferRequest job = new UFTPTransferRequest(host, "nobody", secret, new File(cwd,UFTPWorker.sessionModeTag), true);
+		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret, cwd);
 		job.sendTo(host[0], jobPort);
 		Thread.sleep(1000);
 		InetAddress[]server=host;
@@ -67,9 +66,7 @@ public class TestAsync extends ClientServerTestBase{
 
 		String secret = String.valueOf(System.currentTimeMillis());
 		File cwd=dataDir.getAbsoluteFile();
-
-		//initiate session mode
-		UFTPTransferRequest job = new UFTPTransferRequest(host, "nobody", secret, new File(cwd,UFTPWorker.sessionModeTag), false);
+		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret, cwd);
 		job.sendTo(host[0], jobPort);
 		Thread.sleep(1000);
 

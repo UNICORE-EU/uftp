@@ -1,13 +1,6 @@
 package eu.unicore.uftp.dpc;
 
 public interface UFTPConstants {
-
-	/**
-	 * tag used as "filename" to indicate session mode, i.e. multifile and byte
-	 * range support
-	 */
-	public static final String sessionModeTag = "___UFTP___MULTI___FILE___SESSION___MODE___";
-
 	
 	/**
 	 * environment setting for a ":" separated list of patters UFTPD should NOT write to
