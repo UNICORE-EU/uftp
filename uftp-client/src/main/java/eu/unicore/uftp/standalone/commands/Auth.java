@@ -27,7 +27,7 @@ public class Auth extends DataTransferCommand {
 		String uri = fileArgs[0];
 		mgr.init(uri);
 		AuthClient auth = mgr.getAuthClient(client);
-		AuthResponse res = auth.createSession(mgr.getPath(), true);
+		AuthResponse res = auth.createSession(mgr.getBasedir(), true);
 		if(!res.success){
 			System.out.println("Error: "+res.reason);
 		}

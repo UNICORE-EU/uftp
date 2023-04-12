@@ -17,8 +17,6 @@ class Session(object):
     ACTION_OPEN_SOCKET = 5
     ACTION_CLOSE_DATA = 7
     ACTION_SEND_HASH = 8
-    ACTION_START_RCP_SEND_FILE=9
-    ACTION_START_RCP_RECEIVE_FILE=10
 
     ACTION_END = 99
 
@@ -485,7 +483,6 @@ class Session(object):
         self.assert_permission(Session.MODE_WRITE)
         path = self.makeabs(params)
         self.assert_access(path)
-        
         if self.number_of_bytes is None:
             self.number_of_bytes = sys.maxsize
         self.file_path = path
@@ -497,7 +494,6 @@ class Session(object):
         self.assert_permission(Session.MODE_WRITE)
         path = self.makeabs(params)
         self.assert_access(path)
-
         if self.number_of_bytes is None:
             self.number_of_bytes = sys.maxsize
         try:
@@ -560,8 +556,9 @@ class Session(object):
             return Session.ACTION_CONTINUE
         self.file_path = path
         self.remote_file_spec = (remote_file, server_spec, passwd)
-        self.control.write_message("200 OK")
-        return Session.ACTION_START_RCP_SEND_FILE
+        child_process_id = self.do_launch_transfer(mode="send")
+        self.control.write_message("299 OK transfer-process-ID=%s" % child_process_id)
+        return Session.ACTION_CONTINUE
 
     def rcp_receive_file(self, params):
         self.assert_permission(Session.MODE_WRITE)
@@ -573,8 +570,9 @@ class Session(object):
         path = self.makeabs(path)
         self.file_path = path
         self.remote_file_spec = (remote_file, server_spec, passwd)
-        self.control.write_message("200 OK")
-        return Session.ACTION_START_RCP_RECEIVE_FILE
+        child_process_id = self.do_launch_transfer(mode="receive")
+        self.control.write_message("299 OK transfer-process-ID=%s" % child_process_id)
+        return Session.ACTION_CONTINUE
 
     def set_file_mtime(self, params):
         self.assert_permission(Session.MODE_WRITE)
@@ -783,6 +781,14 @@ class Session(object):
         stats = RSync.Follower(self.data, self.file_path).run()   
         msg = "USAGE [sync-to-server] [%s] [%s]" % (stats, self.job['user'])
         self.LOG.info(msg)
+    
+    def do_launch_transfer(self, mode):
+        pid = Transfer.launch_transfer(self.remote_file_spec, self.file_path, mode,
+                                       self.offset, self.number_of_bytes,
+                                       self.LOG, self.job['user'])
+        self.LOG.info("Started server-server transfer, child process PID <%s>" % pid)
+        self.reset_range()
+        return pid
 
     def control_rate(self, total, start_time):
         interval = int(time.time()*1000 - start_time) + 1
@@ -856,10 +862,6 @@ class Session(object):
                         self.do_sync_to_client()
                     elif mode==Session.ACTION_SYNC_TO_SERVER:
                         self.do_sync_to_server()
-                    elif mode==Session.ACTION_START_RCP_SEND_FILE:
-                        Transfer.launch_transfer(self.remote_file_spec, self.file_path, mode="send")
-                    elif mode==Session.ACTION_START_RCP_RECEIVE_FILE:
-                        Transfer.launch_transfer(self.remote_file_spec, self.file_path, mode="receive")
                     elif mode==Session.ACTION_END:
                         break
                 except Exception as e:

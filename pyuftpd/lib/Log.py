@@ -17,10 +17,10 @@ class Logger(object):
         print(message)
         stdout.flush()
 
-    def reinit(self):
+    def reinit(self, name="UFTPD-worker"):
         if self.use_syslog:
             closelog()
-            openlog("UFTPD-worker")
+            openlog(name)
 
     def error(self, message):
         if self.use_syslog:

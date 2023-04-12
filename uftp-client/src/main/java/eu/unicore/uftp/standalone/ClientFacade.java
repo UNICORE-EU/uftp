@@ -235,12 +235,15 @@ public class ClientFacade {
 			Map<String,String> targetParams = connectionManager.extractConnectionParameters(target);
 			target = targetParams.get("path");
 		}
-		if(receive) {
-			sc.receiveFile(target, source, uftpdAddress, onetimePassword);
+		
+		if(startByte!=null){
+			long size = endByte-startByte+1;
+			sc.sendRangeCommand(startByte, size);
 		}
-		else {
-			sc.sendFile(source, target, uftpdAddress, onetimePassword);
-		}
+		String reply = receive ?
+				sc.receiveFile(target, source, uftpdAddress, onetimePassword):
+				sc.sendFile(source, target, uftpdAddress, onetimePassword);
+		if(verbose)System.out.println(reply);
 	}
 	
 	/**
@@ -728,15 +731,19 @@ public class ClientFacade {
 	}
 
 	/**
-	 * if the local destination is a directory, append the source file name
+	 * Get the final target file name. If the local destination is a directory,
+	 * append the source file name
 	 */
 	public String getFullLocalDestination(String source, String destination) {
 		String destName = FilenameUtils.getName(destination);
-		if (destName == null || destName.isEmpty() || new File(destination).isDirectory()) {
+		File destFile = new File(destination);
+		if (destName == null || destName.isEmpty() || destFile.isDirectory()) {
 			destName = FilenameUtils.getName(source);
 			//verify not null?
 		}
-		return FilenameUtils.concat(FilenameUtils.getFullPath(destination), destName);
+		return destFile.isDirectory() ?
+				new File(destFile, destName).getPath() :
+				FilenameUtils.concat(FilenameUtils.getFullPath(destination), destName);
 	}
 
 	private AuthResponse initSession(AuthClient authClient) throws Exception {

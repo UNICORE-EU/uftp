@@ -5,7 +5,7 @@ _uftp()
   COMPREPLY=()
   cur=`_get_cword`
   prev="${COMP_WORDS[COMP_CWORD-1]}"
-  commands="authenticate checksum cp get-share info ls mkdir put-share rm share sync tunnel"
+  commands="authenticate checksum cp get-share info ls mkdir put-share rcp rm share sync tunnel"
   global_opts="--auth --group --help --identity --client --oidc-agent --password --user --verbose --help"
 
 
@@ -41,6 +41,9 @@ _uftp()
     ;;
     put-share)
     opts="$global_opts --bandwithlimit --compress --encrypt --streams"
+    ;;
+    rcp)
+    opts="$global_opts --bytes --one-time-password --server"
     ;;
     rm)
     opts="$global_opts --quiet --recurse"

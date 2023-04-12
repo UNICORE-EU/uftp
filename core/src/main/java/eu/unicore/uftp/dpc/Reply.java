@@ -16,7 +16,7 @@ public class Reply {
 	private String statusLine;
 	
 	private Reply(){
-		results=new ArrayList<String>();
+		results = new ArrayList<>();
 	}
 
 	public int getCode(){
@@ -24,7 +24,7 @@ public class Reply {
 	}
 	
 	public boolean isOK(){
-		return code==200;
+		return code>=200 && code<=299;
 	}
 
 	public boolean isError(){

@@ -5,6 +5,8 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 import eu.unicore.uftp.standalone.ClientFacade;
+import eu.unicore.uftp.standalone.util.RangeMode;
+import eu.unicore.uftp.standalone.util.UnitParser;
 
 /**
  * server-server copy (remote copy)
@@ -17,6 +19,11 @@ public class URCP extends Command {
 
 	private String onetimePassword;
 	private String uftpdAddress;
+
+	//index of first byte to process
+	protected Long startByte;
+	//index of last byte to process
+	protected Long endByte;
 
 	@Override
 	public String getName() {
@@ -45,6 +52,11 @@ public class URCP extends Command {
 				.required(false)
 				.hasArg()
 				.build());
+		options.addOption(Option.builder("B").longOpt("bytes")
+				.desc("Byte range")
+				.required(false)
+				.hasArg()
+				.build());
 		return options;
 	}
 
@@ -57,6 +69,10 @@ public class URCP extends Command {
 		onetimePassword = line.getOptionValue('p');
 		uftpdAddress = line.getOptionValue('s');
 		target = fileArgs[fileArgs.length-1];
+		if (line.hasOption('B')) {
+			String bytes = line.getOptionValue('B');
+			if(bytes!=null)initRange(bytes);
+		}
 	}
 
 	@Override
@@ -67,7 +83,38 @@ public class URCP extends Command {
 		for(int i=0; i<len;i++){
 			String source = fileArgs[i];
 			String target = this.target;
+			if(startByte!=null){
+				client.setRange(startByte, endByte, RangeMode.READ_WRITE);
+			}
 			client.rcp(source, target, onetimePassword, uftpdAddress, receive);
+			client.resetRange();
+		}
+	}
+
+	protected void initRange(String bytes){
+		String[]tokens=bytes.split("-");
+		try{
+			if(tokens.length>1) {
+				String start=tokens[0];
+				String end=tokens[1];
+				if(start.length()>0){
+					startByte = (long)(UnitParser.getCapacitiesParser(0).getDoubleValue(start));
+					endByte=Long.MAX_VALUE;
+				}
+				if(end.length()>0){
+					endByte=(long)(UnitParser.getCapacitiesParser(0).getDoubleValue(end));
+					if(startByte==null){
+						startByte=Long.valueOf(0l);
+					}
+				}
+			}
+			else {
+				String end=tokens[0];
+				endByte=(long)(UnitParser.getCapacitiesParser(0).getDoubleValue(end));
+				startByte=Long.valueOf(0l);
+			}
+		}catch(Exception e){
+			throw new IllegalArgumentException("Could not parse byte range "+bytes);
 		}
 	}
 

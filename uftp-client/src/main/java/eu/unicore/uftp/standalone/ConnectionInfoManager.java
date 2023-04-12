@@ -6,6 +6,8 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.io.FilenameUtils;
+
 import eu.unicore.services.rest.client.IAuthCallback;
 import eu.unicore.uftp.standalone.authclient.AuthClient;
 import eu.unicore.uftp.standalone.authclient.AuthserverClient;
@@ -52,21 +54,13 @@ public class ConnectionInfoManager {
     public String getPath() {
         return extracted.get("path");
     }
-    
+
     public String getBasedir() {
         return extracted.get("basedir");
     }
 
     public int getPort() {
         return Integer.parseInt(extracted.get("port"));
-    }
-
-    public String getUserName() {
-        return extracted.get("username");
-    }
-
-    public String getPassword() {
-        return extracted.get("password");
     }
 
     public String getScheme() {
@@ -81,19 +75,13 @@ public class ConnectionInfoManager {
             Map<String, String> params = extractConnectionParameters(uri);
             return (params.get("auth").equals(getAuthURL())
                     && params.get("port").equals(String.valueOf(getPort()))
-                    && params.get("scheme").equals(getScheme())
-                    && isIncluded(params.get("basedir"))
-            		);
+                    && params.get("scheme").equals(getScheme()));
         } catch (URISyntaxException ex) {
             return false;
         }
     }
 
-    private boolean isIncluded(String directory) {
-    	return directory!=null && directory.startsWith(getBasedir());
-    }
-
-    Map<String,String> extractConnectionParameters(String uriString) throws URISyntaxException {
+    public Map<String,String> extractConnectionParameters(String uriString) throws URISyntaxException {
         Map<String, String> parameters = new HashMap<>();
         URI localUri = new URI(uriString);
         setCommonParameters(localUri, parameters);
@@ -128,22 +116,31 @@ public class ConnectionInfoManager {
         String[]paths=(localUri.getPath().split("\\:",2));
         String auth = scheme+"://"+localUri.getHost()+":"+port;
         if(paths.length>1){
-        	path=paths[1];
-        	if(path.endsWith("/")) {
-        		parameters.put("basedir", path);
-    			parameters.put("filename", ".");
-        	}
-        	else {
+        	path = FilenameUtils.normalize(paths[1], true);
+        	if(path.startsWith("/")) {
         		Path p = Path.of(path);
-        		Path dir = p.getParent();
-        		if(dir!=null) {
-        			parameters.put("basedir", dir.toString());
-        			parameters.put("filename", p.getFileName().toString());
+        		Path parent = path.endsWith("/")? p: p.getParent();
+        		String filename = path.endsWith("/")? "." : p.getFileName().toString();
+        		if(parent!=null) {
+        			parameters.put("basedir", parent.toString());
+        			parameters.put("filename", filename);
+        		}
+        		else {
+        			parameters.put("basedir", "/");
+        			parameters.put("filename", ".");
         		}
         	}
+//        	else {
+//        		if(path.endsWith("/")) {
+//        			parameters.put("basedir", path);
+//        			parameters.put("filename", ".");
+//        		}
+//        	}
         }
         else {
             path = "";
+            parameters.put("basedir", null);
+			parameters.put("filename", ".");
         }
         auth = auth + paths[0];
         parameters.put("path", path);

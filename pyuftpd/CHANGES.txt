@@ -5,7 +5,7 @@ https://sourceforge.net/p/unicore/uftp-issues
 
 Full documentation is at: https://uftp-docs.readthedocs.io
 
-UFTPD 3.2.0 (released Apr dd, 2023)
+UFTPD 3.2.0 (released Apr 12, 2023)
 -----------------------------------
  - new feature: implement SYNC-TO-CLIENT and SYNC-TO-SERVER for
    synchronising a file between client and server

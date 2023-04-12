@@ -469,11 +469,12 @@ public class UFTPSessionClient extends AbstractUFTPClient implements Runnable {
 	 * @param remoteFile - filename on the receiving side
 	 * @param remoteServer - address in the form 'host:port' of the receiving UFTPD
 	 * @param password - one-time-password for logging into the receiving UFTPD
+	 * @return server reply line
 	 * @throws Exception
 	 */
-	public void sendFile(String localFile, String remoteFile, String remoteServer, String password) throws Exception {
+	public String sendFile(String localFile, String remoteFile, String remoteServer, String password) throws Exception {
 		String cmd = String.format("SEND-FILE '%s' '%s' '%s' '%s'", localFile, remoteFile, remoteServer, password);
-		runCommand(cmd);
+		return runCommand(cmd).getStatusLine();
 	}
 
 	/**
@@ -486,11 +487,12 @@ public class UFTPSessionClient extends AbstractUFTPClient implements Runnable {
 	 * @param remoteFile - filename on the other UFTPD side
 	 * @param remoteServer - address in the form 'host:port' of the other UFTPD
 	 * @param password - one-time-password for logging into the other UFTPD
+	 * @return server reply line
 	 * @throws Exception
 	 */
-	public void receiveFile(String localFile, String remoteFile, String remoteServer, String password) throws Exception {
+	public String receiveFile(String localFile, String remoteFile, String remoteServer, String password) throws Exception {
 		String cmd = String.format("RECEIVE-FILE '%s' '%s' '%s' '%s'", localFile, remoteFile, remoteServer, password);
-		runCommand(cmd);
+		return runCommand(cmd).getStatusLine();
 	}
 
 	/**
@@ -679,7 +681,7 @@ public class UFTPSessionClient extends AbstractUFTPClient implements Runnable {
 	// send "RANG <start> <end>" 
 	// http://tools.ietf.org/html/draft-bryan-ftp-range-05
 	//
-	private void sendRangeCommand(long offset, long length) throws IOException {
+	public void sendRangeCommand(long offset, long length) throws IOException {
 		long endByte = rfcCompliantRange ? offset+length-1 : offset+length;
 		String message = "RANG " + offset + " " + endByte;
 		Reply reply = runCommand(message);
