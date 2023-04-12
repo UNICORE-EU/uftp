@@ -2,7 +2,7 @@ Change log for the UFTP standalone client
 The issue tracker is at
 https://sourceforge.net/p/unicore/uftp-issues/
 
-UFTP Client 1.6.0 (released Apr dd, 2023)
+UFTP Client 1.6.0 (released Apr 12, 2023)
 ----------------------------------------
  - new feature: "uftp rcp" command for triggering
    server-to-server transfer (requires UFTPD 3.2.0 or later)
@@ -10,6 +10,7 @@ UFTP Client 1.6.0 (released Apr dd, 2023)
    (i.e. using "uftp ls" and "uftp cp")
  - fix: when using "-u anonymous" as user, the UFTP client will not
    add ANY authentication
+ - fix: use correct base directory for 'auth'
 
 UFTP Client 1.5.0 (released Nov 7, 2022)
 ----------------------------------------
