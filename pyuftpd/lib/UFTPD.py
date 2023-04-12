@@ -16,8 +16,8 @@ import BecomeUser, FTPHandler, Log, Server, UserInfoHandler, Utils
 #
 MY_VERSION = "DEV"
 
-# supported Python version
-REQUIRED_VERSION = (3, 4, 0)
+# Required Python version
+REQUIRED_VERSION = (3, 6, 0)
 
 # how long to wait for transfer client to connect
 _REQUEST_LIFETIME = 300

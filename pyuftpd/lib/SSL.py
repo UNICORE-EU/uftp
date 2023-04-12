@@ -10,13 +10,17 @@ def setup_ssl(config, socket, LOG, server_mode=False):
     keypass = config.get('credential.password', None)
     try:
         # Python 3.6 and later
-        protocol_version = ssl.PROTOCOL_TLS
+        protocol_version = ssl.PROTOCOL_TLS_SERVER
     except:
         protocol_version = ssl.PROTOCOL_TLSv1_2
         LOG.info("Fallback to SSL protocol TLS v1.2 - consider updating your OS or python3 version")
     context = ssl.SSLContext(protocol_version)
     context.verify_mode = ssl.CERT_REQUIRED
     context.check_hostname = False
+    context.load_default_certs(purpose=ssl.Purpose.SERVER_AUTH)
+    truststore = config.get('truststore', None)
+    if truststore:
+        context.load_verify_locations(cafile=truststore)
     cert = config.get('credential.path', None)
     if cert is not None:
         LOG.info("Loading uftpd credential from '%s'" % cert )
@@ -26,11 +30,6 @@ def setup_ssl(config, socket, LOG, server_mode=False):
         cert = config.get('credential.certificate')
         LOG.info("Loading uftpd key from '%s', certificate from '%s'" % (key, cert))
         context.load_cert_chain(certfile=cert, keyfile=key, password=keypass)
-    truststore = config.get('truststore', None)
-    if truststore:
-        context.load_verify_locations(cafile=truststore)
-    else:
-        context.load_default_certs(purpose=ssl.Purpose.SERVER_AUTH)
     return context.wrap_socket(socket, server_side=server_mode)
 
 
