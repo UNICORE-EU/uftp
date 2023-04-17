@@ -57,7 +57,7 @@ public class AuthServiceImpl extends ServiceBase {
 			UFTPDInstance uftpd = server.getUFTPDInstance();
 			
 			try{
-				authData = assembleAttributes(uftpd.getServerName(), authRequest.group);
+				authData = assembleAttributes(uftpd.getName(), authRequest.group);
 			}
 			catch(SecurityException se){
 				return handleError(400, "", se, logger);

@@ -96,6 +96,7 @@ class Session(object):
         self.rate_limit = 0
         self.sleep_time = 0
         try:
+            # auth server sends bytes per second
             self.rate_limit = int(job.get("rateLimit", "0"))
         except:
             pass
@@ -141,7 +142,9 @@ class Session(object):
             "SYNC-TO-CLIENT": self.sync_to_client,
             "SYNC-TO-SERVER": self.sync_to_server,
             "SEND-FILE": self.rcp_send_file,
-            "RECEIVE-FILE": self.rcp_receive_file
+            "RECEIVE-FILE": self.rcp_receive_file,
+            "RCP-STATUS": self.rcp_status,
+            "RCP-ABORT": self.rcp_abort
         }
 
     def assert_permission(self, requested):
@@ -573,6 +576,32 @@ class Session(object):
         child_process_id = self.do_launch_transfer(mode="receive")
         self.control.write_message("299 OK transfer-process-ID=%s" % child_process_id)
         return Session.ACTION_CONTINUE
+    
+    def rcp_status(self, params):
+        self.assert_permission(Session.MODE_INFO)
+        pid = params
+        try:
+            os.kill(pid, 0)
+            result = "RUNNING"
+        except ProcessLookupError:
+            result = "FINISHED"
+        except OSError:
+            result = "UNKNOWN"
+        self.control.write_message("299 %s" % result)
+        return Session.ACTION_CONTINUE
+
+    def rcp_abort(self, params):
+        self.assert_permission(Session.MODE_INFO)
+        pid = params
+        try:
+            os.kill(pid, 9)
+            result = "ABORTED"
+        except ProcessLookupError:
+            result = "FINISHED"
+        except OSError:
+            result = "UNKNOWN"
+        self.control.write_message("299 %s" % result)
+        return Session.ACTION_CONTINUE
 
     def set_file_mtime(self, params):
         self.assert_permission(Session.MODE_WRITE)
@@ -672,7 +701,7 @@ class Session(object):
                 total = total + len(data)
                 self.data.write(data)
                 if limit_rate:
-                    self.control_rate(total, start_time*1000)
+                    self.control_rate(total, start_time)
             if encrypt or self.compress:
                 self.data.close()
             self.post_transfer()
@@ -752,7 +781,7 @@ class Session(object):
     def copy_data(self, reader, target, num_bytes):
         total = 0
         limit_rate = self.rate_limit > 0
-        start_time = int(time.time()*1000)
+        start_time = int(time.time())
         
         while total<num_bytes:
             length = min(self.BUFFER_SIZE, num_bytes-total)
@@ -785,14 +814,15 @@ class Session(object):
     def do_launch_transfer(self, mode):
         pid = Transfer.launch_transfer(self.remote_file_spec, self.file_path, mode,
                                        self.offset, self.number_of_bytes,
-                                       self.LOG, self.job['user'])
+                                       self.LOG, self.job['user'],
+                                       self.rate_limit)
         self.LOG.info("Started server-server transfer, child process PID <%s>" % pid)
         self.reset_range()
         return pid
 
     def control_rate(self, total, start_time):
-        interval = int(time.time()*1000 - start_time) + 1
-        current_rate = 1000 * total / interval
+        interval = int(time.time() - start_time) + 1
+        current_rate = total / interval
         if current_rate < self.rate_limit:
             self.sleep_time = int(0.5 * self.sleep_time)
         else:
@@ -818,7 +848,10 @@ class Session(object):
     def run(self):
         self.init_functions()
         if self.rate_limit>0:
-            _lim = "%s MB/sec" % int(self.rate_limit/(1024*1024))
+            _r = int(self.rate_limit/(1024*1024))
+            if _r==0:
+                _r = "<1"
+            _lim = "%s MB/sec" % _r
         else:
             _lim = "no"
         self.LOG.info("Processing UFTP session for <%s : %s : %s>, initial_dir='%s', base='%s', encrypted=%s, compress=%s, ratelimit=%s" % (

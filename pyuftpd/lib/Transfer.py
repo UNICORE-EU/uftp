@@ -10,14 +10,15 @@ class Transfer:
     Uses ftplib to open the session and interact with the UFTPD server
     """
 
-    def __init__(self, host, port, password, LOG, username):
+    def __init__(self, host, port, password, LOG, username, rate_limit):
         self.host = host
         self.port= port
         self.password = password
         self.BUFFER_SIZE = 65536
-        self.rate_limit = -1
         self.LOG = LOG
         self.username = username
+        self.rate_limit = rate_limit
+        self.sleep_time = 0
 
     def connect(self):
        """open an FTP session at the given UFTP server"""
@@ -47,7 +48,7 @@ class Transfer:
     def _copy_data(self, source, target, num_bytes):
         total = 0
         limit_rate = self.rate_limit > 0
-        start_time = int(time.time()*1000)
+        start_time = int(time.time())
         if num_bytes<0:
             num_bytes = sys.maxsize
         while total<num_bytes:
@@ -65,15 +66,15 @@ class Transfer:
                 to_write -= written
             total = total + len(data)
             if limit_rate:
-                self.control_rate(total, start_time)
-        return total, int(time.time()*1000) - start_time
+                self._control_rate(total, start_time)
+        return total, int(time.time()) - start_time
     
     def log_usage(self, send, size, duration):
         if send:
             operation = "Sent"
         else:
             operation = "Received"
-        rate = float(size)/(float(duration)+1)
+        rate = 0.001*float(size)/(float(duration)+1)
         if rate<1000:
             unit = "kB/sec"
             rate = int(rate)
@@ -102,15 +103,17 @@ class Transfer:
                 raise OSError("Error setting RANG: %s" % reply)
 
     def _control_rate(self, total, start_time):
-        interval = int(time.time()*1000 - start_time) + 1
-        current_rate = 1000 * total / interval
+        interval = int(time.time() - start_time) + 1
+        current_rate = total / interval
         if current_rate < self.rate_limit:
             self.sleep_time = int(0.5 * self.sleep_time)
         else:
             self.sleep_time = self.sleep_time + 5
-            sleep(0.001*self.sleep_time)
+            time.sleep(0.001*self.sleep_time)
             
-def launch_transfer(remote_file_spec, local_file, mode, offset, number_of_bytes, LOG, username):
+def launch_transfer(remote_file_spec, local_file, mode, offset, number_of_bytes,
+                    LOG, username,
+                    rate_limit):
     """ helper method to launch a transfer """
     remote_file, server_spec, passwd = remote_file_spec
     host, port = server_spec.split(":")
@@ -120,7 +123,7 @@ def launch_transfer(remote_file_spec, local_file, mode, offset, number_of_bytes,
         return pid
     # child - launch transfer
     LOG.reinit("UFTPD-transfer")
-    transfer = Transfer(host, int(port), passwd, LOG, username)
+    transfer = Transfer(host, int(port), passwd, LOG, username, rate_limit)
     transfer.connect()
     try:
         if number_of_bytes is None:
