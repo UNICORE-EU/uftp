@@ -27,9 +27,7 @@ The following commands are available:""" % _VERSION_
 
 def main():
     """
-    Main function to listen on a local port for a client connection.
-    Once the client connects, the tool contacts the server and negotiates
-    the port forwarding
+    Main entry point
     """
     _help = ["help", "-h", "--help"]
 
