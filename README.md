@@ -23,3 +23,6 @@ DOCUMENTATION for users and administrators can be found at
  * uftp-client - the standalone "uftp" client application
 
  * datashare - library containing support code for the data sharing feature
+
+ * pyuftpclient - Python commandline client (Work in progress!)
+
