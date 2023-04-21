@@ -19,7 +19,7 @@ install_requires = [
 extras_require = {}
 
 setup(
-    name="pyuftpclient",
+    name="pyuftp",
     version=VERSION,
     packages=find_packages(),
     author="Bernd Schuller",
