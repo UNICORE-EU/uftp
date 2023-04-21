@@ -2,6 +2,11 @@ Change log for the UFTP standalone client
 The issue tracker is at
 https://sourceforge.net/p/unicore/uftp-issues/
 
+
+UFTP Client 1.6.1 (released Apr 17, 2023)
+----------------------------------------
+ - fix: error when querying password for encrypted SSH key
+
 UFTP Client 1.6.0 (released Apr 12, 2023)
 ----------------------------------------
  - new feature: "uftp rcp" command for triggering

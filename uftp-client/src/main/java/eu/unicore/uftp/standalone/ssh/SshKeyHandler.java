@@ -21,7 +21,7 @@ import eu.unicore.uftp.standalone.util.ConsoleUtils;
  *
  * @author schuller
  */
-public class SshKeyHandler implements PasswordSupplier {
+public class SshKeyHandler {
 
 	private final File privateKey;
 
@@ -47,11 +47,6 @@ public class SshKeyHandler implements PasswordSupplier {
 		this.verbose = verbose;
 	}
 
-	@Override
-	public char[] getPassword() {
-		return ConsoleUtils.readPassword("Enter passphrase for '"+privateKey.getAbsolutePath()+"': ").toCharArray();
-	}
-	
 	public IAuthCallback getAuthData() throws Exception {
 		IAuthCallback result = null;
 		if(SSHAgent.isAgentAvailable()){
@@ -79,9 +74,13 @@ public class SshKeyHandler implements PasswordSupplier {
 	                 throw new IOException("No private key found!");
 		}
 		final PasswordSupplier pf = new PasswordSupplier() {
+			private char[]_p;
 			@Override
 			public char[] getPassword() {
-				return getPassword();
+				if(_p==null) {
+					_p = ConsoleUtils.readPassword("Enter passphrase for '"+privateKey.getAbsolutePath()+"': ").toCharArray();
+				}
+				return _p;
 			}
 		};
 		IAuthCallback result = null;

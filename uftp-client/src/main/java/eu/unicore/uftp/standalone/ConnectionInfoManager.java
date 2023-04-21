@@ -115,7 +115,7 @@ public class ConnectionInfoManager {
         String path = localUri.getPath();
         String[]paths=(localUri.getPath().split("\\:",2));
         String auth = scheme+"://"+localUri.getHost()+":"+port;
-        if(paths.length>1){
+        if(paths.length>1 && FilenameUtils.normalize(paths[1], true)!=null){
         	path = FilenameUtils.normalize(paths[1], true);
         	if(path.startsWith("/")) {
         		Path p = Path.of(path);
