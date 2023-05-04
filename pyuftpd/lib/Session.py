@@ -101,10 +101,10 @@ class Session(object):
         except:
             pass
         self.hash_algorithm = "MD5"
-        self.hash_algorithms = {"MD5": hashlib.md5(),
-                                "SHA-1": hashlib.sha1(),
-                                "SHA-256": hashlib.sha256(),
-                                "SHA-512": hashlib.sha512()}
+        self.hash_algorithms = {"MD5": hashlib.md5,
+                                "SHA-1": hashlib.sha1,
+                                "SHA-256": hashlib.sha256,
+                                "SHA-512": hashlib.sha512}
 
     def init_functions(self):
         self.functions = {
@@ -478,7 +478,12 @@ class Session(object):
 
     def allo(self, params):
         self.assert_permission(Session.MODE_WRITE)
-        self.number_of_bytes = int(params)
+        if self.have_range:
+            # clients may send both RANG and ALLO:
+            self.number_of_bytes = int(params)
+        else:
+            # or just ALLO:
+            self.set_range(0, int(params))
         self.control.write_message("200 OK Will read up to %s bytes from data connection." % self.number_of_bytes)
         return Session.ACTION_CONTINUE
 
@@ -664,7 +669,7 @@ class Session(object):
             total = 0
             start_time = int(time.time())
             interval_start = start_time
-            md = self.hash_algorithms[self.hash_algorithm]
+            md = self.hash_algorithms[self.hash_algorithm]()
             while total<to_send:
                 length = min(self.BUFFER_SIZE, to_send-total)
                 data = f.read(length)

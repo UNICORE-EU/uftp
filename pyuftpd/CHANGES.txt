@@ -5,6 +5,14 @@ https://sourceforge.net/p/unicore/uftp-issues
 
 Full documentation is at: https://uftp-docs.readthedocs.io
 
+UFTPD 3.2.1 (released MMM DD, 2023)
+-----------------------------------
+ - fix: some clients send only ALLO before STOR, in this case set the
+   byte range correctly
+ - fix: create new message digest object for each HASH
+ - improvement: report errors when adding new transfer request
+   back to Auth server
+
 UFTPD 3.2.0 (released Apr 17, 2023)
 -----------------------------------
  - new feature: implement SYNC-TO-CLIENT and SYNC-TO-SERVER for

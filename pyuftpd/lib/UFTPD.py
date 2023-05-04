@@ -116,11 +116,18 @@ def get_user_info(request, connector, config, LOG):
     else:
         connector.write_message("500 No such user or no home directory found")
         connector.close()
-   
+
 def add_job(request, connector, config, LOG):
+    try:
+        _do_add_job(request, connector, config, LOG)
+        connector.write_message("OK::%s" % config['SERVER_PORT'])
+    except Exception as e:
+        connector.write_message("ERROR::%s" % str(e))
+    connector.close()
+
+def _do_add_job(request, connector, config, LOG):
     user = request['user']
     limit = config['MAX_CONNECTIONS']
-    
     user_session_counts = config['_JOB_COUNTER']
     counter = user_session_counts.get(user, Utils.Counter())
     user_session_counts[user]=counter
@@ -143,8 +150,6 @@ def add_job(request, connector, config, LOG):
     request['_PIDS'] = []
     job_map[secret] = request
     LOG.info("New transfer request for '%s' groups: %s" % (user, str(group)))
-    connector.write_message("OK::%s" % config['SERVER_PORT'])
-    connector.close()
 
 def cleanup(config, LOG):
     LOG.debug("Request cleanup thread started.")
