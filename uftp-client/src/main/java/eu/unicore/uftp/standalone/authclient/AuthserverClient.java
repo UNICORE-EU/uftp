@@ -59,7 +59,6 @@ public class AuthserverClient implements AuthClient {
 
 	private AuthResponse do_connect(String path, boolean send, boolean append, boolean persistent) throws Exception {
 		HttpClient httpClient = HttpClientFactory.getClient(uri);
-
 		HttpPost postRequest = new HttpPost(uri);
 		authData.addAuthenticationHeaders(postRequest);
 		postRequest.addHeader("Accept", "application/json");
@@ -70,10 +69,7 @@ public class AuthserverClient implements AuthClient {
 				ContentType.create("application/json", "UTF-8"));
 		postRequest.setEntity(input);
 		AuthResponse response = httpClient.execute(postRequest, new AuthResponseResponseHandler());
-
-		if (response != null) {
-			LOG.debug("Got AuthResponse: {}", response);
-		}
+		LOG.debug("Got AuthResponse: {}", response);
 		return response;
 	}
 	

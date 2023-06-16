@@ -8,11 +8,13 @@ import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import eu.emi.security.authn.x509.helpers.BinaryCertChainValidator;
 import eu.unicore.services.rest.client.BaseClient;
 import eu.unicore.uftp.client.TunnelClient;
 import eu.unicore.uftp.dpc.Utils;
 import eu.unicore.uftp.standalone.ClientFacade;
 import eu.unicore.util.httpclient.DefaultClientConfiguration;
+import eu.unicore.util.httpclient.ServerHostnameCheckingMode;
 
 /**
  * tunneling client: establish a tunnel via UFTPD and start local listening socket
@@ -53,7 +55,7 @@ public class UTunnel extends Command {
 		remotePort = Integer.parseInt(tok[2]);
 		BaseClient bc = getClient(url, client);
 		JSONObject request = createRequest(host, remotePort);
-		System.out.println("Sending tunneling request:" + request);
+		System.out.println("<-- " + request);
 		JSONObject response = null;
 		try(ClassicHttpResponse httpResponse = bc.post(request)){
 			response = bc.asJSON(httpResponse);
@@ -84,8 +86,12 @@ public class UTunnel extends Command {
 		return "Forward connections to a local port to a remote socket via UFTPD";
 	}
 	
-	protected BaseClient getClient(String url, ClientFacade client) throws Exception {	
-		return new BaseClient(url, new DefaultClientConfiguration(), client.getConnectionManager().getAuthData());
+	protected BaseClient getClient(String url, ClientFacade client) throws Exception {
+		DefaultClientConfiguration cc = new DefaultClientConfiguration();
+		cc.setServerHostnameCheckingMode(ServerHostnameCheckingMode.NONE);
+		cc.setValidator(new BinaryCertChainValidator(true));
+		cc.setSslEnabled(true);
+		return new BaseClient(url, cc, client.getConnectionManager().getAuthData());
 	}
 	
 	protected JSONObject createRequest(String target, int port) throws JSONException {

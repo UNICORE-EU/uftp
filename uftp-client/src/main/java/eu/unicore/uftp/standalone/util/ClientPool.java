@@ -252,6 +252,7 @@ public class ClientPool implements Closeable {
 	// otherwise create a few more chunks than we have threads to try 
 	// and avoid idle threads
 	private int computeNumChunks(long dataSize) {
+		if(splitThreshold<0)return 1;
 		long numChunks = 2 * dataSize / splitThreshold;
 		return (int)Math.min(numChunks, (long)(1.25*poolSize));
 	}

@@ -35,7 +35,7 @@ public class UCP extends DataTransferCommand {
 
 	protected int numClients = 1;
 
-	protected long splitThreshold = ClientFacade.DEFAULT_THRESHOLD;
+	protected long splitThreshold = -1;
 
 	protected boolean archiveMode = false;
 
@@ -121,8 +121,11 @@ public class UCP extends DataTransferCommand {
 				splitThreshold = (long)UnitParser.getCapacitiesParser(2).getDoubleValue(thresh);
 			}
 			if(verbose && !archiveMode){
-				System.err.println("Using up to <"+numClients+"> client threads, file split threshold = "
-						+UnitParser.getCapacitiesParser(0).getHumanReadable(splitThreshold));
+				System.err.println("Using up to <"+numClients+"> client threads.");
+				if(splitThreshold>0) {
+					System.err.println("Splitting files larger than " +
+							UnitParser.getCapacitiesParser(0).getHumanReadable(splitThreshold));
+				}
 			}
 		}
 		if (line.hasOption('B')) {
