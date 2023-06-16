@@ -24,6 +24,7 @@ import eu.unicore.uftp.authserver.messages.AuthResponse;
 import eu.unicore.uftp.authserver.messages.CreateTunnelRequest;
 import eu.unicore.uftp.authserver.share.ShareServiceProperties;
 import eu.unicore.util.Log;
+import eu.unicore.util.Pair;
 
 /**
  * @author mgolik
@@ -46,6 +47,10 @@ public class AuthServiceImpl extends ServiceBase {
 		logger.debug("Incoming request from: {} {}", clientIP, json);
 
 		AuthServiceProperties props = kernel.getAttribute(AuthServiceProperties.class);
+		Pair<String,Integer> sn = getServerName(serverName);
+		serverName = sn.getM1();
+		Integer index = sn.getM2();
+
 		LogicalUFTPServer server = props.getServer(serverName);
 		if(server == null){
 			throw new WebApplicationException(404);
@@ -54,8 +59,7 @@ public class AuthServiceImpl extends ServiceBase {
 		AuthRequest authRequest = gson.fromJson(json, AuthRequest.class);
 		
 		try {
-			UFTPDInstance uftpd = server.getUFTPDInstance();
-			
+			UFTPDInstance uftpd = server.getUFTPDInstance(index);
 			try{
 				authData = assembleAttributes(uftpd.getName(), authRequest.group);
 			}
@@ -65,15 +69,18 @@ public class AuthServiceImpl extends ServiceBase {
 			if(authData.uid == null){
 				throw new WebApplicationException(Status.UNAUTHORIZED);
 			}
-
 			// allow to override actual client IP with the one from the request
 			if(authRequest.client!=null){
 				clientIP = authRequest.client;
 			}
 			TransferRequest transferRequest = new TransferRequest(authRequest, authData, clientIP);
 			AuthResponse response = new TransferInitializer().initTransfer(transferRequest,uftpd);            
-			response.secret = transferRequest.getSecret();
-			return Response.ok().entity(response).build();
+			if(response.success) {
+				response.secret = transferRequest.getSecret();
+				return Response.ok().entity(response).build();
+			}else {
+				return handleError(500, response.reason, null, logger);
+			}
 		} catch (IOException e) {
 			return handleError(500,"Cannot connect to UFTPD server",e,logger);
 		}	
@@ -117,8 +124,12 @@ public class AuthServiceImpl extends ServiceBase {
 			}
 			TunnelRequest transferRequest = new TunnelRequest(tunnelRequest, authData, clientIP);
 			AuthResponse response = new TransferInitializer().initTransfer(transferRequest,uftpd);            
-			response.secret = transferRequest.getSecret();
-			return Response.ok().entity(response).build();
+			if(response.success) {
+				response.secret = transferRequest.getSecret();
+				return Response.ok().entity(response).build();
+			}else {
+				return handleError(500, response.reason, null, logger);
+			}
 		} catch (IOException e) {
 			return handleError(500,"Cannot connect to UFTPD server",e,logger);
 		}	
@@ -169,6 +180,19 @@ public class AuthServiceImpl extends ServiceBase {
 			info.put("href", url);
 		}
 		return info;
+	}
+	
+	public static Pair<String, Integer> getServerName(String serverName){
+		int split = serverName.lastIndexOf('-');
+		Integer index = null;
+		if(split>1) {
+			String indexS = serverName.substring(split+1);
+			try {
+				index = Integer.parseInt(indexS);
+				serverName = serverName.substring(0, split);
+			}catch(NumberFormatException nfe) {}
+		}
+		return new Pair<>(serverName, index);
 	}
 	
 }

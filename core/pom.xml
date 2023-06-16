@@ -3,20 +3,21 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>eu.unicore.uftp</groupId>
   <artifactId>uftp-core</artifactId>
-  <version>2.14.0</version>
+  <version>2.15.0</version>
   <packaging>jar</packaging>
   <name>UFTP core library and Java UFTPD server</name>
 
   <parent>
     <groupId>eu.unicore.uftp</groupId>
     <artifactId>uftp-parent</artifactId>
-    <version>2.14.0</version>
+    <version>2.15.0</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
   <properties>
     <package.version>${project.version}</package.version>
     <package.release>1</package.release>
+    <automatic.module.name>${groupId}.core</automatic.module.name>
     <docman.enabled/>
     <doc.src>src/main/doc/uftp-manual.txt</doc.src>
     <doc.target>uftp-manual</doc.target>

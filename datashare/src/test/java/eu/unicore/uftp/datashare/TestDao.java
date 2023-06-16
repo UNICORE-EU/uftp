@@ -8,9 +8,9 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
-import de.fzj.unicore.persist.Persist;
-import de.fzj.unicore.persist.PersistenceProperties;
-import de.fzj.unicore.persist.impl.H2Persist;
+import eu.unicore.persist.Persist;
+import eu.unicore.persist.PersistenceProperties;
+import eu.unicore.persist.impl.H2Persist;
 import eu.unicore.uftp.datashare.db.ACLStorage;
 import eu.unicore.uftp.datashare.db.ShareDAO;
 
@@ -48,8 +48,6 @@ public class TestDao {
 		d2.setAccess(AccessType.WRITE);
 		d2.setDirectory(true);
 		p.write(d2);
-		
-		p.flush();
 		
 		Collection<String> ids = p.getIDs("path", "/data/myfile");
 		Assert.assertEquals(1,ids.size());

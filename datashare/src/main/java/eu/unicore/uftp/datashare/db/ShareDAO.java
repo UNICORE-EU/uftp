@@ -2,9 +2,9 @@ package eu.unicore.uftp.datashare.db;
 
 import java.util.UUID;
 
-import de.fzj.unicore.persist.annotations.Column;
-import de.fzj.unicore.persist.annotations.ID;
-import de.fzj.unicore.persist.annotations.Table;
+import eu.unicore.persist.annotations.Column;
+import eu.unicore.persist.annotations.ID;
+import eu.unicore.persist.annotations.Table;
 import eu.unicore.uftp.datashare.AccessType;
 
 @Table(name="SHARES")

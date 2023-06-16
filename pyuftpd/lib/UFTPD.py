@@ -204,8 +204,10 @@ def process(cmd_server, config, LOG):
             request_type = request.get('request-type', "n/a")
             func = functions.get(request_type, None)
             if not func:
-                raise Exception("Unsupported request type '%s'" % request_type)
-            func(request, connector, config, LOG)
+                connector.write_message("ERROR::Unsupported request type '%s'" % request_type)
+                connector.close()
+            else:
+                func(request, connector, config, LOG)
         except Exception as e:
             LOG.error("Error in command loop: %s" % e)
             connector.close()

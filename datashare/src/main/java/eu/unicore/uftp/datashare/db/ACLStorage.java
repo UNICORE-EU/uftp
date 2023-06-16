@@ -8,11 +8,11 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Properties;
 
-import de.fzj.unicore.persist.Persist;
-import de.fzj.unicore.persist.PersistenceException;
-import de.fzj.unicore.persist.PersistenceFactory;
-import de.fzj.unicore.persist.PersistenceProperties;
-import de.fzj.unicore.persist.impl.PersistenceDescriptor;
+import eu.unicore.persist.Persist;
+import eu.unicore.persist.PersistenceException;
+import eu.unicore.persist.PersistenceFactory;
+import eu.unicore.persist.PersistenceProperties;
+import eu.unicore.persist.impl.PersistenceDescriptor;
 import eu.unicore.uftp.datashare.AccessType;
 import eu.unicore.uftp.datashare.Owner;
 import eu.unicore.uftp.datashare.Target;

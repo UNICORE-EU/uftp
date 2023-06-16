@@ -32,7 +32,7 @@ public class TransferInitializer {
         String[] split = response.split("::");
         if (response.isEmpty()||split.length<2) {
             logger.error("UFTPD server did not provide the expected response (check certificate?), got: <"+response+">");
-            return new AuthResponse(false, "UFTPD Server "+server.getServerName()+" did not respond.");
+            return new AuthResponse(false, "UFTPD Server "+server.getServerName()+": <"+response+">");
         }
         AuthResponse ret = null;
         String status = split[0];

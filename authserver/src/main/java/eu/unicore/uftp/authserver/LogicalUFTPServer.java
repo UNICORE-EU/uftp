@@ -162,6 +162,21 @@ public class LogicalUFTPServer implements ExternalSystemConnector, UserInfoSourc
 		throw new IOException("None of the configured UFTPD servers is available!");
 	}
 	
+	public synchronized UFTPDInstance getUFTPDInstance(Integer index) throws IOException {
+		if(index==null) {
+			return getUFTPDInstance();
+		}
+		if(index>instances.size()) {
+			throw new IOException("Requested UFTP server instance does not exist!");
+		}
+		UFTPDInstance i = instances.get(index-1);
+		if(!i.isUFTPAvailable()) {
+			throw new IOException("Requested UFTP server instance is not available!");
+		}
+		return i;
+	}
+	
+	
 	@Override
 	public List<String> getAcceptedKeys(String requestedUserName){
 		List<String>acceptedKeys = new ArrayList<>();

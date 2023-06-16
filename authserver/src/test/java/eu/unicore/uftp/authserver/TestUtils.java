@@ -10,6 +10,7 @@ import org.junit.Test;
 import eu.unicore.uftp.authserver.share.IdentityExtractor.EmailExtractor;
 import eu.unicore.uftp.authserver.share.ShareServiceBase;
 import eu.unicore.uftp.datashare.AccessType;
+import eu.unicore.util.Pair;
 
 public class TestUtils {
 
@@ -59,4 +60,16 @@ public class TestUtils {
 		assertFalse(ShareServiceBase.checkAccess(AccessType.WRITE, AccessType.READ));
 	}
 
+	@Test
+	public void testServerNameHandling() {
+		var sn = new String[] { "TEST-1", "FOO", "FOO-TEST-2"};
+		var names = new String[] { "TEST", "FOO", "FOO-TEST" };
+		var indices = new Integer[] { 1, null, 2 };
+
+		for(int x=0; x<sn.length; x++) {
+			Pair<String, Integer> sn1 = AuthServiceImpl.getServerName(sn[x]);
+			assertEquals(names[x], sn1.getM1());
+			assertEquals(indices[x], sn1.getM2());
+		}
+	}
 }

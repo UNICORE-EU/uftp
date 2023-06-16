@@ -17,11 +17,6 @@ export PYTHONPATH := lib:.:tests
 
 PYTHON=python3
 
-# ports for testing
-export SERVER_PORT := 54434
-export CMD_PORT := 54435
-
-# by default, test and build everything
 default: test all
 
 test: init runtest
@@ -50,7 +45,7 @@ prepare:
 	mkdir -p build/lib
 	cp -R docs build-tools/* build/
 	cp lib/* build/lib
-	cp CHANGES.txt LICENSE build/docs/
+	cp CHANGES.txt ../LICENSE build/docs/
 	sed -i "s/VERSION/${VERSION}/" build/pom.xml
 	sed -i "s/MY_VERSION = \"DEV\"/MY_VERSION = \"${VERSION}\"/" build/lib/UFTPD.py
 
@@ -76,12 +71,3 @@ clean:
 	@rm build -rf
 	@rm target -rf
 
-run-test-server:
-	python3 lib/UFTPD.py
-
-run-test-ssl-server: export SSL_CONF = tests/uftp-ssl.conf
-run-test-ssl-server: export ACL = tests/uftpd.acl
-run-test-ssl-server: export VERBOSE = true
-
-run-test-ssl-server:
-	@python3 lib/UFTPD.py
