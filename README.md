@@ -24,5 +24,4 @@ DOCUMENTATION for users and administrators can be found at
 
  * datashare - library containing support code for the data sharing feature
 
- * pyuftpclient - Python commandline client (Work in progress!)
-
+The [PyUFTP commandline client](https://github.com/UNICORE-EU/pyuftp) has its own repo.
