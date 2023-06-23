@@ -37,10 +37,16 @@
       <artifactId>junit</artifactId>
     </dependency>
     <dependency>
-      <groupId>eu.unicore.services</groupId>
-      <artifactId>use-core</artifactId>
+      <groupId>eu.unicore.uftp</groupId>
+      <artifactId>uftp-core</artifactId>
+      <version>${uftp.version}</version>
     </dependency>
     <dependency>
+      <groupId>eu.unicore.uftp</groupId>
+      <artifactId>uftp-datashare</artifactId>
+      <version>${datashare.version}</version>
+    </dependency>
+        <dependency>
       <groupId>eu.unicore.services</groupId>
       <artifactId>use-rest</artifactId>
     </dependency>
@@ -53,14 +59,8 @@
       <artifactId>use-pdp</artifactId>
     </dependency>
     <dependency>
-      <groupId>eu.unicore.uftp</groupId>
-      <artifactId>uftp-core</artifactId>
-      <version>${uftp.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>eu.unicore.uftp</groupId>
-      <artifactId>uftp-datashare</artifactId>
-      <version>${datashare.version}</version>
+      <groupId>eu.unicore.security</groupId>
+      <artifactId>securityLibrary</artifactId>
     </dependency>
   </dependencies>
 
