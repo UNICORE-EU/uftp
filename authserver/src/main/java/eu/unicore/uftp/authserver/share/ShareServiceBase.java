@@ -235,6 +235,7 @@ public abstract class ShareServiceBase extends ServiceBase {
 			o.put("lifetime", share.getExpires()-System.currentTimeMillis()/1000);
 		}
 		o.put("onetime", share.isOneTime());
+		o.put("accessCount", share.getAccessCount());
 		String url = (baseURL+"/"+serverName+"/"+share.getID()).replaceFirst("/rest/share/", "/rest/access/");
 		o.put("http", url);
 		String auth = (baseURL+"/"+serverName+":"+share.getPath()).replaceFirst("/rest/share/", "/rest/access/");
@@ -257,6 +258,7 @@ public abstract class ShareServiceBase extends ServiceBase {
 	
 	protected void logUsage(String type, String path, ShareDAO share){
 		if(!logger.isInfoEnabled())return;
+		if(path==null)path="n/a";
 		String uid = share.getUid();
 		String gid = share.getGid()!=null?share.getGid():"NONE";
 		String clientDN = AuthZAttributeStore.getClient().getDistinguishedName();

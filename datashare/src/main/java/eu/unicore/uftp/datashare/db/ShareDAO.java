@@ -32,6 +32,8 @@ public class ShareDAO {
 	
 	private long expires;
 	
+	private int accessCount;
+	
 	@ID
 	public String getID(){
 		return ID;
@@ -112,6 +114,14 @@ public class ShareDAO {
 
 	public void setExpires(long expires) {
 		this.expires = expires;
+	}
+
+	public int getAccessCount() {
+		return accessCount;
+	}
+
+	public void incrementAccessCount() {
+		this.accessCount+=1;
 	}
 
 	public String toString(){

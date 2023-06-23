@@ -111,6 +111,16 @@ public class ACLStorage {
 		return d;
 	}
 
+	public int incrementAccessCount(String uniqueID) {
+		try{
+			ShareDAO dao = getPersist().getForUpdate(uniqueID);
+			dao.incrementAccessCount();
+			getPersist().write(dao);
+			return dao.getAccessCount();
+		}catch(Exception ex) {}
+		return 0;
+	}
+
 	public Collection<ShareDAO>readAll(String path) throws Exception {
 		return readAll(path, true);
 	}

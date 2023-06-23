@@ -87,10 +87,13 @@ public class AccessServiceImpl extends ShareServiceBase {
 					r = getListing(share, uftp, clientIP);
 				}
 				else {
-					logUsage("HTTP-download", path, share);
+					logUsage("HTTP-download", share.getPath(), share);
 					r = doDownload(share, uftp, clientIP, range);
 					if(share.isOneTime()) {
 						shareDB.delete(uniqueID);
+					}
+					else{
+						shareDB.incrementAccessCount(uniqueID);
 					}
 				}
 			}else{
@@ -165,10 +168,12 @@ public class AccessServiceImpl extends ShareServiceBase {
 				ShareServiceProperties spp = kernel.getAttribute(ShareServiceProperties.class);
 				String clientIP = spp.getClientIP();
 				handlePath(path, share);
-				logUsage("HTTP-upload", path, share);
+				logUsage("HTTP-upload", share.getPath(), share);
 				r = doUpload(content, share, uftp, clientIP);
 				if(share.isOneTime()) {
 					shareDB.delete(uniqueID);
+				}else {
+					shareDB.incrementAccessCount(uniqueID);
 				}
 			}else{
 				throw new WebApplicationException(Status.UNAUTHORIZED);
@@ -233,6 +238,9 @@ public class AccessServiceImpl extends ShareServiceBase {
 				r = Response.ok().entity(gson.toJson(response)).build();
 				if(share.isOneTime()) {
 					shareDB.delete(share.getID());
+				}
+				else {
+					shareDB.incrementAccessCount(share.getID());
 				}
 				logUsage("UFTP", path, share);
 			}
