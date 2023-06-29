@@ -57,10 +57,11 @@ class FileInfo(object):
             p = self.path
         else:
             p = basename(self.path)
-        return "size=%s;modify=%s;type=%s;perm=%s; %s" % (st.st_size,
+        return "size=%s;modify=%s;type=%s;perm=%s;UNIX.mode=%s; %s" % (st.st_size,
            strftime("%Y%m%d%H%M%S", localtime(st.st_mtime)),
            self._type(),
            self._perm(mlst=True),
+           oct(st.st_mode)[2:],
            p
         )
 

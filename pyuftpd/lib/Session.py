@@ -31,6 +31,7 @@ class Session(object):
     _FEATURES = [ "PASV", "EPSV",
               "RANG STREAM", "REST STREAM"
               "MFMT", "MLSD", "MLST", "APPE",
+              "MFF Modify;UNIX.mode;"
               "KEEP-ALIVE",
               "ARCHIVE",
               "DPC2_LOGIN_OK",
@@ -135,6 +136,7 @@ class Session(object):
             "STOR": self.stor,
             "APPE": self.appe,
             "MFMT": self.set_file_mtime,
+            "MFF": self.set_file_property,
             "TYPE": self.switch_type,
             "KEEP-ALIVE": self.set_keep_alive,
             "OPTS": self.opts,
@@ -613,9 +615,35 @@ class Session(object):
         mtime, target = params.split(" ", 2)
         path = self.makeabs(target)
         self.assert_access(path)
+        self._set_mtime(path, mtime)
+        self.control.write_message("213 Modify=%s; %s" % (mtime, target))
+        return Session.ACTION_CONTINUE
+
+    def _set_mtime(self, path, mtime):
         st_time = time.mktime(time.strptime(mtime, "%Y%m%d%H%M%S"))
         os.utime(path, (st_time,st_time))
-        self.control.write_message("213 Modify=%s %s" % (mtime, target))
+    
+    def _set_mode(self, path, mode):
+        os.chmod(path, int(mode, 8))
+        
+    def set_file_property(self, params):
+        self.assert_permission(Session.MODE_WRITE)
+        fact_spec, target = params.split(" ", 2)
+        path = self.makeabs(target)
+        self.assert_access(path)
+        reply = []
+        for fact in fact_spec.split(";"):
+            if len(fact)==0:
+                continue
+            key, value = fact.split("=")
+            if key.lower()=="modify":
+                self_set_mtime(path, value)
+            elif key.lower()=="unix.mode":
+                self._set_mode(path, value)
+            else:
+                raise ValueError(f"Not supported: '{key}'")
+            reply.append(fact)
+        self.control.write_message("213 %s; %s" % (";".join(reply), target))
         return Session.ACTION_CONTINUE
 
     def switch_type(self, params):

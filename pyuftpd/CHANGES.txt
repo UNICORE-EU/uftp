@@ -5,13 +5,17 @@ https://sourceforge.net/p/unicore/uftp-issues
 
 Full documentation is at: https://uftp-docs.readthedocs.io
 
-UFTPD 3.2.1 (released MMM DD, 2023)
+UFTPD 3.3.0 (released MMM DD, 2023)
 -----------------------------------
  - fix: some clients send only ALLO before STOR, in this case set the
    byte range correctly
  - fix: create new message digest object for each HASH
  - improvement: report errors when adding new transfer request
    back to Auth server
+ - new feature: support MFF command for setting file mode
+   (e.g. "UNIX.mode=777") and modification time
+ - improvement: MLST reply includes 'UNIX.mode' (octal chmod style,
+   e.g. '10777')
 
 UFTPD 3.2.0 (released Apr 17, 2023)
 -----------------------------------
