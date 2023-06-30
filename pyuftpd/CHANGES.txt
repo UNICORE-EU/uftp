@@ -1,11 +1,9 @@
 Changelog
 ---------
-The UFTP issue tracker is at
-https://sourceforge.net/p/unicore/uftp-issues
+Issue tracker: https://github.com/UNICORE-EU/uftp/issues
+Full documentation: https://uftp-docs.readthedocs.io
 
-Full documentation is at: https://uftp-docs.readthedocs.io
-
-UFTPD 3.3.0 (released MMM DD, 2023)
+UFTPD 3.3.0 (released Jun 30, 2023)
 -----------------------------------
  - fix: some clients send only ALLO before STOR, in this case set the
    byte range correctly
