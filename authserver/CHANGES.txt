@@ -10,7 +10,7 @@ Full documentation is at: https://uftp-docs.readthedocs.io
 ***  see README-UPGRADE.txt for how to update
 ***
 
-Auth Server 2.8.1 (released June 23, 2023)
+Auth Server 2.8.1 (released June 30, 2023)
 ------------------------------------------
  - update to UNICORE 9.2.2 base libs
  - new feature: allow to address individual backend UFTPD servers
@@ -19,6 +19,7 @@ Auth Server 2.8.1 (released June 23, 2023)
  - new feature: new field "accessCount" for shares that counts
    the number of accesses for upload/download via HTTP and UFTP
  - fix: NullPointerException when accessing shares
+ - fix: reduce number of status check requests to UFTPD
 
 Auth Server 2.8.0 (released Apr 17, 2023)
 -----------------------------------------

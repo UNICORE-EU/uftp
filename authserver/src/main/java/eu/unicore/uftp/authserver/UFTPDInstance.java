@@ -150,7 +150,7 @@ public class UFTPDInstance implements ExternalSystemConnector {
 	}
 	
 	private void checkConnection(){
-		if (!Status.OK.equals(status) && (lastChecked+60000>System.currentTimeMillis()))
+		if (lastChecked+60000>System.currentTimeMillis())
 			return;
 
 		boolean ok = true;
@@ -188,7 +188,7 @@ public class UFTPDInstance implements ExternalSystemConnector {
 
 	private static SSLSocketFactory socketfactory = null;
 	
-	private synchronized SSLSocketFactory getSSSSocketFactory() {
+	private synchronized SSLSocketFactory getSSLSocketFactory() {
 		if(socketfactory==null) {
 			IClientConfiguration cfg = kernel.getClientConfiguration();
 			socketfactory = new SocketFactoryCreator2(cfg.getCredential(), cfg.getValidator(), 
@@ -200,31 +200,17 @@ public class UFTPDInstance implements ExternalSystemConnector {
 	
 	
 	private String doSendRequest(final UFTPBaseRequest request)throws IOException{
-
-		final int timeout = 20 * 1000;
-
 		Callable<String>task=new Callable<String>(){
 			@Override
 			public String call() throws Exception {
-				Socket socket=null;
-				if(!ssl){
-					socket=new Socket(InetAddress.getByName(commandHost),commandPort);
-					socket.setSoTimeout(timeout);
-				}
-				else{
-					socket = getSSSSocketFactory().createSocket(commandHost, commandPort);
-					socket.setSoTimeout(timeout);
-				}
-				if(log.isDebugEnabled()){
-					log.debug("Sending "+request.getClass().getSimpleName()+" request to "
-							+commandHost+":"+commandPort+", SSL="+ssl);
-				}
-				try {
+				try (Socket socket = ssl ? 
+						getSSLSocketFactory().createSocket(commandHost, commandPort):
+						new Socket(InetAddress.getByName(commandHost),commandPort))
+				{
+					socket.setSoTimeout(20 * 1000);
+					log.debug("Sending {} request to {}:{}, SSL={}", request.getClass().getSimpleName(),
+							commandHost, commandPort, ssl);
 					return request.sendTo(socket);
-				} finally {
-					try{
-						socket.close();
-					}catch(IOException ex) {}
 				}
 			}
 		};
