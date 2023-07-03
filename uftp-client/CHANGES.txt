@@ -2,6 +2,13 @@ Change log for the UFTP standalone client
 The issue tracker is at
 https://sourceforge.net/p/unicore/uftp-issues/
 
+UFTP Client 1.7.0 (released Jul 4, 2023)
+----------------------------------------
+ - by default, do NOT split up files. User must explicitely
+   set a split threshold to activate this.
+ - more output in --verbose mode
+ - remove 'tunnel' command as it is no longer supported by uftpd
+ - dependency updates
 
 UFTP Client 1.6.1 (released Apr 17, 2023)
 ----------------------------------------

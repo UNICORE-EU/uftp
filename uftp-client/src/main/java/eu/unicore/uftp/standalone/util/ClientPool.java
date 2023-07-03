@@ -118,7 +118,6 @@ public class ClientPool implements Closeable {
 					raf.seek(offset);
 					UFTPClientThread t =(UFTPClientThread)Thread.currentThread();
 					UFTPSessionClient sc = t.getClient();
-					logger.info("Downloading <{}>", remotePath);
 					if(verbose){
 						progressBar.registerNew(localName, size);
 						sc.setProgressListener(progressBar);

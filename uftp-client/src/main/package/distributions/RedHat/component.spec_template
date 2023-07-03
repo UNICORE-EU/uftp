@@ -1,6 +1,5 @@
 Buildroot: %{_builddir}/%{name}-root
 Name: unicore-@component-name@@component-suffix@
-Obsoletes: unicore-@component-name@6
 Version: @component-version@
 Release: @component-release@@component-disttag@
 Summary: UNICORE UFTP Client
@@ -8,7 +7,7 @@ License: BSD
 Distribution: RedHat
 Group: Converted/contrib/misc
 URL: https://www.unicore.eu
-Requires: java-1.@java-main-version@.0-openjdk
+Requires: java-11-openjdk-headless
 AutoReqProv: no
 BuildArch: @component-architecture@
 Packager: Bernd Schuller unicore-support@lists.sourceforge.net

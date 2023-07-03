@@ -189,8 +189,6 @@ public class ClientFacade {
 				return;
 			}
 		}
-
-		verbose("cp {} -> {}", source, destination);
 		if (ConnectionInfoManager.isLocal(source) && connectionManager.isSameServer(destination)) {
 			startUpload(source, destination, policy);
 			return;
@@ -555,7 +553,7 @@ public class ClientFacade {
 	private void executeSingleFileDownload(String remotePath, String local, ClientPool pool)
 			throws FileNotFoundException, URISyntaxException, IOException {
 		String dest = getFullLocalDestination(remotePath, local);
-		logger.debug("Downloading file {} -> {}", remotePath, dest);
+		verbose("Downloading file {} -> {}", remotePath, dest);
 
 		File file = new File(dest);
 		OutputStream fos = null;
@@ -633,7 +631,6 @@ public class ClientFacade {
 
 	public void downloadFileChunk(String remotePath, String dest, long start, long end, UFTPSessionClient sc, FileInfo fi)
 			throws FileNotFoundException, URISyntaxException, IOException{
-		verbose("Downloading [{}:{}] from {} to {}", start, end, remotePath, dest);
 		File file = new File(dest);
 		OutputStream fos = null;
 		try(RandomAccessFile raf = new RandomAccessFile(file, "rw")){
