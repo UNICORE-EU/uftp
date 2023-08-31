@@ -1,4 +1,4 @@
-package eu.unicore.uftp.datashare.reservations;
+package eu.unicore.uftp.authserver.reservations;
 
 import static org.junit.Assert.*;
 
@@ -29,6 +29,8 @@ public class TestReservations {
 		Reservation r = Reservation.fromJSON(o);
 		System.out.println(r);
 		assertTrue(r.isActive());
+		assertTrue(r.isOwner("me"));
+		assertFalse(r.isOwner("you"));
 		assertEquals(0, r.getRateLimit("me"));
 		assertEquals(100, r.getRateLimit("someone_else"));
 	}
@@ -41,20 +43,24 @@ public class TestReservations {
 				System.currentTimeMillis()+1000*300,
 				1024*1024,
 				"me","you");
+		assertTrue(r1.isActive());
 		Reservation r2 = new Reservation(
 				System.currentTimeMillis()-10,
 				System.currentTimeMillis()+1000*300,
 				10*1024*1024,
 				"user1","user2");
+		assertTrue(r2.isActive());
 		Reservation old = new Reservation(
 				System.currentTimeMillis()-1000*3600,
 				System.currentTimeMillis()-1000*300,
 				1024*1024,
 				"no1","no2");
+		assertFalse(old.isActive());
 		rr.getReservations().add(r1);
 		rr.getReservations().add(r2);
 		rr.getReservations().add(old);
 		assertEquals(3, rr.getReservations().size());
+
 		long limit = rr.getRateLimit("hpc1");
 		assertEquals(1024*1024, limit);
 		limit = rr.getRateLimit("me");
@@ -62,7 +68,6 @@ public class TestReservations {
 		limit = rr.getRateLimit("no2");
 		assertEquals(1024*1024, limit);
 
-		// test cleanup
 		rr.cleanup();
 		assertEquals(2, rr.getReservations().size());
 	}

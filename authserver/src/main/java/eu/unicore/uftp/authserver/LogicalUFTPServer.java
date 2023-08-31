@@ -1,6 +1,5 @@
 package eu.unicore.uftp.authserver;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.StringReader;
@@ -16,7 +15,6 @@ import eu.unicore.services.ExternalSystemConnector;
 import eu.unicore.services.Kernel;
 import eu.unicore.services.rest.security.UserPublicKeyCache.UserInfoSource;
 import eu.unicore.services.utils.Utilities;
-import eu.unicore.uftp.authserver.reservations.Reservation;
 import eu.unicore.uftp.authserver.reservations.Reservations;
 import eu.unicore.uftp.server.requests.UFTPGetUserInfoRequest;
 import eu.unicore.util.Log;
@@ -63,7 +61,7 @@ public class LogicalUFTPServer implements ExternalSystemConnector, UserInfoSourc
 		{
 			String path = properties.getProperty(prefix+"reservations.file");
 			if(path!=null) try {
-				this.reservations = new Reservations(new File(path));
+				this.reservations = new Reservations(path);
 				log.info("Reservations enabled for <{}>, JSON file <{}>", name, path);
 			}
 			catch(FileNotFoundException fe) {

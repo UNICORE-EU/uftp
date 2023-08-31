@@ -3,8 +3,6 @@ package eu.unicore.uftp.authserver.reservations;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
@@ -27,13 +25,13 @@ public class Reservations {
 
 	private final static Logger log = Log.getLogger("authservice", Reservations.class);
 
-	private final List<Reservation>reservations = new CopyOnWriteArrayList<>();
+	private List<Reservation>reservations = new CopyOnWriteArrayList<>();
 
-	private final File source;
+	private final String sourceFileName;
 
-	public Reservations(File source) throws FileNotFoundException {
-		this.source = source;
-		if(source!=null) {
+	public Reservations(String sourceFileName) throws FileNotFoundException {
+		this.sourceFileName = sourceFileName;
+		if(sourceFileName!=null) {
 			loadReservations();
 			setupWatchDog();
 		}
@@ -42,28 +40,28 @@ public class Reservations {
 	}
 
 	public void cleanup() {
-		List<Reservation> terminated = new ArrayList<>();
+		List<Reservation>updatedReservations = new CopyOnWriteArrayList<>();
 		for(Reservation r: reservations) {
 			if(r.isTerminated()) {
 				log.info("Reservation expired: {}", r);
-				terminated.add(r);
+			}
+			else {
+				updatedReservations.add(r);
 			}
 		}
-		synchronized(reservations) {
-			reservations.removeAll(terminated);
-		}
+		reservations = updatedReservations;
 	}
 	
 	private void setupWatchDog() throws FileNotFoundException {
-		FileWatcher fw = new FileWatcher(source, ()->{
+		FileWatcher fw = new FileWatcher(new File(sourceFileName), ()->{
 			loadReservations();
 		});
 		fw.schedule(10, TimeUnit.SECONDS);
 	}
 	
 	public synchronized void loadReservations() {
-		List<Reservation> newReservations = new ArrayList<>();
-		try (FileInputStream is = new FileInputStream(source)){
+		List<Reservation> newReservations = new CopyOnWriteArrayList<>();
+		try (FileInputStream is = new FileInputStream(new File(sourceFileName))){
 			JSONObject json = new JSONObject(new JSONTokener(is));
 			JSONArray r = json.optJSONArray("reservations");
 			if(r!=null) {
@@ -71,7 +69,7 @@ public class Reservations {
 					try {
 						Reservation res = Reservation.fromJSON((JSONObject)x);
 						if(!res.isTerminated()) {
-							log.info("Active reservation: {}",res);
+							log.info("Loaded reservation: {}",res);
 							newReservations.add(res);
 						}
 					}catch(Exception ex) {
@@ -79,17 +77,14 @@ public class Reservations {
 					}
 				});
 			}
-		}catch(IOException e) {
+			reservations = newReservations;
+		}catch(Exception e) {
 			log.warn(Log.createFaultMessage("Error loading reservations from "+
-					source.getAbsolutePath(), e));
-		}
-		synchronized(reservations) {
-			reservations.clear();
-			reservations.addAll(newReservations);
+					sourceFileName, e));
 		}
 	}
 	
-	public List<Reservation> getReservations(){
+	List<Reservation> getReservations(){
 		return reservations;
 	}
 	
