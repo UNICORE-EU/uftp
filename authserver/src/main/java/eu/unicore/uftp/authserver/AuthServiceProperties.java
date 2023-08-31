@@ -40,7 +40,7 @@ public class AuthServiceProperties extends PropertiesHelper {
 	private final Kernel kernel;
 	
 	@DocumentationReferenceMeta
-	public final static Map<String, PropertyMD> META = new HashMap<String, PropertyMD>();
+	public final static Map<String, PropertyMD> META = new HashMap<>();
 	static
 	{
 		META.put(PROP_SERVERS, new PropertyMD().

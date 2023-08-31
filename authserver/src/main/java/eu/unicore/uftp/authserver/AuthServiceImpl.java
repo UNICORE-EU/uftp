@@ -1,6 +1,7 @@
 package eu.unicore.uftp.authserver;
 
 import java.io.IOException;
+import java.util.List;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -14,6 +15,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 import org.apache.logging.log4j.Logger;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -24,7 +26,6 @@ import eu.unicore.uftp.authserver.messages.AuthResponse;
 import eu.unicore.uftp.authserver.messages.CreateTunnelRequest;
 import eu.unicore.uftp.authserver.share.ShareServiceProperties;
 import eu.unicore.util.Log;
-import eu.unicore.util.Pair;
 
 /**
  * @author mgolik
@@ -46,12 +47,7 @@ public class AuthServiceImpl extends ServiceBase {
 		String clientIP = AuthZAttributeStore.getTokens().getClientIP();
 		logger.debug("Incoming request from: {} {}", clientIP, json);
 
-		AuthServiceProperties props = kernel.getAttribute(AuthServiceProperties.class);
-		Pair<String,Integer> sn = getServerName(serverName);
-		serverName = sn.getM1();
-		Integer index = sn.getM2();
-
-		LogicalUFTPServer server = props.getServer(serverName);
+		LogicalUFTPServer server = getLogicalServer(serverName);
 		if(server == null){
 			throw new WebApplicationException(404);
 		}
@@ -59,9 +55,9 @@ public class AuthServiceImpl extends ServiceBase {
 		AuthRequest authRequest = gson.fromJson(json, AuthRequest.class);
 		
 		try {
-			UFTPDInstance uftpd = server.getUFTPDInstance(index);
+			UFTPDInstance uftpd = getUFTPD(serverName);
 			try{
-				authData = assembleAttributes(uftpd.getName(), authRequest.group);
+				authData = assembleAttributes(server, authRequest.group);
 			}
 			catch(SecurityException se){
 				return handleError(400, "", se, logger);
@@ -94,22 +90,18 @@ public class AuthServiceImpl extends ServiceBase {
 		if(AuthZAttributeStore.getTokens()==null){
 			throw new WebApplicationException(Status.UNAUTHORIZED);
 		}
-		if(!haveServer(serverName)){
+		LogicalUFTPServer server = getLogicalServer(serverName);
+		if(server==null){
 			throw new WebApplicationException(404);
 		}
-
 		String clientIP = AuthZAttributeStore.getTokens().getClientIP();
 		logger.debug("Incoming tunnel request from: {} {}", clientIP, json);
-
 		UserAttributes authData = null;
 		CreateTunnelRequest tunnelRequest = gson.fromJson(json, CreateTunnelRequest.class);
-
 		try {
-			AuthServiceProperties props = kernel.getAttribute(AuthServiceProperties.class);
-			LogicalUFTPServer server = props.getServer(serverName);
-			UFTPDInstance uftpd = server.getUFTPDInstance();
+			UFTPDInstance uftpd = getUFTPD(serverName);
 			try{
-				authData = assembleAttributes(uftpd.getServerName(), tunnelRequest.group);
+				authData = assembleAttributes(server, tunnelRequest.group);
 			}
 			catch(SecurityException se){
 				return handleError(400, "", se, logger);
@@ -117,7 +109,6 @@ public class AuthServiceImpl extends ServiceBase {
 			if(authData.uid == null){
 				throw new WebApplicationException(Status.UNAUTHORIZED);
 			}
-
 			// allow to override actual client IP with the one from the request
 			if(tunnelRequest.client!=null){
 				clientIP = tunnelRequest.client;
@@ -150,13 +141,19 @@ public class AuthServiceImpl extends ServiceBase {
 				server.put("description",i.getDescription());
 				server.put("status",i.getConnectionStatusMessage());
 				try{
-					UserAttributes ua = assembleAttributes(i.getServerName(), null);
+					UserAttributes ua = assembleAttributes(i, null);
 					if(ua.uid!=null)server.put("uid",ua.uid);
 					if(ua.gid!=null)server.put("gid",ua.gid);
 					if(ua.groups!=null)server.put("availableGroups",ua.groups);
 					if(ua.rateLimit>0)server.put("rateLimit",ua.rateLimit);
 					if(ua.includes!=null)server.put("allowed",ua.includes);
 					if(ua.excludes!=null)server.put("forbidden",ua.excludes);
+					List<String> reservationInfo = i.getActiveReservationInfo(ua.uid);
+					if(reservationInfo.size()>0) {
+						JSONArray jres = new JSONArray();
+						reservationInfo.forEach( x-> jres.put(x));
+						server.put("reservations", jres);
+					}
 				}catch(Exception ex){}
 				server.put("dataSharing",getShareServiceInfo(name));
 				o.put(name, server);
@@ -181,18 +178,6 @@ public class AuthServiceImpl extends ServiceBase {
 		}
 		return info;
 	}
-	
-	public static Pair<String, Integer> getServerName(String serverName){
-		int split = serverName.lastIndexOf('-');
-		Integer index = null;
-		if(split>1) {
-			String indexS = serverName.substring(split+1);
-			try {
-				index = Integer.parseInt(indexS);
-				serverName = serverName.substring(0, split);
-			}catch(NumberFormatException nfe) {}
-		}
-		return new Pair<>(serverName, index);
-	}
+
 
 }

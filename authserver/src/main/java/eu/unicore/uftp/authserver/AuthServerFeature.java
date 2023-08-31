@@ -51,14 +51,12 @@ public class AuthServerFeature extends FeatureImpl {
 		}
 
 		public void run() {
-			UserPublicKeyCache cache = kernel.getAttribute(UserPublicKeyCache.class);
-			if(cache!=null) {
-				Collection<UserInfoSource>sources = cache.getUserInfoSources();
-				for(UserInfoSource s: sources) {
-					if(s instanceof UserPubKeyLoader)return;
-				}
-				sources.add(new UserPubKeyLoader(kernel));
+			UserPublicKeyCache cache = UserPublicKeyCache.get(kernel);
+			Collection<UserInfoSource>sources = cache.getUserInfoSources();
+			for(UserInfoSource s: sources) {
+				if(s instanceof UserPubKeyLoader)return;
 			}
+			sources.add(new UserPubKeyLoader(kernel));
 		}
 	}
 }

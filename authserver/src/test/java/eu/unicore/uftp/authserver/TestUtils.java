@@ -67,7 +67,7 @@ public class TestUtils {
 		var indices = new Integer[] { 1, null, 2 };
 
 		for(int x=0; x<sn.length; x++) {
-			Pair<String, Integer> sn1 = AuthServiceImpl.getServerName(sn[x]);
+			Pair<String, Integer> sn1 = AuthServiceImpl.getServerSpec(sn[x]);
 			assertEquals(names[x], sn1.getM1());
 			assertEquals(indices[x], sn1.getM2());
 		}

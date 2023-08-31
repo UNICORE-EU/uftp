@@ -22,6 +22,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import eu.unicore.services.security.util.AuthZAttributeStore;
+import eu.unicore.uftp.authserver.AuthServiceProperties;
 import eu.unicore.uftp.authserver.LogicalUFTPServer;
 import eu.unicore.uftp.authserver.TransferInitializer;
 import eu.unicore.uftp.authserver.TransferRequest;
@@ -38,6 +39,7 @@ import eu.unicore.uftp.datashare.Target;
 import eu.unicore.uftp.datashare.db.ACLStorage;
 import eu.unicore.uftp.datashare.db.ShareDAO;
 import eu.unicore.util.Log;
+import eu.unicore.util.Pair;
 
 /**
  * @author schuller
@@ -55,19 +57,19 @@ public class ShareServiceImpl extends ShareServiceBase {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response share(@PathParam("serverName") String serverName, String jsonString) {
+		LogicalUFTPServer server = getLogicalServer(serverName);
 		ACLStorage shareDB = getShareDB(serverName);
-		if(shareDB==null || !haveServer(serverName)){
+		if(shareDB==null || server==null){
 			return handleError(404, "No sharing for '"+serverName+"', please check your URL", null, logger);
 		}
-		
 		try{
-			UFTPDInstance uftp = getServer(serverName);
+			UFTPDInstance uftp = getUFTPD(serverName);
 			String clientIP = AuthZAttributeStore.getTokens().getClientIP();
 			logger.debug("Incoming request from: {} {}", clientIP, jsonString);
 
 			JSONObject json = new JSONObject(jsonString);
 			String requestedGroup = json.optString("group", null);
-			UserAttributes ua = assembleAttributes(serverName, requestedGroup);
+			UserAttributes ua = assembleAttributes(server, requestedGroup);
 			if("nobody".equalsIgnoreCase(ua.uid)){
 				// cannot share as nobody!
 				return handleError(401, "Your User ID cannot share, please check your access level", null, logger);
@@ -126,12 +128,13 @@ public class ShareServiceImpl extends ShareServiceBase {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/{serverName}")
 	public Response getShares(@PathParam("serverName") String serverName) {
+		LogicalUFTPServer server = getLogicalServer(serverName);
 		ACLStorage shareDB = getShareDB(serverName);
-		if(shareDB==null || !haveServer(serverName)){
+		if(shareDB==null || server==null){
 			throw new WebApplicationException(404);
 		}
 		try{
-			UserAttributes ua = assembleAttributes(serverName, null);
+			UserAttributes ua = assembleAttributes(server, null);
 			Owner owner = new Owner(getNormalizedCurrentUserName(), ua.uid, ua.gid);
 			JSONObject o = new JSONObject();
 			JSONArray jShares = new JSONArray();
@@ -158,12 +161,13 @@ public class ShareServiceImpl extends ShareServiceBase {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/{serverName}/{uniqueID}")
 	public Response getShareInfo(@PathParam("serverName") String serverName, @PathParam("uniqueID") String uniqueID) {
+		LogicalUFTPServer server = getLogicalServer(serverName);
 		ACLStorage shareDB = getShareDB(serverName);
-		if(shareDB==null || !haveServer(serverName)){
+		if(shareDB==null || server==null){
 			throw new WebApplicationException(404);
 		}
 		try{
-			UserAttributes ua = assembleAttributes(serverName, null);
+			UserAttributes ua = assembleAttributes(server, null);
 			Owner owner = new Owner(getNormalizedCurrentUserName(), ua.uid, ua.gid);
 			ShareDAO share = shareDB.read(uniqueID);
 			if(share == null){
@@ -203,7 +207,7 @@ public class ShareServiceImpl extends ShareServiceBase {
 				server.put("description",i.getDescription());
 				server.put("status",i.getConnectionStatusMessage());
 				o.put(name, server);
-				UserAttributes ua = assembleAttributes(i.getServerName(), null);
+				UserAttributes ua = assembleAttributes(i, null);
 				o.put("userInfo", getUserInfo(ua));
 			}
 			return Response.ok().entity(o.toString(2)).build();
@@ -219,8 +223,12 @@ public class ShareServiceImpl extends ShareServiceBase {
 	@DELETE
 	@Path("/{serverName}/{uniqueID}")
 	public Response delete(@PathParam("serverName") String serverName, @PathParam("uniqueID") String uniqueID) {
+		AuthServiceProperties props = kernel.getAttribute(AuthServiceProperties.class);
+		Pair<String,Integer> sn = getServerSpec(serverName);
+		serverName = sn.getM1();
+		LogicalUFTPServer server = props.getServer(serverName);
 		ACLStorage shareDB = getShareDB(serverName);
-		if(shareDB==null || !haveServer(serverName)){
+		if(shareDB==null || server==null){
 			throw new WebApplicationException(404);
 		};
 		if(AuthZAttributeStore.getTokens()==null){

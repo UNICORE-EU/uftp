@@ -10,6 +10,13 @@ Full documentation is at: https://uftp-docs.readthedocs.io
 ***  see README-UPGRADE.txt for how to update
 ***
 
+Auth Server 2.8.2 (released Aug  31, 2023)
+------------------------------------------
+ - new feature: allow 'reservations' for certain accounts
+   that rate-limit other accounts
+ - fix: cleanup code that addresses individual UFTPD servers
+   so it works consistently across all the authserver features
+
 Auth Server 2.8.1 (released June 30, 2023)
 ------------------------------------------
  - update to UNICORE 9.2.2 base libs

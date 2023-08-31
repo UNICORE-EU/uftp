@@ -1,5 +1,7 @@
 package eu.unicore.uftp.authserver;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -14,6 +16,8 @@ import eu.unicore.services.ExternalSystemConnector;
 import eu.unicore.services.Kernel;
 import eu.unicore.services.rest.security.UserPublicKeyCache.UserInfoSource;
 import eu.unicore.services.utils.Utilities;
+import eu.unicore.uftp.authserver.reservations.Reservation;
+import eu.unicore.uftp.authserver.reservations.Reservations;
 import eu.unicore.uftp.server.requests.UFTPGetUserInfoRequest;
 import eu.unicore.util.Log;
 import eu.unicore.util.configuration.ConfigurationException;
@@ -42,7 +46,9 @@ public class LogicalUFTPServer implements ExternalSystemConnector, UserInfoSourc
 	private final String serverName;
 	
 	private final List<UFTPDInstance> instances = new ArrayList<>();
-	
+
+	private Reservations reservations = null;
+
 	public LogicalUFTPServer(String serverName, Kernel kernel){
 		this.serverName = serverName;
 		this.kernel = kernel;
@@ -52,6 +58,19 @@ public class LogicalUFTPServer implements ExternalSystemConnector, UserInfoSourc
 		String prefix = "authservice.server." + name + ".";
 		String desc = properties.getProperty(prefix+"description", "n/a");
 		setDescription(desc);
+		Boolean enableReservations = Boolean.parseBoolean(properties.getProperty(prefix+"reservations.enable"));
+		if(enableReservations)
+		{
+			String path = properties.getProperty(prefix+"reservations.file");
+			if(path!=null) try {
+				this.reservations = new Reservations(new File(path));
+				log.info("Reservations enabled for <{}>, JSON file <{}>", name, path);
+			}
+			catch(FileNotFoundException fe) {
+				log.warn("Static reservations file <"+path+"> not found. Skipping.");
+			}
+		}
+		
 		if(properties.getProperty(prefix+"host")!=null) {
 			UFTPDInstance server = createUFTPD(name, prefix, properties);
 			instances.add(server);
@@ -197,4 +216,26 @@ public class LogicalUFTPServer implements ExternalSystemConnector, UserInfoSourc
 		}
 		return acceptedKeys;
 	}
+	
+	public Reservations getReservations() {
+		return reservations;
+	}
+	
+	public long getRateLimit(String uid) {
+		return reservations!=null ? reservations.getRateLimit(uid) : -1;
+	}
+
+	public List<String> getActiveReservationInfo(String uid) {
+		List<String> res = new ArrayList<>();
+		if(uid!=null && reservations!=null) {
+			reservations.getReservations().forEach( (x) -> {
+				if(x.isOwner(uid)) {
+					res.add(x.toString());
+				}
+			});
+			
+		}
+		return res;
+	}
+
 }
