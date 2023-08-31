@@ -10,7 +10,6 @@ import org.json.JSONObject;
 import eu.emi.security.authn.x509.helpers.BinaryCertChainValidator;
 import eu.unicore.security.Client;
 import eu.unicore.services.rest.client.BaseClient;
-import eu.unicore.uftp.datashare.AccessType;
 import eu.unicore.uftp.dpc.Utils;
 import eu.unicore.uftp.standalone.ClientFacade;
 import eu.unicore.util.httpclient.DefaultClientConfiguration;
@@ -165,5 +164,17 @@ public class Share extends Command {
 		}
 		return o;
 	}
+
+
+public enum AccessType {
+
+	NONE,
+
+	READ,
 	
+	WRITE,
+	
+	MODIFY
+}
+
 }

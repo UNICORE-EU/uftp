@@ -7,12 +7,12 @@ import java.io.OutputStream;
 
 import org.apache.commons.cli.ParseException;
 
-import eu.unicore.uftp.authserver.messages.AuthResponse;
 import eu.unicore.uftp.client.UFTPSessionClient;
 import eu.unicore.uftp.standalone.ClientFacade;
 import eu.unicore.uftp.standalone.ConnectionInfoManager;
 import eu.unicore.uftp.standalone.UFTPClientFactory;
 import eu.unicore.uftp.standalone.authclient.AuthClient;
+import eu.unicore.uftp.standalone.authclient.AuthResponse;
 import eu.unicore.uftp.standalone.util.ProgressBar;
 
 /**

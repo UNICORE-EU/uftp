@@ -4,9 +4,9 @@ package eu.unicore.uftp.standalone;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
-import eu.unicore.uftp.authserver.messages.AuthResponse;
 import eu.unicore.uftp.client.UFTPSessionClient;
 import eu.unicore.uftp.dpc.Utils;
+import eu.unicore.uftp.standalone.authclient.AuthResponse;
 
 /**
  *

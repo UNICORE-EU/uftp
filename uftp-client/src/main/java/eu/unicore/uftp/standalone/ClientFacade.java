@@ -18,12 +18,12 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.Logger;
 
-import eu.unicore.uftp.authserver.messages.AuthResponse;
 import eu.unicore.uftp.client.FileInfo;
 import eu.unicore.uftp.client.UFTPSessionClient;
 import eu.unicore.uftp.dpc.AuthorizationFailureException;
 import eu.unicore.uftp.rsync.RsyncStats;
 import eu.unicore.uftp.standalone.authclient.AuthClient;
+import eu.unicore.uftp.standalone.authclient.AuthResponse;
 import eu.unicore.uftp.standalone.lists.Command;
 import eu.unicore.uftp.standalone.lists.FileCrawler;
 import eu.unicore.uftp.standalone.lists.FileCrawler.RecursivePolicy;

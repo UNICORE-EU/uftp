@@ -1,9 +1,9 @@
 package eu.unicore.uftp.standalone.commands;
 
-import eu.unicore.uftp.authserver.messages.AuthResponse;
 import eu.unicore.uftp.standalone.ClientFacade;
 import eu.unicore.uftp.standalone.ConnectionInfoManager;
 import eu.unicore.uftp.standalone.authclient.AuthClient;
+import eu.unicore.uftp.standalone.authclient.AuthResponse;
 
 /**
  * Only authenticate the user and print out connect info 

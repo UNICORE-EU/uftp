@@ -22,7 +22,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import eu.unicore.services.rest.client.IAuthCallback;
-import eu.unicore.uftp.authserver.messages.AuthResponse;
 import eu.unicore.uftp.dpc.Utils;
 import eu.unicore.uftp.standalone.ClientFacade;
 import eu.unicore.util.Log;

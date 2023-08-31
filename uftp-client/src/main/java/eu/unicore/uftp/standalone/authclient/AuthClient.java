@@ -4,8 +4,6 @@ package eu.unicore.uftp.standalone.authclient;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import eu.unicore.uftp.authserver.messages.AuthResponse;
-
 /**
  *
  * @author jj

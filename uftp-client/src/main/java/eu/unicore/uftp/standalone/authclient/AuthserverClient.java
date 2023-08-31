@@ -24,8 +24,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import eu.unicore.services.rest.client.IAuthCallback;
-import eu.unicore.uftp.authserver.messages.AuthRequest;
-import eu.unicore.uftp.authserver.messages.AuthResponse;
 import eu.unicore.uftp.dpc.Utils;
 import eu.unicore.uftp.standalone.ClientFacade;
 import eu.unicore.util.Log;

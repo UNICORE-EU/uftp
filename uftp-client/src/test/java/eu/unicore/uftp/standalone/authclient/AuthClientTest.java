@@ -1,15 +1,13 @@
 
 package eu.unicore.uftp.standalone.authclient;
 
-import junit.framework.TestCase;
-
 import java.nio.file.Path;
 
 import org.junit.Test;
 
 import eu.unicore.services.rest.client.IAuthCallback;
 import eu.unicore.services.rest.client.UsernamePassword;
-import eu.unicore.uftp.authserver.messages.AuthRequest;
+import junit.framework.TestCase;
 
 /**
  *
