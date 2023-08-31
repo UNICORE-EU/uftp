@@ -84,7 +84,7 @@ public class Reservations {
 		}
 	}
 	
-	List<Reservation> getReservations(){
+	public List<Reservation> getReservations(){
 		return reservations;
 	}
 	
