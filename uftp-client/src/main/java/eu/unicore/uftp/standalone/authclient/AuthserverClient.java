@@ -1,7 +1,9 @@
 package eu.unicore.uftp.standalone.authclient;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Formatter;
+import java.util.List;
 
 import org.apache.hc.client5.http.ClientProtocolException;
 import org.apache.hc.client5.http.classic.HttpClient;
@@ -17,6 +19,7 @@ import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.apache.hc.core5.http.message.StatusLine;
 import org.apache.logging.log4j.Logger;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -26,6 +29,7 @@ import com.google.gson.GsonBuilder;
 import eu.unicore.services.rest.client.IAuthCallback;
 import eu.unicore.uftp.dpc.Utils;
 import eu.unicore.uftp.standalone.ClientFacade;
+import eu.unicore.uftp.standalone.util.UnitParser;
 import eu.unicore.util.Log;
 
 /**
@@ -52,10 +56,10 @@ public class AuthserverClient implements AuthClient {
 
 	@Override
 	public AuthResponse connect(String path, boolean send, boolean append) throws Exception {
-		return do_connect(path, send, append, false);
+		return doConnect(path, send, append, false);
 	}
 
-	private AuthResponse do_connect(String path, boolean send, boolean append, boolean persistent) throws Exception {
+	private AuthResponse doConnect(String path, boolean send, boolean append, boolean persistent) throws Exception {
 		HttpClient httpClient = HttpClientFactory.getClient(uri);
 		HttpPost postRequest = new HttpPost(uri);
 		authData.addAuthenticationHeaders(postRequest);
@@ -78,7 +82,7 @@ public class AuthserverClient implements AuthClient {
 		}
 		if(baseDir==null)baseDir="";
 		LOG.debug("Initalizing session in <{}>", baseDir);
-		return do_connect(baseDir, true, true, persistent);
+		return doConnect(baseDir, true, true, persistent);
 	}
 
 	String infoURL;
@@ -117,6 +121,15 @@ public class AuthserverClient implements AuthClient {
 				f.format("  Description:      %s%s", server.optString("description", "N/A"), crlf);
 				f.format("  Remote user info: %s%s", getUserInfo(server), crlf);
 				f.format("  Sharing support:  %s%s", getSharingSupport(server), crlf);
+				long rateLimit = server.optLong("rateLimit", 0);
+				if(rateLimit>0) {
+					f.format("  Rate limit:       %sB/sec%s", UnitParser.getCapacitiesParser(0).getHumanReadable(rateLimit), crlf);
+				}
+				List<String> reservations = getReservations(server);
+				if(reservations.size()>0) {
+					f.format("  Reservations:%s", crlf);
+					reservations.forEach( x -> f.format("    * %s%s", x, crlf));
+				}
 				try {
 					String serverStatus = getServerStatus(server);
 					f.format("  Server status:    %s%s", serverStatus, crlf);
@@ -150,6 +163,15 @@ public class AuthserverClient implements AuthClient {
 	private String getSharingSupport(JSONObject info) throws JSONException {
 		boolean enabled = Boolean.parseBoolean(info.getJSONObject("dataSharing").optString("enabled", "N/A"));
 		return enabled? "enabled" : "not available";
+	}
+
+	private List<String> getReservations(JSONObject info) throws JSONException {
+		List<String> res = new ArrayList<>();
+		JSONArray reservations = info.optJSONArray("reservations");
+		if(reservations!=null) {
+			reservations.forEach( x -> res.add(String.valueOf(x)));
+		}
+		return res;
 	}
 	
 	public static String makeInfoURL(String url) {
