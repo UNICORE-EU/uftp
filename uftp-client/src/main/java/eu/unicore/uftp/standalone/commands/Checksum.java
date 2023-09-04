@@ -76,13 +76,14 @@ public class Checksum extends Command {
 	
 	@Override
 	protected void run(ClientFacade client) throws Exception {
-		String fileSpec = fileArgs[0];
-		RecursivePolicy policy = recurse ? RecursivePolicy.RECURSIVE:RecursivePolicy.NONRECURSIVE;
-		client.checksum(fileSpec, hashAlgorithm, policy);
+		for(String fileSpec: fileArgs) {
+			RecursivePolicy policy = recurse ? RecursivePolicy.RECURSIVE:RecursivePolicy.NONRECURSIVE;
+			client.checksum(fileSpec, hashAlgorithm, policy);
+		}
 	}
 
 	private void initRange(String bytes){
-		String[]tokens=bytes.split("-");
+		String[]tokens = bytes.split("-");
 		try{
 			if(tokens.length>1) {
 				String start=tokens[0];

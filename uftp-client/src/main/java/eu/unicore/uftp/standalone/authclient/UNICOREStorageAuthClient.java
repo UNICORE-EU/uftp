@@ -23,7 +23,7 @@ import org.json.JSONObject;
 
 import eu.unicore.services.rest.client.IAuthCallback;
 import eu.unicore.uftp.dpc.Utils;
-import eu.unicore.uftp.standalone.ClientFacade;
+import eu.unicore.uftp.standalone.ClientFacade2;
 import eu.unicore.util.Log;
 
 /**
@@ -37,11 +37,11 @@ public class UNICOREStorageAuthClient implements AuthClient {
 
 	private final IAuthCallback authData;
 
-	private final ClientFacade client;
+	private final ClientFacade2 client;
 
 	private static final Logger LOG = Log.getLogger(Log.CLIENT, UNICOREStorageAuthClient.class);
 
-	public UNICOREStorageAuthClient(String authUrl, IAuthCallback authData, ClientFacade client) {
+	public UNICOREStorageAuthClient(String authUrl, IAuthCallback authData, ClientFacade2 client) {
 		this.uri = authUrl;
 		this.authData = authData;
 		this.client = client;

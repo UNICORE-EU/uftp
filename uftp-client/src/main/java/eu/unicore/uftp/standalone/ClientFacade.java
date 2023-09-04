@@ -39,7 +39,7 @@ import eu.unicore.util.Log;
  *
  * @author jj
  */
-public class ClientFacade {
+public class ClientFacade extends ClientFacade2{
 
 	private static final Logger logger = Log.getLogger(Log.CLIENT+".uftp");
 
@@ -84,6 +84,7 @@ public class ClientFacade {
 	private boolean archiveMode = false;
 	
 	public ClientFacade(ConnectionInfoManager connectionInfoManager, UFTPClientFactory clientFactory) {
+		super(connectionInfoManager, clientFactory);
 		this.connectionManager = connectionInfoManager;
 		this.factory = clientFactory;
 	}

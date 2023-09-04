@@ -147,7 +147,7 @@ public class ConnectionInfoManager {
         parameters.put("auth", auth);
     }
     
-    public AuthClient getAuthClient(ClientFacade client) throws Exception {
+    public AuthClient getAuthClient(ClientFacade2 client) throws Exception {
         String url = getAuthURL();
         IAuthCallback auth = getAuthData();
         if(url.contains("/rest/core/storages/") && !url.contains("/rest/auth")){
