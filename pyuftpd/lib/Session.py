@@ -26,8 +26,6 @@ class Session(object):
     MODE_WRITE = 3
     MODE_FULL = 4
 
-    _FILE_READ_BUFFERSIZE = 2*65536
-
     _FEATURES = [ "PASV", "EPSV",
               "RANG STREAM", "REST STREAM"
               "MFMT", "MLSD", "MLST", "APPE",
@@ -75,6 +73,8 @@ class Session(object):
         self.portrange = job.get("PORTRANGE", (0, -1, -1))
         self.reset_range()
         self.BUFFER_SIZE = 65536
+        self.FILE_READ_BUFFERSIZE = 16384
+        self.FILE_WRITE_BUFFERSIZE = 16384
         self.KEEP_ALIVE = False
         self.archive_mode = False
         self.num_streams = 1
@@ -691,7 +691,7 @@ class Session(object):
             self.data = PConnector.PConnector(self.data_connectors, self.LOG, self.key, self.compress)
 
     def send_hash(self):
-        with open(self.file_path, "rb", buffering = Session._FILE_READ_BUFFERSIZE) as f:
+        with open(self.file_path, "rb", buffering = self.FILE_READ_BUFFERSIZE) as f:
             f.seek(self.offset)
             to_send = self.number_of_bytes
             total = 0
@@ -719,7 +719,7 @@ class Session(object):
             self.log_usage(True, total, duration, 1, self.hash_algorithm)
 
     def send_data(self):
-        with open(self.file_path, "rb", buffering = Session._FILE_READ_BUFFERSIZE) as f:
+        with open(self.file_path, "rb", buffering = self.FILE_READ_BUFFERSIZE) as f:
             limit_rate = self.rate_limit > 0
             f.seek(self.offset)
             to_send = self.number_of_bytes
@@ -751,7 +751,7 @@ class Session(object):
 
     def recv_normal_data(self):
         _mode = "r+b"
-        with open(self.file_path, _mode) as f:
+        with open(self.file_path, _mode, buffering = self.FILE_WRITE_BUFFERSIZE) as f:
             if not self.have_range:
                 f.truncate(0)
             f.seek(self.offset)
