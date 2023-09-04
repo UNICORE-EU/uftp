@@ -98,10 +98,12 @@ public class LogicalUFTPServer implements ExternalSystemConnector, UserInfoSourc
 		return server;
 	}
 
+	private static String[] internal = new String[]
+			{ "class", "reservations.enable", "reservations.file" };
 	private void mapSettings(Object thing, String prefix, Properties properties) {
 		Map<String,String>params = new PropertyGroupHelper(properties, 
 			new String[]{prefix}).getFilteredMap();
-		params.remove(prefix+"class");
+		for(String i: internal)params.remove(prefix+i);
 		Utilities.mapParams(thing, params, log);
 	}
 	
