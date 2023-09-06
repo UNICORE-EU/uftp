@@ -59,9 +59,9 @@ public class LocalFileCrawler extends FileCrawler {
         return true;
     }
     
-    Command cmd;
+    Operation cmd;
     
-    public void crawl(Command cmd, RecursivePolicy policy) throws Exception {
+    public void crawl(Operation cmd, RecursivePolicy policy) throws Exception {
     	this.cmd = cmd;
     	if(isSingleFile(path)){
     		if(!"-".equals(path)) {

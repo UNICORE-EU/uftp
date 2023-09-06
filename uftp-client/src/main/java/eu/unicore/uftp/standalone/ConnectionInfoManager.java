@@ -81,6 +81,17 @@ public class ConnectionInfoManager {
         }
     }
 
+    public boolean currentSessionContains(String uri) {
+    	try {
+    		Map<String, String> params = extractConnectionParameters(uri);
+    		String currentPath = getPath();
+    		String newPath = params.get("path");
+    		return currentPath!=null && newPath!=null && newPath.startsWith(currentPath);
+    	}catch(URISyntaxException ex) {
+    		return false;
+    	}
+    }
+
     public Map<String,String> extractConnectionParameters(String uriString) throws URISyntaxException {
         Map<String, String> parameters = new HashMap<>();
         URI localUri = new URI(uriString);
@@ -147,7 +158,7 @@ public class ConnectionInfoManager {
         parameters.put("auth", auth);
     }
     
-    public AuthClient getAuthClient(ClientFacade2 client) throws Exception {
+    public AuthClient getAuthClient(ClientFacade client) throws Exception {
         String url = getAuthURL();
         IAuthCallback auth = getAuthData();
         if(url.contains("/rest/core/storages/") && !url.contains("/rest/auth")){

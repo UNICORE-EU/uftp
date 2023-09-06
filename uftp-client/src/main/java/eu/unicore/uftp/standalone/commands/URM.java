@@ -6,8 +6,9 @@ import org.apache.commons.cli.ParseException;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
 
+import eu.unicore.uftp.client.FileInfo;
+import eu.unicore.uftp.client.UFTPSessionClient;
 import eu.unicore.uftp.standalone.ClientFacade;
-import eu.unicore.uftp.standalone.lists.FileCrawler.RecursivePolicy;
 
 public class URM extends Command {
 
@@ -39,27 +40,34 @@ public class URM extends Command {
 	public String getName() {
 		return "rm";
 	}
-	
-	ClientFacade client;
 
 	@Override
 	protected void run(ClientFacade client) throws Exception {
-		this.client = client;
-		int len = fileArgs.length;
-		if(len==0) {
+		if(fileArgs.length==0) {
 			throw new IllegalArgumentException("Missing argument: "+getArgumentDescription());
 		}
-		for(int i=0; i<len;i++){
-			doRM(fileArgs[i]);
+		UFTPSessionClient sc = null;
+		for(String fileArg: fileArgs) {
+			sc = client.checkReInit(fileArg, sc);
+			String path = client.getConnectionManager().getPath();
+			doRM(path, sc);
 		}
 	}
 	
-	private void doRM(String file) throws Exception {
+	private void doRM(String file, UFTPSessionClient sc) throws Exception {
 		if(!quiet && !confirm(file)){
 			return;
 		}
-		RecursivePolicy policy = recurse ? RecursivePolicy.RECURSIVE : RecursivePolicy.NONRECURSIVE;
-		client.rm(file, policy);
+		FileInfo stat = sc.stat(file);
+		if(stat.isDirectory()){
+			if(!recurse) {
+				error("uftp rm: cannot remove '{}': Is a directory", file);
+				return;
+			}
+			// TODO session client needs to use the 'RMD' FTP command
+			sc.rm(file);
+		}
+		else sc.rm(file);
 	}
 		
 	@Override
@@ -72,12 +80,18 @@ public class URM extends Command {
 		return "Deletes remote files or directories.";
 	}
 
+	private boolean always = false;
+
 	protected boolean confirm(String file){
 		LineReader r = null;
-		try{
+		try {
 			r = LineReaderBuilder.builder().build();
 			String line = r.readLine("This will delete a remote file/directory '"
-					+file+"', are you sure? [Y]");
+					+file+"', are you sure? [Y/N/A]");
+			if(always || line.startsWith("A") || line.startsWith("a")){
+				always = true;
+				return true;
+			}
 			return line.length()==0  || line.startsWith("y") || line.startsWith("Y");
 		}finally{
 			try{

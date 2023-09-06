@@ -1,29 +1,28 @@
 package eu.unicore.uftp.standalone.commands;
 
+import java.util.Map;
+
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
+import eu.unicore.uftp.client.UFTPSessionClient;
 import eu.unicore.uftp.standalone.ClientFacade;
-import eu.unicore.uftp.standalone.util.RangeMode;
-import eu.unicore.uftp.standalone.util.UnitParser;
+import eu.unicore.uftp.standalone.ConnectionInfoManager;
+import eu.unicore.uftp.standalone.authclient.AuthResponse;
+import eu.unicore.util.Log;
 
 /**
  * server-server copy (remote copy)
  *
  * @author schuller
  */
-public class URCP extends Command {
+public class URCP extends RangedCommand {
 
 	protected String target;
 
 	private String onetimePassword;
 	private String uftpdAddress;
-
-	//index of first byte to process
-	protected Long startByte;
-	//index of last byte to process
-	protected Long endByte;
 
 	@Override
 	public String getName() {
@@ -77,45 +76,54 @@ public class URCP extends Command {
 
 	@Override
 	protected void run(ClientFacade client) throws Exception {
-		client.setVerbose(verbose);
 		int len = fileArgs.length-1;
-		boolean receive = !Boolean.parseBoolean(System.getenv("UFTP_RCP_USE_SEND_FILE"));
 		for(int i=0; i<len;i++){
 			String source = fileArgs[i];
 			String target = this.target;
-			if(startByte!=null){
-				client.setRange(startByte, endByte, RangeMode.READ_WRITE);
+			try{
+				rcp(source, target, client);
+			}catch(Exception ex) {
+				error(Log.createFaultMessage("", ex));
 			}
-			client.rcp(source, target, onetimePassword, uftpdAddress, receive);
-			client.resetRange();
 		}
 	}
 
-	protected void initRange(String bytes){
-		String[]tokens=bytes.split("-");
-		try{
-			if(tokens.length>1) {
-				String start=tokens[0];
-				String end=tokens[1];
-				if(start.length()>0){
-					startByte = (long)(UnitParser.getCapacitiesParser(0).getDoubleValue(start));
-					endByte=Long.MAX_VALUE;
-				}
-				if(end.length()>0){
-					endByte=(long)(UnitParser.getCapacitiesParser(0).getDoubleValue(end));
-					if(startByte==null){
-						startByte=Long.valueOf(0l);
-					}
-				}
-			}
-			else {
-				String end=tokens[0];
-				endByte=(long)(UnitParser.getCapacitiesParser(0).getDoubleValue(end));
-				startByte=Long.valueOf(0l);
-			}
-		}catch(Exception e){
-			throw new IllegalArgumentException("Could not parse byte range "+bytes);
+	public void rcp(String source, String target, ClientFacade client) throws Exception {
+		boolean remoteSource = ConnectionInfoManager.isRemote(source);
+		boolean remoteTarget = ConnectionInfoManager.isRemote(target);
+		boolean receive = !Boolean.parseBoolean(System.getenv("UFTP_RCP_USE_SEND_FILE"));
+		if(!remoteSource && !remoteTarget){
+			String error = String.format("Unable to handle [%s, %s] combination. "
+					+ "At least one must be a URL.", source, target);
+			throw new IllegalArgumentException(error);
 		}
+		if((onetimePassword==null || uftpdAddress==null) && !(remoteSource && remoteTarget)) {
+			throw new IllegalArgumentException("One-time password and UFTPD address are required");
+		}
+		UFTPSessionClient sc = receive? client.doConnect(target) : client.doConnect(source);
+		
+		if(onetimePassword==null) {
+			// authenticate the "other" UFTP side
+			AuthResponse auth = remoteSource? client.authenticate(source) : client.authenticate(target);
+			uftpdAddress = auth.serverHost+":"+auth.serverPort;
+			onetimePassword = auth.secret;
+		}
+		if(remoteSource) {
+			Map<String,String> sourceParams = client.getConnectionManager().extractConnectionParameters(source);
+			source = sourceParams.get("path");
+		}
+		if(remoteTarget) {
+			Map<String,String> targetParams = client.getConnectionManager().extractConnectionParameters(target);
+			target = targetParams.get("path");
+		}
+		
+		if(haveRange()){
+			sc.sendRangeCommand(getOffset(), getLength());
+		}
+		String reply = receive ?
+				sc.receiveFile(target, source, uftpdAddress, onetimePassword):
+				sc.sendFile(source, target, uftpdAddress, onetimePassword);
+		verbose(reply);
 	}
-
+	
 }

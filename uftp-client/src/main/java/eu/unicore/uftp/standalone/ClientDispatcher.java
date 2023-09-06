@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -86,13 +85,10 @@ public final class ClientDispatcher {
 		System.err.println("UFTP Client " + version);
 		System.err.println("Usage: uftp <command> [OPTIONS] <args>");
 		System.err.println("The following commands are available:");
-		List<ICommand>c=new ArrayList<ICommand>();
+		List<ICommand>c = new ArrayList<>();
 		c.addAll(cmds.values());
-		Collections.sort(c, new Comparator<ICommand>() {
-			@Override
-			public int compare(ICommand o1, ICommand o2) {
-				return o1.getName().compareTo(o2.getName());
-			}
+		Collections.sort(c, (o1, o2) -> {
+			 return o1.getName().compareTo(o2.getName());
 		});
 		for (ICommand entry : c) {
 			System.err.printf(" %-20s - %s", entry.getName(), entry.getSynopsis());

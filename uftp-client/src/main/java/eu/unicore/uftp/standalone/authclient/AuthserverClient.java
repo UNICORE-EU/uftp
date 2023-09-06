@@ -28,7 +28,7 @@ import com.google.gson.GsonBuilder;
 
 import eu.unicore.services.rest.client.IAuthCallback;
 import eu.unicore.uftp.dpc.Utils;
-import eu.unicore.uftp.standalone.ClientFacade2;
+import eu.unicore.uftp.standalone.ClientFacade;
 import eu.unicore.uftp.standalone.util.UnitParser;
 import eu.unicore.util.Log;
 
@@ -44,11 +44,11 @@ public class AuthserverClient implements AuthClient {
 
 	private final Gson gson = new GsonBuilder().create();
 
-	private final ClientFacade2 client;
+	private final ClientFacade client;
 	
 	private static final Logger LOG = Log.getLogger(Log.CLIENT, AuthserverClient.class);
 
-	public AuthserverClient(String authUrl, IAuthCallback authData, ClientFacade2 client) {
+	public AuthserverClient(String authUrl, IAuthCallback authData, ClientFacade client) {
 		this.uri = authUrl;
 		this.authData = authData;
 		this.client = client;

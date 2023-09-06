@@ -1,29 +1,27 @@
 package eu.unicore.uftp.standalone.commands;
 
+import java.io.IOException;
+import java.util.Map;
+
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
+import eu.unicore.uftp.client.UFTPSessionClient;
 import eu.unicore.uftp.standalone.ClientFacade;
 import eu.unicore.uftp.standalone.lists.FileCrawler.RecursivePolicy;
-import eu.unicore.uftp.standalone.util.UnitParser;
+import eu.unicore.uftp.standalone.lists.RemoteFileCrawler;
 
 /**
  * tell the server to compute checksum(s) for remote file(s)
  * 
  * @author schuller
  */
-public class Checksum extends Command {
+public class Checksum extends RangedCommand {
 
 	protected boolean recurse = false;
 
 	protected String hashAlgorithm = null;
-
-	//index of first byte to process
-	protected Long startByte;
-
-	//index of last byte to process
-	protected Long endByte;
 
 	@Override
 	public String getName() {
@@ -50,11 +48,6 @@ public class Checksum extends Command {
 				.required(false)
 				.hasArg()
 				.build());
-		options.addOption(Option.builder("B").longOpt("bytes")
-				.desc("Byte range")
-				.required(false)
-				.hasArg()
-				.build());
 		return options;
 	}
 
@@ -76,37 +69,41 @@ public class Checksum extends Command {
 	
 	@Override
 	protected void run(ClientFacade client) throws Exception {
+		UFTPSessionClient sc = null;
 		for(String fileSpec: fileArgs) {
-			RecursivePolicy policy = recurse ? RecursivePolicy.RECURSIVE:RecursivePolicy.NONRECURSIVE;
-			client.checksum(fileSpec, hashAlgorithm, policy);
+			sc = client.checkReInit(fileSpec, sc);
+			Map<String, String> params = client.getConnectionManager().extractConnectionParameters(fileSpec);
+			String path = params.get("path");
+			checksum(path, sc);
 		}
 	}
 
-	private void initRange(String bytes){
-		String[]tokens = bytes.split("-");
-		try{
-			if(tokens.length>1) {
-				String start=tokens[0];
-				String end=tokens[1];
-				if(start.length()>0){
-					startByte = (long)(UnitParser.getCapacitiesParser(0).getDoubleValue(start));
-					endByte=Long.MAX_VALUE;
-				}
-				if(end.length()>0){
-					endByte=(long)(UnitParser.getCapacitiesParser(0).getDoubleValue(end));
-					if(startByte==null){
-						startByte=Long.valueOf(0l);
-					}
-				}
-			}
-			else {
-				String end=tokens[0];
-				endByte=(long)(UnitParser.getCapacitiesParser(0).getDoubleValue(end));
-				startByte=Long.valueOf(0l);
-			}
-		}catch(Exception e){
-			throw new IllegalArgumentException("Could not parse byte range "+bytes);
+	protected void checksum(String path, UFTPSessionClient sc) throws Exception {
+		RecursivePolicy policy = recurse ? RecursivePolicy.RECURSIVE:RecursivePolicy.NONRECURSIVE;
+		RemoteFileCrawler fileList = new RemoteFileCrawler(path, "./dummy/", sc);
+		fileList.setCreateLocalDirs(false);
+		if (fileList.isSingleFile(path)) {
+			singleFileChecksum(path, sc);
 		}
+		else{
+			fileList.crawl( (x, dummy) -> {
+				singleFileChecksum(x, sc);
+			}, policy);
+		}
+	}
+	
+	private boolean haveSetAlgorithm = false;
+	
+	private void singleFileChecksum(String path, UFTPSessionClient sc) throws IOException{
+		if(hashAlgorithm!=null && !haveSetAlgorithm) {
+			String reply = sc.setHashAlgorithm(hashAlgorithm);
+			haveSetAlgorithm = true;
+			verbose("Set hash algorithm: {}", reply);
+		}
+		long offset = getOffset();
+		long length = getLength();
+		UFTPSessionClient.HashInfo hi = sc.getHash(path, offset, length);
+		System.out.println(hi.hash+"  "+hi.path);
 	}
 
 }

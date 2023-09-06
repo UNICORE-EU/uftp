@@ -29,6 +29,8 @@ public class RemoteFileCrawler extends FileCrawler {
     
 	private final String localSeparator;
 
+	private final boolean isSingleFile;
+
     /**
      * @param remoteSource - source file specification
      * @param localTarget - target directory
@@ -36,7 +38,9 @@ public class RemoteFileCrawler extends FileCrawler {
      */
     public RemoteFileCrawler(String remoteSource, String localTarget, UFTPSessionClient sc) throws IOException {
     	this.localSeparator = File.separator;
-    	try{
+    	this.sc = sc;
+    	this.localTarget = localTarget;
+        try{
     		if(!remoteSource.endsWith("/")){
     			if(getFileInfo(remoteSource).isDirectory()){
     				remoteSource += "/";
@@ -53,20 +57,19 @@ public class RemoteFileCrawler extends FileCrawler {
 				localTarget += localSeparator;
 			}
 		}
-        this.localTarget = localTarget;
-        this.sc = sc;
+        this.isSingleFile  = !wildCard.contains("*") && !wildCard.contains("?");
     }
     
     private FileInfo getFileInfo(String path) throws IOException{
     	return sc.stat(path);
     }
 
-    Command cmd;
+    Operation cmd;
     
     @Override
-    public void crawl(Command cmd, RecursivePolicy policy) throws Exception {
+    public void crawl(Operation cmd, RecursivePolicy policy) throws Exception {
     	File t = new File(localTarget);
-		if(t.exists() && !t.isDirectory() && !isDevNull(localTarget)){
+		if(t.exists() && !t.isDirectory() && !isSingleFile && !isDevNull(localTarget)){
 			throw new IOException("Copy target '"+localTarget+"' exists and is not a directory.");
 		}
     	this.cmd = cmd;

@@ -9,6 +9,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 import eu.unicore.uftp.client.FileInfo;
+import eu.unicore.uftp.client.UFTPSessionClient;
 import eu.unicore.uftp.standalone.ClientFacade;
 import eu.unicore.uftp.standalone.util.UnitParser;
 
@@ -41,13 +42,23 @@ public class ULS extends Command {
 		if(fileArgs.length==0) {
 			throw new IllegalArgumentException("Missing argument: "+getArgumentDescription());
 		}
-		FileInfo info = client.stat(fileArgs[0]);
-		if(info.isDirectory()){
-			List<FileInfo> ls = client.ls(fileArgs[0]);
-			printDir(ls);
-		}
-		else{
-			printSingle(info, -1);
+		int len = fileArgs.length;
+		UFTPSessionClient sc = null;
+		for(String fileArg: fileArgs) {
+			sc = client.checkReInit(fileArg, sc);
+			String path = client.getConnectionManager().extractConnectionParameters(fileArg).get("path");
+			FileInfo info = sc.stat(path);
+			if(info.isDirectory()){
+				if(len>1) {
+					System.out.println(path+": ");
+					System.out.println();
+				}
+				List<FileInfo> ls = sc.getFileInfoList(path);
+				printDir(ls);
+			}
+			else{
+				printSingle(info, -1);
+			}
 		}
 	}
 

@@ -16,6 +16,7 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.hc.core5.http.HttpMessage;
+import org.apache.logging.log4j.Logger;
 
 import eu.unicore.services.rest.client.IAuthCallback;
 import eu.unicore.services.rest.client.UsernamePassword;
@@ -37,6 +38,8 @@ import eu.unicore.util.Log;
  * @author schuller
  */
 public abstract class Command implements ICommand {
+
+	protected static final Logger logger = Log.getLogger("uftpclient");
 
 	/**
 	 * environment variable defining the UFTP user name
@@ -182,7 +185,6 @@ public abstract class Command implements ICommand {
 			ClientFacade facade = new ClientFacade(cim, new UFTPClientFactory());
 			setOptions(facade);
 			run(facade);
-			facade.disconnect();
 		}catch(Exception ex) {
 			if(verbose) {
 				ex.printStackTrace();
@@ -337,6 +339,35 @@ public abstract class Command implements ICommand {
 		else {
 			clientIP=ip;
 		}
+	}
+
+	public void setVerbose(boolean verbose){
+		this.verbose = verbose;
+	}
+	
+	/**
+	 * verbose log to console and to the log4j logger
+	 * 
+	 * @param msg - log4j-style message
+	 * @param params - message parameters
+	 */
+	public void verbose(String msg, Object ... params) {
+		logger.debug(msg, params);
+		if(!verbose)return;
+		String f = logger.getMessageFactory().newMessage(msg, params).getFormattedMessage();
+		System.out.println(f);
+	}
+
+	/**
+	 * print message to stderr and to the log4j logger (on error level)
+	 * 
+	 * @param msg - log4j-style message
+	 * @param params - message parameters
+	 */
+	public void error(String msg, Object ... params) {
+		logger.error(msg, params);
+		String f = logger.getMessageFactory().newMessage(msg, params).getFormattedMessage();
+		System.err.println(f);
 	}
 
 }

@@ -15,7 +15,7 @@ import eu.unicore.uftp.standalone.util.UnitParser;
  * 
  * @author schuller
  */
-public abstract class DataTransferCommand extends Command {
+public abstract class DataTransferCommand extends RangedCommand {
 
 	protected int streams = 1;
 	
