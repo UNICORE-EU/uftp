@@ -11,10 +11,10 @@ import eu.unicore.uftp.standalone.ClientDispatcher;
 import eu.unicore.uftp.standalone.ClientFacade;
 import eu.unicore.uftp.standalone.ConnectionInfoManager;
 
-public class TestInfo extends BaseServiceTest {
-	
+public class TestAuth extends BaseServiceTest {
+
 	ClientFacade client ;
-	
+
 	@Before
 	public void setup() throws Exception {
 		client = new ClientFacade(
@@ -23,30 +23,17 @@ public class TestInfo extends BaseServiceTest {
 
     @Test
     public void testCmd() throws Exception {
-    	String[] args = new String[]{ new Info().getName(), "-h" };
+    	String[] args = new String[]{ new Auth().getName(), "-h" };
     	ClientDispatcher._main(args);
     }
 
     @Test
-    public void testInfo() throws Exception {
-    	String[] args = new String[]{ new Info().getName(),
-    			"-u", "demouser:test123",
+    public void testAuth() throws Exception {
+    	String[] args = new String[]{ new Auth().getName(),
+    			"-u", "demouser:test123", "-v",
     			getAuthURL("")
-    	};
-    	assertEquals(0, ClientDispatcher._main(args));
-    	args = new String[]{ new Info().getName(),
-    			"-u", "demouser:test123",
-    			"-R", getAuthURL("")
     	};
     	assertEquals(0, ClientDispatcher._main(args));
     }
 
-    @Test
-    public void testAnonymousInfo() throws Exception {
-    	String[] args = new String[]{ new Info().getName(),
-    			"-u", "anonymous",
-    			getAuthURL("")
-    	};
-    	assertEquals(0, ClientDispatcher._main(args));
-    }
 }

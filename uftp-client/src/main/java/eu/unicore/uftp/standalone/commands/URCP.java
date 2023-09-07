@@ -10,7 +10,6 @@ import eu.unicore.uftp.client.UFTPSessionClient;
 import eu.unicore.uftp.standalone.ClientFacade;
 import eu.unicore.uftp.standalone.ConnectionInfoManager;
 import eu.unicore.uftp.standalone.authclient.AuthResponse;
-import eu.unicore.util.Log;
 
 /**
  * server-server copy (remote copy)
@@ -80,11 +79,7 @@ public class URCP extends RangedCommand {
 		for(int i=0; i<len;i++){
 			String source = fileArgs[i];
 			String target = this.target;
-			try{
-				rcp(source, target, client);
-			}catch(Exception ex) {
-				error(Log.createFaultMessage("", ex));
-			}
+			rcp(source, target, client);
 		}
 	}
 

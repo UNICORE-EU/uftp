@@ -3,18 +3,20 @@ package eu.unicore.uftp.standalone.commands;
 import static org.junit.Assert.assertEquals;
 
 import java.io.File;
+import java.io.IOException;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.Before;
 import org.junit.Test;
 
 import eu.unicore.services.rest.client.UsernamePassword;
+import eu.unicore.uftp.dpc.Utils;
 import eu.unicore.uftp.standalone.BaseServiceTest;
 import eu.unicore.uftp.standalone.ClientDispatcher;
 import eu.unicore.uftp.standalone.ClientFacade;
 import eu.unicore.uftp.standalone.ConnectionInfoManager;
 
-public class TestULS extends BaseServiceTest {
+public class TestRCP extends BaseServiceTest {
 	
 	ClientFacade client ;
 	File testsDir;
@@ -29,26 +31,20 @@ public class TestULS extends BaseServiceTest {
 	}
 
     @Test
-    public void testSingle() throws Exception {
-    	String file = new File("./pom.xml").getAbsolutePath();
-    	String[] args = new String[] {
-    			new ULS().getName(),
-    			"-H", "-u", "demouser:test123",
-    			getAuthURL(file)
-    	};
-    	assertEquals(0, ClientDispatcher._main(args));
+    public void testCmd() throws Exception {
+    	String[] args = new String[]{ new URCP().getName(), "-h" };
+    	ClientDispatcher._main(args);
     }
 
     @Test
-    public void testMultiple() throws Exception {
-    	String file1 = new File(".").getAbsolutePath();
-    	String file2 = testsDir.getAbsolutePath();
-    	String[] args = new String[] {
-    			new ULS().getName(),
-    			"-u", "demouser:test123",
-    			getAuthURL(file1), getAuthURL(file2)
+    public void testRCP1() throws Exception {
+    	String src = new File("./pom.xml").getAbsolutePath();
+    	String target = new File(testsDir, "test.dat").getAbsolutePath();
+    	String[] args = new String[]{ new URCP().getName(), "-u", "demouser:test123",
+    			getAuthURL(src), getAuthURL(target)
     	};
-    	assertEquals(0, ClientDispatcher._main(args));
+    	// Java UFTPD does not do rcp...
+    	assertEquals(1, ClientDispatcher._main(args));
     }
 
 }

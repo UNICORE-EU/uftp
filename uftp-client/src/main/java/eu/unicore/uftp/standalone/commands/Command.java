@@ -24,7 +24,6 @@ import eu.unicore.uftp.dpc.Utils;
 import eu.unicore.uftp.standalone.ClientDispatcher;
 import eu.unicore.uftp.standalone.ClientFacade;
 import eu.unicore.uftp.standalone.ConnectionInfoManager;
-import eu.unicore.uftp.standalone.UFTPClientFactory;
 import eu.unicore.uftp.standalone.oidc.OIDCAgentAuth;
 import eu.unicore.uftp.standalone.ssh.SSHAgent;
 import eu.unicore.uftp.standalone.ssh.SshKeyHandler;
@@ -182,7 +181,7 @@ public abstract class Command implements ICommand {
 		}
 		try{
 			ConnectionInfoManager cim = new ConnectionInfoManager(getAuthData());
-			ClientFacade facade = new ClientFacade(cim, new UFTPClientFactory());
+			ClientFacade facade = new ClientFacade(cim);
 			setOptions(facade);
 			run(facade);
 		}catch(Exception ex) {

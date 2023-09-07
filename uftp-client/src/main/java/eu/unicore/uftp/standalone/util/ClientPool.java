@@ -125,18 +125,12 @@ public class ClientPool implements Closeable {
 
 		private UFTPProgressListener pb = null;
 
-		public TransferTask() { this(null); }
-
 		public TransferTask(UFTPSessionClient sc) {
 			this.sc = sc;
 		}
 
 		public void setProgressListener(UFTPProgressListener pb) {
 			this.pb = pb;
-		}
-
-		public UFTPProgressListener getProgressListener() {
-			return pb;
 		}
 
 		public UFTPSessionClient getSessionClient() {

@@ -1,6 +1,7 @@
 package eu.unicore.uftp.standalone.commands;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 import java.io.File;
 
@@ -14,7 +15,7 @@ import eu.unicore.uftp.standalone.ClientDispatcher;
 import eu.unicore.uftp.standalone.ClientFacade;
 import eu.unicore.uftp.standalone.ConnectionInfoManager;
 
-public class TestULS extends BaseServiceTest {
+public class TestRM extends BaseServiceTest {
 	
 	ClientFacade client ;
 	File testsDir;
@@ -29,26 +30,21 @@ public class TestULS extends BaseServiceTest {
 	}
 
     @Test
-    public void testSingle() throws Exception {
-    	String file = new File("./pom.xml").getAbsolutePath();
-    	String[] args = new String[] {
-    			new ULS().getName(),
-    			"-H", "-u", "demouser:test123",
-    			getAuthURL(file)
-    	};
-    	assertEquals(0, ClientDispatcher._main(args));
+    public void testCmd() throws Exception {
+    	String[] args = new String[]{ new URM().getName(), "-h" };
+    	ClientDispatcher._main(args);
     }
 
     @Test
-    public void testMultiple() throws Exception {
-    	String file1 = new File(".").getAbsolutePath();
-    	String file2 = testsDir.getAbsolutePath();
-    	String[] args = new String[] {
-    			new ULS().getName(),
-    			"-u", "demouser:test123",
-    			getAuthURL(file1), getAuthURL(file2)
+    public void testRM() throws Exception {
+    	File f = new File(testsDir, "to_remove");
+    	FileUtils.writeStringToFile(f, "test123", "UTF-8");
+    	String[] args = new String[]{ new URM().getName(), "-u", "demouser:test123",
+    			"--quiet",
+    			getAuthURL(f.getAbsolutePath())
     	};
     	assertEquals(0, ClientDispatcher._main(args));
+    	assertFalse(f.exists());
     }
 
 }

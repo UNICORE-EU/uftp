@@ -1,11 +1,6 @@
 package eu.unicore.uftp.standalone.util;
 
-import java.text.DateFormat;
 import java.text.NumberFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -166,102 +161,12 @@ public class UnitParser {
 		{"d","days",}, 
 	};
 
-	static int[] timeFactors=new int[]{60,60,24};
-
 	/**
 	 * get a new parser instance suitable for parsing capacity units (K, M, G etc)
 	 * @param decimalDigits
 	 */
 	public static UnitParser getCapacitiesParser(int decimalDigits){
 		return new UnitParser(capacityUnits,capacityFactors,decimalDigits);
-	}
-
-	/**
-	 * get a new parser instance suitable for parsing time units (seconds, minutes, hours, days)
-	 * @param decimalDigits
-	 */
-	public static UnitParser getTimeParser(int decimalDigits){
-		return new UnitParser(timeUnits,timeFactors,decimalDigits);
-	}
-
-	/**
-	 * parses a time from the given string<br/>
-	 * 
-	 * understands a number of date/time formats such as ISO8601, HH:mm, etc
-	 * 
-	 * @param spec - the date specification
-	 */
-	@SuppressWarnings("deprecation")
-	public static synchronized Date extractDateTime(String spec){
-		Date result=null;
-		try{
-			Date d1=getHHMMDate().parse(spec);
-			Calendar c=Calendar.getInstance();
-			c.set(Calendar.HOUR_OF_DAY, d1.getHours());
-			c.set(Calendar.MINUTE, d1.getMinutes());
-			if(c.compareTo(Calendar.getInstance())<0){
-				//interpret time as "on the next day"
-				c.add(Calendar.DATE, 1);
-			}
-			result=c.getTime();
-		}catch(ParseException pe){}
-		
-		if(result==null){
-			try{
-				result=getSimpleDateFormat().parse(spec);
-			}catch(ParseException pe){}
-		}
-		
-		if(result==null){
-			try{
-				result=getISO8601().parse(spec);
-			}catch(ParseException pe){}
-		}
-		if(result!=null)return result;//.getTime();
-		else throw new IllegalArgumentException("Specified date string '"+spec+"'could not be parsed!");
-	}
-
-	public static String convertDateToISO8601(String dateSpec){
-		return getISO8601().format(extractDateTime(dateSpec));
-	}
-	
-	private static DateFormat hhmmDate;
-	
-	/**
-	 * get the static DateFormat instance for the "HH:mm" format<br/>
-	 * Not threadsafe!
-	 */
-	public static DateFormat getHHMMDate(){
-		if(hhmmDate==null){
-			hhmmDate=new SimpleDateFormat("HH:mm");
-		}
-		return hhmmDate;
-	}
-	
-	private static DateFormat iso8601;
-	
-	/**
-	 * gets the static DateFormat instance for the ISO8601 "yyyy-MM-dd'T'HH:mm:ssZ" format<br/>
-	 * Not threadsafe!
-	 */
-	public static DateFormat getISO8601(){
-		if(iso8601==null){
-			iso8601=new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
-		}
-		return iso8601;
-	}
-
-	private static DateFormat simple;
-	
-	/**
-	 * get the static DateFormat instance for the "yyyy-MM-dd HH:mm" format<br/>
-	 * Not threadsafe!
-	 */
-	public static DateFormat getSimpleDateFormat(){
-		if(simple==null){
-			simple=new SimpleDateFormat("yyyy-MM-dd HH:mm");
-		}
-		return simple;
 	}
 
 }

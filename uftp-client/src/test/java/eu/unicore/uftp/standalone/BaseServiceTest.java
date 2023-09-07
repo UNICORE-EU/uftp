@@ -25,6 +25,10 @@ public abstract class BaseServiceTest {
 	public String getAuthURL(String filename) {
 		return getInfoURL()+"/TEST:"+filename;
 	}
+	
+	public String getShareURL() {
+		return "http://localhost:9001/rest/share/TEST";
+	}
 
 	@BeforeClass
 	public static void startServers() throws Exception {

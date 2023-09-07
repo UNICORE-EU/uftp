@@ -53,7 +53,7 @@ public class LocalFileCrawler extends FileCrawler {
         if (name == null || name.isEmpty()) {
             name = "*";
         }
-        filter = new WildcardFileFilter(name);
+        filter = WildcardFileFilter.builder().setWildcards(name).get();
         path = FilenameUtils.getFullPath(path);
         if("".equals(path))path= "." + localSeparator;
         return true;

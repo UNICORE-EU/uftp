@@ -1,9 +1,13 @@
 package eu.unicore.uftp.standalone;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+
 import org.apache.logging.log4j.Logger;
 
 import eu.unicore.uftp.client.UFTPSessionClient;
 import eu.unicore.uftp.dpc.AuthorizationFailureException;
+import eu.unicore.uftp.dpc.Utils;
 import eu.unicore.uftp.standalone.authclient.AuthClient;
 import eu.unicore.uftp.standalone.authclient.AuthResponse;
 import eu.unicore.util.Log;
@@ -18,8 +22,6 @@ public class ClientFacade {
 	private static final Logger logger = Log.getLogger(Log.CLIENT+".uftp");
 
 	private final ConnectionInfoManager connectionManager;
-
-	private final UFTPClientFactory factory;
 
 	private String group = null;
 
@@ -38,9 +40,8 @@ public class ClientFacade {
 
 	private boolean verbose = false;
 
-	public ClientFacade(ConnectionInfoManager connectionInfoManager, UFTPClientFactory clientFactory) {
+	public ClientFacade(ConnectionInfoManager connectionInfoManager) {
 		this.connectionManager = connectionInfoManager;
-		this.factory = clientFactory;
 	}
 
 	public AuthResponse authenticate(String uri) throws Exception {
@@ -65,7 +66,7 @@ public class ClientFacade {
 	public UFTPSessionClient doConnect(String uri) throws Exception {
 		verbose("Connecting to {}", uri);
 		AuthResponse response = authenticate(uri);
-		UFTPSessionClient sc = factory.getUFTPClient(response);
+		UFTPSessionClient sc = getUFTPClient(response);
 		sc.setNumConnections(streams);
 		sc.setCompress(compress);
 		sc.setKey(encryptionKey);
@@ -157,6 +158,17 @@ public class ClientFacade {
 		this.verbose = verbose;
 	}
 	
+	public UFTPSessionClient getUFTPClient(AuthResponse response) throws UnknownHostException {
+		UFTPSessionClient sc = new UFTPSessionClient(getServerArray(response),
+				response.serverPort);
+		sc.setSecret(response.secret);
+		return sc;
+	}
+	
+	InetAddress[] getServerArray(AuthResponse response) throws UnknownHostException {
+		return Utils.parseInetAddresses(response.serverHost, null);
+	}
+
 	/**
 	 * verbose log to console and to the log4j logger
 	 * 

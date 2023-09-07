@@ -11,7 +11,6 @@ import org.apache.commons.io.FilenameUtils;
 import eu.unicore.uftp.client.UFTPSessionClient;
 import eu.unicore.uftp.standalone.ClientFacade;
 import eu.unicore.uftp.standalone.ConnectionInfoManager;
-import eu.unicore.uftp.standalone.UFTPClientFactory;
 import eu.unicore.uftp.standalone.authclient.AuthClient;
 import eu.unicore.uftp.standalone.authclient.AuthResponse;
 import eu.unicore.uftp.standalone.util.ProgressBar;
@@ -80,7 +79,7 @@ public class PutSharedFile extends DataTransferCommand {
 			}
 			AuthResponse response = authClient.connect(path, true, false);
 			try(InputStream sourceStream = new FileInputStream(sourceFile);
-				UFTPSessionClient uftp = new UFTPClientFactory().getUFTPClient(response))
+				UFTPSessionClient uftp = client.getUFTPClient(response))
 			{
 				uftp.connect();
 				ProgressBar pb = new ProgressBar(source, -1);

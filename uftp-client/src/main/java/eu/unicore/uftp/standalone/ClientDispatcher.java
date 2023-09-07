@@ -32,6 +32,9 @@ public final class ClientDispatcher {
 		return Collections.unmodifiableCollection(cmds.values());
 	}
 
+	public static int _main(String[] args) throws Exception {
+		 return new ClientDispatcher().dispatch(args);
+	}
 
 	/**
 	 * main entry point for all commands
@@ -40,8 +43,7 @@ public final class ClientDispatcher {
 	 * @throws Exception
 	 */
 	public static void main(String[] args) throws Exception {
-		int returnCode = new ClientDispatcher().dispatch(args);
-		System.exit(returnCode);
+		System.exit(_main(args));
 	}
 
 	public int dispatch(String[] args) throws Exception {
