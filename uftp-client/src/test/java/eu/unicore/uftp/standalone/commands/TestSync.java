@@ -1,10 +1,8 @@
 package eu.unicore.uftp.standalone.commands;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 
 import java.io.File;
-import java.io.IOException;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.Before;
@@ -46,6 +44,7 @@ public class TestSync extends BaseServiceTest {
     			src.getAbsolutePath(), getAuthURL(target.getAbsolutePath())
     	};
     	assertEquals(0, ClientDispatcher._main(args));
+    	Thread.sleep(1000);
     	assertEquals(Utils.md5(src), Utils.md5(target));
     }
     
@@ -58,6 +57,7 @@ public class TestSync extends BaseServiceTest {
     			getAuthURL(src.getAbsolutePath()), target.getAbsolutePath()
     	};
     	assertEquals(0, ClientDispatcher._main(args));
+    	Thread.sleep(1000);
     	assertEquals(Utils.md5(src), Utils.md5(target));
     }
 
