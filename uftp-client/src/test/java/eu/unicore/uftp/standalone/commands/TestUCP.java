@@ -42,8 +42,41 @@ public class TestUCP extends BaseServiceTest {
     	String src = "./pom.xml";
     	String target = testsDir.getAbsolutePath();
     	String[] args = new String[]{ new UCP().getName(), "-u", "demouser:test123",
+    			"--preserve",
     			src, getAuthURL(target)
     	};
+    	assertEquals(0, ClientDispatcher._main(args));
+    	assertEquals(Utils.md5(new File(src)), Utils.md5(new File(testsDir, "pom.xml")));
+    	assertEquals(new File(src).lastModified()/1000,
+    			     new File(testsDir, "pom.xml").lastModified()/1000);
+    }
+
+    @Test
+    public void testRangedUpload() throws Exception {
+     	String src = "./pom.xml";
+    	String target = testsDir.getAbsolutePath();
+    	String[] args = new String[]{ new UCP().getName(), "-u", "demouser:test123",
+    			"-B0-10",
+    			src, getAuthURL(target)
+    	};
+    	assertEquals(0, ClientDispatcher._main(args));
+    	assertEquals(11, new File(testsDir,"/pom.xml").length());
+    }
+    
+    @Test
+    public void testResumeUpload() throws Exception {
+     	String src = "./pom.xml";
+    	String target = testsDir.getAbsolutePath();
+    	String[] args = new String[]{ new UCP().getName(), "-u", "demouser:test123",
+    			"-B0-10",
+    			src, getAuthURL(target)
+    	};
+    	assertEquals(0, ClientDispatcher._main(args));
+    	assertEquals(11, new File(testsDir,"/pom.xml").length());
+    	args = new String[]{ new UCP().getName(), "-u", "demouser:test123",
+     			"--resume", "-v",
+     			src, getAuthURL(target)
+     	};
     	assertEquals(0, ClientDispatcher._main(args));
     	assertEquals(Utils.md5(new File(src)), Utils.md5(new File(testsDir, "pom.xml")));
     }
@@ -67,7 +100,7 @@ public class TestUCP extends BaseServiceTest {
       	String src = testsDir.getAbsolutePath()+"/inputs/file*";
     	String target = testsDir.getAbsolutePath();
     	String[] args = new String[]{ new UCP().getName(), "-u", "demouser:test123",
-    			src, getAuthURL(target)
+    			"-v", src, getAuthURL(target)
     	};
     	assertEquals(0, ClientDispatcher._main(args));
     	for(int i = 0; i<3; i++) {
@@ -105,7 +138,18 @@ public class TestUCP extends BaseServiceTest {
     	assertEquals(0, ClientDispatcher._main(args));
     	assertEquals(Utils.md5(new File(src)), Utils.md5(new File(testsDir,"/pom.xml")));
     }
-    
+
+    @Test
+    public void testDownloadToStdout() throws Exception {
+       	String src =  new File("./pom.xml").getAbsolutePath();
+    	String target = "-";
+    	String[] args = new String[]{ new UCP().getName(), "-u", "demouser:test123",
+    			"-B-20",
+    			getAuthURL(src), target
+    	};
+    	assertEquals(0, ClientDispatcher._main(args));
+    }
+
     @Test
     public void testRangedDownload() throws Exception {
        	String src =  new File("./pom.xml").getAbsolutePath();
@@ -119,6 +163,24 @@ public class TestUCP extends BaseServiceTest {
     }
 
     @Test
+    public void testResumeDownload() throws Exception {
+       	String src =  new File("./pom.xml").getAbsolutePath();
+    	String target = new File(testsDir,"copy.xml").getAbsolutePath();
+    	String[] args = new String[]{ new UCP().getName(), "-u", "demouser:test123",
+    			"-B0-5",
+    			getAuthURL(src), target
+    	};
+    	assertEquals(0, ClientDispatcher._main(args));
+    	
+    	args = new String[]{ new UCP().getName(), "-u", "demouser:test123",
+    			"--resume", "-v",
+    			getAuthURL(src), target
+    	};
+    	assertEquals(0, ClientDispatcher._main(args));
+    	assertEquals(Utils.md5(new File(src)), Utils.md5(new File(testsDir,"copy.xml")));
+    }
+
+    @Test
     public void testMultipleDownload() throws Exception {
        	for(int i = 0; i<3; i++) {
     		FileUtils.writeStringToFile(new File(testsDir, "inputs/file"+i), "test123"+i, "UTF-8");
@@ -128,7 +190,7 @@ public class TestUCP extends BaseServiceTest {
       	String src = new File(testsDir,"inputs").getAbsolutePath()+"/file*";
       	String target = new File(testsDir,"downloads/").getAbsolutePath();
 	    String[] args = new String[]{ new UCP().getName(), "-u", "demouser:test123",
-	    		"-t", "2", "-T", "256k",
+	    		"-t", "2", "-T", "256k", "-v", 
     			getAuthURL(src), target
     	};
     	assertEquals(0, ClientDispatcher._main(args));

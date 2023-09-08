@@ -86,6 +86,7 @@ public class Share extends Command {
 		BaseClient bc = getClient(url, client);
 		JSONObject shares = bc.getJSON();
 		System.out.println(shares.toString(2));
+		_lastList = shares;
 	}
 	
 	public void share(ClientFacade client) throws Exception {
@@ -127,6 +128,7 @@ public class Share extends Command {
 	protected void showNewShareInfo(JSONObject info) throws Exception {
 		if(verbose)System.out.println(info.toString(2));
 		System.out.println("Shared to: "+info.getJSONObject("share").getString("http"));
+		_lastShare = info;
 	}
 	
 	@Override
@@ -176,5 +178,9 @@ public enum AccessType {
 	
 	MODIFY
 }
+
+// for testing
+ static JSONObject _lastList;
+ static JSONObject _lastShare;
 
 }

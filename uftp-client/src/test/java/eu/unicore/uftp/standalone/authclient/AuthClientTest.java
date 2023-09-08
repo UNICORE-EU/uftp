@@ -69,5 +69,5 @@ public class AuthClientTest extends TestCase {
     	Path p1 = Path.of("/foo/bar/.");
     	System.out.println(p1.getParent());	
     }
-    
+
 }

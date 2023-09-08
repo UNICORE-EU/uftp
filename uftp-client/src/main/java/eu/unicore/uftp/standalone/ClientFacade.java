@@ -64,7 +64,6 @@ public class ClientFacade {
 	 * @throws Exception
 	 */
 	public UFTPSessionClient doConnect(String uri) throws Exception {
-		verbose("Connecting to {}", uri);
 		AuthResponse response = authenticate(uri);
 		UFTPSessionClient sc = getUFTPClient(response);
 		sc.setNumConnections(streams);

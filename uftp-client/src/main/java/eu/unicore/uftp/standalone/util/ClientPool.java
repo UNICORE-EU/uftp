@@ -14,7 +14,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.Logger;
 
-import eu.unicore.uftp.client.UFTPProgressListener;
 import eu.unicore.uftp.client.UFTPSessionClient;
 import eu.unicore.uftp.standalone.ClientFacade;
 import eu.unicore.util.Log;
@@ -41,11 +40,14 @@ public class ClientPool implements Closeable {
 
 	boolean reuseClients = true;
 	
+	private final MultiProgressBar pb;
+
 	public ClientPool(int poolSize, ClientFacade clientFacade, String uri, boolean verbose) {
 		this.clientFacade = clientFacade;
 		this.uri = uri;
 		this.poolSize = poolSize;
 		this.verbose = verbose;
+		this.pb = new MultiProgressBar(poolSize);
 		es = Executors.newFixedThreadPool(poolSize, new ThreadFactory() {
 
 			boolean createNewThreads = true;
@@ -88,10 +90,17 @@ public class ClientPool implements Closeable {
 		}
 	}
 
-	public void submit(Callable<?> r) {
+	public void submit(TransferTask r) {
+		if(verbose)r.setProgressListener(pb);
 		tasks.add(es.submit(r));
 	}
 
+	public void verbose(String msg, Object ... params) {
+		logger.debug(msg, params);
+		if(!verbose)return;
+		String f = logger.getMessageFactory().newMessage(msg, params).getFormattedMessage();
+		System.out.println(f);
+	}
 
 	public static class UFTPClientThread extends Thread {
 
@@ -123,13 +132,33 @@ public class ClientPool implements Closeable {
 
 		private UFTPSessionClient sc = null;
 
-		private UFTPProgressListener pb = null;
+		private MultiProgressBar pb = null;
 
+		private String id;
+
+		private long dataSize = -1;
+		
 		public TransferTask(UFTPSessionClient sc) {
 			this.sc = sc;
 		}
 
-		public void setProgressListener(UFTPProgressListener pb) {
+		public String getId() {
+			return id;
+		}
+
+		public void setId(String id) {
+			this.id = id;
+		}
+
+		public long getDataSize() {
+			return dataSize;
+		}
+
+		public void setDataSize(long dataSize) {
+			this.dataSize = dataSize;
+		}
+
+		public void setProgressListener(MultiProgressBar pb) {
 			this.pb = pb;
 		}
 
@@ -137,14 +166,33 @@ public class ClientPool implements Closeable {
 			if(sc!=null)return sc;
 			UFTPClientThread t = (UFTPClientThread)Thread.currentThread();
 			UFTPSessionClient sc = t.getClient();
-			if(pb!=null)sc.setProgressListener(pb);
+			if(pb!=null) { 
+				pb.registerNew(getId(), getDataSize());
+				sc.setProgressListener(pb);
+			}
 			return sc;
+		}
+
+		public abstract void doCall() throws Exception;
+		
+		@Override
+		public Boolean call(){
+			try {
+				doCall();
+				return Boolean.TRUE;
+			}
+			catch(Exception e) {
+				throw new RuntimeException(e);
+			}
+			finally {
+				close();
+			}
 		}
 
 		@Override
 		public void close() {
-			if(pb!=null && pb instanceof Closeable) {
-				IOUtils.closeQuietly((Closeable)pb);
+			if(pb!=null) {
+				pb.closeSingle();
 			}
 		}
 	}

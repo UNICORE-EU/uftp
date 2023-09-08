@@ -3,14 +3,12 @@ package eu.unicore.uftp.standalone.commands;
 import static org.junit.Assert.assertEquals;
 
 import java.io.File;
-import java.io.IOException;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.Before;
 import org.junit.Test;
 
 import eu.unicore.services.rest.client.UsernamePassword;
-import eu.unicore.uftp.dpc.Utils;
 import eu.unicore.uftp.standalone.BaseServiceTest;
 import eu.unicore.uftp.standalone.ClientDispatcher;
 import eu.unicore.uftp.standalone.ClientFacade;

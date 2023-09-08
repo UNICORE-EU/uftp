@@ -3,10 +3,7 @@ package eu.unicore.uftp.standalone.commands;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
 import java.util.Arrays;
-import java.util.Enumeration;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -98,7 +95,7 @@ public abstract class Command implements ICommand {
 				.hasArg()
 				.build());
 		options.addOption(Option.builder("I").longOpt("client")
-				.desc("Client IP address: AUTO|ALL|address-list")
+				.desc("Client IP address: address-list")
 				.required(false)
 				.hasArg()
 				.build());
@@ -149,7 +146,6 @@ public abstract class Command implements ICommand {
 			oidcAccount = line.getOptionValue('O');
 			enableSSH = false;
 		}
-		
 		if(enableSSH){
 			if(!line.hasOption('u')) {
 				username = Utils.getProperty(UFTP_USER, null);
@@ -159,9 +155,8 @@ public abstract class Command implements ICommand {
 				sshIdentity = line.getOptionValue('i');
 			}
 		}
-
 		if(line.hasOption('I')){
-			setupClientIPMode(line.getOptionValue('I'));
+			clientIP = line.getOptionValue('I');
 		}
 	}
 
@@ -313,31 +308,6 @@ public abstract class Command implements ICommand {
 			ssh.selectIdentity();
 		}
 		return ssh.getAuthData();
-	}
-
-	private void setupClientIPMode(String ip){
-		if("AUTO".equals(ip))return;
-		else if("ALL".equals(ip)){
-			try{
-				StringBuilder sb = new StringBuilder();
-				Enumeration<NetworkInterface>iter = NetworkInterface.getNetworkInterfaces();
-				while(iter.hasMoreElements()){
-					NetworkInterface ni = iter.nextElement();
-					Enumeration<InetAddress> addresses = ni.getInetAddresses();
-					while(addresses.hasMoreElements()){
-						InetAddress ia = addresses.nextElement();
-						if(sb.length()>0)sb.append(",");
-						sb.append(ia.getHostAddress());
-					}
-				}
-				clientIP = sb.toString();
-			}catch(Exception e){
-				System.err.println(Log.createFaultMessage("WARNING:", e));
-			}	
-		}
-		else {
-			clientIP=ip;
-		}
 	}
 
 	public void setVerbose(boolean verbose){

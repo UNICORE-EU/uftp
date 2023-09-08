@@ -20,6 +20,14 @@ public class TestInfo extends BaseServiceTest {
 		client = new ClientFacade(
 				new ConnectionInfoManager(new UsernamePassword("demouser", "test123")));
 	}
+	
+    @Test
+    public void testUsageAndVersion() throws Exception {
+    	String[] args = new String[]{ "-h" };
+    	ClientDispatcher._main(args);
+    	args = new String[]{ "--version" };
+    	ClientDispatcher._main(args);
+    }
 
     @Test
     public void testCmd() throws Exception {
@@ -42,6 +50,16 @@ public class TestInfo extends BaseServiceTest {
     }
 
     @Test
+    public void testKey() throws Exception {
+    	String[] args = new String[]{ new Info().getName(),
+    			"-u", "demouser",
+    			"--identity", "src/test/resources/test_id",
+    			getAuthURL("")
+    	};
+    	assertEquals(0, ClientDispatcher._main(args));
+    }
+
+    @Test
     public void testAnonymousInfo() throws Exception {
     	String[] args = new String[]{ new Info().getName(),
     			"-u", "anonymous",
@@ -49,4 +67,5 @@ public class TestInfo extends BaseServiceTest {
     	};
     	assertEquals(0, ClientDispatcher._main(args));
     }
+
 }

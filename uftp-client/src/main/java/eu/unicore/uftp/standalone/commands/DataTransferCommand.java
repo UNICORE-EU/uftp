@@ -40,7 +40,7 @@ public abstract class DataTransferCommand extends RangedCommand {
 				.desc("Compress data for transfer")
 				.required(false)
 				.build());
-		options.addOption(Option.builder("K").longOpt("bandwithlimit")
+		options.addOption(Option.builder("K").longOpt("bandwith-limit")
 				.desc("Limit bandwith per FTP connection (bytes per second)")
 				.required(false)
 				.hasArg().argName("BandwithLimit")

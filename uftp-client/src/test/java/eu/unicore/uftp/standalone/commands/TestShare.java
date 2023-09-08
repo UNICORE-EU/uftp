@@ -5,9 +5,11 @@ import static org.junit.Assert.assertEquals;
 import java.io.File;
 
 import org.apache.commons.io.FileUtils;
+import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 
+import eu.unicore.uftp.dpc.Utils;
 import eu.unicore.uftp.standalone.BaseServiceTest;
 import eu.unicore.uftp.standalone.ClientDispatcher;
 
@@ -39,16 +41,55 @@ public class TestShare extends BaseServiceTest {
 
     @Test
     public void testShare() throws Exception {
-    	File f = new File(testsDir, "file.dat");
-    	FileUtils.writeStringToFile(f, "test123", "UTF-8");
+    	File src = new File(testsDir, "file.dat");
+    	FileUtils.writeStringToFile(src, "test123", "UTF-8");
     	
+    	// share and download
     	String[] args = new String[]{ new Share().getName(),
     			"-u", "demouser:test123", "-v", 
     			"--server", getShareURL(),
     			"--one-time", "--lifetime", "120",
-    			f.getAbsolutePath()
+    			src.getAbsolutePath()
     	};
     	assertEquals(0, ClientDispatcher._main(args));
+    	args = new String[]{ new Share().getName(),
+    			"-u", "demouser:test123", "-l",
+    			"--server", getShareURL() };
+    	assertEquals(0, ClientDispatcher._main(args));
+    	JSONObject lastList = Share._lastList;
+    	String uftpURL = lastList.getJSONArray("shares").getJSONObject(0).getString("uftp");
+    	
+    	File target = new File(testsDir, "file1.dat");
+    	args = new String[]{ new GetSharedFile().getName(),
+    			"-u", "demouser:test123",
+    			uftpURL, target.getAbsolutePath() };
+    	assertEquals(0, ClientDispatcher._main(args));
+    	assertEquals(Utils.md5(src), Utils.md5(target));
+    	
+    	args = new String[]{ new Share().getName(),
+    			"-u", "demouser:test123",
+    			"--server", getShareURL(),
+    			"--delete",
+    			src.getAbsolutePath()
+    	};
+    	assertEquals(0, ClientDispatcher._main(args));
+
+    	
+    	// writeable share
+    	args = new String[]{ new Share().getName(),
+    			"-u", "demouser:test123", "-v", 
+    			"--server", getShareURL(),
+    			"--write",
+    			"--access", "cn=anonymous,o=unknown,ou=unknown",
+    			src.getAbsolutePath()
+    	};
+    	assertEquals(0, ClientDispatcher._main(args));
+    	uftpURL = Share._lastShare.getJSONObject("share").getString("uftp");
+    	args = new String[]{ new PutSharedFile().getName(),
+    			"-u", "demouser:test123",
+    			"./pom.xml", uftpURL};
+    	assertEquals(0, ClientDispatcher._main(args));
+    	assertEquals(Utils.md5(src), Utils.md5(new File("./pom.xml")));
     	
     }
 

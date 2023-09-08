@@ -30,8 +30,6 @@ import eu.unicore.uftp.standalone.lists.Operation;
 import eu.unicore.uftp.standalone.lists.RemoteFileCrawler;
 import eu.unicore.uftp.standalone.util.ClientPool;
 import eu.unicore.uftp.standalone.util.ClientPool.TransferTask;
-import eu.unicore.uftp.standalone.util.ParallelProgressBar;
-import eu.unicore.uftp.standalone.util.ProgressBar;
 import eu.unicore.uftp.standalone.util.RangeMode;
 import eu.unicore.uftp.standalone.util.UnitParser;
 import eu.unicore.util.Log;
@@ -210,50 +208,40 @@ public class UCP extends DataTransferCommand {
 
 	private void executeSingleFileUpload(String local, String remotePath, ClientPool pool, UFTPSessionClient sc)
 			throws FileNotFoundException, URISyntaxException, IOException {
-		verbose("Uploading file {} -> {}", local, remotePath);
-
-		ProgressBar pb = null;
 		String dest = getFullRemoteDestination(local, remotePath);
 		if(archiveMode) {
 			sc.setType(UFTPSessionClient.TYPE_ARCHIVE);
 		}
-		try {
-			if("-".equals(local)){
-				if(verbose){
-					pb = new ProgressBar("stdin", -1);
-					sc.setProgressListener(pb);
-				}
-				sc.writeAll(dest, System.in, true);
-			}
-			else{
-				File file = new File(local);
-				long offset = 0;
-				if(resume && !haveRange()){
-					try{
-						offset = sc.getFileSize(dest);
-					}catch(IOException ioe) {
-						// does not exist
-					}
-					long size = file.length() - offset;
-					if(size>0){
-						verbose("Resuming transfer, already have <{}> bytes", offset);
-						TransferTask task = getUploadChunkTask(dest, local, offset, file.length()-1, null);
-						pool.submit(task);
-					}
-					else{
-						verbose("Nothing to do for <{]>", dest);
-					}
-				}
-				else {
-					long total = getLength()>-1? getLength() : file.length();
-					doUpload(pool, file, dest, getOffset(), total);
-				}
+		if("-".equals(local)){
+			try(InputStream is = System.in){
+				is.skip(getOffset());
+				sc.put(dest, getLength(), is);
 			}
 		}
-		finally{
-			IOUtils.closeQuietly(pb);
-			sc.setProgressListener(null);
-		}
+		else{
+			File file = new File(local);
+			long offset = 0;
+			if(resume && !haveRange()){
+				try{
+					offset = sc.getFileSize(dest);
+				}catch(IOException ioe) {
+					// does not exist
+				}
+				long size = file.length() - offset;
+				if(size>0){
+					verbose("Resuming transfer, already have <{}> bytes", offset);
+					TransferTask task = getUploadChunkTask(dest, local, offset, file.length()-1, null);
+					pool.submit(task);
+				}
+				else{
+					verbose("Nothing to do for <{]>", dest);
+				}
+			}
+			else {
+				long total = getLength()>-1? getLength() : file.length();
+				doUpload(pool, file, dest, getOffset(), total);
+			}
+		}	
 	}
 
 	private void doUpload(ClientPool pool, final File local, final String remotePath,
@@ -263,12 +251,11 @@ public class UCP extends DataTransferCommand {
 		long last = total-1;
 		logger.debug("Uploading: '{}' --> '{}', length={} numChunks={} chunkSize={}", 
 				local.getPath(), remotePath, total, numChunks, chunkSize);
-		final ParallelProgressBar pb = verbose? new ParallelProgressBar(local.getName(), total, numChunks) : null;
 		for(int i = 0; i<numChunks; i++){
 			final long end = last;
 			final long first =  i<numChunks-1 ? end - chunkSize : 0;
 			TransferTask task = getUploadChunkTask(remotePath, local.getPath(), first, end, null);
-			task.setProgressListener(pb);
+			task.setDataSize(end-first);
 			pool.submit(task);
 			last = first - 1;
 		}
@@ -278,7 +265,7 @@ public class UCP extends DataTransferCommand {
 			throws IOException {
 		TransferTask task = new TransferTask(sc) {
 			@Override
-			public Boolean call(){
+			public void doCall()throws Exception {
 				final File file = new File(local);
 				try(RandomAccessFile raf = new RandomAccessFile(file, "r");
 						InputStream fis = Channels.newInputStream(raf.getChannel()))
@@ -291,14 +278,6 @@ public class UCP extends DataTransferCommand {
 						to.setTimeInMillis(file.lastModified());
 						sc.setModificationTime(remote, to);
 					}
-					return Boolean.TRUE;
-				}
-				catch(Exception ex) {
-					logger.error("Error putting chunk ["+start+":"+end+"] <"+remote+">",ex);
-					throw new RuntimeException(ex);
-				}
-				finally{
-					close();
 				}
 			}};
 			return task;
@@ -329,17 +308,13 @@ public class UCP extends DataTransferCommand {
 	private void executeSingleFileDownload(String remotePath, String local, ClientPool pool, UFTPSessionClient sc)
 			throws FileNotFoundException, URISyntaxException, IOException {
 		String dest = getFullLocalDestination(remotePath, local);
-		verbose("Downloading file {} -> {}", remotePath, dest);
-
 		File file = new File(dest);
 		OutputStream fos = null;
 		RandomAccessFile raf = null;
-		ProgressBar pb = null;
-
 		try{
 			if("-".equals(local)){
 				fos = System.out;
-				sc.get(remotePath,fos);
+				sc.get(remotePath, getOffset(), getLength(), fos);
 				sc.resetDataConnections();
 			}else{
 				FileInfo fi = sc.stat(remotePath);
@@ -357,11 +332,9 @@ public class UCP extends DataTransferCommand {
 
 						if(length>0){
 							verbose("Resuming transfer, already have <{}> bytes", start);
-							if(verbose){
-								pb = new ProgressBar(local,length);
-								sc.setProgressListener(pb);
-							}
-							doDownload(pool, remotePath, dest, fi, start, length);
+							TransferTask task = getDownloadChunkTask(remotePath, local, start,
+									fi.getSize()-1, sc, fi, RangeMode.APPEND);
+							pool.submit(task);
 						}
 						else{
 							verbose("Nothing to do for {}",remotePath);
@@ -380,64 +353,63 @@ public class UCP extends DataTransferCommand {
 						doDownload(pool, remotePath, dest, fi, 0, size);
 					}
 				}
-
 			}
 		}
 		finally{
 			IOUtils.closeQuietly(fos);
 			IOUtils.closeQuietly(raf);
-			IOUtils.closeQuietly(pb);
-			sc.setProgressListener(null);
 		}
 	}
 
-	public void doDownload(ClientPool pool, final String remotePath, final String local, final FileInfo remoteInfo, long start, long total)
+	private void doDownload(ClientPool pool, final String remotePath, final String local, final FileInfo remoteInfo, long start, long total)
 			throws URISyntaxException, IOException {
 		int numChunks = computeNumChunks(total);
 		long chunkSize = total / numChunks;
 		logger.debug("Downloading: '{}' --> '{}', length={} numChunks={} chunkSize={}",
 				remotePath, local, total, numChunks, chunkSize);
-		final ParallelProgressBar pb = verbose? new ParallelProgressBar(local, total, numChunks) : null;
+		int width = String.valueOf(numChunks).length();
 		for(int i = 0; i<numChunks; i++){
 			final long first = start;
 			final long end = i<numChunks-1 ? first + chunkSize : total-1;
-			TransferTask task = getDownloadChunkTask(remotePath, local, start, end, null, remoteInfo);
-			task.setProgressListener(pb);
+			TransferTask task = getDownloadChunkTask(remotePath, local, start, end, null, remoteInfo, rangeMode);
+			String id = numChunks>1 ? 
+					String.format("%s->%s [%0"+width+"d/%d]", remotePath, local, i+1, numChunks):
+						remotePath+"->"+local;
+			task.setId(id);
+			task.setDataSize(end-first);
 			pool.submit(task);
 			start = end + 1;
 		}
 	}
 
-	public TransferTask getDownloadChunkTask(String remotePath, String dest, long start, long end, UFTPSessionClient sc, FileInfo fi)
-			throws FileNotFoundException, URISyntaxException, IOException{
+	private TransferTask getDownloadChunkTask(String remotePath, String dest, long start, long end, 
+			UFTPSessionClient sc, FileInfo fi, RangeMode rangeMode)
+					throws FileNotFoundException, URISyntaxException, IOException{
 		TransferTask task = new TransferTask(sc) {
-			@Override
-			public Boolean call(){
-				try {
-					UFTPSessionClient sc = getSessionClient();
-					File file = new File(dest);
-					OutputStream fos = null;
-					try(RandomAccessFile raf = new RandomAccessFile(file, "rw")){
-						if(rangeMode==RangeMode.READ_WRITE){
-							raf.seek(start);
-						}
-						fos = Channels.newOutputStream(raf.getChannel());
-						sc.get(remotePath, start, end-start+1, fos);
-						if(preserve && !dest.startsWith("/dev/")){
-							try{
-								Files.setLastModifiedTime(file.toPath(),FileTime.fromMillis(fi.getLastModified()));
-							}catch(Exception ex){
-								Log.logException("Error updating modification time", ex, logger);
-							}
-						}
-						return Boolean.TRUE;
-					}finally{
-						IOUtils.closeQuietly(fos);
+			public void doCall() throws Exception {
+				UFTPSessionClient sc = getSessionClient();
+				File file = new File(dest);
+				OutputStream fos = null;
+				try(RandomAccessFile raf = new RandomAccessFile(file, "rw")){
+					if(rangeMode==RangeMode.READ_WRITE){
+						raf.seek(start);
 					}
-				} catch(Exception ex) {
-					ex.printStackTrace();
-					throw new RuntimeException(ex);
+					else if(rangeMode==RangeMode.APPEND) {
+						raf.seek(file.length());
+					}
+					fos = Channels.newOutputStream(raf.getChannel());
+					sc.get(remotePath, start, end-start+1, fos);
+					if(preserve && !dest.startsWith("/dev/")){
+						try{
+							Files.setLastModifiedTime(file.toPath(),FileTime.fromMillis(fi.getLastModified()));
+						}catch(Exception ex){
+							Log.logException("Error updating modification time", ex, logger);
+						}
+					}
+				}finally{
+					IOUtils.closeQuietly(fos);
 				}
+
 			}
 		};
 		return task;
