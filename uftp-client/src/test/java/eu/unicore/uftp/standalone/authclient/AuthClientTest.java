@@ -33,8 +33,6 @@ public class AuthClientTest extends TestCase {
     public void testGetRequest() {
         System.out.println("getRequest");
         String destinationPath = "/some/path";
-        boolean send = false;
-        boolean append = false;
         int streamCount = 20;
         String encryptionKey = "encryptionKey";
         boolean compress = true;
@@ -43,13 +41,11 @@ public class AuthClientTest extends TestCase {
         String password = "pass";
         IAuthCallback auth = new UsernamePassword(username, password);
         AuthserverClient instance = new AuthserverClient("https://server:9991", auth, null);
-        AuthRequest result = instance.createRequestObject(destinationPath, send, append, streamCount, 
+        AuthRequest result = instance.createRequestObject(destinationPath, streamCount,
         		encryptionKey, compress, null, clientIP, true);
 
         assertNotNull(result);
-        assertEquals(append, result.append);
         assertEquals(destinationPath, result.serverPath);
-        assertEquals(send, result.send);
         assertEquals(streamCount, result.streamCount);
         assertEquals(compress, result.compress);
         assertEquals(clientIP, result.client);

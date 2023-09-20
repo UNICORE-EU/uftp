@@ -10,7 +10,7 @@ import org.json.JSONObject;
  */
 public interface AuthClient {
 
-    AuthResponse connect(String path, boolean send, boolean append) throws Exception;
+    AuthResponse connect(String path) throws Exception;
 
     /** create session in default base directory **/
     default AuthResponse createSession() throws Exception {
@@ -21,8 +21,8 @@ public interface AuthClient {
     default AuthResponse createSession(String baseDir) throws Exception {
     	return createSession(baseDir, false);
     }
-    
-    /** create session in the given base directory **/
+
+    /** create persistent session in the given base directory **/
     AuthResponse createSession(String baseDir, boolean persistent) throws Exception;
     
     JSONObject getInfo() throws Exception;

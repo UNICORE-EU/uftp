@@ -8,7 +8,7 @@
     <fileSet>
       <includes>
         <include>LICENSE</include>
-        <include>CHANGES.txt</include>
+        <include>CHANGES.md</include>
 	<include>README</include>
       </includes>
     </fileSet>

@@ -48,11 +48,11 @@ public class UNICOREStorageAuthClient implements AuthClient {
 	}
 
 	@Override
-	public AuthResponse connect(String path, boolean send, boolean append) throws Exception {
-		return do_connect(path, send, append, false);
+	public AuthResponse connect(String path) throws Exception {
+		return do_connect(path, false);
 	}
 
-	private AuthResponse do_connect(String path, boolean send, boolean append, boolean persistent) throws Exception {
+	private AuthResponse do_connect(String path, boolean persistent) throws Exception {
 		HttpClient httpClient = HttpClientFactory.getClient(uri);
 		HttpPost postRequest = new HttpPost(uri);
 		authData.addAuthenticationHeaders(postRequest);
@@ -81,7 +81,7 @@ public class UNICOREStorageAuthClient implements AuthClient {
 		}
 		if(baseDir==null)baseDir="";
 		LOG.debug("Initalizing session in <{}>", baseDir);
-		return do_connect(baseDir, true, true, persistent);
+		return do_connect(baseDir, persistent);
 	}
 
 	@Override

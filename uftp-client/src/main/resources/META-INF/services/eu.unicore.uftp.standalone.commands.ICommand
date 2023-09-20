@@ -9,8 +9,6 @@ eu.unicore.uftp.standalone.commands.URM
 eu.unicore.uftp.standalone.commands.USYNC
 eu.unicore.uftp.standalone.commands.Info
 eu.unicore.uftp.standalone.commands.Share
-eu.unicore.uftp.standalone.commands.GetSharedFile
-eu.unicore.uftp.standalone.commands.PutSharedFile
 eu.unicore.uftp.standalone.commands.Auth
 eu.unicore.uftp.standalone.commands.Checksum
 eu.unicore.uftp.standalone.commands.URCP

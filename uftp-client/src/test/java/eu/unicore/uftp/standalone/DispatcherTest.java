@@ -12,7 +12,6 @@ public class DispatcherTest {
 
 	@Test
 	public void testGetCommands() {
-		System.out.println("getCommands");
 		Collection<ICommand>commands = new ClientDispatcher().getCommands();
 		assertNotNull(commands);
 		assertTrue(commands.size()>0);

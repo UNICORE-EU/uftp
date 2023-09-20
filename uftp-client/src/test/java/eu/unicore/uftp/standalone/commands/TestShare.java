@@ -48,7 +48,7 @@ public class TestShare extends BaseServiceTest {
     	String[] args = new String[]{ new Share().getName(),
     			"-u", "demouser:test123", "-v", 
     			"--server", getShareURL(),
-    			"--one-time", "--lifetime", "120",
+    			"--lifetime", "120",
     			src.getAbsolutePath()
     	};
     	assertEquals(0, ClientDispatcher._main(args));
@@ -60,8 +60,8 @@ public class TestShare extends BaseServiceTest {
     	String uftpURL = lastList.getJSONArray("shares").getJSONObject(0).getString("uftp");
     	
     	File target = new File(testsDir, "file1.dat");
-    	args = new String[]{ new GetSharedFile().getName(),
-    			"-u", "demouser:test123",
+    	args = new String[]{ new UCP().getName(),
+    			"-u", "anonymous", "-v",
     			uftpURL, target.getAbsolutePath() };
     	assertEquals(0, ClientDispatcher._main(args));
     	assertEquals(Utils.md5(src), Utils.md5(target));
@@ -85,8 +85,8 @@ public class TestShare extends BaseServiceTest {
     	};
     	assertEquals(0, ClientDispatcher._main(args));
     	uftpURL = Share._lastShare.getJSONObject("share").getString("uftp");
-    	args = new String[]{ new PutSharedFile().getName(),
-    			"-u", "demouser:test123",
+    	args = new String[]{ new UCP().getName(),
+    			"-u", "anonymous",
     			"./pom.xml", uftpURL};
     	assertEquals(0, ClientDispatcher._main(args));
     	assertEquals(Utils.md5(src), Utils.md5(new File("./pom.xml")));

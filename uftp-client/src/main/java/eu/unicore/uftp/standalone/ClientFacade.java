@@ -54,7 +54,14 @@ public class ClientFacade {
 	}
 
 	private AuthResponse initSession(AuthClient authClient) throws Exception {
-		return authClient.createSession(connectionManager.getBasedir());
+		String baseDir = connectionManager.getBasedir();
+		if(connectionManager.getURI().contains("/rest/access/")) {
+			baseDir = connectionManager.getPath();
+			return authClient.connect(baseDir);
+		}
+		else {
+			return authClient.createSession(baseDir);
+		}
 	}
 
 	/**
@@ -177,8 +184,17 @@ public class ClientFacade {
 	public void verbose(String msg, Object ... params) {
 		logger.debug(msg, params);
 		if(!verbose)return;
+		message(msg, params);
+	}
+
+	/**
+	 * log to console and to the log4j logger
+	 *
+	 * @param msg - log4j-style message
+	 * @param params - message parameters
+	 */
+	public void message(String msg, Object ... params) {
 		String f = logger.getMessageFactory().newMessage(msg, params).getFormattedMessage();
 		System.out.println(f);
 	}
-
 }

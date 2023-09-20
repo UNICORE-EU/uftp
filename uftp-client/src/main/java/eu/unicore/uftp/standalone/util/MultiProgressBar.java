@@ -8,11 +8,12 @@ import org.jline.terminal.TerminalBuilder;
 import org.jline.utils.InfoCmp.Capability;
 
 import eu.unicore.uftp.client.UFTPProgressListener2;
+import eu.unicore.uftp.standalone.util.ClientPool.TransferTracking;
 import eu.unicore.util.Log;
 
 
 /**
- * Track progress when transferring multiple file
+ * Track multi-threaded progress when transferring multiple files / chunks
  * 
  * @author schuller
  */
@@ -30,22 +31,24 @@ public class MultiProgressBar implements UFTPProgressListener2, Closeable {
 	private final long size[];
 	private final long have[];
 	private final double rate[];
+	private final TransferTracking[] trackers;
+	
 	private String[] sizeDisplay;
 
-	private final int numThreads;
+	private final int maxThreads;
 	private final long[] threadIds;
 
 
-	public MultiProgressBar(int numThreads) {
-		this.numThreads = numThreads;
-		this.threadIds = new long[numThreads];
-		this.startedAt = new long[numThreads];
-		this.size = new long[numThreads];
-		this.have = new long[numThreads];
-		this.rate = new double[numThreads];
-		this.identifiers = new String[numThreads];
-		this.sizeDisplay = new String[numThreads];
-
+	public MultiProgressBar(int maxThreads) {
+		this.maxThreads = maxThreads;
+		this.threadIds = new long[maxThreads];
+		this.startedAt = new long[maxThreads];
+		this.size = new long[maxThreads];
+		this.have = new long[maxThreads];
+		this.rate = new double[maxThreads];
+		this.identifiers = new String[maxThreads];
+		this.sizeDisplay = new String[maxThreads];
+		this.trackers = new TransferTracking[maxThreads];
 		try{
 			terminal = TerminalBuilder.terminal();
 			width = terminal.getWidth();
@@ -59,12 +62,13 @@ public class MultiProgressBar implements UFTPProgressListener2, Closeable {
 	 * register a new file transfer 
 	 * NOTE: this must be called from a worker thread!
 	 */
-	public synchronized void registerNew(String identifier, long length){
+	public synchronized void registerNew(String identifier, long length, TransferTracking tracker){
 		int i = getThreadIndex();
 		identifiers[i] = identifier;
 		size[i] = length;
 		rate[i] = 0;
 		have[i] = 0;
+		trackers[i] = tracker;
 		startedAt[i] = System.currentTimeMillis();
 		doSetTransferSize(length);
 	}
@@ -90,7 +94,7 @@ public class MultiProgressBar implements UFTPProgressListener2, Closeable {
 
 	protected int getThreadIndex(){
 		long currentId = Thread.currentThread().getId();
-		for(int i=0; i<numThreads; i++){
+		for(int i=0; i<maxThreads; i++){
 			long threadId = threadIds[i];
 			if(threadId==0){
 				threadIds[i] = currentId;
@@ -113,7 +117,7 @@ public class MultiProgressBar implements UFTPProgressListener2, Closeable {
 		StringBuilder sb=new StringBuilder();
 		double totalRate = 0;
 
-		for(int i=0; i<numThreads;i++){
+		for(int i=0; i<maxThreads;i++){
 			if(rate[i]>0){
 				sb.append(String.format(" %sB/s", rateParser.getHumanReadable(rate[i])));
 				totalRate+=rate[i];
@@ -129,21 +133,25 @@ public class MultiProgressBar implements UFTPProgressListener2, Closeable {
 			for(int i=0; i<fill; i++)sb.append(" ");
 		}
 		lastOutputLength = sb.length();
-		try {
-			terminal.puts(Capability.carriage_return);
-			terminal.writer().write(sb.toString());
-			terminal.flush();
-		}
-		catch (Exception e) {
-			logger.error("Could not output to jline console",e);
-			terminal = null;
+		synchronized(this){
+			try {
+				terminal.puts(Capability.carriage_return);
+				terminal.writer().write(sb.toString());
+				terminal.flush();
+			}
+			catch (Exception e) {
+				logger.error("Could not output to jline console",e);
+				terminal = null;
+			}
 		}
 	}
 	
 	public String getStatus(int threadIndex){
 		if(size[threadIndex]==0)return " -------";
 		StringBuilder sb = new StringBuilder();
-		long progress=have[threadIndex]*100/size[threadIndex];
+		int n = trackers[threadIndex].numChunks;
+		int finished = n - trackers[threadIndex].chunkCounter.get() + 1;
+		int progress = 100 * finished / n;
 		sb.append(String.format("%3d%%  %s",progress, sizeDisplay[threadIndex]));
 		sb.append(String.format(" %sB/s", rateParser.getHumanReadable(rate[threadIndex])));
 		return sb.toString();
@@ -173,7 +181,26 @@ public class MultiProgressBar implements UFTPProgressListener2, Closeable {
 		size[i] = 0;
 		rate[i] = 0;
 		have[i] = 0;
+		trackers[i] = null;
 		startedAt[i]=0;
+	}
+
+	public void finalize(String identifier, long size, double rate) {
+		try {
+			StringBuilder sb = new StringBuilder();
+			sb.append(rateParser.getHumanReadable(size));
+			sb.append(String.format(" %sB/s", rateParser.getHumanReadable(rate)));
+			int max = width-sb.length()-5;
+			if(max<0)max=8;
+			sb.insert(0, String.format("%-"+max+"s", identifier));
+			synchronized (this) {
+				terminal.puts(Capability.newline);
+				terminal.puts(Capability.carriage_return);
+				terminal.writer().write(sb.toString());
+				terminal.puts(Capability.newline);
+				terminal.flush();
+			}
+		}catch(Exception ex) {}
 	}
 
 	public void close(){

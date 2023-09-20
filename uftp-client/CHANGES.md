@@ -1,4 +1,6 @@
 Change log for the UFTP standalone client
+=========================================
+
 The issue tracker is at
 https://sourceforge.net/p/unicore/uftp-issues/
 
@@ -32,9 +34,7 @@ UFTP Client 1.6.0 (released Apr 12, 2023)
 UFTP Client 1.5.0 (released Nov 7, 2022)
 ----------------------------------------
 
-*** JAVA VERSION NOTE:
-
-   This release requires Java 11 or later!
+**JAVA VERSION NOTE** This release requires Java 11 or later!
 
  - documentation at https://uftp-docs.readthedocs.io
  - update to UNICORE 9.0 libs

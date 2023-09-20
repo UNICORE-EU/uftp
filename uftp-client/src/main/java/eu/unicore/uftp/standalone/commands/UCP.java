@@ -11,7 +11,8 @@ import java.nio.channels.Channels;
 import java.nio.file.Files;
 import java.nio.file.attribute.FileTime;
 import java.util.Calendar;
-import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
@@ -23,13 +24,13 @@ import eu.unicore.uftp.client.FileInfo;
 import eu.unicore.uftp.client.UFTPSessionClient;
 import eu.unicore.uftp.standalone.ClientFacade;
 import eu.unicore.uftp.standalone.ConnectionInfoManager;
-import eu.unicore.uftp.standalone.lists.FileCrawler;
 import eu.unicore.uftp.standalone.lists.FileCrawler.RecursivePolicy;
 import eu.unicore.uftp.standalone.lists.LocalFileCrawler;
 import eu.unicore.uftp.standalone.lists.Operation;
 import eu.unicore.uftp.standalone.lists.RemoteFileCrawler;
 import eu.unicore.uftp.standalone.util.ClientPool;
 import eu.unicore.uftp.standalone.util.ClientPool.TransferTask;
+import eu.unicore.uftp.standalone.util.ClientPool.TransferTracking;
 import eu.unicore.uftp.standalone.util.RangeMode;
 import eu.unicore.uftp.standalone.util.UnitParser;
 import eu.unicore.util.Log;
@@ -56,6 +57,8 @@ public class UCP extends DataTransferCommand {
 	protected boolean archiveMode = false;
 
 	protected ClientFacade client;
+
+	long totalSize = 0;
 
 	@Override
 	public String getName() {
@@ -159,10 +162,17 @@ public class UCP extends DataTransferCommand {
 	protected void run(ClientFacade client) throws Exception {
 		this.client = client;
 		int len = fileArgs.length-1;
+		long start = System.currentTimeMillis();
 		for(int i=0; i<len;i++){
 			String source = fileArgs[i];
 			String target = this.target;
 			cp(source, target);
+		}
+		if(totalSize>0) {
+			double rate = 1000* totalSize / (System.currentTimeMillis() - start);
+			UnitParser up = UnitParser.getCapacitiesParser(1);
+			verbose("\nTotal bytes transferred: "+up.getHumanReadable(totalSize)+"B");
+			verbose("Net transfer rate:       "+up.getHumanReadable(rate)+"B/sec.");
 		}
 	}
 
@@ -251,10 +261,21 @@ public class UCP extends DataTransferCommand {
 		long last = total-1;
 		logger.debug("Uploading: '{}' --> '{}', length={} numChunks={} chunkSize={}", 
 				local.getPath(), remotePath, total, numChunks, chunkSize);
+		int width = String.valueOf(numChunks).length();
+		AtomicInteger chunkCounter = new AtomicInteger(numChunks);
+		AtomicLong startL = new AtomicLong(0);
+		String localFileID = local.getPath();
 		for(int i = 0; i<numChunks; i++){
 			final long end = last;
 			final long first =  i<numChunks-1 ? end - chunkSize : 0;
-			TransferTask task = getUploadChunkTask(remotePath, local.getPath(), first, end, null);
+			TransferTask task = getUploadChunkTask(remotePath, localFileID, first, end, null);
+			String id = numChunks>1 ? 
+					String.format("%s->%s [%0"+width+"d/%d]", localFileID, remotePath, i+1, numChunks):
+						local+"->"+remotePath;
+			task.setId(id);
+			TransferTracking ti = new TransferTracking(localFileID+"->"+remotePath, total,
+					numChunks, chunkCounter, startL);
+			task.setTransferInfo(ti);
 			task.setDataSize(end-first);
 			pool.submit(task);
 			last = first - 1;
@@ -263,6 +284,8 @@ public class UCP extends DataTransferCommand {
 
 	private TransferTask getUploadChunkTask(String remote, String local, long start, long end, UFTPSessionClient sc)
 			throws IOException {
+		final long toTransfer = end-start+1;
+		totalSize+=toTransfer;
 		TransferTask task = new TransferTask(sc) {
 			@Override
 			public void doCall()throws Exception {
@@ -272,7 +295,7 @@ public class UCP extends DataTransferCommand {
 				{
 					UFTPSessionClient sc = getSessionClient();
 					raf.seek(start);
-					sc.put(remote, end-start+1, start, fis);
+					sc.put(remote, toTransfer, start, fis);
 					if(preserve && !remote.startsWith("/dev/")){
 						Calendar to = Calendar.getInstance();
 						to.setTimeInMillis(file.lastModified());
@@ -286,23 +309,18 @@ public class UCP extends DataTransferCommand {
 	private void startDownload(String remote, String destination) 
 			throws Exception {
 		UFTPSessionClient sc = client.doConnect(remote);
-		Map<String, String> params = client.getConnectionManager().extractConnectionParameters(remote);
-		String path = params.get("path");
+		String path = client.getConnectionManager().getPath();
 		RecursivePolicy policy = recurse ? RecursivePolicy.RECURSIVE : RecursivePolicy.NONRECURSIVE;
 		try(ClientPool pool = new ClientPool(numClients, client, remote, verbose)){
-			FileCrawler fileList = new RemoteFileCrawler(path, destination, sc);
-			fileList.crawl(getDownloadCommand(pool, sc), policy);
+			RemoteFileCrawler fileList = new RemoteFileCrawler(path, destination, sc);
+			fileList.crawl( (src, dest) -> {
+				try {
+					executeSingleFileDownload(src, dest, pool, sc);
+				} catch (URISyntaxException|IOException ex) {
+					throw new IOException("Error downloading: '"+src+"' -> '"+dest+"'", ex);
+				}
+			}, policy);
 		}
-	}
-
-	private Operation getDownloadCommand(final ClientPool pool, UFTPSessionClient sc) {
-		return (source, destination) -> {
-			try {
-				executeSingleFileDownload(source, destination, pool, sc);
-			} catch (URISyntaxException|IOException ex) {
-				throw new IOException("Error downloading: '"+source+"' -> '"+destination+"'", ex);
-			}
-		};
 	}
 
 	private void executeSingleFileDownload(String remotePath, String local, ClientPool pool, UFTPSessionClient sc)
@@ -368,6 +386,8 @@ public class UCP extends DataTransferCommand {
 		logger.debug("Downloading: '{}' --> '{}', length={} numChunks={} chunkSize={}",
 				remotePath, local, total, numChunks, chunkSize);
 		int width = String.valueOf(numChunks).length();
+		AtomicInteger chunkCounter = new AtomicInteger(numChunks);
+		AtomicLong startL = new AtomicLong(0);
 		for(int i = 0; i<numChunks; i++){
 			final long first = start;
 			final long end = i<numChunks-1 ? first + chunkSize : total-1;
@@ -376,6 +396,9 @@ public class UCP extends DataTransferCommand {
 					String.format("%s->%s [%0"+width+"d/%d]", remotePath, local, i+1, numChunks):
 						remotePath+"->"+local;
 			task.setId(id);
+			TransferTracking ti = new TransferTracking(remotePath+"->"+local, total,
+					numChunks, chunkCounter, startL);
+			task.setTransferInfo(ti);
 			task.setDataSize(end-first);
 			pool.submit(task);
 			start = end + 1;
@@ -385,6 +408,8 @@ public class UCP extends DataTransferCommand {
 	private TransferTask getDownloadChunkTask(String remotePath, String dest, long start, long end, 
 			UFTPSessionClient sc, FileInfo fi, RangeMode rangeMode)
 					throws FileNotFoundException, URISyntaxException, IOException{
+		final long toTransfer = end-start+1;
+		totalSize+=toTransfer;
 		TransferTask task = new TransferTask(sc) {
 			public void doCall() throws Exception {
 				UFTPSessionClient sc = getSessionClient();
@@ -398,7 +423,7 @@ public class UCP extends DataTransferCommand {
 						raf.seek(file.length());
 					}
 					fos = Channels.newOutputStream(raf.getChannel());
-					sc.get(remotePath, start, end-start+1, fos);
+					sc.get(remotePath, start, toTransfer, fos);
 					if(preserve && !dest.startsWith("/dev/")){
 						try{
 							Files.setLastModifiedTime(file.toPath(),FileTime.fromMillis(fi.getLastModified()));

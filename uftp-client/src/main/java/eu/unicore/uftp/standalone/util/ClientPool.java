@@ -10,6 +10,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.Logger;
@@ -22,7 +23,7 @@ public class ClientPool implements Closeable {
 
 	private static final Logger logger = Log.getLogger(Log.CLIENT, ClientPool.class);
 
-	private final AtomicInteger num = new AtomicInteger(1);
+	private final AtomicInteger num = new AtomicInteger(0);
 	
 	final ExecutorService es;
 	
@@ -38,8 +39,6 @@ public class ClientPool implements Closeable {
 
 	final boolean verbose;
 
-	boolean reuseClients = true;
-	
 	private final MultiProgressBar pb;
 
 	public ClientPool(int poolSize, ClientFacade clientFacade, String uri, boolean verbose) {
@@ -56,17 +55,17 @@ public class ClientPool implements Closeable {
 			public Thread newThread(Runnable r) {
 				if(!createNewThreads) return null;
 				try{
-					UFTPSessionClient client = null;
-					if(reuseClients) {
-						client = ClientPool.this.clientFacade.doConnect(ClientPool.this.uri);
-						clients.add(client);
-					}
+					UFTPSessionClient client = clientFacade.doConnect(ClientPool.this.uri);
+					clients.add(client);
 					UFTPClientThread t = new UFTPClientThread(r, client, clientFacade, uri);
-					t.setName("UFTPClient-"+num.getAndIncrement());
+					t.setName("UFTPClient-"+num.incrementAndGet());
 					return t;
 				}catch(Exception ex){
-					logger.info("Creating new client thread failed.", ex);
+					clientFacade.message("Creating new client thread failed: {}", ex);
 					createNewThreads = false;
+					if(num.get()==0) {
+						throw new RuntimeException(ex);
+					}
 					return null;
 				}
 			}
@@ -137,7 +136,9 @@ public class ClientPool implements Closeable {
 		private String id;
 
 		private long dataSize = -1;
-		
+
+		private TransferTracking transferInfo;
+
 		public TransferTask(UFTPSessionClient sc) {
 			this.sc = sc;
 		}
@@ -167,10 +168,18 @@ public class ClientPool implements Closeable {
 			UFTPClientThread t = (UFTPClientThread)Thread.currentThread();
 			UFTPSessionClient sc = t.getClient();
 			if(pb!=null) { 
-				pb.registerNew(getId(), getDataSize());
+				pb.registerNew(getId(), getDataSize(), transferInfo);
 				sc.setProgressListener(pb);
 			}
 			return sc;
+		}
+
+		public TransferTracking getTransferInfo() {
+			return transferInfo;
+		}
+
+		public void setTransferInfo(TransferTracking transferInfo) {
+			this.transferInfo = transferInfo;
 		}
 
 		public abstract void doCall() throws Exception;
@@ -178,6 +187,9 @@ public class ClientPool implements Closeable {
 		@Override
 		public Boolean call(){
 			try {
+				if(transferInfo!=null && transferInfo.start.get()==0) {
+					transferInfo.start.compareAndExchange(0, System.currentTimeMillis());
+				}
 				doCall();
 				return Boolean.TRUE;
 			}
@@ -193,8 +205,30 @@ public class ClientPool implements Closeable {
 		public void close() {
 			if(pb!=null) {
 				pb.closeSingle();
+				if(transferInfo!=null) {
+					int active = transferInfo.chunkCounter.decrementAndGet();
+					if(active==0) {
+						double rate = 1000*(double)transferInfo.size /
+								      (System.currentTimeMillis()-transferInfo.start.get());
+						pb.finalize(transferInfo.file, transferInfo.size, rate);
+					}
+				}
 			}
 		}
 	}
 
+	public static class TransferTracking {
+		public final String file;
+		public final long size;
+		public final AtomicLong start;
+		public final int numChunks;
+		public final AtomicInteger chunkCounter;
+		public TransferTracking(String file, long size, int numChunks, AtomicInteger chunkCounter, AtomicLong start) {
+			this.file = file;
+			this.size = size;
+			this.chunkCounter = chunkCounter;
+			this.start = start;
+			this.numChunks = numChunks;
+		}
+	}
 }

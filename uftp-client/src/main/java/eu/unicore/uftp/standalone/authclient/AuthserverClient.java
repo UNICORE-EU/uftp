@@ -54,19 +54,19 @@ public class AuthserverClient implements AuthClient {
 		this.client = client;
 	}
 
-	@Override
-	public AuthResponse connect(String path, boolean send, boolean append) throws Exception {
-		return doConnect(path, send, append, false);
+	public AuthResponse connect(String path) throws Exception {
+		return doConnect(path, false);
 	}
 
-	private AuthResponse doConnect(String path, boolean send, boolean append, boolean persistent) throws Exception {
+	private AuthResponse doConnect(String path,boolean persistent) throws Exception {
 		HttpClient httpClient = HttpClientFactory.getClient(uri);
 		HttpPost postRequest = new HttpPost(uri);
 		authData.addAuthenticationHeaders(postRequest);
 		postRequest.addHeader("Accept", "application/json");
 		String base64Key = client.getEncryptionKey()!=null? Utils.encodeBase64(client.getEncryptionKey()) : null;
-		AuthRequest request = createRequestObject(path, send, append, 
-				client.getStreams(), base64Key, client.isCompress(), client.getGroup(), client.getClientIP(), persistent);
+		AuthRequest request = createRequestObject(path,
+				client.getStreams(), base64Key, client.isCompress(),
+				client.getGroup(), client.getClientIP(), persistent);
 		StringEntity input = new StringEntity(gson.toJson(request),
 				ContentType.create("application/json", "UTF-8"));
 		postRequest.setEntity(input);
@@ -82,7 +82,7 @@ public class AuthserverClient implements AuthClient {
 		}
 		if(baseDir==null)baseDir="";
 		LOG.debug("Initalizing session in <{}>", baseDir);
-		return doConnect(baseDir, true, true, persistent);
+		return doConnect(baseDir, persistent);
 	}
 
 	String infoURL;
@@ -178,12 +178,10 @@ public class AuthserverClient implements AuthClient {
 		return url.split("/rest/auth")[0]+"/rest/auth";
 	}
 	
-	AuthRequest createRequestObject(String destinationPath,	boolean send, boolean append, 
-			int streamCount, String encryptionKey, boolean compress, String group, String clientIP, boolean persistent) {
+	AuthRequest createRequestObject(String destinationPath, int streamCount,
+			String encryptionKey, boolean compress, String group, String clientIP, boolean persistent) {
 		AuthRequest ret = new AuthRequest();
 		ret.serverPath = destinationPath;
-		ret.send = send;
-		ret.append = append;
 		ret.streamCount = streamCount;
 		ret.encryptionKey = encryptionKey;
 		ret.compress = compress;
