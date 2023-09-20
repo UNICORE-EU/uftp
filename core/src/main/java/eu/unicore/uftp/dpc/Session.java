@@ -113,7 +113,7 @@ public class Session {
 	public Session(Connection connection, UFTPSessionRequest job, FileAccess fileAccess, int maxParCons) {
 		this.connection = connection;
 		this.fileAccess = new UserFileAccess(fileAccess,job.getUser(),job.getGroup());
-		this.defaultExcludes = parsePathlist(Utils.getProperty(UFTPConstants.ENV_UFTP_NO_WRITE, null), false);
+		this.defaultExcludes = parsePathlist(Utils.getProperty(UFTPConstants.ENV_UFTP_NO_WRITE, null));
 		File _dir = new File(job.getBaseDirectory());
 		if(!_dir.isDirectory()) {
 			_dir = _dir.getParentFile();
@@ -135,8 +135,8 @@ public class Session {
 		}
 		this.maxParCons = maxParCons;
 		this.accessLevel = job.getAccessPermissions();
-		this.includes = parsePathlist(job.getIncludes(), true);
-		this.excludes = parsePathlist(job.getExcludes(), true);
+		this.includes = parsePathlist(job.getIncludes());
+		this.excludes = parsePathlist(job.getExcludes());
 		
 	}
 
@@ -1071,14 +1071,8 @@ public class Session {
 		return Pattern.compile(pattern.toString());
 	}
 
-	private String[] parsePathlist(String pathList, boolean makeAbsolute){
-		String[] res = pathList != null ? pathList.split(":") : null;
-		if(res!=null && makeAbsolute) {
-			for(int i=0; i<res.length; i++) {
-				res[i] = new File(baseDirectory, res[i]).getPath();
-			}
-		}
-		return res;
+	private String[] parsePathlist(String pathList){
+		return pathList != null ? pathList.split(":") : null;
 	}
 
 	private InputStream stream;
