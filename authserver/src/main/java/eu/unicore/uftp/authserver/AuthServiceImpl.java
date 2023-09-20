@@ -140,6 +140,11 @@ public class AuthServiceImpl extends ServiceBase {
 				server.put("href",url);
 				server.put("description",i.getDescription());
 				server.put("status",i.getConnectionStatusMessage());
+				server.put("uftpdServerVersion",i.getVersion());
+				int sessionLimit = i.getSessionLimit();
+				if(sessionLimit>0) {
+					server.put("sessionLimit", sessionLimit);
+				}
 				try{
 					UserAttributes ua = assembleAttributes(i, null);
 					if(ua.uid!=null)server.put("uid",ua.uid);

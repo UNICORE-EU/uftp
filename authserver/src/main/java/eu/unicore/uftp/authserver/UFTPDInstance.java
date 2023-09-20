@@ -1,13 +1,17 @@
 package eu.unicore.uftp.authserver;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.security.SecureRandom;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 import javax.net.ssl.SSLSocketFactory;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.Logger;
 
 import eu.emi.security.authn.x509.impl.SocketFactoryCreator2;
@@ -53,6 +57,8 @@ public class UFTPDInstance implements ExternalSystemConnector {
 	private long lastChecked;
 
 	private final Kernel kernel;
+	
+	private final Map<String,String>serverInfo = new HashMap<>();
 	
 	public UFTPDInstance(String serverName, Kernel kernel){
 		this.serverName = serverName;
@@ -156,7 +162,14 @@ public class UFTPDInstance implements ExternalSystemConnector {
 		boolean ok = true;
 		UFTPPingRequest req = new UFTPPingRequest();
 		try{
-			doSendRequest(req);
+			String response = doSendRequest(req);
+			for(String line: IOUtils.readLines(new StringReader(response))){
+				if(!line.contains(":"))continue;
+				try {
+					String[]tok = line.split(":", 2);
+					serverInfo.put(tok[0].trim(), tok[1].trim());
+				}catch(Exception e) {}
+			}
 		}
 		catch(IOException e){
 			ok = false;
@@ -184,6 +197,18 @@ public class UFTPDInstance implements ExternalSystemConnector {
 			throw new IOException(statusMessage);
 		}
 		return doSendRequest(request);
+	}
+
+	public int getSessionLimit() {
+		int limit = -1;
+		try {
+			limit = Integer.parseInt(serverInfo.getOrDefault("MaxSessionsPerClient", "-1"));
+		}catch(Exception ex) {}
+		return limit;
+	}
+
+	public String getVersion() {
+		return serverInfo.getOrDefault("Version", "n/a");
 	}
 
 	private static SSLSocketFactory socketfactory = null;

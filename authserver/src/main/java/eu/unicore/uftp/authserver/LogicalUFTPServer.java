@@ -233,9 +233,27 @@ public class LogicalUFTPServer implements ExternalSystemConnector, UserInfoSourc
 					res.add(x.toString());
 				}
 			});
-			
 		}
 		return res;
 	}
 
+	public int getSessionLimit() {
+		int limit = 0;
+		for(UFTPDInstance i: instances) {
+			int iLimit = i.getSessionLimit();
+			if(iLimit<0)continue;
+			limit = limit>0 ? Math.min(iLimit, limit) : iLimit;
+		}
+		return limit;
+	}
+	
+	public String getVersion() {
+		// note: we ignore potentially different versions for 
+		// the various instances
+		for(UFTPDInstance i: instances) {
+			String v = i.getVersion();
+			if(!"n/a".equals(v))return v;
+		}
+		return "n/a";
+	}
 }

@@ -10,6 +10,12 @@ Full documentation is at: https://uftp-docs.readthedocs.io
 ***  see README-UPGRADE.txt for how to update
 ***
 
+Auth Server 2.9.0 (released MM DD, 2023)
+----------------------------------------
+ - show server's session limit in info
+ - show uftpd version in info
+ - update to UNICORE 9.3.0 base libs  
+
 Auth Server 2.8.2 (released Aug  31, 2023)
 ------------------------------------------
  - new feature: allow 'reservations' for certain accounts
