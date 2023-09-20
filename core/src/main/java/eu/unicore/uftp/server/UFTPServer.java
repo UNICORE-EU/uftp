@@ -9,7 +9,6 @@ import java.io.OutputStreamWriter;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.RejectedExecutionException;
@@ -24,7 +23,6 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.Logger;
 
-import eu.unicore.uftp.dpc.DPCServer;
 import eu.unicore.uftp.dpc.UFTPConstants;
 import eu.unicore.uftp.dpc.Utils;
 import eu.unicore.uftp.server.requests.UFTPBaseRequest;
@@ -356,13 +354,12 @@ public class UFTPServer implements Runnable {
 	public String getServerInfo() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("Version: ").append(getVersion());
-		sb.append("\nMaxStreamsPerClient: ").append(maxStreams);
+		sb.append("\nMaxSessionsPerClient: ").append(maxControlConnectionsPerClient);
 		if(advertiseAddress!=null){
 			sb.append("\nAdvertiseAddress: ").append(advertiseAddress);
 		}
 		sb.append("\nListenPort: ").append(srvport);
 		sb.append("\nListenAddress: ").append(srvip.getHostAddress());
-		sb.append("\nFeatures: ").append(Arrays.asList(DPCServer.getFeatures()));
 		return sb.toString();
 	}
 

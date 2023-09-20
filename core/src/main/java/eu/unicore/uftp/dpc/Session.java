@@ -113,9 +113,7 @@ public class Session {
 	public Session(Connection connection, UFTPSessionRequest job, FileAccess fileAccess, int maxParCons) {
 		this.connection = connection;
 		this.fileAccess = new UserFileAccess(fileAccess,job.getUser(),job.getGroup());
-		this.includes = parsePathlist(job.getIncludes());
-		this.excludes = parsePathlist(job.getExcludes());
-		this.defaultExcludes = parsePathlist(Utils.getProperty(UFTPConstants.ENV_UFTP_NO_WRITE, null));
+		this.defaultExcludes = parsePathlist(Utils.getProperty(UFTPConstants.ENV_UFTP_NO_WRITE, null), false);
 		File _dir = new File(job.getBaseDirectory());
 		if(!_dir.isDirectory()) {
 			_dir = _dir.getParentFile();
@@ -137,6 +135,9 @@ public class Session {
 		}
 		this.maxParCons = maxParCons;
 		this.accessLevel = job.getAccessPermissions();
+		this.includes = parsePathlist(job.getIncludes(), true);
+		this.excludes = parsePathlist(job.getExcludes(), true);
+		
 	}
 
 	public int getNextAction() throws IOException, ProtocolViolationException {
@@ -1015,15 +1016,17 @@ public class Session {
 	}
 
 	public boolean isAllowed(File path, Mode requestedAccess){
+		if(Mode.INFO.compareTo(requestedAccess)<=0)return true;
 		boolean res=false;
-		//check if it is in the includes
+		// check if we have includes
 		if(includes!=null && includes.length>0){
 			for(String include: includes){
 				res=res || match(path,include);
 			}
 		}
-		//else everything is included
-		else res=true;
+		else {
+			res=true;
+		}
 		return res;
 	}
 
@@ -1068,8 +1071,14 @@ public class Session {
 		return Pattern.compile(pattern.toString());
 	}
 
-	private String[] parsePathlist(String pathList){
-		return pathList != null ? pathList.split(":") : null;
+	private String[] parsePathlist(String pathList, boolean makeAbsolute){
+		String[] res = pathList != null ? pathList.split(":") : null;
+		if(res!=null && makeAbsolute) {
+			for(int i=0; i<res.length; i++) {
+				res[i] = new File(baseDirectory, res[i]).getPath();
+			}
+		}
+		return res;
 	}
 
 	private InputStream stream;
