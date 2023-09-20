@@ -92,10 +92,12 @@ def ping(request, connector, config, LOG):
     response = """Version: %s
 ListenPort: %s
 ListenAddress: %s
+MaxSessionsPerClient: %s
 """ % (
         MY_VERSION,
         config['SERVER_PORT'],
-        config['SERVER_HOST']
+        config['SERVER_HOST'],
+        config['MAX_CONNECTIONS']
     )
     if config['ADVERTISE_HOST'] is not None:
         response += "AdvertiseAddress: %s" % config['ADVERTISE_HOST']

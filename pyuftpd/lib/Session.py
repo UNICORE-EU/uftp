@@ -465,6 +465,7 @@ class Session(object):
     def retr(self, params):
         self.assert_permission(Session.MODE_READ)
         path = self.makeabs(params)
+        self.assert_access(path)
         fi = FileInfo(path)
         if not fi.can_read():
             self.control.write_message("500 Directory/file does not exist or cannot be accessed!")
