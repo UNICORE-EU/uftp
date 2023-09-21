@@ -45,7 +45,7 @@ prepare:
 	mkdir -p build/lib
 	cp -R docs build-tools/* build/
 	cp lib/* build/lib
-	cp CHANGES.txt ../LICENSE build/docs/
+	cp CHANGES.md ../LICENSE build/docs/
 	sed -i "s/VERSION/${VERSION}/" build/pom.xml
 	sed -i "s/MY_VERSION = \"DEV\"/MY_VERSION = \"${VERSION}\"/" build/lib/UFTPD.py
 
