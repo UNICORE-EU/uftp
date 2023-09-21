@@ -3,7 +3,6 @@ package eu.unicore.uftp.standalone.lists;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
-import java.net.URISyntaxException;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
@@ -31,14 +30,17 @@ public class LocalFileCrawler extends FileCrawler {
 
 	private final UFTPSessionClient sc;
     
-    public LocalFileCrawler(String path, String target, UFTPSessionClient sc) {
+	private final RecursivePolicy policy;
+
+    public LocalFileCrawler(String path, String target, UFTPSessionClient sc, RecursivePolicy policy) {
     	this.path = path;
     	this.sc = sc;
     	this.target = target;
+    	this.policy = policy;
     	this.localSeparator = File.separator;
     }
 
-    private boolean init(RecursivePolicy policy) throws Exception {
+    private boolean init() throws Exception {
     	File source = new File(path);
     	if(source.isDirectory()){
     		if(RecursivePolicy.RECURSIVE!=policy){
@@ -61,7 +63,7 @@ public class LocalFileCrawler extends FileCrawler {
     
     Operation cmd;
     
-    public void crawl(Operation cmd, RecursivePolicy policy) throws Exception {
+    public void crawl(Operation cmd) throws Exception {
     	this.cmd = cmd;
     	if(isSingleFile(path)){
     		if(!"-".equals(path)) {
@@ -78,14 +80,14 @@ public class LocalFileCrawler extends FileCrawler {
     		cmd.execute(path, target);
     	}
     	else{
-    		if(init(policy)){
-    			crawl(path, target, policy, false);
+    		if(init()){
+    			crawl(path, target, false);
     		}
     	}
     }
     
-    private void crawl(String source, String remoteDirectory, FileCrawler.RecursivePolicy policy, boolean all) 
-			throws URISyntaxException, IOException {
+    private void crawl(String source, String remoteDirectory, boolean all) 
+			throws Exception {
     	File[] files = getFiles(source, all);
     	if(files == null || files.length == 0)return;
     	
@@ -98,7 +100,7 @@ public class LocalFileCrawler extends FileCrawler {
 					logger.debug(msg);
 				}else{
 					safeMkDir(target);
-					crawl(localFile.getPath(), target, policy, true);
+					crawl(localFile.getPath(), target, true);
 				}
 			}else{
 				cmd.execute(localFile.getPath(),target);

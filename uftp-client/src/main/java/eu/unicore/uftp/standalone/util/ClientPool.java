@@ -77,16 +77,14 @@ public class ClientPool implements Closeable {
 		logger.info("Shutting down client pool");
 		es.shutdown();
 		logger.debug("Have {} tasks", tasks.size());
-		for(Future<?>f: tasks){
+		tasks.forEach(f -> {
 			try{
 				f.get();
-			}catch(Exception ee){
-				logger.error(ee);
+			}catch(Exception e){
+				verbose(Log.createFaultMessage("ERROR: ", e));
 			}
-		}
-		for(UFTPSessionClient s: clients){
-			IOUtils.closeQuietly(s);
-		}
+		});
+		clients.forEach(sc -> IOUtils.closeQuietly(sc));
 	}
 
 	public void submit(TransferTask r) {
@@ -103,9 +101,9 @@ public class ClientPool implements Closeable {
 
 	public static class UFTPClientThread extends Thread {
 
-		UFTPSessionClient client;
-		ClientFacade cf;
-		String uri;
+		final UFTPSessionClient client;
+		final ClientFacade cf;
+		final String uri;
 
 		public UFTPClientThread(Runnable target, UFTPSessionClient client, ClientFacade cf, String uri) {
 			super(target);
@@ -187,7 +185,7 @@ public class ClientPool implements Closeable {
 		@Override
 		public Boolean call(){
 			try {
-				if(transferInfo!=null && transferInfo.start.get()==0) {
+				if(transferInfo!=null) {
 					transferInfo.start.compareAndExchange(0, System.currentTimeMillis());
 				}
 				doCall();
@@ -205,14 +203,6 @@ public class ClientPool implements Closeable {
 		public void close() {
 			if(pb!=null) {
 				pb.closeSingle();
-				if(transferInfo!=null) {
-					int active = transferInfo.chunkCounter.decrementAndGet();
-					if(active==0) {
-						double rate = 1000*(double)transferInfo.size /
-								      (System.currentTimeMillis()-transferInfo.start.get());
-						pb.finalize(transferInfo.file, transferInfo.size, rate);
-					}
-				}
 			}
 		}
 	}

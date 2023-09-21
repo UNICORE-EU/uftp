@@ -47,4 +47,15 @@ public class TestRM extends BaseServiceTest {
     	assertFalse(f.exists());
     }
 
+    @Test
+    public void testRMDir() throws Exception {
+    	File f = new File(testsDir, "dir_to_remove");
+    	f.mkdir();
+    	String[] args = new String[]{ new URM().getName(), "-u", "demouser:test123",
+    			"--quiet", "--recurse",
+    			getAuthURL(f.getAbsolutePath())
+    	};
+    	assertEquals(0, ClientDispatcher._main(args));
+    	assertFalse(f.exists());
+    }
 }

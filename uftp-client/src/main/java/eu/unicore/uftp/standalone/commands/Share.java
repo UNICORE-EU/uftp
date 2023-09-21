@@ -20,14 +20,14 @@ import eu.unicore.util.httpclient.DefaultClientConfiguration;
  * @author schuller
  */
 public class Share extends Command {
-	
+
 	/**
 	 * environment variable defining the server URL for sharing
 	 */
 	public static String UFTP_SHARE_URL = "UFTP_SHARE_URL";
-	
+
 	String url;
-	
+
 	@Override
 	public String getName() {
 		return "share";
@@ -81,14 +81,14 @@ public class Share extends Command {
 		}
 		share(client);
 	}
-	
+
 	public void listShares(ClientFacade client) throws Exception {
 		BaseClient bc = getClient(url, client);
 		JSONObject shares = bc.getJSON();
 		System.out.println(shares.toString(2));
 		_lastList = shares;
 	}
-	
+
 	public void share(ClientFacade client) throws Exception {
 		boolean anonymous = !line.hasOption("a");
 		boolean write = line.hasOption("w");
@@ -100,7 +100,7 @@ public class Share extends Command {
 			throw new IllegalArgumentException("Cannot have --write without specifying --access. "
 					+ "If you REALLY want anonymous write access, use: --access 'cn=anonymous,o=unknown,ou=unknown'");
 		}
-		
+
 		String accessType = write? "WRITE" : "READ" ;
 		if(delete)accessType = "NONE";
 		String target = anonymous? Client.ANONYMOUS_CLIENT_DN : line.getOptionValue('a');
@@ -108,7 +108,7 @@ public class Share extends Command {
 			throw new IllegalArgumentException("Missing argument: <path>");
 		}
 		String path = fileArgs[0];
-		
+
 		File file = new File(path);
 		if(!file.isAbsolute()) {
 			file = new File(System.getProperty("user.dir"), file.getPath());
@@ -124,13 +124,13 @@ public class Share extends Command {
 			showNewShareInfo(bc.getJSON());
 		}
 	}
-	
+
 	protected void showNewShareInfo(JSONObject info) throws Exception {
 		if(verbose)System.out.println(info.toString(2));
 		System.out.println("Shared to: "+info.getJSONObject("share").getString("http"));
 		_lastShare = info;
 	}
-	
+
 	@Override
 	public String getArgumentDescription() {
 		return "<path>"
@@ -139,19 +139,19 @@ public class Share extends Command {
 				+" OR --delete --access <target-dn> <path>"
 				;
 	}
-	
+
 	public String getSynopsis(){
 		return "Create, update and delete shares.";
 	}
-	
+
 	protected BaseClient getClient(String url, ClientFacade client) throws Exception {
 		DefaultClientConfiguration sec = new DefaultClientConfiguration();
 		sec.setValidator(new BinaryCertChainValidator(true));
-        sec.setSslAuthn(true);
-        sec.setSslEnabled(true);
+		sec.setSslAuthn(true);
+		sec.setSslEnabled(true);
 		return new BaseClient(url, sec, client.getConnectionManager().getAuthData());
 	}
-	
+
 	protected JSONObject createRequest(String access, String target, String path, boolean onetime, long lifetime) throws JSONException {
 		JSONObject o = new JSONObject();
 		AccessType t = AccessType.valueOf(access);
@@ -168,19 +168,15 @@ public class Share extends Command {
 	}
 
 
-public enum AccessType {
+	public enum AccessType {
+		NONE,
+		READ,
+		WRITE,
+		MODIFY
+	}
 
-	NONE,
-
-	READ,
-	
-	WRITE,
-	
-	MODIFY
-}
-
-// for testing
- static JSONObject _lastList;
- static JSONObject _lastShare;
+	// for testing
+	static JSONObject _lastList;
+	static JSONObject _lastShare;
 
 }

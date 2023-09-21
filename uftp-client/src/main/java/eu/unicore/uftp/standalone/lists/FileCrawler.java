@@ -12,7 +12,7 @@ public abstract class FileCrawler {
         NONRECURSIVE
     }
 
-    public abstract void crawl(Operation cmd, RecursivePolicy policy) throws Exception;
+    public abstract void crawl(Operation cmd) throws Exception;
 
     public abstract boolean isSingleFile(String path);
 

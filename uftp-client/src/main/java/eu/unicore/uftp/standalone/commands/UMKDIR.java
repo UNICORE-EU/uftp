@@ -1,5 +1,7 @@
 package eu.unicore.uftp.standalone.commands;
 
+import org.apache.commons.io.IOUtils;
+
 import eu.unicore.uftp.client.UFTPSessionClient;
 import eu.unicore.uftp.standalone.ClientFacade;
 
@@ -16,13 +18,18 @@ public class UMKDIR extends Command {
 			throw new IllegalArgumentException("Missing argument: "+getArgumentDescription());
 		}
 		UFTPSessionClient sc = null;
-		for(String fileArg: fileArgs) {
-			sc = client.checkReInit(fileArg, sc);
-			String path = client.getConnectionManager().getPath();
-			sc.mkdir(path);
+		try {
+			for(String fileArg: fileArgs) {
+				sc = client.checkReInit(fileArg, sc);
+				String path = client.getConnectionManager().getPath();
+				sc.mkdir(path);
+			}
+		}
+		finally{
+			IOUtils.closeQuietly(sc);
 		}
 	}
-		
+
 	@Override
 	public String getArgumentDescription() {
 		return "<remote_directory> ...";	

@@ -95,30 +95,29 @@ public class URCP extends RangedCommand {
 		if((onetimePassword==null || uftpdAddress==null) && !(remoteSource && remoteTarget)) {
 			throw new IllegalArgumentException("One-time password and UFTPD address are required");
 		}
-		UFTPSessionClient sc = receive? client.doConnect(target) : client.doConnect(source);
-		
-		if(onetimePassword==null) {
-			// authenticate the "other" UFTP side
-			AuthResponse auth = remoteSource? client.authenticate(source) : client.authenticate(target);
-			uftpdAddress = auth.serverHost+":"+auth.serverPort;
-			onetimePassword = auth.secret;
+		try(UFTPSessionClient sc = receive? client.doConnect(target) : client.doConnect(source)) {
+			if(onetimePassword==null) {
+				// authenticate the "other" UFTP side
+				AuthResponse auth = remoteSource? client.authenticate(source) : client.authenticate(target);
+				uftpdAddress = auth.serverHost+":"+auth.serverPort;
+				onetimePassword = auth.secret;
+			}
+			if(remoteSource) {
+				Map<String,String> sourceParams = client.getConnectionManager().extractConnectionParameters(source);
+				source = sourceParams.get("path");
+			}
+			if(remoteTarget) {
+				Map<String,String> targetParams = client.getConnectionManager().extractConnectionParameters(target);
+				target = targetParams.get("path");
+			}
+			if(haveRange()){
+				sc.sendRangeCommand(getOffset(), getLength());
+			}
+			String reply = receive ?
+						sc.receiveFile(target, source, uftpdAddress, onetimePassword):
+						sc.sendFile(source, target, uftpdAddress, onetimePassword);
+			verbose(reply);
 		}
-		if(remoteSource) {
-			Map<String,String> sourceParams = client.getConnectionManager().extractConnectionParameters(source);
-			source = sourceParams.get("path");
-		}
-		if(remoteTarget) {
-			Map<String,String> targetParams = client.getConnectionManager().extractConnectionParameters(target);
-			target = targetParams.get("path");
-		}
-		
-		if(haveRange()){
-			sc.sendRangeCommand(getOffset(), getLength());
-		}
-		String reply = receive ?
-				sc.receiveFile(target, source, uftpdAddress, onetimePassword):
-				sc.sendFile(source, target, uftpdAddress, onetimePassword);
-		verbose(reply);
 	}
 	
 }

@@ -3,6 +3,7 @@ package eu.unicore.uftp.standalone.commands;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.commons.io.IOUtils;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
 
@@ -47,10 +48,14 @@ public class URM extends Command {
 			throw new IllegalArgumentException("Missing argument: "+getArgumentDescription());
 		}
 		UFTPSessionClient sc = null;
-		for(String fileArg: fileArgs) {
-			sc = client.checkReInit(fileArg, sc);
-			String path = client.getConnectionManager().getPath();
-			doRM(path, sc);
+		try {
+			for(String fileArg: fileArgs) {
+				sc = client.checkReInit(fileArg, sc);
+				String path = client.getConnectionManager().getPath();
+				doRM(path, sc);
+			}
+		}finally {
+			IOUtils.closeQuietly(sc);
 		}
 	}
 	
@@ -64,8 +69,7 @@ public class URM extends Command {
 				error("uftp rm: cannot remove '{}': Is a directory", file);
 				return;
 			}
-			// TODO session client needs to use the 'RMD' FTP command
-			sc.rm(file);
+			sc.rmdir(file);
 		}
 		else sc.rm(file);
 	}

@@ -6,8 +6,10 @@ import java.util.Map;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.commons.io.IOUtils;
 
 import eu.unicore.uftp.client.UFTPSessionClient;
+import eu.unicore.uftp.client.UFTPSessionClient.HashInfo;
 import eu.unicore.uftp.standalone.ClientFacade;
 import eu.unicore.uftp.standalone.lists.FileCrawler.RecursivePolicy;
 import eu.unicore.uftp.standalone.lists.RemoteFileCrawler;
@@ -70,25 +72,27 @@ public class Checksum extends RangedCommand {
 	@Override
 	protected void run(ClientFacade client) throws Exception {
 		UFTPSessionClient sc = null;
-		for(String fileSpec: fileArgs) {
-			sc = client.checkReInit(fileSpec, sc);
-			Map<String, String> params = client.getConnectionManager().extractConnectionParameters(fileSpec);
-			String path = params.get("path");
-			checksum(path, sc);
+		try {
+			for(String fileSpec: fileArgs) {
+				sc = client.checkReInit(fileSpec, sc);
+				Map<String, String> params = client.getConnectionManager().extractConnectionParameters(fileSpec);
+				String path = params.get("path");
+				checksum(path, sc);
+			}
+		} finally {
+			IOUtils.closeQuietly(sc);
 		}
 	}
 
 	protected void checksum(String path, UFTPSessionClient sc) throws Exception {
 		RecursivePolicy policy = recurse ? RecursivePolicy.RECURSIVE:RecursivePolicy.NONRECURSIVE;
-		RemoteFileCrawler fileList = new RemoteFileCrawler(path, "./dummy/", sc);
+		RemoteFileCrawler fileList = new RemoteFileCrawler(path, "./dummy/", sc, policy);
 		fileList.setCreateLocalDirs(false);
 		if (fileList.isSingleFile(path)) {
 			singleFileChecksum(path, sc);
 		}
 		else{
-			fileList.crawl( (x, dummy) -> {
-				singleFileChecksum(x, sc);
-			}, policy);
+			fileList.crawl( (x, dummy) -> singleFileChecksum(x, sc));
 		}
 	}
 	
@@ -100,9 +104,7 @@ public class Checksum extends RangedCommand {
 			haveSetAlgorithm = true;
 			verbose("Set hash algorithm: {}", reply);
 		}
-		long offset = getOffset();
-		long length = getLength();
-		UFTPSessionClient.HashInfo hi = sc.getHash(path, offset, length);
+		HashInfo hi = sc.getHash(path, getOffset(), getLength());
 		System.out.println(hi.hash+"  "+hi.path);
 	}
 

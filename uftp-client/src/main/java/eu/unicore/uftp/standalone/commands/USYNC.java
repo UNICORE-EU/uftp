@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
+import org.apache.commons.io.IOUtils;
+
 import eu.unicore.uftp.client.UFTPSessionClient;
 import eu.unicore.uftp.rsync.RsyncStats;
 import eu.unicore.uftp.standalone.ClientFacade;
@@ -26,22 +28,27 @@ public class USYNC extends DataTransferCommand {
 		String master = fileArgs[0];
 		String slave = fileArgs[1];
 		verbose("sync {} (MASTER) -> {} (SLAVE)", master, slave);	
-		if (ConnectionInfoManager.isRemote(master) && ConnectionInfoManager.isLocal(slave)) {
-			sc = client.doConnect(master);
-			Map<String, String> params = client.getConnectionManager().extractConnectionParameters(master);
-			String path = params.get("path");
-			stats = rsyncLocalFile(slave, path, sc);
-		}
-		else if (ConnectionInfoManager.isLocal(master) && ConnectionInfoManager.isRemote(slave)) {
+		try {
+			if (ConnectionInfoManager.isRemote(master) && ConnectionInfoManager.isLocal(slave)) {
+				sc = client.doConnect(master);
+				Map<String, String> params = client.getConnectionManager().extractConnectionParameters(master);
+				String path = params.get("path");
+				stats = rsyncLocalFile(slave, path, sc);
+			}
+			else if (ConnectionInfoManager.isLocal(master) && ConnectionInfoManager.isRemote(slave)) {
 				sc = client.doConnect(slave);
 				Map<String, String> params = client.getConnectionManager().extractConnectionParameters(slave);
 				String path = params.get("path");
 				stats =  rsyncRemoteFile(master, path, sc);
+			}
+			else {
+				throw new IOException("Need one remote and one local file for sync.");
+			}
+			verbose("Statistics : {}", stats);
 		}
-		else {
-			throw new IOException("Need one remote and one local file for sync.");
+		finally{
+			IOUtils.closeQuietly(sc);
 		}
-		verbose("Statistics : {}", stats);
 	}
 
 	private RsyncStats rsyncRemoteFile(String local, String remote, UFTPSessionClient sc) throws Exception {

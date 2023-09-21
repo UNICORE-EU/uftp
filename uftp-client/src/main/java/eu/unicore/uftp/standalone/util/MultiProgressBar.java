@@ -181,24 +181,31 @@ public class MultiProgressBar implements UFTPProgressListener2, Closeable {
 		size[i] = 0;
 		rate[i] = 0;
 		have[i] = 0;
+		TransferTracking t = trackers[i];
 		trackers[i] = null;
 		startedAt[i]=0;
+		if(t!=null)finalize(t);
 	}
 
-	public void finalize(String identifier, long size, double rate) {
+	private void finalize(TransferTracking t) {
 		try {
-			StringBuilder sb = new StringBuilder();
-			sb.append(rateParser.getHumanReadable(size));
-			sb.append(String.format(" %sB/s", rateParser.getHumanReadable(rate)));
-			int max = width-sb.length()-5;
-			if(max<0)max=8;
-			sb.insert(0, String.format("%-"+max+"s", identifier));
-			synchronized (this) {
-				terminal.puts(Capability.newline);
-				terminal.puts(Capability.carriage_return);
-				terminal.writer().write(sb.toString());
-				terminal.puts(Capability.newline);
-				terminal.flush();
+			int active = t.chunkCounter.decrementAndGet();
+			if(active==0) {
+				double rate = 1000*(double)t.size /
+						(System.currentTimeMillis()-t.start.get());
+				StringBuilder sb = new StringBuilder();
+				sb.append(rateParser.getHumanReadable(t.size));
+				sb.append(String.format(" %sB/s", rateParser.getHumanReadable(rate)));
+				int max = width-sb.length()-5;
+				if(max<0)max=8;
+				sb.insert(0, String.format("%-"+max+"s", t.file));
+				synchronized (this) {
+					terminal.puts(Capability.newline);
+					terminal.puts(Capability.carriage_return);
+					terminal.writer().write(sb.toString());
+					terminal.puts(Capability.newline);
+					terminal.flush();
+				}
 			}
 		}catch(Exception ex) {}
 	}

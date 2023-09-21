@@ -1,7 +1,5 @@
 package eu.unicore.uftp.standalone.lists;
 
-import java.io.IOException;
-
 /**
  *
  * @author jj
@@ -13,8 +11,8 @@ public interface Operation {
 	 * 
 	 * @param source
 	 * @param destination
-	 * @throws IOException
+	 * @throws Exception
 	 */
-    public void execute(String source, String destination) throws IOException;
+    public void execute(String source, String destination) throws Exception;
 
 }

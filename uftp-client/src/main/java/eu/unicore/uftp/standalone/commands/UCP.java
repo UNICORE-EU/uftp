@@ -10,6 +10,7 @@ import java.net.URISyntaxException;
 import java.nio.channels.Channels;
 import java.nio.file.Files;
 import java.nio.file.attribute.FileTime;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -26,7 +27,6 @@ import eu.unicore.uftp.standalone.ClientFacade;
 import eu.unicore.uftp.standalone.ConnectionInfoManager;
 import eu.unicore.uftp.standalone.lists.FileCrawler.RecursivePolicy;
 import eu.unicore.uftp.standalone.lists.LocalFileCrawler;
-import eu.unicore.uftp.standalone.lists.Operation;
 import eu.unicore.uftp.standalone.lists.RemoteFileCrawler;
 import eu.unicore.uftp.standalone.util.ClientPool;
 import eu.unicore.uftp.standalone.util.ClientPool.TransferTask;
@@ -163,11 +163,9 @@ public class UCP extends DataTransferCommand {
 		this.client = client;
 		int len = fileArgs.length-1;
 		long start = System.currentTimeMillis();
-		for(int i=0; i<len;i++){
-			String source = fileArgs[i];
-			String target = this.target;
-			cp(source, target);
-		}
+		String[] sources = new String[len];
+		System.arraycopy(fileArgs, 0, sources, 0, len);
+		cp(sources, target);
 		if(totalSize>0) {
 			double rate = 1000* totalSize / (System.currentTimeMillis() - start);
 			UnitParser up = UnitParser.getCapacitiesParser(1);
@@ -179,41 +177,36 @@ public class UCP extends DataTransferCommand {
 	/**
 	 * Entry to the Copy feature
 	 */
-	public void cp(String source, String destination)
+	public void cp(String[] sources, String destination)
 			throws Exception {
-		if (ConnectionInfoManager.isLocal(source)) {
-			startUpload(source, destination);
+		if (!ConnectionInfoManager.isLocal(destination)) {
+			startUpload(sources, destination);
 			return;
 		}
 		if (ConnectionInfoManager.isLocal(destination)) {
-			startDownload(source, destination);
+			for(String source: sources) {
+				startDownload(source, destination);
+			}
 			return;
 		}
 		String error = String.format("Unable to handle [%s, %s] combination. "
-				+ "It is neither upload nor download", source, destination);
+				+ "It is neither upload nor download", Arrays.asList(sources), destination);
 		throw new IllegalArgumentException(error);
 	}
 
 
-	private void startUpload(String localSource, String destinationURL) 
+	private void startUpload(String[] localSources, String destinationURL) 
 			throws Exception {
-		UFTPSessionClient sc = client.doConnect(destinationURL);
-		String remotePath = client.getConnectionManager().getPath();
-		RecursivePolicy policy = recurse ? RecursivePolicy.RECURSIVE : RecursivePolicy.NONRECURSIVE;
-		try(ClientPool pool = new ClientPool(numClients, client, destinationURL, verbose)){
-			LocalFileCrawler fileList = new LocalFileCrawler(localSource, remotePath, sc);
-			fileList.crawl(getUploadCommand(preserve, pool, sc), policy);
+		try(UFTPSessionClient sc = client.doConnect(destinationURL)){
+			String remotePath = client.getConnectionManager().getPath();
+			RecursivePolicy policy = recurse ? RecursivePolicy.RECURSIVE : RecursivePolicy.NONRECURSIVE;
+			try(ClientPool pool = new ClientPool(numClients, client, destinationURL, verbose)){
+				for(String localSource: localSources) {
+					LocalFileCrawler fileList = new LocalFileCrawler(localSource, remotePath, sc, policy);
+					fileList.crawl( (src, dest)-> executeSingleFileUpload(src, dest, pool, sc));
+				}
+			}
 		}
-	}
-
-	private Operation getUploadCommand(final boolean preserveAttributes, final ClientPool pool, UFTPSessionClient sc) {
-		return (source, destination)-> {
-			try {
-				executeSingleFileUpload(source, destination, pool, sc);
-			} catch (URISyntaxException|IOException ex) {
-				throw new IOException("Error uploading '"+source+"' -> '"+destination+"'", ex);
-			}			
-		};
 	}
 
 	private void executeSingleFileUpload(String local, String remotePath, ClientPool pool, UFTPSessionClient sc)
@@ -308,23 +301,18 @@ public class UCP extends DataTransferCommand {
 
 	private void startDownload(String remote, String destination) 
 			throws Exception {
-		UFTPSessionClient sc = client.doConnect(remote);
-		String path = client.getConnectionManager().getPath();
-		RecursivePolicy policy = recurse ? RecursivePolicy.RECURSIVE : RecursivePolicy.NONRECURSIVE;
-		try(ClientPool pool = new ClientPool(numClients, client, remote, verbose)){
-			RemoteFileCrawler fileList = new RemoteFileCrawler(path, destination, sc);
-			fileList.crawl( (src, dest) -> {
-				try {
-					executeSingleFileDownload(src, dest, pool, sc);
-				} catch (URISyntaxException|IOException ex) {
-					throw new IOException("Error downloading: '"+src+"' -> '"+dest+"'", ex);
-				}
-			}, policy);
+		try(UFTPSessionClient sc = client.doConnect(remote)){
+			String path = client.getConnectionManager().getPath();
+			RecursivePolicy policy = recurse ? RecursivePolicy.RECURSIVE : RecursivePolicy.NONRECURSIVE;
+			try(ClientPool pool = new ClientPool(numClients, client, remote, verbose)){
+				RemoteFileCrawler fileList = new RemoteFileCrawler(path, destination, sc, policy);
+				fileList.crawl( (src, dest) -> executeSingleFileDownload(src, dest, pool, sc));
+			}
 		}
 	}
 
 	private void executeSingleFileDownload(String remotePath, String local, ClientPool pool, UFTPSessionClient sc)
-			throws FileNotFoundException, URISyntaxException, IOException {
+			throws Exception {
 		String dest = getFullLocalDestination(remotePath, local);
 		File file = new File(dest);
 		OutputStream fos = null;

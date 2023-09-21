@@ -114,7 +114,7 @@ public class TestUCP extends BaseServiceTest {
         String nonExistingFile = "/some/path/file1.dat";
         UCP ucp = new UCP();
 		ucp.client = client;
-		ucp.cp(getAuthURL(nonExistingFile), "/tmp/filexxx.dat");
+		ucp.cp(new String[]{getAuthURL(nonExistingFile)}, "/tmp/filexxx.dat");
     }
 
     @Test

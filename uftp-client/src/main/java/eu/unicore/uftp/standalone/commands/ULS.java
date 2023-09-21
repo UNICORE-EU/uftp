@@ -7,6 +7,7 @@ import java.util.List;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.commons.io.IOUtils;
 
 import eu.unicore.uftp.client.FileInfo;
 import eu.unicore.uftp.client.UFTPSessionClient;
@@ -44,32 +45,35 @@ public class ULS extends Command {
 		}
 		int len = fileArgs.length;
 		UFTPSessionClient sc = null;
-		for(String fileArg: fileArgs) {
-			sc = client.checkReInit(fileArg, sc);
-			String path = client.getConnectionManager().extractConnectionParameters(fileArg).get("path");
-			FileInfo info = sc.stat(path);
-			if(info.isDirectory()){
-				if(len>1) {
-					System.out.println(path+": ");
-					System.out.println();
+		try {
+			for(String fileArg: fileArgs) {
+				sc = client.checkReInit(fileArg, sc);
+				String path = client.getConnectionManager().extractConnectionParameters(fileArg).get("path");
+				FileInfo info = sc.stat(path);
+				if(info.isDirectory()){
+					if(len>1) {
+						System.out.println(path+": ");
+						System.out.println();
+					}
+					List<FileInfo> ls = sc.getFileInfoList(path);
+					printDir(ls);
 				}
-				List<FileInfo> ls = sc.getFileInfoList(path);
-				printDir(ls);
+				else{
+					printSingle(info, -1);
+				}
 			}
-			else{
-				printSingle(info, -1);
-			}
+		} finally {
+			IOUtils.closeQuietly(sc);
 		}
 	}
 
 	protected void printDir(List<FileInfo> ls) {
-		int size = -1;
+		int width = -1;
 		for (FileInfo item : ls) {
-			size = Math.max(size, String.valueOf(item.getSize()).length());
+			width = Math.max(width, String.valueOf(item.getSize()).length());
 		}
-
 		for (FileInfo item : ls) {
-			printSingle(item, size);
+			printSingle(item, width);
 		}
 	}
 
@@ -77,7 +81,7 @@ public class ULS extends Command {
 
 	final UnitParser up = UnitParser.getCapacitiesParser(2);
 
-	protected void printSingle(FileInfo fi, int size) {
+	protected void printSingle(FileInfo fi, int width) {
 		StringBuilder info = new StringBuilder();
 		info.append(fi.getIsDirectory());
 		info.append(fi.getUnixPermissions("-"));
@@ -85,8 +89,8 @@ public class ULS extends Command {
 			info.append(String.format(" %10s ", up.getHumanReadable(fi.getSize())));	
 		}
 		else {
-			if(size>-1) {
-				info.append(String.format(" %"+size+"d ", fi.getSize()));
+			if(width>-1) {
+				info.append(String.format(" %"+width+"d ", fi.getSize()));
 			}
 			else {
 				info.append(String.format(" %d ", fi.getSize()));
