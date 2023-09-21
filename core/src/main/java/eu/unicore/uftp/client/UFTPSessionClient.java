@@ -369,16 +369,27 @@ public class UFTPSessionClient extends AbstractUFTPClient implements Runnable {
 	}
 
 	/**
-	 * delete a remote file/directory
+	 * delete a remote file
 	 *
-	 * @param path - the file/dir to delete, either absolute or relative to the
-	 * current one
+	 * @param path - the file to delete
 	 *
 	 * @throws IOException
 	 */
 	public void rm(String path) throws IOException {
 		checkConnected();
 		runCommand("DELE " + path);
+	}
+
+	/**
+	 * delete a remote directory
+	 *
+	 * @param path - the directory to delete
+	 *
+	 * @throws IOException
+	 */
+	public void rmdir(String path) throws IOException {
+		checkConnected();
+		runCommand("RMD " + path);
 	}
 
 	/**
