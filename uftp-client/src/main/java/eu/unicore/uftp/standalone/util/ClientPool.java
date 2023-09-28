@@ -13,15 +13,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.message.ParameterizedMessage;
 
 import eu.unicore.uftp.client.UFTPSessionClient;
 import eu.unicore.uftp.standalone.ClientFacade;
 import eu.unicore.util.Log;
+import eu.unicore.util.Pair;
 
 public class ClientPool implements Closeable {
-
-	private static final Logger logger = Log.getLogger(Log.CLIENT, ClientPool.class);
 
 	private final AtomicInteger num = new AtomicInteger(0);
 	
@@ -35,18 +34,19 @@ public class ClientPool implements Closeable {
 	
 	final List<UFTPSessionClient> clients = new ArrayList<>();
 	
-	final List<Future<?>> tasks = new ArrayList<>();
+	final List<Pair<TransferTask,Future<Boolean>>> tasks;
 
 	final boolean verbose;
 
 	private final MultiProgressBar pb;
 
-	public ClientPool(int poolSize, ClientFacade clientFacade, String uri, boolean verbose) {
+	public ClientPool(List<Pair<TransferTask,Future<Boolean>>> tasks, int poolSize, ClientFacade clientFacade, String uri, boolean verbose, boolean showPerformance) {
+		this.tasks = tasks;
 		this.clientFacade = clientFacade;
 		this.uri = uri;
 		this.poolSize = poolSize;
 		this.verbose = verbose;
-		this.pb = new MultiProgressBar(poolSize);
+		this.pb = showPerformance ?  new MultiProgressBar(poolSize, verbose) : null;
 		es = Executors.newFixedThreadPool(poolSize, new ThreadFactory() {
 
 			boolean createNewThreads = true;
@@ -74,29 +74,31 @@ public class ClientPool implements Closeable {
 
 	@Override
 	public void close() throws IOException{
-		logger.info("Shutting down client pool");
 		es.shutdown();
-		logger.debug("Have {} tasks", tasks.size());
-		tasks.forEach(f -> {
+		tasks.forEach(p -> {
+			Future<Boolean> f = p.getM2();
+			TransferTask t = p.getM1();
 			try{
 				f.get();
 			}catch(Exception e){
-				verbose(Log.createFaultMessage("ERROR: ", e));
+				message(Log.createFaultMessage("ERROR in <"+t.getId()+">", e));
 			}
 		});
 		clients.forEach(sc -> IOUtils.closeQuietly(sc));
+		if(pb!=null)pb.close();
 	}
 
 	public void submit(TransferTask r) {
-		if(verbose)r.setProgressListener(pb);
-		tasks.add(es.submit(r));
+		if(pb!=null)r.setProgressListener(pb);
+		tasks.add(new Pair<>(r, es.submit(r)));
 	}
 
 	public void verbose(String msg, Object ... params) {
-		logger.debug(msg, params);
-		if(!verbose)return;
-		String f = logger.getMessageFactory().newMessage(msg, params).getFormattedMessage();
-		System.out.println(f);
+		if(verbose)message(msg, params);
+	}
+
+	public void message(String msg, Object ... params) {
+		System.out.println(new ParameterizedMessage(msg, params).getFormattedMessage());
 	}
 
 	public static class UFTPClientThread extends Thread {
@@ -135,7 +137,7 @@ public class ClientPool implements Closeable {
 
 		private long dataSize = -1;
 
-		private TransferTracking transferInfo;
+		private TransferTracker transferTracker;
 
 		public TransferTask(UFTPSessionClient sc) {
 			this.sc = sc;
@@ -166,36 +168,37 @@ public class ClientPool implements Closeable {
 			UFTPClientThread t = (UFTPClientThread)Thread.currentThread();
 			UFTPSessionClient sc = t.getClient();
 			if(pb!=null) { 
-				pb.registerNew(getId(), getDataSize(), transferInfo);
+				pb.registerNew(getId(), getDataSize(), transferTracker);
 				sc.setProgressListener(pb);
 			}
 			return sc;
 		}
 
-		public TransferTracking getTransferInfo() {
-			return transferInfo;
+		public TransferTracker getTransferTracker() {
+			return transferTracker;
 		}
 
-		public void setTransferInfo(TransferTracking transferInfo) {
-			this.transferInfo = transferInfo;
+		public void setTransferTracker(TransferTracker transferTracker) {
+			this.transferTracker = transferTracker;
 		}
 
-		public abstract void doCall() throws Exception;
+		protected abstract void doCall() throws Exception;
 		
 		@Override
 		public Boolean call(){
 			try {
-				if(transferInfo!=null) {
-					transferInfo.start.compareAndExchange(0, System.currentTimeMillis());
+				if(transferTracker!=null) {
+					transferTracker.start.compareAndExchange(0, System.currentTimeMillis());
 				}
 				doCall();
+				close();
 				return Boolean.TRUE;
 			}
 			catch(Exception e) {
+				if(pb!=null) {
+					pb.closeWithError(Log.getDetailMessage(e));
+				}
 				throw new RuntimeException(e);
-			}
-			finally {
-				close();
 			}
 		}
 
@@ -207,13 +210,13 @@ public class ClientPool implements Closeable {
 		}
 	}
 
-	public static class TransferTracking {
+	public static class TransferTracker {
 		public final String file;
 		public final long size;
 		public final AtomicLong start;
 		public final int numChunks;
 		public final AtomicInteger chunkCounter;
-		public TransferTracking(String file, long size, int numChunks, AtomicInteger chunkCounter, AtomicLong start) {
+		public TransferTracker(String file, long size, int numChunks, AtomicInteger chunkCounter, AtomicLong start) {
 			this.file = file;
 			this.size = size;
 			this.chunkCounter = chunkCounter;

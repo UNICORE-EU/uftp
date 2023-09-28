@@ -125,6 +125,10 @@ public class AuthserverClient implements AuthClient {
 				if(rateLimit>0) {
 					f.format("  Rate limit:       %sB/sec%s", UnitParser.getCapacitiesParser(0).getHumanReadable(rateLimit), crlf);
 				}
+				long sessionLimit = server.optLong("sessionLimit", 0);
+				if(sessionLimit>0) {
+					f.format("  Max. sessions:    %s%s", sessionLimit, crlf);
+				}
 				List<String> reservations = getReservations(server);
 				if(reservations.size()>0) {
 					f.format("  Reservations:%s", crlf);

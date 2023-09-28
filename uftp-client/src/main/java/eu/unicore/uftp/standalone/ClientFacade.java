@@ -3,14 +3,13 @@ package eu.unicore.uftp.standalone;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
-import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.message.ParameterizedMessage;
 
 import eu.unicore.uftp.client.UFTPSessionClient;
 import eu.unicore.uftp.dpc.AuthorizationFailureException;
 import eu.unicore.uftp.dpc.Utils;
 import eu.unicore.uftp.standalone.authclient.AuthClient;
 import eu.unicore.uftp.standalone.authclient.AuthResponse;
-import eu.unicore.util.Log;
 
 /**
  * Helper for creating UFTP Sessions
@@ -18,8 +17,6 @@ import eu.unicore.util.Log;
  * @author jj
  */
 public class ClientFacade {
-
-	private static final Logger logger = Log.getLogger(Log.CLIENT+".uftp");
 
 	private final ConnectionInfoManager connectionManager;
 
@@ -182,7 +179,6 @@ public class ClientFacade {
 	 * @param params - message parameters
 	 */
 	public void verbose(String msg, Object ... params) {
-		logger.debug(msg, params);
 		if(!verbose)return;
 		message(msg, params);
 	}
@@ -194,7 +190,7 @@ public class ClientFacade {
 	 * @param params - message parameters
 	 */
 	public void message(String msg, Object ... params) {
-		String f = logger.getMessageFactory().newMessage(msg, params).getFormattedMessage();
+		String f = new ParameterizedMessage(msg, params).getFormattedMessage();
 		System.out.println(f);
 	}
 }

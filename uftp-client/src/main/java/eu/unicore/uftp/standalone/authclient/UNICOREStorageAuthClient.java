@@ -17,14 +17,12 @@ import org.apache.hc.core5.http.io.HttpClientResponseHandler;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.apache.hc.core5.http.message.StatusLine;
-import org.apache.logging.log4j.Logger;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import eu.unicore.services.rest.client.IAuthCallback;
 import eu.unicore.uftp.dpc.Utils;
 import eu.unicore.uftp.standalone.ClientFacade;
-import eu.unicore.util.Log;
 
 /**
  * create a session using the UNICORE Storage API
@@ -38,8 +36,6 @@ public class UNICOREStorageAuthClient implements AuthClient {
 	private final IAuthCallback authData;
 
 	private final ClientFacade client;
-
-	private static final Logger LOG = Log.getLogger(Log.CLIENT, UNICOREStorageAuthClient.class);
 
 	public UNICOREStorageAuthClient(String authUrl, IAuthCallback authData, ClientFacade client) {
 		this.uri = authUrl;
@@ -68,9 +64,6 @@ public class UNICOREStorageAuthClient implements AuthClient {
 		}catch(JSONException e) {
 			throw new IOException(e);
 		}
-		if (response != null) {
-			LOG.debug("Got AuthResponse: {}", response);
-		}
 		return response;
 	}
 	
@@ -80,7 +73,6 @@ public class UNICOREStorageAuthClient implements AuthClient {
 			baseDir = baseDir+"/";
 		}
 		if(baseDir==null)baseDir="";
-		LOG.debug("Initalizing session in <{}>", baseDir);
 		return do_connect(baseDir, persistent);
 	}
 

@@ -13,7 +13,7 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.hc.core5.http.HttpMessage;
-import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.message.ParameterizedMessage;
 
 import eu.unicore.services.rest.client.IAuthCallback;
 import eu.unicore.services.rest.client.UsernamePassword;
@@ -34,8 +34,6 @@ import eu.unicore.util.Log;
  * @author schuller
  */
 public abstract class Command implements ICommand {
-
-	protected static final Logger logger = Log.getLogger("uftpclient");
 
 	/**
 	 * environment variable defining the UFTP user name
@@ -313,7 +311,7 @@ public abstract class Command implements ICommand {
 	public void setVerbose(boolean verbose){
 		this.verbose = verbose;
 	}
-	
+
 	/**
 	 * verbose log to console and to the log4j logger
 	 * 
@@ -321,9 +319,8 @@ public abstract class Command implements ICommand {
 	 * @param params - message parameters
 	 */
 	public void verbose(String msg, Object ... params) {
-		logger.debug(msg, params);
 		if(!verbose)return;
-		String f = logger.getMessageFactory().newMessage(msg, params).getFormattedMessage();
+		String f = new ParameterizedMessage(msg, params).getFormattedMessage();
 		System.out.println(f);
 	}
 
@@ -334,9 +331,13 @@ public abstract class Command implements ICommand {
 	 * @param params - message parameters
 	 */
 	public void error(String msg, Object ... params) {
-		logger.error(msg, params);
-		String f = logger.getMessageFactory().newMessage(msg, params).getFormattedMessage();
+		String f = new ParameterizedMessage(msg, params).getFormattedMessage();
 		System.err.println(f);
+	}
+
+	public void message(String msg, Object ... params) {
+		String f = new ParameterizedMessage(msg, params).getFormattedMessage();
+		System.out.println(f);
 	}
 
 }

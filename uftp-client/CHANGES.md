@@ -6,7 +6,7 @@ https://sourceforge.net/p/unicore/uftp-issues/
 
 UFTP Client 1.8.0 (released MMM dd, 2023)
 -----------------------------------------
- - new feature: 'info' shows rate limit and reservations, if they exist
+ - new feature: 'info' shows rate limit, session limit and reservations, if they exist
  - fix: 'rm': use RMD command to delete a directory
  - more verbose output for chunked 'cp' operations (with "-v")
  - internal code refactoring and clean-up

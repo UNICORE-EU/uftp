@@ -25,7 +25,7 @@ _uftp()
     opts="$global_opts --algorithm --bytes --recurse"
     ;;
     cp)
-    opts="$global_opts --archive --bandwith-limit --bytes --compress --encrypt --preserve --recurse --resume --split-threshold --streams --threads"
+    opts="$global_opts --archive --bandwith-limit --bytes --compress --encrypt --preserve --recurse --resume --show-performance --split-threshold --streams --threads"
     ;;
     info)
     opts="$global_opts --raw"

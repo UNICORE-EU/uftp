@@ -10,8 +10,11 @@ import java.net.URISyntaxException;
 import java.nio.channels.Channels;
 import java.nio.file.Files;
 import java.nio.file.attribute.FileTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.List;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -30,21 +33,17 @@ import eu.unicore.uftp.standalone.lists.LocalFileCrawler;
 import eu.unicore.uftp.standalone.lists.RemoteFileCrawler;
 import eu.unicore.uftp.standalone.util.ClientPool;
 import eu.unicore.uftp.standalone.util.ClientPool.TransferTask;
-import eu.unicore.uftp.standalone.util.ClientPool.TransferTracking;
+import eu.unicore.uftp.standalone.util.ClientPool.TransferTracker;
 import eu.unicore.uftp.standalone.util.RangeMode;
 import eu.unicore.uftp.standalone.util.UnitParser;
 import eu.unicore.util.Log;
+import eu.unicore.util.Pair;
 
 public class UCP extends DataTransferCommand {
 
 	protected boolean resume = false;
 
-	protected boolean isUpload = false;
-
 	protected String target;
-
-	// whether multiple files are to be transferred
-	protected boolean multiple = false;
 
 	protected boolean recurse = false;
 
@@ -56,9 +55,11 @@ public class UCP extends DataTransferCommand {
 
 	protected boolean archiveMode = false;
 
+	protected boolean showPerformance = false;
+
 	protected ClientFacade client;
 
-	long totalSize = 0;
+	protected final List<Pair<TransferTask,Future<Boolean>>> tasks = new ArrayList<>();
 
 	@Override
 	public String getName() {
@@ -103,6 +104,10 @@ public class UCP extends DataTransferCommand {
 				.desc("Tell server to interpret data as tar/zip stream and unpack it")
 				.required(false)
 				.build());
+		options.addOption(Option.builder("D").longOpt("show-performance")
+				.desc("Show detailed transfer rates during the transfer")
+				.required(false)
+				.build());
 		return options;
 	}
 
@@ -113,17 +118,14 @@ public class UCP extends DataTransferCommand {
 			throw new IllegalArgumentException("Missing argument: "+getArgumentDescription());
 		}
 		target = fileArgs[fileArgs.length-1];
-		isUpload = !ConnectionInfoManager.isLocal(target);
-		multiple = fileArgs.length>2;
-		if(multiple){
-			if(!target.endsWith("/")){
-				target = target + "/";
-			}
+		if(fileArgs.length>2 && !target.endsWith("/")){
+			target = target + "/";
 		}
 		recurse = line.hasOption('r');
 		preserve = line.hasOption('p');
 		resume = line.hasOption('R');
 		archiveMode = line.hasOption('a');
+		showPerformance = verbose || line.hasOption('D');
 
 		if (line.hasOption('t')) {
 			numClients = Integer.parseInt(line.getOptionValue('t'));
@@ -145,8 +147,7 @@ public class UCP extends DataTransferCommand {
 			}
 		}
 		if (line.hasOption('B')) {
-			String bytes = line.getOptionValue('B');
-			if(bytes!=null)initRange(bytes);
+			initRange(line.getOptionValue('B'));
 		}
 
 		if(resume && line.hasOption('B')){
@@ -166,6 +167,18 @@ public class UCP extends DataTransferCommand {
 		String[] sources = new String[len];
 		System.arraycopy(fileArgs, 0, sources, 0, len);
 		cp(sources, target);
+
+		long totalSize = 0;
+		for(Pair<TransferTask,Future<Boolean>> tp: tasks) {
+			Future<Boolean> f = tp.getM2();
+			TransferTask t = tp.getM1();
+			try{
+				f.get();
+				totalSize += t.getDataSize();
+			}catch(Exception e){
+				message(Log.createFaultMessage("ERROR in <"+t.getId()+">", e));
+			}
+		}
 		if(totalSize>0) {
 			double rate = 1000* totalSize / (System.currentTimeMillis() - start);
 			UnitParser up = UnitParser.getCapacitiesParser(1);
@@ -181,17 +194,17 @@ public class UCP extends DataTransferCommand {
 			throws Exception {
 		if (!ConnectionInfoManager.isLocal(destination)) {
 			startUpload(sources, destination);
-			return;
 		}
-		if (ConnectionInfoManager.isLocal(destination)) {
+		else if (ConnectionInfoManager.isLocal(destination)) {
 			for(String source: sources) {
 				startDownload(source, destination);
 			}
-			return;
 		}
-		String error = String.format("Unable to handle [%s, %s] combination. "
-				+ "It is neither upload nor download", Arrays.asList(sources), destination);
-		throw new IllegalArgumentException(error);
+		else {
+			String error = String.format("Unable to handle [%s, %s] combination. "
+					+ "It is neither upload nor download", Arrays.asList(sources), destination);
+			throw new IllegalArgumentException(error);
+		}
 	}
 
 
@@ -200,7 +213,7 @@ public class UCP extends DataTransferCommand {
 		try(UFTPSessionClient sc = client.doConnect(destinationURL)){
 			String remotePath = client.getConnectionManager().getPath();
 			RecursivePolicy policy = recurse ? RecursivePolicy.RECURSIVE : RecursivePolicy.NONRECURSIVE;
-			try(ClientPool pool = new ClientPool(numClients, client, destinationURL, verbose)){
+			try(ClientPool pool = new ClientPool(tasks, numClients, client, destinationURL, verbose, showPerformance)){
 				for(String localSource: localSources) {
 					LocalFileCrawler fileList = new LocalFileCrawler(localSource, remotePath, sc, policy);
 					fileList.crawl( (src, dest)-> executeSingleFileUpload(src, dest, pool, sc));
@@ -237,7 +250,7 @@ public class UCP extends DataTransferCommand {
 					pool.submit(task);
 				}
 				else{
-					verbose("Nothing to do for <{]>", dest);
+					verbose("Nothing to do for <{}>", dest);
 				}
 			}
 			else {
@@ -252,23 +265,22 @@ public class UCP extends DataTransferCommand {
 		int numChunks = computeNumChunks(total);
 		long chunkSize = total / numChunks;
 		long last = total-1;
-		logger.debug("Uploading: '{}' --> '{}', length={} numChunks={} chunkSize={}", 
+		verbose("Uploading: '{}' --> '{}', length={} numChunks={} chunkSize={}", 
 				local.getPath(), remotePath, total, numChunks, chunkSize);
 		int width = String.valueOf(numChunks).length();
-		AtomicInteger chunkCounter = new AtomicInteger(numChunks);
-		AtomicLong startL = new AtomicLong(0);
 		String localFileID = local.getPath();
+		String shortID = localFileID+"->"+remotePath;
+		TransferTracker ti = new TransferTracker(shortID, total,
+				numChunks, new AtomicInteger(numChunks), new AtomicLong(0));
 		for(int i = 0; i<numChunks; i++){
 			final long end = last;
 			final long first =  i<numChunks-1 ? end - chunkSize : 0;
 			TransferTask task = getUploadChunkTask(remotePath, localFileID, first, end, null);
 			String id = numChunks>1 ? 
 					String.format("%s->%s [%0"+width+"d/%d]", localFileID, remotePath, i+1, numChunks):
-						local+"->"+remotePath;
+						shortID;
 			task.setId(id);
-			TransferTracking ti = new TransferTracking(localFileID+"->"+remotePath, total,
-					numChunks, chunkCounter, startL);
-			task.setTransferInfo(ti);
+			task.setTransferTracker(ti);
 			task.setDataSize(end-first);
 			pool.submit(task);
 			last = first - 1;
@@ -277,18 +289,16 @@ public class UCP extends DataTransferCommand {
 
 	private TransferTask getUploadChunkTask(String remote, String local, long start, long end, UFTPSessionClient sc)
 			throws IOException {
-		final long toTransfer = end-start+1;
-		totalSize+=toTransfer;
 		TransferTask task = new TransferTask(sc) {
 			@Override
 			public void doCall()throws Exception {
 				final File file = new File(local);
-				try(RandomAccessFile raf = new RandomAccessFile(file, "r");
-						InputStream fis = Channels.newInputStream(raf.getChannel()))
+				try(RandomAccessFile raf = new RandomAccessFile(file, "r"))
 				{
+					InputStream fis = Channels.newInputStream(raf.getChannel());
 					UFTPSessionClient sc = getSessionClient();
-					raf.seek(start);
-					sc.put(remote, toTransfer, start, fis);
+					if(start>0)raf.seek(start);
+					sc.put(remote, end-start+1, start, fis);
 					if(preserve && !remote.startsWith("/dev/")){
 						Calendar to = Calendar.getInstance();
 						to.setTimeInMillis(file.lastModified());
@@ -304,7 +314,7 @@ public class UCP extends DataTransferCommand {
 		try(UFTPSessionClient sc = client.doConnect(remote)){
 			String path = client.getConnectionManager().getPath();
 			RecursivePolicy policy = recurse ? RecursivePolicy.RECURSIVE : RecursivePolicy.NONRECURSIVE;
-			try(ClientPool pool = new ClientPool(numClients, client, remote, verbose)){
+			try(ClientPool pool = new ClientPool(tasks, numClients, client, remote, verbose, showPerformance)){
 				RemoteFileCrawler fileList = new RemoteFileCrawler(path, destination, sc, policy);
 				fileList.crawl( (src, dest) -> executeSingleFileDownload(src, dest, pool, sc));
 			}
@@ -362,7 +372,6 @@ public class UCP extends DataTransferCommand {
 			}
 		}
 		finally{
-			IOUtils.closeQuietly(fos);
 			IOUtils.closeQuietly(raf);
 		}
 	}
@@ -371,22 +380,21 @@ public class UCP extends DataTransferCommand {
 			throws URISyntaxException, IOException {
 		int numChunks = computeNumChunks(total);
 		long chunkSize = total / numChunks;
-		logger.debug("Downloading: '{}' --> '{}', length={} numChunks={} chunkSize={}",
+		verbose("Downloading: '{}' --> '{}', length={} numChunks={} chunkSize={}",
 				remotePath, local, total, numChunks, chunkSize);
 		int width = String.valueOf(numChunks).length();
-		AtomicInteger chunkCounter = new AtomicInteger(numChunks);
-		AtomicLong startL = new AtomicLong(0);
+		String shortID = remotePath+"->"+local;
+		TransferTracker ti = new TransferTracker(shortID, total,
+				numChunks, new AtomicInteger(numChunks), new AtomicLong(0));
 		for(int i = 0; i<numChunks; i++){
 			final long first = start;
 			final long end = i<numChunks-1 ? first + chunkSize : total-1;
 			TransferTask task = getDownloadChunkTask(remotePath, local, start, end, null, remoteInfo, rangeMode);
 			String id = numChunks>1 ? 
 					String.format("%s->%s [%0"+width+"d/%d]", remotePath, local, i+1, numChunks):
-						remotePath+"->"+local;
+						shortID;
 			task.setId(id);
-			TransferTracking ti = new TransferTracking(remotePath+"->"+local, total,
-					numChunks, chunkCounter, startL);
-			task.setTransferInfo(ti);
+			task.setTransferTracker(ti);
 			task.setDataSize(end-first);
 			pool.submit(task);
 			start = end + 1;
@@ -396,8 +404,6 @@ public class UCP extends DataTransferCommand {
 	private TransferTask getDownloadChunkTask(String remotePath, String dest, long start, long end, 
 			UFTPSessionClient sc, FileInfo fi, RangeMode rangeMode)
 					throws FileNotFoundException, URISyntaxException, IOException{
-		final long toTransfer = end-start+1;
-		totalSize+=toTransfer;
 		TransferTask task = new TransferTask(sc) {
 			public void doCall() throws Exception {
 				UFTPSessionClient sc = getSessionClient();
@@ -411,18 +417,13 @@ public class UCP extends DataTransferCommand {
 						raf.seek(file.length());
 					}
 					fos = Channels.newOutputStream(raf.getChannel());
-					sc.get(remotePath, start, toTransfer, fos);
+					sc.get(remotePath, start, end-start+1, fos);
 					if(preserve && !dest.startsWith("/dev/")){
 						try{
 							Files.setLastModifiedTime(file.toPath(),FileTime.fromMillis(fi.getLastModified()));
-						}catch(Exception ex){
-							Log.logException("Error updating modification time", ex, logger);
-						}
+						}catch(Exception ex){}
 					}
-				}finally{
-					IOUtils.closeQuietly(fos);
 				}
-
 			}
 		};
 		return task;
