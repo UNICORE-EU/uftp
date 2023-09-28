@@ -25,11 +25,11 @@ import org.apache.logging.log4j.Logger;
 import eu.unicore.uftp.dpc.AuthorizationFailureException;
 import eu.unicore.uftp.dpc.Reply;
 import eu.unicore.uftp.dpc.Utils;
+import eu.unicore.uftp.rsync.Follower;
 import eu.unicore.uftp.rsync.Leader;
 import eu.unicore.uftp.rsync.RsyncStats;
-import eu.unicore.uftp.rsync.Follower;
-import eu.unicore.uftp.rsync.SocketLeaderChannel;
 import eu.unicore.uftp.rsync.SocketFollowerChannel;
+import eu.unicore.uftp.rsync.SocketLeaderChannel;
 import eu.unicore.uftp.server.UFTPCommands;
 import eu.unicore.util.Pair;
 
