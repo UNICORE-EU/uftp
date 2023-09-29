@@ -1,7 +1,9 @@
 package eu.unicore.uftp.authserver;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -9,6 +11,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -19,7 +22,12 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import eu.emi.security.authn.x509.X509Credential;
+import eu.unicore.security.AuthenticationException;
 import eu.unicore.security.SecurityException;
+import eu.unicore.services.rest.jwt.JWTServerProperties;
+import eu.unicore.services.rest.security.AuthNHandler;
+import eu.unicore.services.rest.security.jwt.JWTUtils;
 import eu.unicore.services.security.util.AuthZAttributeStore;
 import eu.unicore.uftp.authserver.messages.AuthRequest;
 import eu.unicore.uftp.authserver.messages.AuthResponse;
@@ -80,6 +88,42 @@ public class AuthServiceImpl extends ServiceBase {
 		} catch (IOException e) {
 			return handleError(500,"Cannot connect to UFTPD server",e,logger);
 		}	
+	}
+
+	@GET
+	@Path("/token")
+	@Produces(MediaType.TEXT_PLAIN)
+	public Response getToken(@QueryParam("lifetime")String lifetimeParam,
+			@QueryParam("renewable")String renewable,
+			@QueryParam("limited")String limited)
+			throws Exception {
+		try {
+			String method = (String)AuthZAttributeStore.getTokens().getContext().get(AuthNHandler.USER_AUTHN_METHOD);
+			if("ETD".equals(method)) {
+				if(!(Boolean)AuthZAttributeStore.getTokens().getContext().get(AuthNHandler.ETD_RENEWABLE)) {
+					throw new AuthenticationException("Cannot create token when authenticating with a non-renewable token!");
+				}
+			}
+			JWTServerProperties jwtProps = new JWTServerProperties(kernel.getContainerProperties().getRawProperties());
+			String user = AuthZAttributeStore.getClient().getDistinguishedName();
+			X509Credential issuerCred =  kernel.getContainerSecurityConfiguration().getCredential();
+			long lifetime = lifetimeParam!=null? Long.valueOf(lifetimeParam): jwtProps.getTokenValidity();
+			Map<String,String> claims = new HashMap<>();
+			claims.put("etd", "true");
+			if(Boolean.parseBoolean(renewable)) {
+				claims.put("renewable", "true");
+			}
+			if(Boolean.parseBoolean(limited)) {
+				claims.put("aud", issuerCred.getSubjectName());
+			}
+			String token = JWTUtils.createJWTToken(user, lifetime,
+					issuerCred.getSubjectName(), issuerCred.getKey(),
+					claims);
+			return Response.ok().entity(token).build();
+		}
+		catch(Exception ex) {
+			return handleError("Error creating token", ex, logger);
+		}
 	}
 
 	@POST
