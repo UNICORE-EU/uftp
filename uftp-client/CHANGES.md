@@ -7,8 +7,9 @@ https://sourceforge.net/p/unicore/uftp-issues/
 UFTP Client 1.8.0 (released MMM dd, 2023)
 -----------------------------------------
  - new feature: 'info' shows rate limit, session limit and reservations, if they exist
+ - 'cp': more verbose output for chunked operations (with "-v")
+ - 'cp': new option "-D" to switch on display of transfer performance
  - fix: 'rm': use RMD command to delete a directory
- - more verbose output for chunked 'cp' operations (with "-v")
  - internal code refactoring and clean-up
 
 UFTP Client 1.7.0 (released Jul 4, 2023)

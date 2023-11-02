@@ -125,7 +125,7 @@ public class UCP extends DataTransferCommand {
 		preserve = line.hasOption('p');
 		resume = line.hasOption('R');
 		archiveMode = line.hasOption('a');
-		showPerformance = verbose || line.hasOption('D');
+		showPerformance = line.hasOption('D');
 
 		if (line.hasOption('t')) {
 			numClients = Integer.parseInt(line.getOptionValue('t'));
