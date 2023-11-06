@@ -1,8 +1,7 @@
 # UNICORE File transfer (UFTP)
 
-This repository contains the source code for various
-server and client components for the UNICORE FTP
-high-performance file transfer toolkit.
+This repository contains the source code for various server components
+for the UNICORE FTP high-performance file transfer toolkit.
 
 WORKING BINARIES can be
 [downloaded from SourceForge](https://sourceforge.net/projects/unicore/files)
@@ -20,8 +19,9 @@ DOCUMENTATION for users and administrators can be found at
  * authserver -  a set of services providing authentication for UFTP as well
    as data sharing features
 
- * uftp-client - the standalone "uftp" client application
-
  * datashare - library containing support code for the data sharing feature
 
-The [PyUFTP commandline client](https://github.com/UNICORE-EU/pyuftp) has its own repo.
+Client components can be found in their own repositoris:
+ * [PyUFTP commandline client](https://github.com/UNICORE-EU/pyuftp)
+ * ['uftp' Java commandline client](https://github.com/UNICORE-EU/uftp-javaclient)
+

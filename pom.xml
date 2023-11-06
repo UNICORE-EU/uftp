@@ -32,7 +32,6 @@
     <module>core</module>
     <module>datashare</module>
     <module>authserver</module>
-    <module>uftp-client</module>
   </modules>
 
   <repositories>
