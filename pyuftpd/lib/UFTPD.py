@@ -47,6 +47,8 @@ def setup_config(config):
     config['LOG_SYSLOG'] = os.getenv("LOG_SYSLOG", "true").lower() in [ "true", "yes", "1" ]
     config['DISABLE_IP_CHECK'] = os.getenv("DISABLE_IP_CHECK", "false").lower() in [ "true", "yes", "1" ]
     config['PORTRANGE'] = configure_portrange()
+    config['PAM_MODULE'] = os.getenv("PAM_MODULE", "unicore-uftpd")
+    config['OPEN_USER_SESSIONS'] = os.getenv("OPEN_USER_SESSIONS", "0").lower() in ["1", "true"]
 
 def configure_portrange():
     rangespec = os.getenv("PORT_RANGE", None)

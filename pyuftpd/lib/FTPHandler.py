@@ -1,7 +1,7 @@
 import os
 import threading
 
-import BecomeUser, Connector, Log, Protocol, Server, Session
+import BecomeUser, Connector, Log, PAM, Protocol, Server, Session
 
 def create_session(connector: Connector, config, LOG: Log, ftp_server, cmd_server):
     try:
@@ -54,12 +54,17 @@ def create_session(connector: Connector, config, LOG: Log, ftp_server, cmd_serve
     #
     # child - cleanup, drop privileges and launch session processing
     #
+    pam_enabled =  config.get('OPEN_USER_SESSIONS', False)
+    pam_module = config.get('PAM_MODULE', "unicore-uftpd")
     try:
         LOG.reinit()
         ftp_server.close()
         cmd_server.close()
         user = job['user']
         groups = job.get('group')
+        if pam_enabled:
+            pam_session = PAM.PAM(LOG, module_name=pam_module)
+            pam_session.open_session(user)
         user_switch_status = BecomeUser.become_user(user, groups, config, LOG)
         if user_switch_status is not True:
             connector.write_message("530 Not logged in: %s" % user_switch_status)
@@ -76,6 +81,8 @@ def create_session(connector: Connector, config, LOG: Log, ftp_server, cmd_serve
         connector.close()
     except Exception as e:
         LOG.error(e)
+    if pam_enabled:
+        pam_session.close_session()
     os._exit(0)
 
 def ftp_listener(ftp_server, config, LOG: Log, cmd_server):

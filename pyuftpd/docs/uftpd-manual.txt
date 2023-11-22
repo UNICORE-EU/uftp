@@ -139,7 +139,7 @@ Installation and operation
 Prerequisites
 ~~~~~~~~~~~~~
 
-  - Python 3.4.0 or later
+  - Python 3.6.0 or later
 
   - the server's "listen" port needs to be accessible through your firewalls, 
     declaring it an "FTP" port (FTP connection tracking). Alternatively a fixed
@@ -324,17 +324,6 @@ truststore=path/to/ca-cert-file.pem
 ---------------
 
 The credential.password is only needed and used if the key is encrypted.
-
-
-[NOTE] 
-.Backwards (in)compatibility to previous versions
-========================================================= 
-UFTPD 2.x SSL config is NOT supported
-
-If you already have a p12 keystore for UFTPD 2.x, you can 
-use 'openssl' to convert it to PEM format
-=========================================================
-
 
 
 ACL setup
