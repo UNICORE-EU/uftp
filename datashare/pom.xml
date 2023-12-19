@@ -22,7 +22,7 @@
   </repositories>
 
   <properties>
-    <uftp.version>2.16.0</uftp.version>
+    <uftp.version>2.17.0</uftp.version>
     <automatic.module.name>${project.groupId}.datashare</automatic.module.name>
   </properties>
 
