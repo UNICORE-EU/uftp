@@ -3,10 +3,9 @@ package eu.unicore.uftp.authserver.share;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.ws.rs.core.Application;
-
 import eu.unicore.services.Kernel;
 import eu.unicore.services.rest.USERestApplication;
+import jakarta.ws.rs.core.Application;
 
 /**
  * Access to shared files via UFTP, both anonymous and authenticated

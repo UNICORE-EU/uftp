@@ -8,10 +8,6 @@ import java.net.InetAddress;
 import java.util.Collection;
 import java.util.List;
 
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.ResponseBuilder;
-import javax.ws.rs.core.Response.Status;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
@@ -37,6 +33,9 @@ import eu.unicore.uftp.datashare.db.ACLStorage;
 import eu.unicore.uftp.datashare.db.ShareDAO;
 import eu.unicore.uftp.dpc.Session.Mode;
 import eu.unicore.util.Log;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.ResponseBuilder;
+import jakarta.ws.rs.core.Response.Status;
 
 /**
  * common stuff for the share and access services

@@ -1,25 +1,13 @@
 package eu.unicore.uftp.authserver;
 
-import java.io.IOException;
-import java.io.StringReader;
-import java.net.InetAddress;
-import java.net.Socket;
 import java.security.SecureRandom;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.Callable;
 
 import javax.net.ssl.SSLSocketFactory;
-
-import org.apache.commons.io.IOUtils;
-import org.apache.logging.log4j.Logger;
 
 import eu.emi.security.authn.x509.impl.SocketFactoryCreator2;
 import eu.unicore.services.ExternalSystemConnector;
 import eu.unicore.services.Kernel;
-import eu.unicore.uftp.server.requests.UFTPBaseRequest;
-import eu.unicore.uftp.server.requests.UFTPPingRequest;
-import eu.unicore.util.Log;
+import eu.unicore.uftp.server.UFTPDInstanceBase;
 import eu.unicore.util.httpclient.HostnameMismatchCallbackImpl;
 import eu.unicore.util.httpclient.IClientConfiguration;
 import eu.unicore.util.httpclient.ServerHostnameCheckingMode;
@@ -30,37 +18,16 @@ import eu.unicore.util.httpclient.ServerHostnameCheckingMode;
  *
  * @author schuller
  */
-public class UFTPDInstance implements ExternalSystemConnector {
-
-	public static final Logger log = Log.getLogger(Log.SERVICES, UFTPDInstance.class);
-	
-	private String host;
-	
-	private int port;
-	
-	private String commandHost;
-	
-	private int commandPort;
-
-	private boolean ssl=true;
-
-	private String description="n/a";
+public class UFTPDInstance extends UFTPDInstanceBase implements ExternalSystemConnector {
 
 	private final String serverName;
 	
 	private String logicalName;
-	
-	private String statusMessage = "N/A";
-
-	private Status status = Status.UNKNOWN;
-
-	private long lastChecked;
 
 	private final Kernel kernel;
 	
-	private final Map<String,String>serverInfo = new HashMap<>();
-	
 	public UFTPDInstance(String serverName, Kernel kernel){
+		super();
 		this.serverName = serverName;
 		this.logicalName = serverName;
 		this.kernel = kernel;
@@ -68,52 +35,6 @@ public class UFTPDInstance implements ExternalSystemConnector {
 
 	public void setLogicalName(String name) {
 		this.logicalName = name;
-	}
-	
-	/**
-	 * the address of the FTP socket
-	 */
-	public String getHost() {
-		return host;
-	}
-
-	public void setHost(String host) {
-		this.host = host;
-	}
-
-	/**
-	 * the port of the FTP socket
-	 */
-	public int getPort() {
-		return port;
-	}
-
-	public void setPort(int port) {
-		this.port = port;
-	}
-
-	public String getCommandHost() {
-		return commandHost;
-	}
-
-	public void setCommandHost(String commandHost) {
-		this.commandHost = commandHost;
-	}
-
-	public int getCommandPort() {
-		return commandPort;
-	}
-
-	public void setCommandPort(int commandPort) {
-		this.commandPort = commandPort;
-	}
-	
-	public boolean isSsl() {
-		return ssl;
-	}
-
-	public void setSsl(boolean ssl) {
-		this.ssl = ssl;
 	}
 
 	public String getName(){
@@ -123,97 +44,19 @@ public class UFTPDInstance implements ExternalSystemConnector {
 	public String getServerName(){
 		return serverName;
 	}
-	
-	public String getDescription() {
-		return description;
-	}
-
-	public void setDescription(String description) {
-		this.description = description;
-	}
-	
-	public String getConnectionStatusMessage(){
-		checkConnection();
-		return statusMessage;
-	}
-	
+		
 	public Status getConnectionStatus() {
 		checkConnection();
-		return status;
+		return isUp ? Status.OK : Status.DOWN;
 	}
 	
 	public String getExternalSystemName() {
 		return  "UFTPD server '"+serverName+"'";
 	}
 	
-	public String toString(){
-		return "[UFTPD server '"+serverName+"': cmd"+(ssl?"(ssl)":"")+"="+commandHost+":"+commandPort+" listen="+host+":"+port+"]";
-	}
-	
-	public boolean isUFTPAvailable(){
-		checkConnection();
-		return Status.OK.equals(status);
-	}
-	
-	private void checkConnection(){
-		if (lastChecked+60000>System.currentTimeMillis())
-			return;
-
-		boolean ok = true;
-		UFTPPingRequest req = new UFTPPingRequest();
-		try{
-			String response = doSendRequest(req);
-			for(String line: IOUtils.readLines(new StringReader(response))){
-				if(!line.contains(":"))continue;
-				try {
-					String[]tok = line.split(":", 2);
-					serverInfo.put(tok[0].trim(), tok[1].trim());
-				}catch(Exception e) {}
-			}
-		}
-		catch(IOException e){
-			ok = false;
-			String err = Log.createFaultMessage("Error", e);
-			statusMessage="CAN'T CONNECT TO UFTPD "+commandHost+":"+commandPort+" ["+err+"]";
-		}
-		if(ok){
-			status = Status.OK;
-			statusMessage="OK [connected to UFTPD "+commandHost+":"+commandPort+"]";
-		}
-		else {
-			status = Status.DOWN;
-		}
-		lastChecked=System.currentTimeMillis();
-	}
-
-	/**
-	 * send request via UFTPD control channel
-	 * 
-	 * @return reply from uftpd
-	 * @throws IOException in case of IO errors or timeout
-	 */
-	public String sendRequest(final UFTPBaseRequest request)throws IOException {
-		if(!isUFTPAvailable()){
-			throw new IOException(statusMessage);
-		}
-		return doSendRequest(request);
-	}
-
-	public int getSessionLimit() {
-		int limit = -1;
-		try {
-			limit = Integer.parseInt(serverInfo.getOrDefault("MaxSessionsPerClient", "-1"));
-		}catch(Exception ex) {}
-		return limit;
-	}
-
-	public String getVersion() {
-		return serverInfo.getOrDefault("Version", "n/a");
-	}
-
 	private static SSLSocketFactory socketfactory = null;
 	
-	private synchronized SSLSocketFactory getSSLSocketFactory() {
+	protected synchronized SSLSocketFactory getSSLSocketFactory() {
 		if(socketfactory==null) {
 			IClientConfiguration cfg = kernel.getClientConfiguration();
 			socketfactory = new SocketFactoryCreator2(cfg.getCredential(), cfg.getValidator(), 
@@ -223,32 +66,6 @@ public class UFTPDInstance implements ExternalSystemConnector {
 		return socketfactory;
 	}
 	
-	
-	private String doSendRequest(final UFTPBaseRequest request)throws IOException{
-		Callable<String>task=new Callable<String>(){
-			@Override
-			public String call() throws Exception {
-				try (Socket socket = ssl ? 
-						getSSLSocketFactory().createSocket(commandHost, commandPort):
-						new Socket(InetAddress.getByName(commandHost),commandPort))
-				{
-					socket.setSoTimeout(20 * 1000);
-					log.debug("Sending {} request to {}:{}, SSL={}", request.getClass().getSimpleName(),
-							commandHost, commandPort, ssl);
-					return request.sendTo(socket);
-				}
-			}
-		};
-		try{
-			return task.call();
-		}catch(Exception ie){
-			String err = Log.createFaultMessage("Error", ie);
-			statusMessage = "CAN'T CONNECT TO UFTPD "+commandHost+":"+commandPort+" ["+err+"]";
-			status = Status.DOWN;
-			throw new IOException(ie);
-		}
-	}
-
 	private static SecureRandom random=null;
 
 	private synchronized SecureRandom getRandom(){

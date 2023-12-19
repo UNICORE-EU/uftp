@@ -1,31 +1,42 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
+  <groupId>eu.unicore.uftp</groupId>
   <artifactId>uftp-datashare</artifactId>
   <packaging>jar</packaging>
   <name>UFTP Datasharing</name>
-  <version>0.11.0</version>
+  <version>0.12.0</version>
 
   <parent>
-    <groupId>eu.unicore.uftp</groupId>
-    <artifactId>uftp-parent</artifactId>
-    <version>2.16.0</version>
-    <relativePath>../pom.xml</relativePath>
+    <groupId>eu.unicore</groupId>
+    <artifactId>unicore-parent</artifactId>
+    <version>2.3</version>
   </parent>
 
+  <repositories>
+    <repository>
+      <id>unicore.eu</id>
+      <name>UNICORE repository</name>
+      <url>https://unicore-dev.zam.kfa-juelich.de/maven</url>
+    </repository>
+  </repositories>
+
   <properties>
-    <uftp.version>${project.parent.version}</uftp.version>
-    <automatic.module.name>${groupId}.datashare</automatic.module.name>
+    <uftp.version>2.16.0</uftp.version>
+    <automatic.module.name>${project.groupId}.datashare</automatic.module.name>
   </properties>
 
   <dependencies>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
+      <version>4.13.2</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>eu.unicore</groupId>
       <artifactId>persistence</artifactId>
+      <version>0.600</version>
       <scope>provided</scope>
     </dependency>
     <dependency>

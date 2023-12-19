@@ -9,18 +9,19 @@
   <url>https://www.unicore.eu</url>
 
   <parent>
-    <groupId>eu.unicore.uftp</groupId>
-    <artifactId>uftp-parent</artifactId>
-    <version>2.16.0</version>
-    <relativePath>../pom.xml</relativePath>
+    <groupId>eu.unicore</groupId>
+    <artifactId>unicore-parent</artifactId>
+    <version>2.3</version>
   </parent>
 
+  
   <properties>
-    <uftp.version>2.16.0</uftp.version>
-    <datashare.version>0.11.0</datashare.version>
+    <use.version>5.0.0</use.version>
+    <uftp.version>2.17.0</uftp.version>
+    <datashare.version>0.12.0</datashare.version>
     <package.version>${project.version}</package.version>
     <package.release>1</package.release>
-    <automatic.module.name>${groupId}.authserver</automatic.module.name>
+    <automatic.module.name>${project.groupId}.authserver</automatic.module.name>
   </properties>
 
   <repositories>
@@ -35,6 +36,8 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
+      <version>4.13.2</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>eu.unicore.uftp</groupId>
@@ -46,21 +49,20 @@
       <artifactId>uftp-datashare</artifactId>
       <version>${datashare.version}</version>
     </dependency>
-        <dependency>
+    <dependency>
       <groupId>eu.unicore.services</groupId>
       <artifactId>use-rest</artifactId>
+      <version>${use.version}</version>
     </dependency>
     <dependency>
       <groupId>eu.unicore.services</groupId>
       <artifactId>use-aip</artifactId>
+      <version>${use.version}</version>
     </dependency>
     <dependency>
       <groupId>eu.unicore.services</groupId>
       <artifactId>use-pdp</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>eu.unicore.security</groupId>
-      <artifactId>securityLibrary</artifactId>
+      <version>${use.version}</version>
     </dependency>
   </dependencies>
 

@@ -103,11 +103,11 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 		session.setRFCRangeMode(server.getRFCRangeMode());
 		boolean isPersistent = job.isPersistent();
 		int count = job.newActiveSession();
-		if(isPersistent)logger.info("New session for <"+job.getUser()+"> this is number <"+count+">");
+		if(isPersistent)logger.info("New session for <{}> this is number <{}>", job.getUser(), count);
 		runSession(session);
 		count = job.endActiveSession();
-		if(isPersistent)logger.info("Ending session for <"+job.getUser()+"> remaining: "+count
-				+( count==0 ?", request processing finished.":""));
+		if(isPersistent)logger.info("Ending session for <{}> remaining: {}",
+				job.getUser(), count+( count==0 ?", request processing finished.":""));
 		if(count==0 && isPersistent)server.invalidateJob(job);
 	}
 
@@ -117,7 +117,7 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 	 */
 	protected void runSession(Session session) {
 		int action = 0;
-		logger.info("Processing "+String.valueOf(session));
+		logger.info("Processing {}", session);
 		try {
 			action = Session.ACTION_NONE;
 
@@ -138,7 +138,7 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 					break;
 					
 				case Session.ACTION_CLOSE_DATA:
-					logger.info("Closing data connection for "+session.getClientDescription());
+					logger.info("Closing data connection for {}", session.getClientDescription());
 					connection.closeData();
 					socket = null;
 					break;
@@ -175,9 +175,8 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 				}
 			}
 		} catch (Exception ex) {
-			String msg = "Error processing session-mode action <"+action+
-					"> for connection from " + connection.getAddress();
-			logger.error(msg, ex);
+			logger.error("Error processing session-mode action <"+action+
+					"> for connection from " + connection.getAddress(), null, ex);
 			cleanup();
 		}
 	}
@@ -321,12 +320,9 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 		else {
 			total = readNormalData(session, reader);
 		}
-
 		if(!session.isKeepAlive())Utils.closeQuietly(reader);
 		session.reset();
-		if(logger.isDebugEnabled()){
-			logger.debug("Time: " + (System.currentTimeMillis() - startTime) + " total bytes transferred: " + total);
-		}
+		logger.debug("Time: {} total bytes transferred: {}", System.currentTimeMillis()-startTime, total);
 		long millis = System.currentTimeMillis() - startTime;
 		logUsage("Receive", total, millis, connection.getAddress(), numFiles);
 	}
@@ -336,9 +332,7 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 		long bytesToRead = session.getNumberOfBytes();
 		RandomAccessFile ra = session.getLocalRandomAccessFile();
 		ra.seek(offset);
-
 		long total = copyData(reader, ra, bytesToRead);
-
 		if(!session.haveRange()){
 			// make sure we truncate to properly handle over-writing existing files
 			ra.getChannel().truncate(offset+total);
@@ -351,13 +345,14 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 			throws IOException, ArchiveException, InterruptedException {
 		long counter = 0;
 		reader = new BufferedInputStream(reader, 2048);
-		ArchiveInputStream input = new ArchiveStreamFactory().createArchiveInputStream(reader);
+		ArchiveInputStream<?> input = new ArchiveStreamFactory().createArchiveInputStream(reader);
 		ArchiveEntry entry = null;
 		long total = 0;
 
 	        while ((entry = input.getNextEntry()) != null) {
 	            if (!input.canReadEntryData(entry)) {
-	                logger.error("Cannot read archive entry <"+entry.getName()+"> for "+session.getClientDescription());
+	                logger.error("Cannot read archive entry <{}> for {}",
+	                		entry.getName(), session.getClientDescription());
 	                continue;
 	        }
 

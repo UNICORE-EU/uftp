@@ -1,6 +1,8 @@
 package eu.unicore.uftp.authserver.reservations;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.text.DateFormat;
 import java.util.Date;
@@ -9,8 +11,6 @@ import org.json.JSONObject;
 import org.junit.Test;
 
 import eu.unicore.services.utils.UnitParser;
-import eu.unicore.uftp.authserver.reservations.Reservation;
-import eu.unicore.uftp.authserver.reservations.Reservations;
 
 public class TestReservations {
 

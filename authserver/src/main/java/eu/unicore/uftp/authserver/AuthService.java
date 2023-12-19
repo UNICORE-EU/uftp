@@ -3,7 +3,7 @@ package eu.unicore.uftp.authserver;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.ws.rs.core.Application;
+import jakarta.ws.rs.core.Application;
 
 import eu.unicore.services.Kernel;
 import eu.unicore.services.rest.USERestApplication;
@@ -19,7 +19,7 @@ public class AuthService extends Application implements USERestApplication {
 
     @Override
     public Set<Class<?>> getClasses() {
-        Set<Class<?>> classes = new HashSet<Class<?>>();
+        Set<Class<?>> classes = new HashSet<>();
         //jj: you can mix providers here
         classes.add(AuthServiceImpl.class);
         classes.add(AuthResponseBodyProvider.class);        

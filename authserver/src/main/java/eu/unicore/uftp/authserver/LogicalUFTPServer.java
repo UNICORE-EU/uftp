@@ -31,18 +31,17 @@ import eu.unicore.util.configuration.PropertyGroupHelper;
 public class LogicalUFTPServer implements ExternalSystemConnector, UserInfoSource {
 
 	public static final Logger log = Log.getLogger(Log.SERVICES, LogicalUFTPServer.class);
-    
 
 	private String statusMessage = "N/A";
-	
+
 	private String description="n/a";
 
 	private Status status= Status.UNKNOWN;
-		
+
 	private final Kernel kernel;
 
 	private final String serverName;
-	
+
 	private final List<UFTPDInstance> instances = new ArrayList<>();
 
 	private Reservations reservations = null;
@@ -51,7 +50,7 @@ public class LogicalUFTPServer implements ExternalSystemConnector, UserInfoSourc
 		this.serverName = serverName;
 		this.kernel = kernel;
 	}
-	
+
 	public void configure(String name, Properties properties) {
 		String prefix = "authservice.server." + name + ".";
 		String desc = properties.getProperty(prefix+"description", "n/a");
@@ -93,7 +92,6 @@ public class LogicalUFTPServer implements ExternalSystemConnector, UserInfoSourc
 		UFTPDInstance server = new UFTPDInstance(name, kernel);
 		mapSettings(server, prefix, properties);
 		if(server.getHost()==null)throw new ConfigurationException("Property 'host' not set for UFTPD server '"+name+"'");
-		kernel.getExternalSystemConnectors().add(server);
 		log.info("Configured {}: {}", name, server);
 		return server;
 	}
@@ -256,4 +254,5 @@ public class LogicalUFTPServer implements ExternalSystemConnector, UserInfoSourc
 		}
 		return "n/a";
 	}
+	
 }
