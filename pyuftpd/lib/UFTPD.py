@@ -262,6 +262,10 @@ def main():
     if pr[0]>0:
         LOG.debug("Data port range            : %s:%s" % (pr[1], pr[2]))
     LOG.debug("Validating client IPs      : %s" % str(not config['DISABLE_IP_CHECK']))
+    try:
+        import CryptUtil
+    except:
+        LOG.info("Warning: Cryptography is not available.")
     process(cmd_server, config, LOG)
     return 0
 
