@@ -45,7 +45,7 @@ public class ShareServiceProperties extends PropertiesHelper {
 	public static final String PROP_UFTPD_PREFIX = "server.";
 
 	@DocumentationReferenceMeta
-	public final static Map<String, PropertyMD> META = new HashMap<String, PropertyMD>();
+	public final static Map<String, PropertyMD> META = new HashMap<>();
 	static
 	{
 		META.put(PROP_SERVERS, new PropertyMD().
@@ -111,8 +111,7 @@ public class ShareServiceProperties extends PropertiesHelper {
 	protected ACLStorage configure(String name) throws Exception {
 		Properties p = new Properties();
 		p.putAll(rawProperties);
-		ACLStorage a = new ACLStorage(name, p);
-		return a;
+		return new ACLStorage(name, p);
 	}
 
 	private IdentityExtractor extractor;

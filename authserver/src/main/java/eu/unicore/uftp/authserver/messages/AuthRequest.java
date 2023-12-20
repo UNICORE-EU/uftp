@@ -8,7 +8,8 @@ public class AuthRequest {
 	public int streamCount = 1;
 	public boolean append = false;
 	public boolean compress = false;
-	public String encryptionKey = null;  
+	public String encryptionKey = null;
+	public String encryptionAlgorithm = null;
 	public String group = null;
 	public String client = null;
 	public boolean persistent = true;

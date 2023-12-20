@@ -1,14 +1,12 @@
 Changelog
----------
-The UFTP issue tracker is at
-https://sourceforge.net/p/unicore/uftp-issues
+=========================================
 
-Full documentation is at: https://uftp-docs.readthedocs.io
+The UFTP issue tracker is at:
+https://github.com/UNICORE-EU/uftp/issues
 
+Full documentation is at:
+https://uftp-docs.readthedocs.io
 
-***
-***  see README-UPGRADE.txt for how to update
-***
 
 Auth Server 3.0.0 (released MM DD, 2024)
 ----------------------------------------

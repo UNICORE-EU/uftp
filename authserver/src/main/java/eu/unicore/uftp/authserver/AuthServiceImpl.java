@@ -54,7 +54,7 @@ public class AuthServiceImpl extends ServiceBase {
 		String clientIP = AuthZAttributeStore.getTokens().getClientIP();
 		logger.debug("Incoming request from: {} {}", clientIP, json);
 
-		LogicalUFTPServer server = getLogicalServer(serverName);
+		UFTPBackend server = getLogicalServer(serverName);
 		if(server == null){
 			throw new WebApplicationException(404);
 		}
@@ -133,7 +133,7 @@ public class AuthServiceImpl extends ServiceBase {
 		if(AuthZAttributeStore.getTokens()==null){
 			throw new WebApplicationException(Status.UNAUTHORIZED);
 		}
-		LogicalUFTPServer server = getLogicalServer(serverName);
+		UFTPBackend server = getLogicalServer(serverName);
 		if(server==null){
 			throw new WebApplicationException(404);
 		}
@@ -176,13 +176,13 @@ public class AuthServiceImpl extends ServiceBase {
 		Response r = null;
 		JSONObject o = new JSONObject();
 		try{
-			for(LogicalUFTPServer i : getAuthServiceProperties().getServers()){
+			for(UFTPBackend i : getConfig().getServers()){
 				String name = i.getServerName();
 				String url = kernel.getContainerProperties().getContainerURL()+"/rest/auth/"+name;
 				JSONObject server = new JSONObject();
 				server.put("href",url);
 				server.put("description",i.getDescription());
-				server.put("status",i.getConnectionStatusMessage());
+				server.put("status",i.getStatusDescription());
 				server.put("uftpdServerVersion",i.getVersion());
 				int sessionLimit = i.getSessionLimit();
 				if(sessionLimit>0) {

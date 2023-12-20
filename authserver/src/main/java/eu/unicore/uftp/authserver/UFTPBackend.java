@@ -4,6 +4,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -28,15 +29,15 @@ import eu.unicore.util.configuration.PropertyGroupHelper;
  *
  * @author schuller
  */
-public class LogicalUFTPServer implements ExternalSystemConnector, UserInfoSource {
+public class UFTPBackend implements UserInfoSource {
 
-	public static final Logger log = Log.getLogger(Log.SERVICES, LogicalUFTPServer.class);
+	public static final Logger log = Log.getLogger(Log.SERVICES, UFTPBackend.class);
 
 	private String statusMessage = "N/A";
 
 	private String description="n/a";
 
-	private Status status= Status.UNKNOWN;
+	private boolean isUp = false;
 
 	private final Kernel kernel;
 
@@ -46,7 +47,7 @@ public class LogicalUFTPServer implements ExternalSystemConnector, UserInfoSourc
 
 	private Reservations reservations = null;
 
-	public LogicalUFTPServer(String serverName, Kernel kernel){
+	public UFTPBackend(String serverName, Kernel kernel){
 		this.serverName = serverName;
 		this.kernel = kernel;
 	}
@@ -118,37 +119,34 @@ public class LogicalUFTPServer implements ExternalSystemConnector, UserInfoSourc
 		this.description = description;
 	}
 	
-	public Status getConnectionStatus(){
-		checkConnection();
-		return status;
-	}
-	
-	public String getConnectionStatusMessage(){
+	public String getStatusDescription(){
 		checkConnection();
 		return statusMessage;
 	}
 
-	public String toString(){
-		return "[UFTPD Server '"+serverName+"' "+getConnectionStatusMessage()+"]";
+	public Collection<ExternalSystemConnector>getExternalConnections(){
+		Collection<ExternalSystemConnector>l = new ArrayList<>();
+		l.addAll(instances);
+		return l;
 	}
 
-	public String getExternalSystemName(){
-		return "UFTPD Server '"+serverName+"'";
+	public String toString(){
+		return "[UFTPD Server '"+serverName+"' "+getStatusDescription()+"]";
 	}
 
 	public boolean isUFTPAvailable(){
 		checkConnection();
-		return Status.OK.equals(status);
+		return isUp;
 	}
 	
 	private synchronized void checkConnection(){
-		status = Status.DOWN;
+		isUp = false;
 		int avail = 0;
 		
 		for(UFTPDInstance i: instances){
 			String state = "DOWN";
 			if(i.isUFTPAvailable()) {
-				status = Status.OK;
+				isUp = true;
 				state = "UP";
 				avail++;
 			}

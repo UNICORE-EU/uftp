@@ -8,7 +8,7 @@ import org.apache.commons.io.FilenameUtils;
 
 import eu.unicore.security.Client;
 import eu.unicore.services.security.util.AuthZAttributeStore;
-import eu.unicore.uftp.authserver.LogicalUFTPServer;
+import eu.unicore.uftp.authserver.UFTPBackend;
 import eu.unicore.uftp.authserver.TransferInitializer;
 import eu.unicore.uftp.authserver.TransferRequest;
 import eu.unicore.uftp.authserver.UFTPDInstance;
@@ -67,7 +67,7 @@ public class AccessServiceImpl extends ShareServiceBase {
 	@Path("/{serverName}/{uniqueID}/{path:.*}")
 	public Response downloadPath(@PathParam("serverName") String serverName, @PathParam("uniqueID") String uniqueID, 
 			@PathParam("path") String path, @HeaderParam("range")String range) {
-		LogicalUFTPServer server = getLogicalServer(serverName);
+		UFTPBackend server = getLogicalServer(serverName);
 		ACLStorage shareDB = getShareDB(serverName);
 		if(shareDB==null || server==null){
 			return handleError(404, "No server or no data sharing for '"+serverName+"'", null, logger);
@@ -150,7 +150,7 @@ public class AccessServiceImpl extends ShareServiceBase {
 	@Path("/{serverName}/{uniqueID}/{path:.*}")
 	public Response uploadPath(InputStream content, @PathParam("serverName") String serverName, 
 			@PathParam("uniqueID") String uniqueID, @PathParam("path") String path) {
-		LogicalUFTPServer server = getLogicalServer(serverName);
+		UFTPBackend server = getLogicalServer(serverName);
 		ACLStorage shareDB = getShareDB(serverName);
 		if(shareDB==null || server==null) {
 			return handleError(404, "No server or no data sharing for '"+serverName+"'", null, logger);
@@ -193,7 +193,7 @@ public class AccessServiceImpl extends ShareServiceBase {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response auth(@PathParam("serverName") String serverName, String json) {
-		LogicalUFTPServer server = getLogicalServer(serverName);
+		UFTPBackend server = getLogicalServer(serverName);
 		ACLStorage shareDB = getShareDB(serverName);
 		if(shareDB==null || server==null){
 			return handleError(404, "No sharing for / no server '"+serverName+"', please check your URL", null, logger);

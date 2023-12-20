@@ -10,8 +10,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import eu.unicore.services.security.util.AuthZAttributeStore;
-import eu.unicore.uftp.authserver.AuthServiceProperties;
-import eu.unicore.uftp.authserver.LogicalUFTPServer;
+import eu.unicore.uftp.authserver.UFTPBackend;
 import eu.unicore.uftp.authserver.TransferInitializer;
 import eu.unicore.uftp.authserver.TransferRequest;
 import eu.unicore.uftp.authserver.UFTPDInstance;
@@ -56,7 +55,7 @@ public class ShareServiceImpl extends ShareServiceBase {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response share(@PathParam("serverName") String serverName, String jsonString) {
-		LogicalUFTPServer server = getLogicalServer(serverName);
+		UFTPBackend server = getLogicalServer(serverName);
 		ACLStorage shareDB = getShareDB(serverName);
 		if(shareDB==null || server==null){
 			return handleError(404, "No sharing for '"+serverName+"', please check your URL", null, logger);
@@ -127,7 +126,7 @@ public class ShareServiceImpl extends ShareServiceBase {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/{serverName}")
 	public Response getShares(@PathParam("serverName") String serverName) {
-		LogicalUFTPServer server = getLogicalServer(serverName);
+		UFTPBackend server = getLogicalServer(serverName);
 		ACLStorage shareDB = getShareDB(serverName);
 		if(shareDB==null || server==null){
 			throw new WebApplicationException(404);
@@ -160,7 +159,7 @@ public class ShareServiceImpl extends ShareServiceBase {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/{serverName}/{uniqueID}")
 	public Response getShareInfo(@PathParam("serverName") String serverName, @PathParam("uniqueID") String uniqueID) {
-		LogicalUFTPServer server = getLogicalServer(serverName);
+		UFTPBackend server = getLogicalServer(serverName);
 		ACLStorage shareDB = getShareDB(serverName);
 		if(shareDB==null || server==null){
 			throw new WebApplicationException(404);
@@ -196,7 +195,7 @@ public class ShareServiceImpl extends ShareServiceBase {
 	public Response getCatchAll() {
 		JSONObject o = new JSONObject();
 		try{
-			for(LogicalUFTPServer i : getAuthServiceProperties().getServers()){
+			for(UFTPBackend i : getConfig().getServers()){
 				String name = i.getServerName();
 				ACLStorage shareDB = getShareDB(name);
 				if(shareDB==null)continue;
@@ -204,7 +203,7 @@ public class ShareServiceImpl extends ShareServiceBase {
 				JSONObject server = new JSONObject();
 				server.put("href",url);
 				server.put("description",i.getDescription());
-				server.put("status",i.getConnectionStatusMessage());
+				server.put("status",i.getStatusDescription());
 				o.put(name, server);
 				UserAttributes ua = assembleAttributes(i, null);
 				o.put("userInfo", getUserInfo(ua));
@@ -222,10 +221,9 @@ public class ShareServiceImpl extends ShareServiceBase {
 	@DELETE
 	@Path("/{serverName}/{uniqueID}")
 	public Response delete(@PathParam("serverName") String serverName, @PathParam("uniqueID") String uniqueID) {
-		AuthServiceProperties props = kernel.getAttribute(AuthServiceProperties.class);
 		Pair<String,Integer> sn = getServerSpec(serverName);
 		serverName = sn.getM1();
-		LogicalUFTPServer server = props.getServer(serverName);
+		UFTPBackend server = getConfig().getServer(serverName);
 		ACLStorage shareDB = getShareDB(serverName);
 		if(shareDB==null || server==null){
 			throw new WebApplicationException(404);

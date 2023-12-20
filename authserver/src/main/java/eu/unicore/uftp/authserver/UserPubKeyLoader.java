@@ -23,9 +23,9 @@ public class UserPubKeyLoader implements UserInfoSource, KernelInjectable {
 
 	@Override
 	public Collection<String> getAcceptedKeys(String userName) {
-		AuthServiceProperties p = kernel.getAttribute(AuthServiceProperties.class);
+		AuthServiceConfig p = kernel.getAttribute(AuthServiceConfig.class);
 		Set<String> acceptedKeys = new HashSet<>();
-		for(LogicalUFTPServer uftpd: p.getServers()) {
+		for(UFTPBackend uftpd: p.getServers()) {
 			List<String> keys = uftpd.getAcceptedKeys(userName);
 			acceptedKeys.addAll(keys);
 		}

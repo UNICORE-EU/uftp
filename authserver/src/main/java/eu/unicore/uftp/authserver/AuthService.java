@@ -28,16 +28,11 @@ public class AuthService extends Application implements USERestApplication {
     }
     
     /**
-     * create the configuration object for the service
-     * and store it for later use
+     * setup configuration
      */
 	@Override
 	public void initialize(Kernel kernel)throws Exception {
-		AuthServiceProperties props = kernel.getAttribute(AuthServiceProperties.class);
-		if(props == null){
-			props = new AuthServiceProperties(kernel.getContainerProperties().getRawProperties(), kernel);
-			kernel.setAttribute(AuthServiceProperties.class, props);
-		}
+		AuthServiceConfig.get(kernel);
 	}
 
 }

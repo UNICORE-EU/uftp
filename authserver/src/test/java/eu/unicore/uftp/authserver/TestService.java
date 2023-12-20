@@ -96,6 +96,12 @@ public class TestService {
 		assertEquals("CN=demouser-dyn, OU=ssh-local-users", o.getJSONObject("client").getString("dn"));
 		assertEquals("user", o.getJSONObject("client").getJSONObject("role").getString("selected"));
 	}
+	
+	@Test
+	public void testReloadConfig() throws Exception {
+		AuthServiceConfig conf = k.getAttribute(AuthServiceConfig.class);
+		conf.reloadConfig(k);
+	}
 
 	protected static UFTPServer server;
 	static int cmdPort = 63321;

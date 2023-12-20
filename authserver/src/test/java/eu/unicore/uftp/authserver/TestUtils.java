@@ -5,6 +5,8 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.Properties;
+
 import org.junit.Test;
 
 import eu.unicore.uftp.authserver.share.IdentityExtractor.EmailExtractor;
@@ -71,5 +73,18 @@ public class TestUtils {
 			assertEquals(names[x], sn1.getM1());
 			assertEquals(indices[x], sn1.getM2());
 		}
+	}
+	
+	@Test
+	public void testAuthServerProperties() {
+		Properties p = new Properties();
+		p.put(AuthServiceProperties.PREFIX+AuthServiceProperties.PROP_SERVERS, "TEST");
+		AuthServiceProperties props = new AuthServiceProperties(p);
+		Properties p2 = new Properties();
+		p2.put(AuthServiceProperties.PREFIX+AuthServiceProperties.PROP_SERVERS, "TEST");
+		p2.put("some.other.property", "FOO");
+		assertFalse(props.hasChanges(p2));
+		p2.put(AuthServiceProperties.PREFIX+AuthServiceProperties.PROP_SERVERS, "TEST ANOTHER");
+		assertTrue(props.hasChanges(p2));
 	}
 }

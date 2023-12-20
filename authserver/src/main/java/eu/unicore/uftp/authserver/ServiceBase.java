@@ -29,7 +29,7 @@ public abstract class ServiceBase extends ApplicationBaseResource implements Ker
 
 	protected static final Gson gson = new GsonBuilder().create();
 	
-	protected UserAttributes assembleAttributes(LogicalUFTPServer server, String requestedGroup){
+	protected UserAttributes assembleAttributes(UFTPBackend server, String requestedGroup){
 		String serverName = server.getServerName();
 		Client client = AuthZAttributeStore.getClient();
 		String uid = client.getXlogin().getUserName();
@@ -74,8 +74,8 @@ public abstract class ServiceBase extends ApplicationBaseResource implements Ker
 		return ua;
 	}
 
-	protected AuthServiceProperties getAuthServiceProperties(){
-		return kernel.getAttribute(AuthServiceProperties.class);
+	protected AuthServiceConfig getConfig(){
+		return kernel.getAttribute(AuthServiceConfig.class);
 	}
 
 	/**
@@ -83,10 +83,9 @@ public abstract class ServiceBase extends ApplicationBaseResource implements Ker
 	 *
 	 * @param serverName
 	 */
-	protected LogicalUFTPServer getLogicalServer(String serverName) {
-		AuthServiceProperties props = kernel.getAttribute(AuthServiceProperties.class);
+	protected UFTPBackend getLogicalServer(String serverName) {
 		Pair<String,Integer> sn = getServerSpec(serverName);
-		return props.getServer(sn.getM1());
+		return getConfig().getServer(sn.getM1());
 	}
 
 	/**
@@ -95,9 +94,8 @@ public abstract class ServiceBase extends ApplicationBaseResource implements Ker
 	 * @param serverName
 	 */
 	protected UFTPDInstance getUFTPD(String serverName) throws IOException {
-		AuthServiceProperties props = kernel.getAttribute(AuthServiceProperties.class);
 		Pair<String,Integer> sn = getServerSpec(serverName);
-		LogicalUFTPServer server = props.getServer(sn.getM1());
+		UFTPBackend server = getConfig().getServer(sn.getM1());
 		return server!=null? server.getUFTPDInstance(sn.getM2()) : null;
 	}
 	

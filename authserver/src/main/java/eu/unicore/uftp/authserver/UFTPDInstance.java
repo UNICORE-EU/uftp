@@ -54,7 +54,7 @@ public class UFTPDInstance extends UFTPDInstanceBase implements ExternalSystemCo
 		return  "UFTPD server '"+serverName+"'";
 	}
 	
-	private static SSLSocketFactory socketfactory = null;
+	private SSLSocketFactory socketfactory = null;
 	
 	protected synchronized SSLSocketFactory getSSLSocketFactory() {
 		if(socketfactory==null) {
