@@ -4,16 +4,33 @@ similar to the CipherInput/OutputStream classes in Java. The whole stream is tre
 as a "single block", applying padding only to the last chunk
 """
 
-from Crypto.Cipher import Blowfish
+from Crypto.Cipher import AES, Blowfish
 from struct import pack
+
+
+def create_cipher(key, algo):
+    if "BLOWFISH".upper()==algo:
+        if len(key)>56:
+            raise ValueError("Key length must <=56 for encryption algorithm: %s" % algo)
+        return Blowfish.new(key, mode = Blowfish.MODE_ECB)
+    elif "AES".upper()==algo:
+        if len(key)<32:
+            raise ValueError("Key length must be >32 for encryption algorithm: %s" % algo)
+        key_length = len(key) - 16;
+        if not key_length in [16,24,32]:
+            raise ValueError("Illegal key length for encryption algorithm: %s" % algo)
+        iv = key[:16]
+        key = key[16:]
+        return AES.new(key, mode = AES.MODE_CBC, iv = iv)
+    else:
+        raise ValueError("Unknown encryption algorithm: %s" % algo)
 
 class CryptedConnector(object):
 
-    def __init__(self, data_connector, key):
+    def __init__(self, data_connector, key, algo):
         self.write_mode = True
-        self.cipher = Blowfish.new(key, mode = Blowfish.MODE_ECB)
-        self.writer = CryptedWriter(data_connector, key, self.cipher)
-        self.reader = Decrypt(data_connector, key, self.cipher)
+        self.writer = CryptedWriter(data_connector, create_cipher(key, algo))
+        self.reader = Decrypt(data_connector, create_cipher(key, algo))
 
     def write(self, data):
         return self.writer.write(data)
@@ -33,19 +50,17 @@ class CryptedConnector(object):
 
 class CryptedWriter(object):
 
-    def __init__(self, target, key, cipher=None):
+    def __init__(self, target, cipher):
         self.target = target
-        if cipher is None:
-            self.cipher = Blowfish.new(key, mode = Blowfish.MODE_ECB)
-        else:
-            self.cipher = cipher
+        self.cipher = cipher
         self.stored = b""
+        self.block_length = self.cipher.block_size
         self._closed = False
 
     def write(self, data):
         if len(self.stored)>0:
             data = self.stored + data
-        extra = divmod(len(data),8)[1];
+        extra = divmod(len(data), self.block_length)[1];
         if extra>0:
             crypted = self.cipher.encrypt(data[:-extra])
             self.stored = data[-extra:]
@@ -62,27 +77,25 @@ class CryptedWriter(object):
         if self._closed:
             return
         self._closed = True
-        length = 8-len(self.stored)
+        length = self.block_length - len(self.stored)
         padding = [length]*length
         self.target.write(self.cipher.encrypt(self.stored + pack('b'*length, *padding)))
         self.target.close()
     
 class Decrypt(object):
     
-    def __init__(self, source, key, cipher=None):
-        if cipher is None:
-            self.cipher = Blowfish.new(key, mode = Blowfish.MODE_ECB)
-        else:
-            self.cipher = cipher
+    def __init__(self, source, cipher):
+        self.cipher = cipher
         self.source = source
         self.stored = b""
+        self.block_length = self.cipher.block_size
 
     def read(self, length):
         data = self.source.read(length)
         finish = len(data)<length
         if len(self.stored)>0:
             data = self.stored + data
-        extra = divmod(len(data),8)[1];
+        extra = divmod(len(data), self.block_length)[1];
         if extra>0:
             decrypted = self.cipher.decrypt(data[:-extra])
             self.stored = data[-extra:]

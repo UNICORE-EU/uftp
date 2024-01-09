@@ -1,4 +1,5 @@
 import hashlib, fnmatch, os.path, pathlib, shlex, sys, time
+from base64 import b64decode
 
 from Connector import Connector
 from FileInfo import FileInfo
@@ -90,9 +91,18 @@ class Session(object):
             if len(f)>0:
                 self.includes.append(self.makeabs(f))
         self.key = job.get("key", None)
-        if(self.key is not None):
-            from base64 import b64decode
+        if self.key is not None:
             self.key = b64decode(self.key)
+            self.algo = job.get("algo", None)
+            if self.algo is None:
+                if len(self.key) in [16+16, 16+24, 16+32]:
+                    self.algo = "AES"
+                else:
+                    self.algo = "BLOWFISH"
+                    if len(self.key)>56:
+                        raise ValueError("Illegal key length")
+        else:
+            self.algo = "n/a"
         self.compress = job.get("compress", False)
         self.rate_limit = 0
         self.sleep_time = 0
@@ -681,7 +691,7 @@ class Session(object):
             self.BUFFER_SIZE = 65536
             if self.key is not None:
                 import CryptUtil
-                self.data = CryptUtil.CryptedConnector(self.data_connectors[0], self.key)
+                self.data = CryptUtil.CryptedConnector(self.data_connectors[0], self.key, self.algo)
             else:
                 self.data = self.data_connectors[0]
             if self.compress:
@@ -689,7 +699,7 @@ class Session(object):
         else:
             self.LOG.debug("Opening parallel data connector with <%d> streams" % self.num_streams)
             self.BUFFER_SIZE = 16384 # Java version compatibility
-            self.data = PConnector.PConnector(self.data_connectors, self.LOG, self.key, self.compress)
+            self.data = PConnector.PConnector(self.data_connectors, self.LOG, self.key, self.algo, self.compress)
 
     def send_hash(self):
         with open(self.file_path, "rb", buffering = self.FILE_READ_BUFFERSIZE) as f:
@@ -888,11 +898,15 @@ class Session(object):
             _lim = "%s MB/sec" % _r
         else:
             _lim = "no"
+        if self.key is not None:
+            _crypt = "True (%s)" % self.algo
+        else:
+            _crypt = "False"
         self.LOG.info("Processing UFTP session for <%s : %s : %s>, initial_dir='%s', base='%s', encrypted=%s, compress=%s, ratelimit=%s" % (
             self.job['user'], self.job['group'],
             self.control.client_ip(),
             self.current_dir, self.basedir,
-            self.key is not None, self.compress, _lim
+            _crypt, self.compress, _lim
         ))
         while True:
             msg = self.control.read_line()

@@ -11,7 +11,7 @@ class PConnector(object):
         Thomas Jefferson National Accelerator Facility
     """
 
-    def __init__(self, connectors: Connector, LOG: Log, key=None, compress=False):
+    def __init__(self, connectors: Connector, LOG: Log, key=None, algo="BLOWFISH", compress=False):
         self._connectors = connectors
         self._inputs = []
         self._outputs = []
@@ -21,8 +21,9 @@ class PConnector(object):
             import CryptUtil
         for conn in connectors:
             if self.encrypt:
-                self._outputs.append(CryptUtil.CryptedWriter(conn, key))
-                self._inputs.append(CryptUtil.Decrypt(conn, key))
+                cipher = CryptUtil.create_cipher(key, algo)
+                self._outputs.append(CryptUtil.CryptedWriter(conn, cipher))
+                self._inputs.append(CryptUtil.Decrypt(conn, cipher))
             else:
                 self._outputs.append(conn.client.makefile("wb"))
                 self._inputs.append(conn.client.makefile("rb"))
