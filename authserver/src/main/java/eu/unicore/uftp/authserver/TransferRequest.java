@@ -4,6 +4,7 @@ import java.util.Random;
 
 import eu.unicore.uftp.authserver.messages.AuthRequest;
 import eu.unicore.uftp.dpc.Utils;
+import eu.unicore.uftp.dpc.Utils.EncryptionAlgorithm;
 import eu.unicore.uftp.server.requests.UFTPSessionRequest;
 
 /**
@@ -32,6 +33,10 @@ public final class TransferRequest extends UFTPSessionRequest {
         setGroup(authData.gid);
         setAppend(authRequest.append);
         setKey(Utils.decodeBase64(authRequest.encryptionKey));
+        String alg = authRequest.encryptionAlgorithm;
+        if(alg!=null) {
+        	setEncryptionAlgorithm(EncryptionAlgorithm.valueOf(alg.toUpperCase()));
+        }
         setCompress(authRequest.compress);
         setIncludes(authData.includes);
         setExcludes(authData.excludes);
