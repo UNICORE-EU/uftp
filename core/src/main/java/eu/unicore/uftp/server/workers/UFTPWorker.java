@@ -292,7 +292,7 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 		if(!(socket instanceof PSocket)){
 			if (job.getKey() != null) {
 				//need to wrap here for encryption
-				reader = Utils.getDecryptStream(socket.getInputStream(), job.getKey());
+				reader = Utils.getDecryptStream(socket.getInputStream(), job.getKey(), job.getEncryptionAlgorithm());
 			} else {
 				reader = socket.getInputStream();
 			}
@@ -442,7 +442,7 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 		if(!(socket instanceof PSocket)){
 			if (job.getKey() != null) {
 				//need to wrap here for encryption
-				target = Utils.getEncryptStream(socket.getOutputStream(), job.getKey());
+				target = Utils.getEncryptStream(socket.getOutputStream(), job.getKey(), job.getEncryptionAlgorithm());
 			} else {
 				target = socket.getOutputStream();
 			}
@@ -500,7 +500,7 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 		List<Socket>dataCons = connection.getDataSockets();
 		if (n > 1) {
 			logger.info("Creating parallel socket with " + n + " streams.");
-			PSocket parallelSocket = new PSocket(job.getKey(), job.isCompress());
+			PSocket parallelSocket = new PSocket(job.getKey(), job.isCompress(), job.getEncryptionAlgorithm());
 			parallelSocket.init(1, dataCons.size());
 			for (Socket dataCon : dataCons) {
 				parallelSocket.addSocketStream(dataCon);

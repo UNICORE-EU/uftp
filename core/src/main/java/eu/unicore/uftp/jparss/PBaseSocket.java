@@ -36,19 +36,21 @@ import java.net.Socket;
 import java.net.SocketException;
 
 import eu.unicore.uftp.dpc.Utils;
+import eu.unicore.uftp.dpc.Utils.EncryptionAlgorithm;
 
 public class PBaseSocket extends Socket {
 	
-	public PBaseSocket(byte[] key, boolean compress){
+	public PBaseSocket(byte[] key, boolean compress, EncryptionAlgorithm algo){
 		super();
-		this.key=key;
-		this.compress=compress;
+		this.key = key;
+		this.algo = algo;
+		this.compress = compress;
 	}
 	
 	// encrypt/decryption
 	final byte[] key;
-	
-	// compress data
+	final EncryptionAlgorithm algo;
+
 	final boolean compress;
 	
 	/**
@@ -81,7 +83,7 @@ public class PBaseSocket extends Socket {
 		try {
 			for (int i = 0; i < numStreams_; i++){
 				InputStream source=sockets_[i].getInputStream();
-				tinputs[i] = key!=null? Utils.getDecryptStream(source, key) : source;
+				tinputs[i] = key!=null? Utils.getDecryptStream(source, key, algo) : source;
 				if(compress){
 					tinputs[i] = Utils.getDecompressStream(tinputs[i]);
 				}
@@ -102,7 +104,7 @@ public class PBaseSocket extends Socket {
 		try {
 			for (int i = 0; i < numStreams_; i++){
 				OutputStream sink=sockets_[i].getOutputStream();
-				toutputs[i] = key!=null ? Utils.getEncryptStream(sink, key) : sink;
+				toutputs[i] = key!=null ? Utils.getEncryptStream(sink, key, algo) : sink;
 				if(compress){
 					toutputs[i] = Utils.getCompressStream(toutputs[i]);
 				}

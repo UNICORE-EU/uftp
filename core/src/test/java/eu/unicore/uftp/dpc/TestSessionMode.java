@@ -28,6 +28,7 @@ import eu.unicore.uftp.client.SessionCommands.Get;
 import eu.unicore.uftp.client.UFTPSessionClient;
 import eu.unicore.uftp.client.UFTPSessionClient.HashInfo;
 import eu.unicore.uftp.dpc.Session.Mode;
+import eu.unicore.uftp.dpc.Utils.EncryptionAlgorithm;
 import eu.unicore.uftp.rsync.RsyncStats;
 import eu.unicore.uftp.rsync.TestRsync;
 import eu.unicore.uftp.server.ClientServerTestBase;
@@ -489,7 +490,7 @@ public class TestSessionMode extends ClientServerTestBase{
 			client.mkdir("forbidden");
 			fail("ACL does not work");
 		}catch(IOException e){
-			assertTrue(Utils.getDetailMessage(e).contains("Access denied"));
+			assertTrue(Log.getDetailMessage(e).contains("Access denied"));
 		}
 		client.mkdir("ok");
 		client.cd("ok");
@@ -498,7 +499,7 @@ public class TestSessionMode extends ClientServerTestBase{
 			client.put("not_ok", is.available(), is);
 			fail("ACL does not work");
 		}catch(IOException e){
-			assertTrue(Utils.getDetailMessage(e).contains("Access denied"));
+			assertTrue(Log.getDetailMessage(e).contains("Access denied"));
 		}
 		client.close();
 	}
@@ -684,7 +685,7 @@ public class TestSessionMode extends ClientServerTestBase{
 	@Test
 	public void testMultiStreamEncrypted() throws Exception {
 		int numCon = 2;
-		byte[] key = Utils.createKey();
+		byte[] key = Utils.createKey(EncryptionAlgorithm.BLOWFISH);
 		boolean compress = true;
 		
 		File sourceFile = new File(dataDir,"testsourcefile-"+System.currentTimeMillis());

@@ -9,16 +9,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.security.Key;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.SecureRandom;
-import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.Random;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.regex.Matcher;
@@ -27,7 +21,7 @@ import java.util.zip.GZIPInputStream;
 
 import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
-import javax.crypto.KeyGenerator;
+import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.apache.commons.codec.binary.Base64;
@@ -46,25 +40,14 @@ public class Utils {
 	public static final String LOG_CLIENT = "uftp.client";
 	public static final String LOG_SECURITY = "uftp.security";
 
-	//symmetric encryption algorithm
-	private static final String algo = "Blowfish";
-	//key type
-	private static final String keyAlgo = "Blowfish";
-	//mode
-	private static final String mode = "ECB";
-	//padding type
-	private static final String padding = "PKCS5Padding";
-	private static KeyGenerator keyGenerator;
-
-	static {
-		try {
-			keyGenerator = KeyGenerator.getInstance(keyAlgo);
-			keyGenerator.init(new SecureRandom());
-		} catch (Exception ex) {
-			throw new RuntimeException(ex);
-		}
-	}
-
+	private static String BLOWFISH_SPEC = "Blowfish/ECB/PKCS5Padding";
+	private static String AES_SPEC = "AES/CBC/PKCS5Padding";
+	
+	public static enum EncryptionAlgorithm {
+		BLOWFISH,
+		AES
+	};
+	
 	public static Logger getLogger(String prefix, Class<?>clazz){
 		return Log.getLogger(prefix, clazz);
 	}
@@ -73,13 +56,13 @@ public class Utils {
 	 * returns a stream that decrypts data
 	 *
 	 * @param source - the underlying physical stream
-	 * @param key - encoded key
+	 * @param key - decryption key
 	 * 
 	 * @throws IOException
 	 */
-	public static InputStream getDecryptStream(InputStream source, byte[] key) throws IOException {
+	public static InputStream getDecryptStream(InputStream source, byte[] key, EncryptionAlgorithm algo) throws IOException {
 		try {
-			return new CipherInputStream(source, Utils.makeDecryptionCipher(key));
+			return new CipherInputStream(source, Utils.makeDecryptionCipher(key, algo));
 		} catch (Exception ex) {
 			throw new IOException(ex);
 		}
@@ -89,13 +72,13 @@ public class Utils {
 	 * returns a stream that encrypts data
 	 *
 	 * @param sink - the underlying physical stream
-	 * @param key - encoded key
+	 * @param key - encryption key
 	 * 
 	 * @throws IOException
 	 */
-	public static OutputStream getEncryptStream(OutputStream sink, byte[] key) throws IOException {
+	public static OutputStream getEncryptStream(OutputStream sink, byte[] key, EncryptionAlgorithm algo) throws IOException {
 		try {
-			return new MyCipherOutputStream(sink, Utils.makeEncryptionCipher(key));
+			return new MyCipherOutputStream(sink, Utils.makeEncryptionCipher(key, algo));
 		} catch (Exception ex) {
 			throw new IOException(ex);
 		}
@@ -143,40 +126,76 @@ public class Utils {
 		}
 		return Base64.decodeBase64(base64.getBytes());
 	}
-
-	/**
-	 * create a {@link Cipher} for encryption
-	 *
-	 * @param encodedKey - encoded key
-	 * @throws Exception
-	 */
-	public static Cipher makeEncryptionCipher(byte[] encodedKey) throws Exception {
-		Cipher c = Cipher.getInstance(algo + "/" + mode + "/" + padding);
-		SecretKeySpec keySpec = new SecretKeySpec(encodedKey, keyAlgo);
-		c.init(Cipher.ENCRYPT_MODE, keySpec);
+	
+	public static Cipher makeEncryptionCipher(byte[] key, EncryptionAlgorithm algo) throws Exception {
+		Cipher c = null;
+		switch (algo) {
+		case BLOWFISH:
+			if(key.length>56)throw new IllegalArgumentException("Blowfish key length cannot be longer than 56");
+			c = Cipher.getInstance(BLOWFISH_SPEC);
+			c.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(key, "Blowfish"));
+			break;
+		case AES:
+			if(key.length<32)throw new IllegalArgumentException("AES key length must be > 32 (16 iv, rest for key)");
+			int keyLength = key.length - 16;
+			if(keyLength != 16 && keyLength != 24 && keyLength != 32) {
+				throw new IllegalArgumentException("Illegal AES key length");
+			}
+			c = Cipher.getInstance(AES_SPEC);
+			byte[] iv = new byte[16];
+			System.arraycopy(key, 0, iv, 0, 16);
+			byte[] aesKey = new byte[keyLength];
+			System.arraycopy(key, 16, aesKey , 0, keyLength);
+			c.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(aesKey, "AES"), new IvParameterSpec(iv));
+			break;
+		}
 		return c;
 	}
 
-	/**
-	 * create a {@link Cipher} for decryption
-	 *
-	 * @param encodedKey - encoded key
-	 */
-	public static Cipher makeDecryptionCipher(byte[] encodedKey) throws Exception {
-		Cipher c = Cipher.getInstance(algo + "/" + mode + "/" + padding);
-		SecretKeySpec keySpec = new SecretKeySpec(encodedKey, keyAlgo);
-		c.init(Cipher.DECRYPT_MODE, keySpec);
+	public static Cipher makeDecryptionCipher(byte[] key, EncryptionAlgorithm algo) throws Exception {
+		Cipher c = null;
+		switch (algo) {
+		case BLOWFISH:
+			c = Cipher.getInstance(BLOWFISH_SPEC);
+			c.init(Cipher.DECRYPT_MODE, new SecretKeySpec(key, "Blowfish"));
+			break;
+		case AES:
+			if(key.length<32) {
+				throw new IllegalArgumentException("AES key length must be > 32 (16 iv, rest for key)");
+			}
+			int keyLength = key.length - 16;
+			if(keyLength != 16 && keyLength != 24 && keyLength != 32) {
+				throw new IllegalArgumentException("Illegal AES key length");
+			}
+			c = Cipher.getInstance(AES_SPEC);
+			byte[] iv = new byte[16];
+			System.arraycopy(key, 0, iv, 0, 16);
+			byte[] aesKey = new byte[keyLength];
+			System.arraycopy(key, 16, aesKey, 0, keyLength);
+			c.init(Cipher.DECRYPT_MODE, new SecretKeySpec(aesKey, "AES"), new IvParameterSpec(iv));
+			break;
+		}
 		return c;
 	}
 
 	/**
 	 * create a new symmetric key
-	 *
+	 * @param algo
 	 * @return the encoded key
 	 */
-	public static byte[] createKey() throws InvalidKeySpecException, NoSuchAlgorithmException, NoSuchProviderException {
-		Key key = keyGenerator.generateKey();
-		return key.getEncoded();
+	public static byte[] createKey(EncryptionAlgorithm algo){
+		byte[] key = null;
+		switch (algo) {
+		case BLOWFISH:
+			key = new byte[56];
+			new Random().nextBytes(key);
+			break;
+		case AES:
+			key = new byte[16+32];
+			new Random().nextBytes(key);
+			break;
+		}
+		return key;
 	}
 
 	public static String md5(File file) throws Exception {
@@ -259,39 +278,6 @@ public class Utils {
 		}
 		return executor;
 	}
-	private static Set<String> whiteList;
-
-	public static synchronized Set<String> getWhiteList() {
-		if (whiteList == null) {
-			whiteList = new HashSet<String>();
-		}
-		return whiteList;
-	}
-
-	public static String getDetailMessage(Throwable throwable) {
-		StringBuilder sb = new StringBuilder();
-		Throwable cause = throwable;
-		String message = null;
-		String type = null;
-		type = cause.getClass().getName();
-		do {
-			type = cause.getClass().getName();
-			message = cause.getMessage();
-			cause = cause.getCause();
-		} while (cause != null);
-
-		sb.append(type).append(" ");
-		if (message != null) {
-			sb.append(message);
-		} else {
-			sb.append(" (no further message available)");
-		}
-		return sb.toString();
-	}
-
-	public static String createFaultMessage(String message, Throwable cause) {
-		return message + ": " + getDetailMessage(cause);
-	}
 
 	/**
 	 * this removes leading and trailing \" characters
@@ -371,9 +357,6 @@ public class Utils {
 
 	public static void closeQuietly(Closeable x) {
 		IOUtils.closeQuietly(x);
-		try {
-			if(x!=null)x.close();
-		} catch (IOException ex) {}
 	}
 
 	public static InetAddress[] parseInetAddresses(String addresses, Logger logger){

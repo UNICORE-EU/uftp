@@ -6,8 +6,8 @@ import java.util.zip.GZIPOutputStream;
 
 public class MyGZIPOutputStream extends GZIPOutputStream {
 
-	private OutputStream out;
-	
+	private final OutputStream out;
+
 	public MyGZIPOutputStream(OutputStream out) throws IOException {
 		super(out);
 		this.out = out;

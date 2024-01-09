@@ -91,10 +91,10 @@ public class Session {
 
 	// hash algorithm
 	private String hashAlgorithm = "MD5";
-	private String[] supportedHashAlgorithms = new String[] { "MD5", "SHA-1", "SHA-256", "SHA-512" };
+	private final String[] supportedHashAlgorithms = new String[] { "MD5", "SHA-1", "SHA-256", "SHA-512" };
 	private MessageDigest md;
 
-	private final Map<String, Pattern>patterns=new HashMap<String, Pattern>();
+	private final Map<String, Pattern>patterns = new HashMap<>();
 
 	private boolean archiveMode = false;
 
@@ -617,7 +617,7 @@ public class Session {
 			assertACL(newDir, Mode.WRITE);
 			fileAccess.mkdir(newDir.getAbsolutePath());
 		} catch (Exception ex) {
-			String msg = Utils.createFaultMessage("Can't create directory " + newDir.getAbsolutePath(), ex);
+			String msg = Log.createFaultMessage("Can't create directory " + newDir.getAbsolutePath(), ex);
 			connection.sendError(msg);
 			return;
 		}
@@ -746,7 +746,7 @@ public class Session {
 			connection.sendControl(UFTPCommands.OK);
 		}
 		catch(Exception ex){
-			String msg = Utils.createFaultMessage("Could not rename file", ex);
+			String msg = Log.createFaultMessage("Could not rename file", ex);
 			connection.sendError(msg);
 		}
 	}
@@ -775,7 +775,7 @@ public class Session {
 			connection.sendControl("213 Modify="+time+" "+target);
 		}
 		catch(Exception ex){
-			String msg = Utils.createFaultMessage("Could not set modification time for file", ex);
+			String msg = Log.createFaultMessage("Could not set modification time for file", ex);
 			connection.sendError(msg);
 		}
 	}

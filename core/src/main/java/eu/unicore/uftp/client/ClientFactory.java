@@ -13,6 +13,7 @@ import org.apache.logging.log4j.Logger;
 
 import eu.unicore.uftp.dpc.ProtocolViolationException;
 import eu.unicore.uftp.dpc.Utils;
+import eu.unicore.util.Log;
 
 public class ClientFactory {
 
@@ -147,7 +148,7 @@ public class ClientFactory {
 			 client.run();
 			 System.exit(0);
 		 } catch (Exception ex) {
-			 System.err.println(Utils.createFaultMessage("Error running UFTP client", ex));
+			 System.err.println(Log.createFaultMessage("Error running UFTP client", ex));
 			 if (ex.getCause() instanceof ProtocolViolationException) {
 				 System.err.println();
 				 System.err.println("Please check hostname and port of the remote server!");

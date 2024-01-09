@@ -11,6 +11,7 @@ import java.util.List;
 import eu.unicore.uftp.dpc.AuthorizationFailureException;
 import eu.unicore.uftp.dpc.DPCClient;
 import eu.unicore.uftp.dpc.Utils;
+import eu.unicore.uftp.dpc.Utils.EncryptionAlgorithm;
 import eu.unicore.uftp.jparss.PSocket;
 
 /**
@@ -41,6 +42,7 @@ public abstract class AbstractUFTPClient implements Closeable {
 	protected long bandwidthLimit = -1;
 
 	protected byte[] key;
+	protected EncryptionAlgorithm algo = EncryptionAlgorithm.BLOWFISH;
 
 	protected boolean compress = false;
 
@@ -84,7 +86,7 @@ public abstract class AbstractUFTPClient implements Closeable {
 	 */
 	public void openDataConnection() throws IOException {
 		if (socket == null) {
-			socket = createSocket(numcons, client, key, compress);
+			socket = createSocket(numcons, client, key, compress, algo);
 		}
 	}
 
@@ -108,7 +110,7 @@ public abstract class AbstractUFTPClient implements Closeable {
 	protected void setupForGet(OutputStream localTarget) throws IOException {
 		if (numcons == 1) {
 			if (key != null) {
-				reader = Utils.getDecryptStream(socket.getInputStream(), key);
+				reader = Utils.getDecryptStream(socket.getInputStream(), key, algo);
 			} else {
 				reader = socket.getInputStream();
 			}
@@ -133,7 +135,7 @@ public abstract class AbstractUFTPClient implements Closeable {
 		writer = socket.getOutputStream();
 		if (numcons == 1) {
 			if (key != null) {
-				writer = Utils.getEncryptStream(writer, key);
+				writer = Utils.getEncryptStream(writer, key, algo);
 			}
 			if (compress) {
 				writer = Utils.getCompressStream(writer);
@@ -142,18 +144,18 @@ public abstract class AbstractUFTPClient implements Closeable {
 		reader = localSource;
 	}
 
-	protected Socket createSocket(int numConnections, DPCClient client, byte[] key) throws IOException {
-		return createSocket(numConnections, client, key, false);
+	protected Socket createSocket(int numConnections, DPCClient client, byte[] key, EncryptionAlgorithm algo) throws IOException {
+		return createSocket(numConnections, client, key, false, algo);
 	}
 
-	protected Socket createSocket(final int numConnections, DPCClient client, byte[] key, boolean compress)
+	protected Socket createSocket(final int numConnections, DPCClient client, byte[] key, boolean compress, EncryptionAlgorithm algo)
 			throws IOException {
 		Socket localSocket;
 		List<Socket> dataCons = client.openDataConnections(numConnections);
 		// server may have given us less connections than we requested
 		numcons = dataCons.size();
 		if (numcons > 1) {
-			localSocket = new PSocket(key, compress);
+			localSocket = new PSocket(key, compress, algo);
 			PSocket parallelSocket = (PSocket) localSocket;
 			parallelSocket.init(1, numcons);
 			for (Socket dataCon : dataCons) {
@@ -207,7 +209,7 @@ public abstract class AbstractUFTPClient implements Closeable {
 	}
 
 	/**
-	 * set the (encoded) symmetric key to be used for encryption/decryption
+	 * set the (symmetric) key to be used for encryption/decryption
 	 *
 	 * @param key
 	 */
@@ -217,6 +219,14 @@ public abstract class AbstractUFTPClient implements Closeable {
 
 	public byte[] getKey() {
 		return key;
+	}
+
+	public EncryptionAlgorithm getEncryptionAlgorithm() {
+		return algo;
+	}
+
+	public void setEncryptionAlgorithm(EncryptionAlgorithm algo) {
+		this.algo = algo;
 	}
 
 	public boolean isCompress() {

@@ -28,14 +28,16 @@ package eu.unicore.uftp.jparss;
 import java.io.IOException;
 import java.net.Socket;
 
+import eu.unicore.uftp.dpc.Utils.EncryptionAlgorithm;
+
 public class PSocket extends PBaseSocket {
 
 	/**
 	 * Constructor. Creates an unconnected socket.
 	 * @param key - encoded key for encryption/decryption. Set no <code>null</code> for no encryption
 	 */
-	public PSocket(byte[]key, boolean compress) {
-		super(key,compress);
+	public PSocket(byte[]key, boolean compress, EncryptionAlgorithm algo) {
+		super(key,compress, algo);
 	}
 
 	/**

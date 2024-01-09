@@ -17,20 +17,31 @@ import javax.crypto.CipherOutputStream;
 import org.junit.Test;
 
 import eu.unicore.uftp.client.FileInfo;
+import eu.unicore.uftp.dpc.Utils.EncryptionAlgorithm;
 
 public class TestVarious {
 
 	@Test
-	public void testCryptoStuff()throws Exception{
-		byte[] key=Utils.createKey();
-		Cipher c=Utils.makeEncryptionCipher(key);
+	public void testCrypto()throws Exception{
+		for(EncryptionAlgorithm algo: new EncryptionAlgorithm[]
+		   { EncryptionAlgorithm.BLOWFISH, EncryptionAlgorithm.AES })
+		{
+			runCryptoTest(algo);
+		}
+	}
+
+	private void runCryptoTest(EncryptionAlgorithm algo)throws Exception{
+		String msg = "Test123 Test123 Test123";
+		byte[] key = Utils.createKey(algo);
+		System.out.println("Key length: "+key.length);
+		Cipher c = Utils.makeEncryptionCipher(key, algo);
 		assertNotNull(c);
-		ByteArrayOutputStream bos=new ByteArrayOutputStream();
-		CipherOutputStream os=new CipherOutputStream(bos,c);
-		os.write("Test123 Test123 Test123".getBytes());
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		CipherOutputStream os = new CipherOutputStream(bos, c);
+		os.write(msg.getBytes());
 		os.close();
-		System.out.println("Length: "+bos.size());
-		Cipher c_read=Utils.makeDecryptionCipher(key);
+		System.out.println("Message length: "+bos.size());
+		Cipher c_read = Utils.makeDecryptionCipher(key, algo);
 		try(CipherInputStream is=new CipherInputStream(new ByteArrayInputStream(bos.toByteArray()),c_read)){
 			byte[]data=new byte[128];
 			int total=0;
@@ -39,24 +50,31 @@ public class TestVarious {
 				if(l<0)break;
 				total+=l;
 			}
-			System.out.println(total);
 			String out=new String(data, 0, total);
 			System.out.println(out);
+			assertEquals(msg, out);
 		}
 	}
 
 	@Test
-	public void testCryptoStuff2()throws Exception{
-		byte[] key=Utils.createKey();
-		
-		ByteArrayOutputStream sink=new ByteArrayOutputStream();
-		OutputStream os=Utils.getEncryptStream(sink, key);
-		os.write("Test123 Test123 Test123".getBytes());
+	public void testCryptoStream() throws Exception{
+		for(EncryptionAlgorithm algo: new EncryptionAlgorithm[]
+		   { EncryptionAlgorithm.BLOWFISH, EncryptionAlgorithm.AES })
+		{
+			runCryptoStreamTest(algo);
+		}
+	}
+
+	private void runCryptoStreamTest(EncryptionAlgorithm algo) throws Exception{
+		String msg = "Test123 Test123 Test123";
+		byte[] key = Utils.createKey(algo);
+		ByteArrayOutputStream sink = new ByteArrayOutputStream();
+		OutputStream os=Utils.getEncryptStream(sink, key, algo);
+		os.write(msg.getBytes());
 		os.close();
-		System.out.println("Length: "+sink.size());
 		InputStream source=new ByteArrayInputStream(sink.toByteArray());
-		InputStream is=Utils.getDecryptStream(source, key);
-		
+		InputStream is=Utils.getDecryptStream(source, key, algo);
+
 		byte[]data=new byte[128];
 		int total=0;
 		while(true){
@@ -67,6 +85,7 @@ public class TestVarious {
 		System.out.println(total);
 		String out=new String(data, 0, total);
 		System.out.println(out);
+		assertEquals(msg, out);
 	}
 	
 	@Test
@@ -80,7 +99,7 @@ public class TestVarious {
 		s="abcd\"";
 		assertEquals("abcd", Utils.trim(s));
 	}
-	
+
 	@Test
 	public void testToMListEntry(){
 		FileInfo f = new FileInfo(new File("pom.xml"));

@@ -10,6 +10,7 @@ import java.util.Properties;
 
 import eu.unicore.uftp.dpc.Session;
 import eu.unicore.uftp.dpc.Utils;
+import eu.unicore.uftp.dpc.Utils.EncryptionAlgorithm;
 
 /**
  * Requests permission for a client to open a session on
@@ -46,6 +47,8 @@ public class UFTPSessionRequest extends UFTPBaseRequest {
      * encryption key - null for no encryption
      */
     private byte[] key;
+
+    private EncryptionAlgorithm algo = EncryptionAlgorithm.BLOWFISH;
 
     /**
      * whether to append to an existing file
@@ -112,6 +115,7 @@ public class UFTPSessionRequest extends UFTPBaseRequest {
         compress = Boolean.parseBoolean(properties.getProperty("compress"));
         streams = Integer.parseInt(properties.getProperty("streams", "2"));
         key = Utils.decodeBase64(properties.getProperty("key"));
+        algo = EncryptionAlgorithm.valueOf(properties.getProperty("algo", "BLOWFISH"));
         group = properties.getProperty("group");
         rateLimit = Long.parseLong(properties.getProperty("rateLimit", "0"));
         offset = Long.parseLong(properties.getProperty("offset", "0"));
@@ -149,6 +153,7 @@ public class UFTPSessionRequest extends UFTPBaseRequest {
         }
         if (key != null) {
             os.write(("key=" + Utils.encodeBase64(key) + "\n").getBytes());
+            os.write(("algo=" + algo + "\n").getBytes());
         }
         if (includes !=null) {
             os.write(("includes=" + includes + "\n").getBytes());
@@ -218,6 +223,14 @@ public class UFTPSessionRequest extends UFTPBaseRequest {
 
 	public void setKey(byte[] key) {
 		this.key = key;
+	}
+
+	public EncryptionAlgorithm getEncryptionAlgorithm() {
+		return algo;
+	}
+
+	public void setEncryptionAlgorithm(EncryptionAlgorithm algo) {
+		this.algo = algo;
 	}
 
 	public boolean isAppend() {

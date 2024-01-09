@@ -455,7 +455,7 @@ public class UFTPServer implements Runnable {
 						svrThread.addJob(request);
 					}
 				} catch (Exception e) {
-					response = UFTPCommands.ERROR+"::"+Utils.createFaultMessage("Request rejected. Reason: ", e);
+					response = UFTPCommands.ERROR+"::"+Log.createFaultMessage("Request rejected. Reason: ", e);
 					logger.error("Error processing job: " + jobString, e);
 				}
 				writeResponse(response, jobSocket.getOutputStream());

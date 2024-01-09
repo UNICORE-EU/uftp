@@ -23,6 +23,7 @@ import java.util.regex.Pattern;
 import org.apache.logging.log4j.Logger;
 
 import eu.unicore.uftp.server.UFTPCommands;
+import eu.unicore.util.Log;
 
 /**
  * Client allowing parallel data transfer with dynamic port configuration using
@@ -185,7 +186,7 @@ public class DPCClient implements Closeable{
 							}
 						} catch (Exception ignored) {
 						}
-						errors.append("[").append(s).append(": ").append(Utils.createFaultMessage(s.toString(), ex)).append("]");
+						errors.append("[").append(s).append(": ").append(Log.createFaultMessage(s.toString(), ex)).append("]");
 					}
 				}
 			}
