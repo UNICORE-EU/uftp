@@ -195,6 +195,8 @@ class Session(object):
         self.control.write_message("211-Features:")
         for feat in self._FEATURES:
             self.control.write_message(" %s"  % feat)
+        if self.key is not None:
+            self.control.write_message(" CRYPTED-%s"  % self.algo)
         feat = "HASH "
         for f in self.hash_algorithms:
             feat+=f
@@ -224,18 +226,24 @@ class Session(object):
         self.assert_permission(Session.MODE_INFO)
         path = self.makeabs(params)
         self.assert_access(path)
-        os.chdir(path)
-        self.current_dir = path
-        self.control.write_message("200 OK")
+        try:
+            os.chdir(path)
+            self.current_dir = path
+            self.control.write_message("200 OK")
+        except OSError as e:
+            self.control.write_message("500 Can't cwd to directory: %s" % str(e))
         return Session.ACTION_CONTINUE
 
     def cdup(self, params):
         if self.current_dir==self.basedir:
             self.control.write_message("500 Can't cd up, already at base directory")
         else:
-            os.chdir("..")
-            self.current_dir = os.getcwd()
-            self.control.write_message("200 OK")
+            try:
+                os.chdir("..")
+                self.current_dir = os.getcwd()
+                self.control.write_message("200 OK")
+            except OSError as e:
+                self.control.write_message("500 Can't cd up: %s" % str(e))
         return Session.ACTION_CONTINUE
 
     def pwd(self, params):
@@ -249,55 +257,52 @@ class Session(object):
         try:
             os.mkdir(path)
             self.control.write_message("257 \"%s\" directory created" % path)
-        except Exception as e:
+        except OSError as e:
             self.control.write_message("500 Can't create directory: %s" % str(e))
         return Session.ACTION_CONTINUE
 
     def rm(self, params):
         self.assert_permission(Session.MODE_FULL)
         _path = self.makeabs(params)
+        self.assert_access(_path)
         try:
-            self.assert_access(_path)
             os.unlink(_path)
             self.control.write_message("200 OK")
-        except Exception as e:
+        except OSError as e:
             self.control.write_message("500 Can't remove path: %s" % str(e))
         return Session.ACTION_CONTINUE
 
     def rmdir(self, params):
         self.assert_permission(Session.MODE_FULL)
         _path = self.makeabs(params)
+        self.assert_access(_path)
         try:
-            self.assert_access(_path)
             os.rmdir(_path)
             self.control.write_message("200 OK")
-        except Exception as e:
+        except OSError as e:
             self.control.write_message("500 Can't remove path: %s" % str(e))
         return Session.ACTION_CONTINUE
 
     def rename_from(self, params):
         self.assert_permission(Session.MODE_WRITE)
         _path = self.makeabs(params)
-        try:
-            self.assert_access(_path)
-            self.rename_from_path = _path
-            self.control.write_message("350 File action OK Please send rename-to")
-        except Exception as e:
-            self.control.write_message("500 Can't rename from: %s" % str(e))
+        self.assert_access(_path)
+        self.rename_from_path = _path
+        self.control.write_message("350 File action OK Please send rename-to")
         return Session.ACTION_CONTINUE
 
     def rename_to(self, params):
         self.assert_permission(Session.MODE_WRITE)
         _path = self.makeabs(params)
-        try:
-            if self.rename_from_path is None:
+        self.assert_access(_path)
+        if self.rename_from_path is None:
                 raise Exception("Illegal sequence of FTP commands - must send RNFR first")
-            self.assert_access(_path)
+        try:
             os.rename(self.rename_from_path, _path)
             self.control.write_message("200 OK")
-            self.rename_from_path = None
-        except Exception as e:
+        except OSError as e:
             self.control.write_message("500 Can't rename to: %s" % str(e))
+        self.rename_from_path = None
         return Session.ACTION_CONTINUE
 
     def pasv(self, params):
@@ -323,7 +328,7 @@ class Session(object):
                 msg = "227 Entering Passive Mode (%s,%d,%d)" % (adv.replace(".",","), (my_port / 256), (my_port % 256))
             self.control.write_message(msg)
             _data_connector = Server.accept_data(server_socket, self.LOG, self.control.client_ip())
-            self.LOG.debug("Accepted %s"% _data_connector.info())
+            self.LOG.debug("Accepted %s" % _data_connector.info())
             self.data_connectors.append(_data_connector)
             if len(self.data_connectors) == self.num_streams:
                 return Session.ACTION_OPEN_SOCKET
@@ -361,7 +366,7 @@ class Session(object):
             return Session.ACTION_CLOSE_DATA
         try:
             file_list = os.listdir(path)
-        except Exception as e:
+        except OSError as e:
             self.control.write_message("500 Error listing <%s>: %s"% (path, str(e)))
             return Session.ACTION_CLOSE_DATA
         self.control.write_message("150 OK")
@@ -507,8 +512,12 @@ class Session(object):
         if self.number_of_bytes is None:
             self.number_of_bytes = sys.maxsize
         self.file_path = path
-        pathlib.Path(path).touch()
-        self.control.write_message("150 OK")
+        try:
+            pathlib.Path(path).touch()
+            self.control.write_message("150 OK")
+        except OSError as e:
+            self.control.write_message("500 Cannot access target file: %s" % str(e))
+            return Session.ACTION_CONTINUE
         return Session.ACTION_STORE
 
     def appe(self, params):
@@ -519,8 +528,8 @@ class Session(object):
             self.number_of_bytes = sys.maxsize
         try:
             self.offset = os.stat(path)['st_size']
-        except:
-            self.control.write_message("500 Target file does not exist / is not readable")
+        except OSError as e:
+            self.control.write_message("500 Target file does not exist / is not readable: %s" % str(e))
             return Session.ACTION_CONTINUE
         self.file_path = path
         self.control.write_message("150 OK")

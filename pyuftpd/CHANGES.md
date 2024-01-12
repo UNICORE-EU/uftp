@@ -8,10 +8,11 @@ Changelog for the PyUFTPD server
 
 UFTPD 3.4.0 (released MMM DD, 2024)
 -----------------------------------
- - report MaxSessionsPerClient setting to Auth server in "ping" reply
- - add PAM.py to optionally put UFTPD processes into the systemd user slice
- - check crypto support when starting
+ - new feature: report MaxSessionsPerClient setting to Auth server in "ping" reply
+ - new feature: add PAM.py to optionally put UFTPD processes into the systemd user slice
  - new feature: AES encryption support
+ - fix: check crypto support when starting
+ - do not accept transfers requesting crypted connections if crypto support is not available
 
 UFTPD 3.3.0 (released Jun 30, 2023)
 -----------------------------------

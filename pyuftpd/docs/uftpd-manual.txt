@@ -24,7 +24,7 @@ UNICORE UFTP
 UFTP is a data streaming library and file transfer tool. 
 
 UFTP is best used using the 'uftp' client-side application (available
-from https://sourceforge.net/projects/unicore/files/Clients/UFTP-Client),
+from https://github.com/UNICORE-EU/uftp-javaclient),
 but is easily integrated into custom applications due to its FTP
 compliance.
 
@@ -39,8 +39,7 @@ A full UFTP server installation consists of two parts
  - either a UNICORE/X server, or a standalone authentication 
    service.
 
-This manual covers the UFTP file server "uftpd" version 3.0 and higher, 
-written in Python.
+This manual covers the UFTP file server "uftpd".
 
 
 UFTP features
@@ -139,7 +138,7 @@ Installation and operation
 Prerequisites
 ~~~~~~~~~~~~~
 
-  - Python 3.6.0 or later
+  - Python 3.7.0 or later
 
   - the server's "listen" port needs to be accessible through your firewalls, 
     declaring it an "FTP" port (FTP connection tracking). Alternatively a fixed
@@ -156,6 +155,10 @@ Prerequisites
 A functional UFTP installation requires either an Auth server or a 
 full UNICORE/X server.
 
+To support encrypted data connections, you need to install the 'pycryptodome' package
+using
+
+  pip install pycryptodome
 
 [NOTE]
 .NOTE ON PATHS

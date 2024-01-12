@@ -152,6 +152,9 @@ def _do_add_job(request, connector, config, LOG):
     request['_LOCK'] = threading.Lock()
     request['_EXPIRES'] = int(time.time())+_REQUEST_LIFETIME
     request['_PIDS'] = []
+    if request.get('key', None) is not None:
+         if not config['_CRYPTOGRAPHY_AVAILABLE']:
+             raise Exception("Encrypted connections are not supported by this UFTPD server.")
     job_map[secret] = request
     LOG.info("New transfer request for '%s' groups: %s" % (user, str(group)))
 
@@ -264,8 +267,10 @@ def main():
     LOG.debug("Validating client IPs      : %s" % str(not config['DISABLE_IP_CHECK']))
     try:
         import CryptUtil
+        config['_CRYPTOGRAPHY_AVAILABLE'] = True
     except:
         LOG.info("Warning: Cryptography is not available.")
+        config['_CRYPTOGRAPHY_AVAILABLE'] = False
     process(cmd_server, config, LOG)
     return 0
 

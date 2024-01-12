@@ -103,7 +103,7 @@ class Decrypt(object):
         else:
             decrypted = self.cipher.decrypt(data)
             self.stored = b""
-        if finish:
+        if finish and len(decrypted)>0:
             padlength = decrypted[-1]
             return decrypted[:-padlength]
         else:
