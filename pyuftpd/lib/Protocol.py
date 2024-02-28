@@ -2,9 +2,8 @@ import Connector
 from UFTPD import MY_VERSION
 
 _REQUEST_PASSWORD = "331 Please specify the password"
-_FILE_ACTION_OK = "350 File action OK"
-_LOGIN_SUCCESS = "230 Login successful"
 _SYSTEM_REPLY = "215 Unix Type: L8"
+_PROTOCOL_ERROR = "500 Protocol error"
 
 def login(cmd: str, connector: Connector):
     secret = None
@@ -16,7 +15,7 @@ def login(cmd: str, connector: Connector):
             if password != "anonymous":
                 secret = password
     if not secret:
-        connector.write_message("500 Client login does not comply with protocol.")
+        connector.write_message(_PROTOCOL_ERROR)
         connector.close()
     return secret
 
@@ -38,8 +37,8 @@ def establish_connection(connector: Connector, config):
             return job_map.get(secret, None)
         elif chk.startswith("SYST"):
             cmds.remove("SYST")
-            connector.write_message("215 Unix Type: L8")
+            connector.write_message(_SYSTEM_REPLY)
         else:
-            connector.write_message("500 Protocol error")
+            connector.write_message(_PROTOCOL_ERROR)
             return False
 

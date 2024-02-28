@@ -11,9 +11,12 @@ class MockConnector(object):
 
     def getvalue(self):
         return self.writer.getvalue()
-    
+
     def read(self, length):
         return self.reader.read(length)
-    
+
+    def flush(self):
+        pass
+
     def close(self):
         pass

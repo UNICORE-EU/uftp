@@ -78,8 +78,8 @@ class Session(object):
         self.FILE_WRITE_BUFFERSIZE = 16384
         self.KEEP_ALIVE = False
         self.archive_mode = False
-        self.num_streams = 1
-        self.max_streams = job.get('MAX_STREAMS', 1)
+        self.num_streams = int(job.get('streams', 1))
+        self.max_streams = int(job.get('MAX_STREAMS', 1))
         self.mlsd_directory = None
         for f in job.get('UFTP_NOWRITE', []):
             if len(f)>0:
@@ -441,12 +441,10 @@ class Session(object):
     def set_range(self, offset, number_of_bytes):
         self.offset = offset
         self.number_of_bytes = number_of_bytes
-        self.have_range = True
 
     def reset_range(self):
-        self.set_range(0,0)
+        self.set_range(0,-1)
         self.have_range = False
-        self.number_of_bytes = None
 
     def rang(self, params):
         tokens = params.split(" ")
@@ -463,6 +461,7 @@ class Session(object):
             response = "350 Restarting at %s. End byte range at %s" % (local_offset, last_byte)
             num_bytes = last_byte - local_offset
             self.set_range(local_offset, num_bytes)
+            self.have_range = True
         self.control.write_message(response)
         return Session.ACTION_CONTINUE
 
@@ -509,7 +508,7 @@ class Session(object):
         self.assert_permission(Session.MODE_WRITE)
         path = self.makeabs(params)
         self.assert_access(path)
-        if self.number_of_bytes is None:
+        if self.number_of_bytes==-1:
             self.number_of_bytes = sys.maxsize
         self.file_path = path
         try:
@@ -524,7 +523,7 @@ class Session(object):
         self.assert_permission(Session.MODE_WRITE)
         path = self.makeabs(params)
         self.assert_access(path)
-        if self.number_of_bytes is None:
+        if self.number_of_bytes==-1:
             self.number_of_bytes = sys.maxsize
         try:
             self.offset = os.stat(path)['st_size']
@@ -657,7 +656,7 @@ class Session(object):
                 continue
             key, value = fact.split("=")
             if key.lower()=="modify":
-                self_set_mtime(path, value)
+                self._set_mtime(path, value)
             elif key.lower()=="unix.mode":
                 self._set_mode(path, value)
             else:
@@ -773,7 +772,10 @@ class Session(object):
         _mode = "r+b"
         with open(self.file_path, _mode, buffering = self.FILE_WRITE_BUFFERSIZE) as f:
             if not self.have_range:
-                f.truncate(0)
+                try:
+                    f.truncate(0)
+                except OSError:
+                    pass
             f.seek(self.offset)
             reader = self.get_reader()
             start_time = int(time.time())
@@ -866,9 +868,14 @@ class Session(object):
     
     def do_launch_transfer(self, mode):
         pid = Transfer.launch_transfer(self.remote_file_spec, self.file_path, mode,
-                                       self.offset, self.number_of_bytes,
                                        self.LOG, self.job['user'],
-                                       self.rate_limit)
+                                       offset=self.offset, length=self.number_of_bytes,
+                                       rate_limit=self.rate_limit,
+                                       number_of_streams=self.num_streams,
+                                       key=self.key,
+                                       algo=self.algo,
+                                       compress=self.compress
+                                       )
         self.LOG.info("Started server-server transfer, child process PID <%s>" % pid)
         self.reset_range()
         return pid

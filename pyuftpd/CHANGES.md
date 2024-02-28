@@ -6,12 +6,15 @@ Changelog for the PyUFTPD server
 [Full documentation](https://uftp-docs.readthedocs.io)
 
 
-UFTPD 3.4.0 (released MMM DD, 2024)
+UFTPD 3.4.0 (released Feb DD, 2024)
 -----------------------------------
  - new feature: report MaxSessionsPerClient setting to Auth server in "ping" reply
  - new feature: add PAM.py to optionally put UFTPD processes into the systemd user slice
  - new feature: AES encryption support
+ - new feature: remote-copy supports compression, encryption and multiple TCP streams
+ - fix: writing to existing files: only truncate when clients sends ALLO (no RANG/REST)
  - fix: check crypto support when starting
+ - fix: multi-tcp-stream combined with encryption was not working correctly
  - do not accept transfers requesting crypted connections if crypto support is not available
 
 UFTPD 3.3.0 (released Jun 30, 2023)

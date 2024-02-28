@@ -1,11 +1,11 @@
 """ Helpers for dealing with control and data connections """
 
-import socket
-import Log
+from socket import socket, SHUT_RDWR
+from Log import Logger
 
 class Connector(object):
 
-    def __init__(self, client, LOG: Log, conntype="FTP", binary_mode=False):
+    def __init__(self, client: socket, LOG: Logger, conntype="FTP", binary_mode=False):
         self.client = client
         self.binary_mode = binary_mode
         if binary_mode:
@@ -98,7 +98,7 @@ class Connector(object):
                 self.LOG.debug("Closing %s" % self.info())
             except:
                 pass
-            self.client.shutdown(socket.SHUT_RDWR)
+            self.client.shutdown(SHUT_RDWR)
             self.client.close()
         except Exception as e:
             self.LOG.error(e)

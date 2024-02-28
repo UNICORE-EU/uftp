@@ -1,17 +1,18 @@
 from struct import pack, unpack
 
-import Connector, Log
+from Connector import Connector
+from Log import Logger
 
 class PConnector(object):
     """
         Multi-stream connector that writes/reads multiple TCP (data)streams
         
-        written to be compatible with the JPARSS library, 
+        written to be compatible with the JPARSS library, which is
         Copyright (c) 2001 Southeastern Universities Research Association,
         Thomas Jefferson National Accelerator Facility
     """
 
-    def __init__(self, connectors: Connector, LOG: Log, key=None, algo="BLOWFISH", compress=False):
+    def __init__(self, connectors: list[Connector], LOG: Logger, key=None, algo="BLOWFISH", compress=False):
         self._connectors = connectors
         self._inputs = []
         self._outputs = []
@@ -22,8 +23,8 @@ class PConnector(object):
         for conn in connectors:
             if self.encrypt:
                 cipher = CryptUtil.create_cipher(key, algo)
-                self._outputs.append(CryptUtil.CryptedWriter(conn, cipher))
-                self._inputs.append(CryptUtil.Decrypt(conn, cipher))
+                self._outputs.append(CryptUtil.CryptWriter(conn, cipher))
+                self._inputs.append(CryptUtil.DecryptReader(conn, cipher))
             else:
                 self._outputs.append(conn.client.makefile("wb"))
                 self._inputs.append(conn.client.makefile("rb"))
@@ -37,7 +38,6 @@ class PConnector(object):
 
     def write(self, data):
         """ Write all the data to remote channel """
-        
         _magic = 0xcebf
         size = len(data)
         chunk = int(len(data) / self.num_streams)
@@ -45,15 +45,15 @@ class PConnector(object):
         for out in self._outputs:
             offset = i * chunk
             if i == self.num_streams - 1:
-                chunk_len = size - i * chunk;
+                chunk_len = size - i * chunk
             else:
-                chunk_len = chunk;
-            self.write_block(pack(">HHIII", _magic, i, self.seq, size, chunk_len)
+                chunk_len = chunk
+            self._write_block(pack(">HHIII", _magic, i, self.seq, size, chunk_len)
                              +data[offset:offset+chunk_len], out)
             i += 1
         self.seq += 1
 
-    def write_block(self, data, _out):
+    def _write_block(self, data, _out):
         """ Write all the data to out """
         to_write = len(data)
         write_offset = 0
@@ -65,15 +65,28 @@ class PConnector(object):
             to_write -= written
         _out.flush()
 
+    def _read_block(self, length, _in):
+        _chunks = []
+        _have = 0
+        while _have < length:
+            want = min(length - _have, length)
+            chunk = _in.read(want)
+            if chunk == b'':
+                break
+            _chunks.append(chunk)
+            _have = _have + len(chunk)
+        return b''.join(_chunks)
+
     def read(self, length):
         """ Read data from remote channel """
         buffer = bytearray(length)
         _magic = 0xcebf
-        for i in range(0, len(self._inputs)):
+        for i in range(0, self.num_streams):
             src = self._inputs[i]
-            header = src.read(16)
+            header = self._read_block(16, src)
             if len(header)==0:
-                break
+                # EOF
+                return []
             (magic, pos, seq, size, chunk_len) = unpack(">HHIII", header)
             if pos!=i:
                 raise Exception("I/O error reader %s (unexpected stream position: )" % (i,pos))
@@ -81,8 +94,6 @@ class PConnector(object):
                 raise Exception("I/O error reader %s (magic number)" % i)
             if seq!=self.seq:
                 raise Exception("I/O error reader %s (sequence number)" % i)
-            if size != len(buffer):
-                raise Exception("I/O error reader %s (total size: expected %s got %s)" % (i, size, len(buffer)))
             chunk = int(size / self.num_streams)
             offset = pos * chunk
             buffer[offset:offset+chunk_len] = src.read(chunk_len)
@@ -90,12 +101,7 @@ class PConnector(object):
         return buffer[0:size]
 
     def close(self):
-        for i in range(0, len(self._connectors)):
-            try:
-                self._outputs[i].close()
-                self._inputs[i].close()
-            except Exception as e:
-                self.LOG.error(e)
+        for i in range(0, self.num_streams):
             try:
                 self._connectors[i].close()
             except:

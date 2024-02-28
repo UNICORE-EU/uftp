@@ -7,7 +7,6 @@ as a "single block", applying padding only to the last chunk
 from Crypto.Cipher import AES, Blowfish
 from struct import pack
 
-
 def create_cipher(key, algo):
     if "BLOWFISH".upper()==algo:
         if len(key)>56:
@@ -16,7 +15,7 @@ def create_cipher(key, algo):
     elif "AES".upper()==algo:
         if len(key)<32:
             raise ValueError("Key length must be >32 for encryption algorithm: %s" % algo)
-        key_length = len(key) - 16;
+        key_length = len(key) - 16
         if not key_length in [16,24,32]:
             raise ValueError("Illegal key length for encryption algorithm: %s" % algo)
         iv = key[:16]
@@ -29,8 +28,8 @@ class CryptedConnector(object):
 
     def __init__(self, data_connector, key, algo):
         self.write_mode = True
-        self.writer = CryptedWriter(data_connector, create_cipher(key, algo))
-        self.reader = Decrypt(data_connector, create_cipher(key, algo))
+        self.writer = CryptWriter(data_connector, create_cipher(key, algo))
+        self.reader = DecryptReader(data_connector, create_cipher(key, algo))
 
     def write(self, data):
         return self.writer.write(data)
@@ -48,7 +47,7 @@ class CryptedConnector(object):
         else:
             self.reader.close()
 
-class CryptedWriter(object):
+class CryptWriter(object):
 
     def __init__(self, target, cipher):
         self.target = target
@@ -60,7 +59,7 @@ class CryptedWriter(object):
     def write(self, data):
         if len(self.stored)>0:
             data = self.stored + data
-        extra = divmod(len(data), self.block_length)[1];
+        extra = divmod(len(data), self.block_length)[1]
         if extra>0:
             crypted = self.cipher.encrypt(data[:-extra])
             self.stored = data[-extra:]
@@ -72,17 +71,18 @@ class CryptedWriter(object):
 
     def flush(self):
         pass
-    
+
     def close(self):
         if self._closed:
             return
-        self._closed = True
         length = self.block_length - len(self.stored)
         padding = [length]*length
         self.target.write(self.cipher.encrypt(self.stored + pack('b'*length, *padding)))
+        self.target.flush()
+        self._closed = True
         self.target.close()
-    
-class Decrypt(object):
+
+class DecryptReader(object):
     
     def __init__(self, source, cipher):
         self.cipher = cipher
@@ -91,12 +91,12 @@ class Decrypt(object):
         self.block_length = self.cipher.block_size
 
     def read(self, length):
-        data = self.source.read(length)
+        data = self.source.read(max(length, self.block_length))
         finish = len(data)<length
         if len(self.stored)>0:
             data = self.stored + data
-        extra = divmod(len(data), self.block_length)[1];
-        if extra>0:
+        num_blocks, extra = divmod(len(data), self.block_length)
+        if num_blocks>0 and extra>0:
             decrypted = self.cipher.decrypt(data[:-extra])
             self.stored = data[-extra:]
             finish = False
@@ -108,8 +108,6 @@ class Decrypt(object):
             return decrypted[:-padlength]
         else:
             return decrypted
-    
+
     def close(self):
         self.source.close()
-
-    
