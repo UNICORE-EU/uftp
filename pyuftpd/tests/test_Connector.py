@@ -1,7 +1,8 @@
-import io, unittest
+import unittest
+
+import MockSocket
 
 from lib import Connector, Log
-import MockSocket
 
 class TestConnector(unittest.TestCase):
 

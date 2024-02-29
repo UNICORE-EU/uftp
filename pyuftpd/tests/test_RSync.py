@@ -1,8 +1,8 @@
 import os, unittest
-import Connector, RSync
 from hashlib import md5
-from time import sleep
 from random import randint
+
+from lib import RSync
 
 class TestRSync(unittest.TestCase):
 

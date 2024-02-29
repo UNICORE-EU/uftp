@@ -1,11 +1,9 @@
 import unittest
-import os
-import pwd
-import time
 import secrets
-from lib import Connector, CryptUtil, Log
+
 import MockConnector
 
+from lib import CryptUtil, Log
 
 class TestCrypto(unittest.TestCase):
     def setUp(self):

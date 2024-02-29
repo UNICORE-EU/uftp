@@ -1,9 +1,6 @@
 import os, unittest
-import Connector, Log, RSync
+from lib import RSync
 from hashlib import md5
-from time import sleep
-from sys import exit
-from random import randint
 import cProfile
 from pstats import Stats
 

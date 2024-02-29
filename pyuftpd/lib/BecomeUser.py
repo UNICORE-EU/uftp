@@ -8,7 +8,7 @@ import UserCache
 
 def initialize(config, LOG: Log):
     """ Setup the user cache."""
-    (_x, euid, _y) = os.getresuid()
+    (_, euid, _) = os.getresuid()
     config['uftpd.effective_uid'] = euid
     switch_uid = config.get('uftpd.switch_uid', True)
     if switch_uid or euid == 0:

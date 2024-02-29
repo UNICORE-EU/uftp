@@ -9,7 +9,9 @@ import os
 import sys
 import threading
 import time
-import BecomeUser, FTPHandler, Log, Server, UserInfoHandler, Utils
+import BecomeUser, FTPHandler, Server, UserInfoHandler, Utils
+from Connector import Connector
+from Log import Logger
 
 #
 # the UFTPD version
@@ -28,7 +30,7 @@ def assert_version():
     """
     return sys.version_info >= REQUIRED_VERSION
 
-def setup_config(config):
+def setup_config(config: dict):
     config['CMD_HOST'] = os.getenv("CMD_HOST", "localhost")
     config['CMD_PORT'] = int(os.getenv("CMD_PORT", "64435"))
     config['SERVER_HOST'] = os.getenv("SERVER_HOST", "localhost")
@@ -90,7 +92,7 @@ def init_functions():
         "uftp-transfer-request": add_job,
     }
 
-def ping(request, connector, config, LOG):
+def ping(request, connector: Connector, config: dict, LOG: Logger):
     response = """Version: %s
 ListenPort: %s
 ListenAddress: %s
@@ -106,7 +108,7 @@ MaxSessionsPerClient: %s
     connector.write_message(response)
     connector.close()
 
-def get_user_info(request, connector, config, LOG):
+def get_user_info(request: dict, connector: Connector, config: dict, LOG: Logger):
     user = request['user'].strip()
     if user=="root":
         connector.write_message("500 Not allowed")
@@ -121,15 +123,15 @@ def get_user_info(request, connector, config, LOG):
         connector.write_message("500 No such user or no home directory found")
         connector.close()
 
-def add_job(request, connector, config, LOG):
+def add_job(request: dict, connector: Connector, config: dict, LOG: Logger):
     try:
-        _do_add_job(request, connector, config, LOG)
+        _do_add_job(request, config, LOG)
         connector.write_message("OK::%s" % config['SERVER_PORT'])
     except Exception as e:
         connector.write_message("ERROR::%s" % str(e))
     connector.close()
 
-def _do_add_job(request, connector, config, LOG):
+def _do_add_job(request: dict, config: dict, LOG: Logger):
     user = request['user']
     limit = config['MAX_CONNECTIONS']
     user_session_counts = config['_JOB_COUNTER']
@@ -158,7 +160,7 @@ def _do_add_job(request, connector, config, LOG):
     job_map[secret] = request
     LOG.info("New transfer request for '%s' groups: %s" % (user, str(group)))
 
-def cleanup(config, LOG):
+def cleanup(config: dict, LOG: Logger):
     LOG.debug("Request cleanup thread started.")
     job_map = config['job_map']
     while True:
@@ -189,14 +191,14 @@ def cleanup(config, LOG):
         try:
             children = config.get('user_info_process_pids')
             for pid in children:
-                (_pid, _status) = os.waitpid(pid, os.WNOHANG)
+                (_pid, _) = os.waitpid(pid, os.WNOHANG)
                 if _pid!=0:
                     children.remove(pid)
         except Exception as e:
             LOG.error(e)
         time.sleep(5)
                              
-def process(cmd_server, config, LOG):
+def process(cmd_server, config: dict, LOG: Logger):
     """
     Command processing loop. Reads commands from cmd socket and invokes the
     appropriate command.
@@ -231,7 +233,7 @@ def main():
     setup_config(config)
     verbose = config["LOG_VERBOSE"]
     use_syslog = config['LOG_SYSLOG']
-    LOG = Log.Logger(verbose=verbose, use_syslog=use_syslog)
+    LOG = Logger(verbose=verbose, use_syslog=use_syslog)
 
     LOG.info("**** UFTPD Version %s starting" % MY_VERSION)
 

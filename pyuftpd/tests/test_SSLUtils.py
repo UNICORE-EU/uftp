@@ -1,4 +1,4 @@
-import ssl, unittest
+import unittest
 
 from lib import Server, SSL, Log
 

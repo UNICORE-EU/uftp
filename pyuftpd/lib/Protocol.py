@@ -19,7 +19,7 @@ def login(cmd: str, connector: Connector):
         connector.close()
     return secret
 
-def establish_connection(connector: Connector, config):
+def establish_connection(connector: Connector, config: dict):
     cmds = ["USER","SYST"]
     connector.write_message("220 UFTPD %s, https://www.unicore.eu" % MY_VERSION)
     while len(cmds)>0:

@@ -58,7 +58,7 @@ class Transfer:
     def _copy_data(self, source, target, num_bytes):
         if self.number_of_streams>1:
             # parallel connector expects this
-            self.buffer_size = 16384
+            self.BUFFER_SIZE = 16384
         total = 0
         limit_rate = self.rate_limit > 0
         start_time = int(time.time())

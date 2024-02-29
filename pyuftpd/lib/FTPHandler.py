@@ -85,7 +85,7 @@ def create_session(connector: Connector, config, LOG: Log, ftp_server, cmd_serve
         pam_session.close_session()
     os._exit(0)
 
-def ftp_listener(ftp_server, config, LOG: Log, cmd_server):
+def ftp_listener(ftp_server, config, LOG: Log.Logger, cmd_server):
     LOG.info("Started FTP listener thread.")
     while True:
         try:

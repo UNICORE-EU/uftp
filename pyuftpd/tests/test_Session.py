@@ -1,6 +1,6 @@
 import os, unittest
 import MockSocket
-import Connector, Log, Session
+from lib import Connector, Log, Session
 
 class TestSession(unittest.TestCase):
 

@@ -13,7 +13,7 @@ RELEASE ?= ${DEFAULT_RELEASE}
 
 TESTS = $(wildcard tests/test_*.py)
 
-export PYTHONPATH := lib:.:tests
+export PYTHONPATH := .:lib
 
 PYTHON=python3
 
