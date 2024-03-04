@@ -8,8 +8,8 @@ Full documentation is at:
 https://uftp-docs.readthedocs.io
 
 
-Auth Server 3.0.0 (released MM DD, 2024)
-----------------------------------------
+Auth Server 2.9.0 (released Mar, DD, 2024)
+------------------------------------------
  - show server's session limit in info
  - show uftpd version in info
  - new feature: endpoint 'rest/auth/token' for issuing a token

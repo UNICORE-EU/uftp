@@ -25,6 +25,7 @@ import eu.unicore.uftp.server.FileAccess;
 import eu.unicore.uftp.server.UFTPCommands;
 import eu.unicore.uftp.server.UserFileAccess;
 import eu.unicore.uftp.server.requests.UFTPSessionRequest;
+import eu.unicore.uftp.server.workers.RCPThread;
 import eu.unicore.util.Log;
 
 /**
@@ -75,6 +76,10 @@ public class Session {
 
 	public static final int ACTION_SEND_HASH = 8;
 
+	public static final int ACTION_SEND_FILE = 9;
+
+	public static final int ACTION_RECEIVE_FILE = 10;
+
 	private final File baseDirectory;
 
 	private File currentDirectory;
@@ -109,7 +114,9 @@ public class Session {
 	}
 
 	private Mode accessLevel = Mode.FULL;
-	
+
+	private final UFTPSessionRequest job;
+
 	public Session(Connection connection, UFTPSessionRequest job, FileAccess fileAccess, int maxParCons) {
 		this.connection = connection;
 		this.fileAccess = new UserFileAccess(fileAccess,job.getUser(),job.getGroup());
@@ -137,6 +144,7 @@ public class Session {
 		this.accessLevel = job.getAccessPermissions();
 		this.includes = parsePathlist(job.getIncludes());
 		this.excludes = parsePathlist(job.getExcludes());
+		this.job = job;
 		
 	}
 
@@ -283,6 +291,14 @@ public class Session {
 			return ok? ACTION_SEND_STREAM_DATA : ACTION_CLOSE_DATA;
 		}
 		
+		else if (chk.startsWith("SEND-FILE ")) {
+			launchSendFile(cmd);
+		}
+
+		else if (chk.startsWith("RECEIVE-FILE ")) {
+			launchReceiveFile(cmd);
+		}
+
 		else if (chk.startsWith("KEEP-ALIVE")) {
 			handleKeepAlive(cmd);
 		}
@@ -885,6 +901,72 @@ public class Session {
 			keepAlive = false;
 		}
 		connection.sendControl(UFTPCommands.OK);
+	}
+
+	private void launchSendFile(String cmd) throws IOException {
+		assertMode(Mode.READ);
+		// params are: SEND-FILE path, remote_file, server_spec, passwd
+		String[] tok = cmd.trim().split(" ");
+		if(tok.length!=5) {
+			connection.sendError("Wrong parameter count for SEND-FILE");
+			return;
+		}
+		String remotePath =  trimQuotes(tok[2]);
+		String serverSpec = trimQuotes(tok[3]);
+		String password = trimQuotes(tok[4]);
+		String localFileName = trimQuotes(tok[1]);
+		File localFile = getFile(localFileName);
+		try{
+			assertACL(localFile, Mode.READ);
+		}catch(Exception e){
+			connection.sendError( "Can't open file for reading: "+e.getMessage());
+			return;
+		}
+		RCPThread t = new RCPThread(localFile, remotePath, serverSpec, password);
+		configureRCP(t);
+		String id = t.getName();
+		t.start();
+		connection.sendControl("299 OK transfer-process-ID=" + id);
+	}
+
+	private void launchReceiveFile(String cmd) throws IOException {
+		assertMode(Mode.WRITE);
+		// params are: RECEIVE-FILE path, remote_file, server_spec, passwd
+		String[] tok = cmd.trim().split(" ");
+		if(tok.length!=5) {
+			connection.sendError("Wrong parameter count for SEND-FILE");
+			return;
+		}
+		String remotePath =  trimQuotes(tok[2]);
+		String serverSpec = trimQuotes(tok[3]);
+		String password = trimQuotes(tok[4]);
+		String localFileName = trimQuotes(tok[1]);
+		File localFile = getFile(localFileName);
+		try{
+			assertACL(localFile, Mode.WRITE);
+		}catch(Exception e){
+			connection.sendError( "Can't open file for writing: "+e.getMessage());
+			return;
+		}
+		RCPThread t = new RCPThread(remotePath, localFile, serverSpec, password);
+		configureRCP(t);
+		String id = t.getName();
+		t.start();
+		connection.sendControl("299 OK transfer-process-ID=" + id);
+	}
+	
+	private String trimQuotes(String s) {
+		if(s.startsWith("'"))s=s.substring(1);
+		if(s.endsWith("'"))s=s.substring(0, s.length()-1);
+		return s;
+	}
+
+	private void configureRCP(RCPThread t) {
+		t.setNumberOfStreams(this.numParCons);
+		long size = haveRange? this.numberOfBytes : -1;
+		t.setRange(this.offset, size);
+		t.setEncryption(job.getKey(), job.getEncryptionAlgorithm());
+		t.setCompress(job.isCompress());
 	}
 
 	public long getOffset() {

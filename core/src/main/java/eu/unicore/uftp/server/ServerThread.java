@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -65,7 +64,7 @@ public class ServerThread extends Thread {
 	public ServerThread(InetAddress ip, int port, int backlog, int maxStreams,
 			String advertiseAddress, PortManager pm, boolean checkClientIP) throws IOException {
 		this.maxStreams = maxStreams;
-        runningConnectionsMap = new ConcurrentHashMap<InetAddress, AtomicInteger>();
+        runningConnectionsMap = new ConcurrentHashMap<>();
         setupExpiryCheck();
         fileAccess = Utils.getFileAccess(logger);
         haveUnixUser = fileAccess instanceof SetUIDFileAccess;
@@ -223,11 +222,10 @@ public class ServerThread extends Thread {
         this.bufferSize = bufferSize;
     }
 
-
 	public void setCheckClientIP(boolean checkIP){
 		server.setCheckClientIP(checkIP);
 	}
-	
+
 	public void setRFCRangeMode(boolean rfcMode){
 		server.setRFCRangeMode(rfcMode);
 	}
@@ -236,11 +234,6 @@ public class ServerThread extends Thread {
 		return server.getRFCRangeMode();
 	}
 
-    /**
-     * a connection to the given client was closed
-     *
-     * @param client
-     */
     public void notifyConnectionClosed(InetAddress client) {
         AtomicInteger i = runningConnectionsMap.get(client);
         if (i != null) {
@@ -252,25 +245,21 @@ public class ServerThread extends Thread {
         isHalt = true;
     }
 
-    /**
-     * schedule expiry check
-     */
     private final void setupExpiryCheck() {
-        Runnable r = new Runnable() {
-            public void run() {
-                try{
-		    jobStore.checkForExpiredJobs();
-                }catch(Exception ex) {}
-            }
+        Runnable r = ()-> {
+        	try{
+        		jobStore.checkForExpiredJobs();
+        	}catch(Exception ex) {}
+
         };
         long delay = Math.max(jobStore.getJobLifetime()/3, 60);
         Utils.getExecutor().scheduleWithFixedDelay(r, delay, 60, TimeUnit.SECONDS);
     }
 
     public void cleanConnectionCounters() {
-        Iterator<Map.Entry<InetAddress, AtomicInteger>> iterator = runningConnectionsMap.entrySet().iterator();
+        var iterator = runningConnectionsMap.entrySet().iterator();
         while (iterator.hasNext()) {
-            Map.Entry<InetAddress, AtomicInteger> entry = iterator.next();
+            var entry = iterator.next();
             AtomicInteger counter = entry.getValue();
             if (counter.get() == 0) {
                 iterator.remove();
@@ -281,9 +270,9 @@ public class ServerThread extends Thread {
     public FileAccess getFileAccess() {
         return fileAccess;
     }
-    
+
     public void invalidateJob(UFTPBaseRequest job) {
     	jobStore.remove(job);
     }
-   
+
 }

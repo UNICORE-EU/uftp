@@ -89,9 +89,6 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 		this.bufferSize = bufferSize;        
 	}
 
-
-	boolean isSession = true;
-	
 	/**
 	 * Open data connections, perform the data transfer, and close the
 	 * connection. If appropriate, the target file permissions will be set to
@@ -106,8 +103,10 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 		if(isPersistent)logger.info("New session for <{}> this is number <{}>", job.getUser(), count);
 		runSession(session);
 		count = job.endActiveSession();
-		if(isPersistent)logger.info("Ending session for <{}> remaining: {}",
+		if(isPersistent) {
+			logger.info("Ending session for <{}> remaining: {}",
 				job.getUser(), count+( count==0 ?", request processing finished.":""));
+		}
 		if(count==0 && isPersistent)server.invalidateJob(job);
 	}
 
@@ -459,7 +458,7 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 	private void postSend(OutputStream target, Session session, long total, long startTime, String operation, boolean send226) throws IOException {
 		if(target!=null) {
 			target.flush();
-			if(isSession)Utils.finishWriting(target);
+			Utils.finishWriting(target);
 			if(!session.isKeepAlive())Utils.closeQuietly(target);
 		}
 		session.reset(send226);
@@ -484,7 +483,7 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 		RsyncStats stats = slave.call();
 		logger.info(stats);
 	}
-
+		
 	/**
 	 * create a new Socket with the specified number of parallel TCP streams
 	 *
