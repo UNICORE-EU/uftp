@@ -1,16 +1,15 @@
 package eu.unicore.uftp.datashare.db;
 
-import java.util.UUID;
-
 import eu.unicore.persist.annotations.Column;
 import eu.unicore.persist.annotations.ID;
 import eu.unicore.persist.annotations.Table;
+import eu.unicore.persist.util.UUID;
 import eu.unicore.uftp.datashare.AccessType;
 
 @Table(name="SHARES")
 public class ShareDAO {
 
-	private String ID = UUID.randomUUID().toString();
+	private String ID = UUID.newUniqueID();
 	
 	@Column(name="path")
 	private String path;

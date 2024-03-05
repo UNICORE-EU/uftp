@@ -36,8 +36,7 @@
     <dependency>
       <groupId>eu.unicore</groupId>
       <artifactId>persistence</artifactId>
-      <version>0.600</version>
-      <scope>provided</scope>
+      <version>0.603</version>
     </dependency>
     <dependency>
       <groupId>eu.unicore.uftp</groupId>
