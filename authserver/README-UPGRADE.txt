@@ -9,7 +9,7 @@
    If you want to keep existing data during the update, you'll
    need to convert the databases, or use the old H2 v1 version
 
-   An update tool is available in the UNICORE Core Server 9.0.0 release!
+   An update tool is available in the UNICORE Core Server release!
 
 ***
 ***  Update procedure
@@ -27,7 +27,7 @@ e.g. to /tmp/
 
 In the following, this location will be denoted as "$NEW":
 
-$> export NEW=/tmp/unicore-authserver-2.7.0
+$> export NEW=/tmp/unicore-authserver-2.9.0
 
  - stop the server. If not yet done, make a backup of the config files.
 
