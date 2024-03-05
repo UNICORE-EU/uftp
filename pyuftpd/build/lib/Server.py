@@ -8,11 +8,11 @@ from time import time
 import socket
 import sys
 
-from Connector import Connector
-from Log import Logger
+import Connector
+import Log
 from SSL import setup_ssl, verify_peer, convert_dn
 
-def configure_socket(sock: socket.socket):
+def configure_socket(sock):
     """
     Setup socket options (keepalive).
     """
@@ -37,12 +37,12 @@ def close_quietly(closeable):
     except:
         pass
 
-def update_acl(config: dict, LOG: Logger):
-    last_checked = config.get("_last_acl_file_check", 0)
+def update_acl(configuration, LOG):
+    last_checked = configuration.get("_last_acl_file_check", 0)
     now = int(time())
     if now < last_checked + 10:
         return
-    acl_file = config.get('ACL')
+    acl_file = configuration.get('ACL')
     mtime = int(stat(acl_file).st_mtime)
     if last_checked >= mtime:
         return
@@ -50,11 +50,11 @@ def update_acl(config: dict, LOG: Logger):
         LOG.info("ACL file '%s' modified - reloading entries." % acl_file)
     else:
         LOG.info("ACL file '%s'" % acl_file)
-    config["_last_acl_file_check"] = now
+    configuration["_last_acl_file_check"] = now
     with open(acl_file, "r") as f:
         lines = f.readlines()
         acl = []
-        config['uftpd.acl'] = acl
+        configuration['uftpd.acl'] = acl
         for line in lines:
             try:
                 line = line.strip()
@@ -66,7 +66,7 @@ def update_acl(config: dict, LOG: Logger):
             except Exception as e:
                 LOG.error("ACL entry '%s' could not be parsed: %s" % (line, e))
 
-def setup_cmd_server_socket(config: dict, LOG: Logger) -> socket.socket:
+def setup_cmd_server_socket(configuration, LOG: Log):
     """
     Return command socket for communicating
     with the authentication server(s)
@@ -74,19 +74,19 @@ def setup_cmd_server_socket(config: dict, LOG: Logger) -> socket.socket:
     Parameters: dictionary of config settings, logger
     """
 
-    host = config['CMD_HOST']
-    port = config['CMD_PORT']
-    ssl_mode = config.get('SSL_CONF') is not None
+    host = configuration['CMD_HOST']
+    port = configuration['CMD_PORT']
+    ssl_mode = configuration.get('SSL_CONF') is not None
     if ssl_mode:
-        with open(config.get('SSL_CONF'), "r") as f:
+        with open(configuration.get('SSL_CONF'), "r") as f:
             lines = f.readlines()
             for line in lines:
                 try:
                     key, value = line.split("=",1)
-                    config[key.strip()]=value.strip()
+                    configuration[key.strip()]=value.strip()
                 except:
                     pass
-        update_acl(config, LOG)
+        update_acl(configuration, LOG)
     
     LOG.info("UFTPD Command server socket started on %s:%s" % (host, port))
     LOG.info("SSL enabled: %s" % ssl_mode)
@@ -94,7 +94,7 @@ def setup_cmd_server_socket(config: dict, LOG: Logger) -> socket.socket:
     server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     server.bind((host, port))
     if ssl_mode:
-        server = setup_ssl(config, server, LOG, True)
+        server = setup_ssl(configuration, server, LOG, True)
     else:
         LOG.info("*****")
         LOG.info("*****   WARNING:")
@@ -104,12 +104,12 @@ def setup_cmd_server_socket(config: dict, LOG: Logger) -> socket.socket:
         LOG.info("*****")
     return server
 
-def accept_command(server: socket.socket, config: dict, LOG: Logger) -> Connector:
+def accept_command(server, configuration, LOG: Log):
     """ Waits for a connection from the Auth server. 
     Upon a new connection, it is checked it is from a valid source.
     If yes, the message is read and returned to the caller for processing.
     """
-    ssl_mode = config.get('SSL_CONF') is not None
+    ssl_mode = configuration.get('SSL_CONF') is not None
 
     server.listen(2)
 
@@ -123,8 +123,8 @@ def accept_command(server: socket.socket, config: dict, LOG: Logger) -> Connecto
 
         if ssl_mode:
             try:
-                update_acl(config, LOG)
-                verify_peer(config, auth, LOG)
+                update_acl(configuration, LOG)
+                verify_peer(configuration, auth, LOG)
             except EnvironmentError as e:
                 LOG.error("Error verifying connection from %s : %s" % (
                     auth_host, str(e)))
@@ -132,20 +132,20 @@ def accept_command(server: socket.socket, config: dict, LOG: Logger) -> Connecto
                 continue
 
         configure_socket(auth)
-        connector = Connector(auth,LOG,conntype="COMMAND")
+        connector = Connector.Connector(auth,LOG,conntype="COMMAND")
         LOG.debug("Accepted %s" % connector.info())
         return connector
 
     
-def setup_ftp_server_socket(config: dict, LOG: Logger) -> socket.socket:
+def setup_ftp_server_socket(configuration, LOG: Log):
     """
     Return FTP listener socket
 
     Parameters: dictionary of config settings, logger
     """
 
-    host = config['SERVER_HOST']
-    port = config['SERVER_PORT']
+    host = configuration['SERVER_HOST']
+    port = configuration['SERVER_PORT']
 
     LOG.info("UFTPD Listener server socket started on %s:%s" % (host, port))
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -154,24 +154,24 @@ def setup_ftp_server_socket(config: dict, LOG: Logger) -> socket.socket:
     return server
 
 
-def accept_ftp(server: socket.socket, LOG: Logger) -> Connector:
+def accept_ftp(server, LOG: Log):
     """ Waits for a connection to the FTP socket
     """
     server.listen(2)
 
     while True:
         try:
-            (client, (_x, _)) = server.accept()
+            (client, (_x, _y)) = server.accept()
         except EnvironmentError as e:
             if e.errno != errno.EINTR:
                 LOG.error("Error waiting for new connection: " + str(e))
             continue
 
         configure_socket(client)
-        return Connector(client,LOG)
+        return Connector.Connector(client,LOG)
 
 
-def setup_data_server_socket(host="0.0.0.0", port_range=(0,-1,-1)) -> socket.socket:
+def setup_data_server_socket(host="0.0.0.0", port_range=(0,-1,-1)):
     """
     Return listener socket for data connections
     """
@@ -201,18 +201,18 @@ def setup_data_server_socket(host="0.0.0.0", port_range=(0,-1,-1)) -> socket.soc
                 raise e
     raise Exception("Cannot set up data connection - no free ports in range %s:%s"% (_lower, _upper))
 
-def accept_data(server: socket.socket, LOG: Logger, expected_client: str=None) -> Connector:
+def accept_data(server, LOG: Log, expected_client=None):
     """ Waits for a data connection
     """
     server.listen(2)
     attempts = 0
     while attempts < 3:
         try:
-            (client, (client_host, _)) = server.accept()
+            (client, (client_host, _x)) = server.accept()
             if expected_client is not None:
                 if client_host!=expected_client:
                     raise Exception("Rejecting connection from unexpected host %s - expected %s" % (client_host, expected_client))
-            return Connector(client, LOG, conntype="DATA", binary_mode=True)
+            return Connector.Connector(client, LOG, conntype="DATA", binary_mode=True)
         except EnvironmentError as e:
             LOG.error(e)
             attempts+=1

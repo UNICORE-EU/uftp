@@ -37,7 +37,7 @@ class Session(object):
               "UTF-8"
     ]
 
-    def __init__(self, connector: Connector, job: dict, LOG: Logger):
+    def __init__(self, connector: Connector, job, LOG: Logger):
         self.job = job
         self.control = connector
         self.advertise_host = job.get("ADVERTISE_HOST", None)
@@ -79,7 +79,7 @@ class Session(object):
         self.KEEP_ALIVE = False
         self.archive_mode = False
         self.num_streams = int(job.get('streams', 1))
-        self.max_streams = job.get('MAX_STREAMS', 1)
+        self.max_streams = int(job.get('MAX_STREAMS', 1))
         self.mlsd_directory = None
         for f in job.get('UFTP_NOWRITE', []):
             if len(f)>0:
@@ -183,15 +183,15 @@ class Session(object):
             raise Exception("Forbidden: %s not in %s"%(p, self.basedir))
         return p
 
-    def shutdown(self, _):
+    def shutdown(self, params):
         self.close_data()
         return Session.ACTION_END
 
-    def syst(self, _):
+    def syst(self, params):
         self.control.write_message(Protocol._SYSTEM_REPLY)
         return Session.ACTION_CONTINUE
 
-    def feat(self, _):
+    def feat(self, params):
         self.control.write_message("211-Features:")
         for feat in self._FEATURES:
             self.control.write_message(" %s"  % feat)
@@ -234,7 +234,7 @@ class Session(object):
             self.control.write_message("500 Can't cwd to directory: %s" % str(e))
         return Session.ACTION_CONTINUE
 
-    def cdup(self, _):
+    def cdup(self, params):
         if self.current_dir==self.basedir:
             self.control.write_message("500 Can't cd up, already at base directory")
         else:
@@ -246,7 +246,7 @@ class Session(object):
                 self.control.write_message("500 Can't cd up: %s" % str(e))
         return Session.ACTION_CONTINUE
 
-    def pwd(self, _):
+    def pwd(self, params):
         self.assert_permission(Session.MODE_INFO)
         self.control.write_message("257 \""+os.getcwd()+"\"")
         return Session.ACTION_CONTINUE
@@ -305,10 +305,10 @@ class Session(object):
         self.rename_from_path = None
         return Session.ACTION_CONTINUE
 
-    def pasv(self, _):
+    def pasv(self, params):
         return self.add_data_connection(epsv=False)
 
-    def epsv(self, _):
+    def epsv(self, params):
         return self.add_data_connection()
 
     def add_data_connection(self, epsv=True):
@@ -444,7 +444,7 @@ class Session(object):
 
     def reset_range(self):
         self.set_range(0,-1)
-        self.have_range = False
+        self.have_range = False    
 
     def rang(self, params):
         tokens = params.split(" ")

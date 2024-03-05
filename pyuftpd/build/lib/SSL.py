@@ -5,9 +5,7 @@
 import ssl
 import re
 
-from Log import Logger
-
-def setup_ssl(config: dict, socket, LOG: Logger, server_mode=False) -> ssl.SSLSocket:
+def setup_ssl(config, socket, LOG, server_mode=False):
     """ Wraps the given socket with an SSL context """
     keypass = config.get('credential.password', None)
     try:
@@ -98,7 +96,7 @@ def get_common_name(subject):
         pass
     return "n/a"
 
-def verify_peer(config:dict, socket: ssl.SSLSocket, LOG: Logger):
+def verify_peer(config, socket, LOG):
     """ check that the peer is OK by comparing the DN to our ACL """
     acl = config.get('uftpd.acl', [])
     subject = socket.getpeercert()['subject']

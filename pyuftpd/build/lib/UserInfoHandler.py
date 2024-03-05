@@ -1,10 +1,8 @@
 import os
 
-import BecomeUser,UFTPD
-from Connector import Connector
-from Log import Logger
+import BecomeUser, Connector, Log, UFTPD
 
-def get_user_info(user, home, connector: Connector, config: dict, LOG: Logger):
+def get_user_info(user, home, connector: Connector, config, LOG: Log):
     pid = os.fork()
     if pid:
         # parent

@@ -1,6 +1,6 @@
-# UNICORE File transfer (UFTP)
+# UNICORE File transfer (UFTP) services
 
-This repository contains the source code for various server components
+This repository contains the source code for the Auth servers
 for the UNICORE FTP high-performance file transfer toolkit.
 
 WORKING BINARIES can be downloaded from
@@ -9,9 +9,6 @@ WORKING BINARIES can be downloaded from
 
 DOCUMENTATION for users and administrators can be found at
 [UFTP-Docs](https://uftp-docs.readthedocs.io)
-
- * pyuftpd - contains the sources for the 'uftpd' server,
-   written in Python
 
  * authserver -  a set of services providing authentication for UFTP
    as well as data sharing features
@@ -22,6 +19,8 @@ DOCUMENTATION for users and administrators can be found at
 
  * datashare - library containing support code for the data sharing feature
 
+The UFTPD file server cam be found in its own repository:
+ * [UFTPD file server](https://github.com/UNICORE-EU/uftpd)
 
 Client components can be found in their own repositoris:
  * [PyUFTP commandline client](https://github.com/UNICORE-EU/pyuftp)

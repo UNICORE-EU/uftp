@@ -9,7 +9,7 @@
   <url>https://www.unicore.eu</url>
   <name>Distribution of the UNICORE UFTPD server</name>
 
-  <version>VERSION</version>
+  <version>3.4.0</version>
 
   <parent>
     <groupId>eu.unicore</groupId>

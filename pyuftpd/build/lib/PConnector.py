@@ -64,7 +64,7 @@ class PConnector(object):
             write_offset += written
             to_write -= written
         _out.flush()
-
+    
     def _read_block(self, length, _in):
         _chunks = []
         _have = 0
