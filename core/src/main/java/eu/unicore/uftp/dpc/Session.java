@@ -810,6 +810,9 @@ public class Session {
 		if(rfcRangeMode) {
 			connection.sendControl(" "+UFTPCommands.FEATURE_RFC_RANG);
 		}
+		if(job.getKey()!=null) {
+			connection.sendControl(" CRYPTED-" + job.getEncryptionAlgorithm());
+		}
 		StringBuilder hashFeature = new StringBuilder();
 		hashFeature.append(" HASH ");
 		for(String supp: supportedHashAlgorithms)

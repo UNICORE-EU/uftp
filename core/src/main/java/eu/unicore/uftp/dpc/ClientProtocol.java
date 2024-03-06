@@ -69,7 +69,7 @@ public class ClientProtocol {
         }
 	}
 
-	public  List<String> checkFeatures() throws IOException {
+	public List<String> checkFeatures() throws IOException {
 		 readFeatures();
 		 checkPassiveSupport(features);
 		 return features;

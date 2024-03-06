@@ -86,6 +86,10 @@ public abstract class AbstractUFTPClient implements Closeable {
 	 */
 	public void openDataConnection() throws IOException {
 		if (socket == null) {
+			if(key!=null && EncryptionAlgorithm.AES==algo) {
+				// old servers don't have AES
+				assertFeature("CRYPTED-AES");
+			}
 			socket = createSocket(numcons, client, key, compress, algo);
 		}
 	}

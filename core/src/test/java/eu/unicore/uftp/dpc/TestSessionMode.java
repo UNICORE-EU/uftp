@@ -681,7 +681,47 @@ public class TestSessionMode extends ClientServerTestBase{
 			System.out.println(client.stat("."));
 		}
 	}
-	
+
+	@Test
+	public void testAESEncryption() throws Exception {
+		int numCon = 1;
+		byte[] key = Utils.createKey(EncryptionAlgorithm.AES);
+		boolean compress = true;
+
+		File sourceFile = new File(dataDir,"testsourcefile-"+System.currentTimeMillis());
+		makeTestFile2(sourceFile, 1024*500);
+		String target = "target/testdata/testfile-" + System.currentTimeMillis();
+
+		// send job to server...
+		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", "secretCode",
+				sourceFile.getParentFile().getAbsolutePath());
+		job.setKey(key);
+		job.setEncryptionAlgorithm(EncryptionAlgorithm.AES);
+		job.setCompress(compress);
+		job.setStreams(numCon);
+		job.sendTo(host[0], jobPort);
+		Thread.sleep(1000);
+		try(UFTPSessionClient client = new UFTPSessionClient(host, srvPort);
+				FileOutputStream fos = new FileOutputStream(target)){
+			client.setSecret("secretCode");
+			client.setNumConnections(numCon);
+			client.setKey(key);
+			client.setEncryptionAlgorithm(EncryptionAlgorithm.AES);
+			client.setCompress(compress);
+			client.connect();
+			client.get(sourceFile.getName(),fos);
+		}
+		System.out.println("Finished client.");
+		// check that file exists and has correct content
+		File targetFile = new File(target);
+		assertTrue(targetFile.exists());
+		String expected = Utils.md5(sourceFile);
+		String actual = Utils.md5(targetFile);
+		System.out.println("Source file "+sourceFile.getAbsolutePath()+" "+expected);
+		System.out.println("Target file "+targetFile.getAbsolutePath()+" "+actual);
+		assertEquals("File contents do not match", expected, actual);
+	}
+
 	@Test
 	public void testMultiStreamEncrypted() throws Exception {
 		int numCon = 2;
