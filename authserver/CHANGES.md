@@ -8,7 +8,7 @@ Full documentation is at:
 https://uftp-docs.readthedocs.io
 
 
-Auth Server 2.9.0 (released Mar 05, 2024)
+Auth Server 2.9.0 (released Mar 07, 2024)
 -----------------------------------------
  - show server's session limit in info
  - show uftpd version in info
