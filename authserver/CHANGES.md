@@ -8,6 +8,11 @@ Full documentation is at:
 https://uftp-docs.readthedocs.io
 
 
+Auth Server 2.9.0 patch1 (released Mar 15, 2024)
+------------------------------------------------
+ - fix: SAML authenticator temporarily inactive after checking 
+   invalid token, leading to "403" authentication errors
+
 Auth Server 2.9.0 (released Mar 07, 2024)
 -----------------------------------------
  - show server's session limit in info

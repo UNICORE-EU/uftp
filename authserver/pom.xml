@@ -16,7 +16,7 @@
 
   
   <properties>
-    <use.version>5.0.0</use.version>
+    <use.version>5.0.1</use.version>
     <seclib.version>7.0.0</seclib.version>
     <uftp.version>2.17.0</uftp.version>
     <datashare.version>0.12.0</datashare.version>
