@@ -5,7 +5,6 @@ for the UNICORE FTP high-performance file transfer toolkit.
 
 WORKING BINARIES can be downloaded from
  * GitHub [Releases](https://github.com/UNICORE-EU/uftp/releases)
- * or from [SourceForge](https://sourceforge.net/projects/unicore/files/Servers)
 
 DOCUMENTATION for users and administrators can be found at
 [UFTP-Docs](https://uftp-docs.readthedocs.io)
