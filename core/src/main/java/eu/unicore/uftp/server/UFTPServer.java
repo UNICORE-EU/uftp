@@ -13,13 +13,6 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.RejectedExecutionException;
 
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.Logger;
 
@@ -215,123 +208,6 @@ public class UFTPServer implements Runnable {
 		}
 	}
 
-	/**
-	 * starts a server reading params from commandline args
-	 */
-	public static void main(String[] args) {
-		Options options = createOptions();
-		CommandLineParser parser = new DefaultParser();
-		CommandLine line = null;
-		try {
-			line = parser.parse(options, args);
-		} catch (ParseException pe) {
-			System.out.println("Unable to parse options: " + pe.getLocalizedMessage());
-			printUsage(options);
-			System.exit(SYNERR);
-		}
-
-		printHeader();
-
-		InetAddress cmdip, srvip;
-		int cmdport, srvport;
-		String advertiseAddress;
-		boolean checkClientIP;
-		UFTPServer server = null;
-
-		try {
-			cmdip = InetAddress.getByName(line.getOptionValue("c"));
-			cmdport = Integer.parseInt(line.getOptionValue("p"));
-			srvip = InetAddress.getByName(line.getOptionValue("l"));
-			srvport = Integer.parseInt(line.getOptionValue("L"));
-			advertiseAddress = line.getOptionValue("a");
-			String portRange = line.getOptionValue("P");
-			PortManager pm = createPortManager(portRange);
-			checkClientIP = !line.hasOption("I");
-			server = new UFTPServer(cmdip, cmdport, srvip, srvport, advertiseAddress, pm, checkClientIP);
-			server.maxControlConnectionsPerClient = Integer.parseInt(line.getOptionValue("m", "16"));
-			server.maxStreams = Integer.parseInt(line.getOptionValue("s", "8"));
-			server.bufferSize = Integer.parseInt(line.getOptionValue("b", "128")) * 1024;
-
-			//TODO timeouts
-
-		} catch (Exception e) {
-			System.out.println("Invalid option detected: " + e.getLocalizedMessage());
-			printUsage(options);
-			System.exit(SYNERR);
-		}
-		if (server != null) {
-			server.run();
-		}
-	}
-
-	private static PortManager createPortManager(String portRange){
-		PortManager pm;
-		if(portRange != null){
-			String[]tokens = portRange.split(":");
-			int lower = Integer.parseInt(tokens[0]);
-			int upper = Integer.parseInt(tokens[1]);
-			pm = new PortManager(lower, upper);
-			logger.info("Using local ports "+portRange+" for data connections.");
-		} else {
-			pm = new PortManager();
-		}
-		return pm;
-	}
-
-	public static Options createOptions() {
-		Options options = new Options();
-		options.addOption(Option.builder("l").longOpt("listen-host")
-				.desc("Hostname of the listen socket")
-				.required(true)
-				.hasArg().argName("Listen host")
-				.build());
-		options.addOption(Option.builder("L").longOpt("listen-port")
-				.desc("Post of the listen socket")
-				.required(true)
-				.hasArg().argName("Listen port")
-				.build());
-		options.addOption(Option.builder("a").longOpt("advertise-host")
-				.desc("Host to advertise in place of listen-host. Useful for servers behind NAT")
-				.required(false)
-				.hasArg().argName("Advertise host")
-				.build());
-		options.addOption(Option.builder("c").longOpt("command-host")
-				.desc("Hostname of the command socket")
-				.required(true)
-				.hasArg().argName("Command host")
-				.build());
-		options.addOption(Option.builder("p").longOpt("command-port")
-				.desc("Post of the command socket")
-				.required(true)
-				.hasArg().argName("Command port")
-				.build());
-		options.addOption(Option.builder("m").longOpt("max-connections")
-				.desc("Limit on the number of connections per client IP (default: 32)")
-				.required(false)
-				.hasArg().argName("Max connections")
-				.build());
-		options.addOption(Option.builder("s").longOpt("max-streams")
-				.desc("Limit on the number of parallel data streams per client (default: 8)")
-				.required(false)
-				.hasArg().argName("Stream limit")
-				.build());
-		options.addOption(Option.builder("b").longOpt("buffersize")
-				.desc("Buffer size in kbytes for reading/writing files (default: 128))")
-				.required(false)
-				.hasArg().argName("Buffer size")
-				.build());
-		options.addOption(Option.builder("P").longOpt("portrange")
-				.desc("Port range for data connections in the form 'lower:upper' (default: any port can be used)")
-				.required(false)
-				.hasArg().argName("Port range")
-				.build());
-		options.addOption(Option.builder("I").longOpt("no-check-client-ip")
-				.desc("Disable check if client's IP matches the requested one")
-				.required(false)
-				.build());
-		return options;
-	}
-
 	public static String getVersion() {
 		if (VER == null) {
 			VER = "DEVELOPMENT";
@@ -343,13 +219,6 @@ public class UFTPServer implements Runnable {
 		String message = "**** UFTPD Version "+getVersion()+ " starting";
 		logger.info(message);
 	}
-
-	public static void printUsage(Options options) {
-		HelpFormatter formatter = new HelpFormatter();
-		String syntax = "UFTPD [OPTIONS]" + System.getProperty("line.separator");
-		formatter.printHelp(syntax, options);
-	}
-
 
 	public String getServerInfo() {
 		StringBuilder sb = new StringBuilder();
@@ -363,8 +232,6 @@ public class UFTPServer implements Runnable {
 		return sb.toString();
 	}
 
-	
-	
 	public String getUserInfo(String username) {
 
 		StringBuilder sb = new StringBuilder();

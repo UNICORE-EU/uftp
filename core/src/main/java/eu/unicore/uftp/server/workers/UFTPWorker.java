@@ -499,6 +499,7 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 		List<Socket>dataCons = connection.getDataSockets();
 		if (n > 1) {
 			logger.info("Creating parallel socket with " + n + " streams.");
+			@SuppressWarnings("resource")
 			PSocket parallelSocket = new PSocket(job.getKey(), job.isCompress(), job.getEncryptionAlgorithm());
 			parallelSocket.init(1, dataCons.size());
 			for (Socket dataCon : dataCons) {

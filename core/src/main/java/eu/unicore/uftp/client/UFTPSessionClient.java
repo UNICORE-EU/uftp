@@ -2,24 +2,16 @@ package eu.unicore.uftp.client;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
 import org.apache.logging.log4j.Logger;
 
 import eu.unicore.uftp.dpc.AuthorizationFailureException;
@@ -743,82 +735,5 @@ public class UFTPSessionClient extends AbstractUFTPClient implements Runnable {
 	public void setRFCRangeMode(boolean rfcMode){
 		this.rfcCompliantRange = rfcMode;
 	}
-
-	/**
-	 * create a correct commandline for passing the given parameters to a
-	 * UFTPSessionClient
-	 *
-	 * @param host - server host (can be a comma separated list of addresses)
-	 * @param port - server port
-	 * @param baseDirectory - local base directory
-	 * @param secret - the secret
-	 * @param numStreams - the number of streams
-	 * @param encryptionKey - encryption key (base64), if <code>null</code>, no
-	 * encryption will be used
-	 * @param bufferSize - size of the buffer
-	 * @param compress - whether to enable gzip compression
-	 * @param commandFile - file to read commands from
-	 */
-	public static String makeCommandline(String host, int port,
-			String baseDirectory,
-			String secret,
-			int numStreams,
-			String encryptionKey,
-			int bufferSize,
-			boolean compress,
-			String commandFile) {
-		StringBuilder sb = new StringBuilder();
-		sb.append("-l ").append(host);
-		sb.append(" -L ").append(port);
-		sb.append(" -f \"").append(baseDirectory).append("\"");
-		sb.append(" -x ").append(secret);
-		sb.append(" -n ").append(numStreams);
-		if (encryptionKey != null) {
-			sb.append(" -E ");
-			sb.append(encryptionKey);
-		}
-		if (commandFile != null) {
-			sb.append(" -c \"").append(commandFile).append("\"");
-		}
-		if (bufferSize > 0) {
-			sb.append(" -b ").append(bufferSize);
-		}
-		if(compress){
-			sb.append(" -z");
-		}
-		return sb.toString();
-	}
-
-	/**
-	 * create a session client instance from the supplied commandline parameters
-	 */
-	public static UFTPSessionClient create(String[] args) throws UnknownHostException, FileNotFoundException {
-		Options options = ClientFactory.createOptions();
-		CommandLineParser parser = new DefaultParser();
-		CommandLine line = null;
-		try {
-			line = parser.parse(options, args);
-		} catch (ParseException pe) {
-			System.out.println("Unable to parse options: " + pe.getLocalizedMessage());
-			ClientFactory.printUsage(options);
-			System.exit(SYNERR);
-		}
-
-		// setup connection parameters
-		int port = Integer.parseInt(line.getOptionValue('L'));
-		InetAddress[] server = ClientFactory.getServers(line, logger);
-
-
-		UFTPSessionClient client = new UFTPSessionClient(server, port);
-		ClientFactory.configureClient(client, line, logger);
-		client.setCommandFile(line.getOptionValue('c'));
-		String base = line.getOptionValue('f');
-		if (base == null) {
-			base = ".";
-		}
-		client.setBaseDirectory(new File(base));
-		logger.info("New UFTP session client for server " + Arrays.asList(server) + " at port " + port);
-		return client;
-	}
-
+	
 }
