@@ -1,8 +1,10 @@
 Changelog
 ---------
-The UFTP issue tracker is at
-https://sourceforge.net/p/unicore/uftp-issues
-
+UFTP 2.20.1
+-----------
+ - move to Maven Central
+ - update dependencies
+ - update testbase to junit5
 
 UFTP 2.18.0
 -----------

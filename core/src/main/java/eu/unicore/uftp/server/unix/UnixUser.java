@@ -103,7 +103,7 @@ public class UnixUser {
 
     
 
-    /** Sets the real&effective user ID and stores the original one */
+    /** Sets the real and effective user ID and stores the original one */
     public static native int changeIdentity(int uid, int originalUID);
     
     /** Sets the real user ID */

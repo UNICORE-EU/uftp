@@ -56,8 +56,7 @@ public class RollingChecksum {
 
 	/**
 	 * update the rolling checksum with the next byte of data
-	 * 
-	 * @param Xk     - the data value at position 'k'
+	 *
 	 * @param nextX - the data value at position 'l+1'
 	 * @return checksum value for the block from 'k+1' to 'l+1'
 	 */

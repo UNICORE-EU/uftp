@@ -16,8 +16,7 @@
   <properties>
     <compiler.fork>false</compiler.fork>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <seclib.version>7.1.0</seclib.version>
-    <bc.version>1.78.1</bc.version>
+    <seclib.version>7.1.1</seclib.version>
     <package.version>${project.version}</package.version>
     <package.release>1</package.release>
     <automatic.module.name>${project.groupId}.core</automatic.module.name>
@@ -44,7 +43,7 @@
     <dependency>
       <groupId>commons-codec</groupId>
       <artifactId>commons-codec</artifactId>
-      <version>1.17.0</version>
+      <version>1.17.1</version>
     </dependency>
     <dependency>
       <groupId>eu.unicore.security</groupId>
@@ -80,16 +79,6 @@
 	  <artifactId>xmlsec</artifactId>
 	</exclusion>
       </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.bouncycastle</groupId>
-      <artifactId>bcprov-jdk18on</artifactId>
-      <version>${bc.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.bouncycastle</groupId>
-      <artifactId>bcpkix-jdk18on</artifactId>
-      <version>${bc.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
