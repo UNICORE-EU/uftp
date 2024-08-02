@@ -1,12 +1,13 @@
 package eu.unicore.uftp.rsync;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import java.io.ByteArrayInputStream;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Random;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class TestRollingChecksum {
 	
@@ -32,7 +33,7 @@ public class TestRollingChecksum {
 		is.skip(k);
 		is.read(block);
 		long c2=r.reset(block, k, l);
-		Assert.assertEquals(c1,c2);
+		assertEquals(c1,c2);
 	}
 
 	@Test
@@ -44,7 +45,7 @@ public class TestRollingChecksum {
 		
 		RollingChecksum r = new RollingChecksum();
 		long c_test1 = r.init(new byte[]{12,33,1,84});
-		Assert.assertEquals(c_test1,c1);
+		assertEquals(c_test1,c1);
 		// block 2 does not match
 		r.reset(new byte[]{0,11,13,5}, 4, 7);
 		// update with individual 'correct') bytes
@@ -53,7 +54,7 @@ public class TestRollingChecksum {
 			c_test3 = r.update(b);
 		}
 		// now should be the same checksum as c3:
-		Assert.assertEquals(c_test3,c3);
+		assertEquals(c_test3,c3);
 	}
 	@Test
 	public void testRolling3()throws Exception{
@@ -64,7 +65,7 @@ public class TestRollingChecksum {
 		
 		RollingChecksum r = new RollingChecksum();
 		long c_test1 = r.init(new byte[]{-12,-33,-1,-84});
-		Assert.assertEquals(c_test1,c1);
+		assertEquals(c_test1,c1);
 		// block 2 does not match
 		r.reset(new byte[]{0,-11,-13,-5}, 4, 7);
 		// update with individual 'correct') bytes
@@ -73,23 +74,23 @@ public class TestRollingChecksum {
 			c_test3 = r.update(b);
 		}
 		// now should be the same checksum as c3:
-		Assert.assertEquals(c_test3,c3);
+		assertEquals(c_test3,c3);
 	}
 
 	@Test
 	public void testFunctions() throws Exception {
 		var block = new byte[] { 1,2,3,4,5,6,7,8,9,10 };
-		Assert.assertEquals(55,Checksum.a(block));
+		assertEquals(55,Checksum.a(block));
 		block = new byte[258];
 		for (int i=0; i<258; i++) {
 			block[i] = (byte)255;
 		}
 		block[257] = 2;
-		Assert.assertEquals(1,Checksum.a(block));
+		assertEquals(1,Checksum.a(block));
 		
 		block = new byte[] { 1,2,3,4,5,6,7,8,9,10 };
-		Assert.assertEquals(275,Checksum.b(block,0, 10));
-		Assert.assertEquals( 10 + (32 * 65536), Checksum.sum(10, 32));
+		assertEquals(275,Checksum.b(block,0, 10));
+		assertEquals( 10 + (32 * 65536), Checksum.sum(10, 32));
 	}
 
 	@Test
@@ -100,7 +101,7 @@ public class TestRollingChecksum {
 		var result = new ArrayList<Long>();
 		result.add(3670588062l);
 		result.add(1824262269l);
-		Assert.assertEquals(s.getWeakChecksums(), result);
+		assertEquals(s.getWeakChecksums(), result);
 	}
 
 }

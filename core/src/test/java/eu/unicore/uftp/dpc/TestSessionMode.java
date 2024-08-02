@@ -1,10 +1,10 @@
 package eu.unicore.uftp.dpc;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -21,7 +21,7 @@ import java.util.Properties;
 import java.util.UUID;
 
 import org.apache.commons.io.FileUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import eu.unicore.uftp.client.FileInfo;
 import eu.unicore.uftp.client.SessionCommands.Get;
@@ -217,17 +217,13 @@ public class TestSessionMode extends ClientServerTestBase{
 		fis.skip(offset);
 		client.put("test", realSource.length()-offset, Long.valueOf(offset), fis);
 		fis.close();
-
-
+		
 		// checks
 		long rSize=client.getFileSize("test");
 		assertEquals(realSource.length(),rSize);
-
 		String md5Orig = Utils.md5(realSource);
 		String md5Remote = Utils.md5(new File(cwd, newDir+"/test"));
-
-		assertEquals("File content mismatch",md5Orig, md5Remote);
-
+		assertEquals(md5Orig, md5Remote, "File content mismatch");
 		client.close();
 	}
 
@@ -264,6 +260,7 @@ public class TestSessionMode extends ClientServerTestBase{
 		FileInputStream fis=new FileInputStream(realSource);
 		client.put("test", realSource.length(), fis);
 		fis.close();
+		
 		long rSize=client.getFileSize("test");
 		assertEquals(realSource.length(),rSize);
 		client.close();
@@ -307,16 +304,13 @@ public class TestSessionMode extends ClientServerTestBase{
 		fis.skip(offset);
 		client.append("test", realSource.length()-offset, fis);
 		fis.close();
-
+		
 		// checks
 		long rSize=client.getFileSize("test");
 		assertEquals(realSource.length(),rSize);
-
 		String md5Orig = Utils.md5(realSource);
 		String md5Remote = Utils.md5(new File(cwd, newDir+"/test"));
-
-		assertEquals("File content mismatch",md5Orig, md5Remote);
-
+		assertEquals(md5Orig, md5Remote, "File content mismatch");
 		client.close();
 	}
 
@@ -714,12 +708,8 @@ public class TestSessionMode extends ClientServerTestBase{
 		System.out.println("Finished client.");
 		// check that file exists and has correct content
 		File targetFile = new File(target);
-		assertTrue(targetFile.exists());
 		String expected = Utils.md5(sourceFile);
-		String actual = Utils.md5(targetFile);
-		System.out.println("Source file "+sourceFile.getAbsolutePath()+" "+expected);
-		System.out.println("Target file "+targetFile.getAbsolutePath()+" "+actual);
-		assertEquals("File contents do not match", expected, actual);
+		checkFile(targetFile, expected);
 	}
 
 	@Test
@@ -752,12 +742,8 @@ public class TestSessionMode extends ClientServerTestBase{
 		System.out.println("Finished client.");
 		// check that file exists and has correct content
 		File targetFile = new File(target);
-		assertTrue(targetFile.exists());
 		String expected = Utils.md5(sourceFile);
-		String actual = Utils.md5(targetFile);
-		System.out.println("Source file "+sourceFile.getAbsolutePath()+" "+expected);
-		System.out.println("Target file "+targetFile.getAbsolutePath()+" "+actual);
-		assertEquals("File contents do not match", expected, actual);
+		checkFile(targetFile, expected);
 	}
 
 	@Test

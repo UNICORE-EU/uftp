@@ -1,8 +1,8 @@
 package eu.unicore.uftp.datashare.share;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -17,11 +17,11 @@ import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -42,14 +42,14 @@ public class TestShareService {
 	
 	Kernel k;
 	
-	@Before
+	@BeforeEach
 	public void startKernel() throws Exception {
 		FileUtils.deleteQuietly(new File("target/data"));
 		k = new Kernel("src/test/resources/container.properties");
 		k.startSynchronous();
 	}
 	
-	@After
+	@AfterEach
 	public void shutdownKernel() throws Exception {
 		k.shutdown();
 	}
@@ -272,7 +272,7 @@ public class TestShareService {
 	static int cmdPort = 63321;
 	static int listenPort = 63320;
 
-	@BeforeClass
+	@BeforeAll
 	public static void startUFTPD() throws Exception {
 		InetAddress host = InetAddress.getByName("localhost");
 		server = new UFTPServer(host, cmdPort, host, listenPort);
@@ -280,7 +280,7 @@ public class TestShareService {
 		serverThread.start();
 	}
 
-	@AfterClass
+	@AfterAll
 	public static void stopUFTPD() throws Exception {
 		server.stop();
 	}

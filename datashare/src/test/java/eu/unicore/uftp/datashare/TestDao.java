@@ -1,12 +1,14 @@
 package eu.unicore.uftp.datashare;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import eu.unicore.persist.Persist;
 import eu.unicore.persist.PersistenceProperties;
@@ -37,7 +39,7 @@ public class TestDao {
 		d1.setTargetID("you@baz.com");
 		d1.setAccess(AccessType.READ);
 		p.write(d1);
-		
+
 		String target = "verytrusted@x.com";
 		ShareDAO d2 = new ShareDAO();
 		d2.setPath("/home/my");
@@ -48,26 +50,26 @@ public class TestDao {
 		d2.setAccess(AccessType.WRITE);
 		d2.setDirectory(true);
 		p.write(d2);
-		
+
 		Collection<String> ids = p.getIDs("path", "/data/myfile");
-		Assert.assertEquals(1,ids.size());
-		
+		assertEquals(1,ids.size());
+
 		String id = ids.iterator().next();
 		ShareDAO d3 = p.read(id);
 		System.out.println("Select by path:");
 		System.out.println(d3);
-		Assert.assertEquals("READ",d3.getAccess());
-		
+		assertEquals("READ",d3.getAccess());
+
 		ids = p.getIDs("target", target);
-		Assert.assertEquals(1,ids.size());
+		assertEquals(1,ids.size());
 		id = ids.iterator().next();
 		ShareDAO d4 = p.read(id);
 		System.out.println("Select by target:");
 		System.out.println(d4);
-		Assert.assertEquals("WRITE",d4.getAccess());
-		Assert.assertEquals(target,d4.getTargetID());
-		Assert.assertTrue(d4.isDirectory());
-		
+		assertEquals("WRITE",d4.getAccess());
+		assertEquals(target,d4.getTargetID());
+		assertTrue(d4.isDirectory());
+
 		p.shutdown();
 	}
 	
@@ -81,7 +83,7 @@ public class TestDao {
 		l.add(d1);
 		l.add(d2);
 		Collections.sort(l, ACLStorage.MostSpecificPath);
-		Assert.assertEquals(d2.getPath(), l.get(0).getPath());
+		assertEquals(d2.getPath(), l.get(0).getPath());
 	}
-	
+
 }

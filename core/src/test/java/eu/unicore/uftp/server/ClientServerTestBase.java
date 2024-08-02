@@ -1,8 +1,8 @@
 package eu.unicore.uftp.server;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -11,8 +11,8 @@ import java.net.InetAddress;
 import java.util.Random;
 
 import org.apache.commons.io.FileUtils;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 
 import eu.unicore.uftp.client.UFTPProgressListener;
 import eu.unicore.uftp.dpc.Utils;
@@ -28,7 +28,7 @@ public abstract class ClientServerTestBase {
 	//all temporary test files should go into this dir ("target/testdata")
 	protected static File dataDir=new File("target","testdata");
 	
-	@BeforeClass
+	@BeforeAll
 	public static void initUFTPServer()throws Exception{
 		FileUtils.deleteQuietly(dataDir);
 		dataDir.mkdirs();
@@ -38,7 +38,7 @@ public abstract class ClientServerTestBase {
 		Thread.sleep(2000);
 	}
 
-	@AfterClass
+	@AfterAll
 	public static void stopUFTPServer()throws Exception{
 		server.stop();
 	}
@@ -75,7 +75,7 @@ public abstract class ClientServerTestBase {
 	protected void checkFile(File target, String md5)throws Exception{
 		assertTrue(target.exists());
 		String actual = Utils.md5(target);
-		assertEquals("File <"+target+">: contents "+target.getName()+" do not match", md5, actual);
+		assertEquals(md5, actual, "File <"+target+">: contents "+target.getName()+" do not match");
 	}
 
 	public static class MockProgressListener implements UFTPProgressListener{

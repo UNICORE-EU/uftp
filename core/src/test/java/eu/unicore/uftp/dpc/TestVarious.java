@@ -1,8 +1,8 @@
 package eu.unicore.uftp.dpc;
 
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -14,7 +14,7 @@ import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
 import javax.crypto.CipherOutputStream;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import eu.unicore.uftp.client.FileInfo;
 import eu.unicore.uftp.dpc.Utils.EncryptionAlgorithm;

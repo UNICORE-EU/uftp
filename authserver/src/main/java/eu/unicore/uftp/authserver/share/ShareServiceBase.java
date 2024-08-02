@@ -103,6 +103,7 @@ public abstract class ShareServiceBase extends ServiceBase {
 			PipedInputStream pin = new PipedInputStream(sink);
 			final Runnable task = new Runnable() {
 				public void run() {
+					logger.info("Starting download {} {}", remoteFile, range);
 					try{
 						if(range.haveRange) {
 							uc.get(remoteFile, range.offset, range.length, sink);
@@ -128,6 +129,7 @@ public abstract class ShareServiceBase extends ServiceBase {
 			ResponseBuilder rb = wantRange? Response.status(Status.PARTIAL_CONTENT) :Response.ok();
 			rb.entity(pin);
 			if(name!=null)rb.header("Content-Disposition", "attachment; filename=\""+name+"\"");
+			// TODO need Content-Range header!? test with wget
 			r = rb.build();
 		}catch(Exception ex){
 			r = handleError(500, "", ex, logger);
@@ -307,6 +309,13 @@ public abstract class ShareServiceBase extends ServiceBase {
 					length = last+1-offset;
 				}
 			}
+		}
+
+		public String toString() {
+			if(haveRange) {
+				return String.format("[offset=%s length=%s]", offset, length);
+			}
+			else return "";
 		}
 	}
 

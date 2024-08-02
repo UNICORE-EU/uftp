@@ -2,7 +2,7 @@ package eu.unicore.uftp.server;
 
 import javax.net.ssl.SSLSocketFactory;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author schuller

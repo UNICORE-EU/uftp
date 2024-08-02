@@ -1,8 +1,9 @@
 package eu.unicore.uftp.dpc;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -11,9 +12,8 @@ import java.net.InetAddress;
 import java.util.UUID;
 
 import org.apache.commons.io.FileUtils;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import eu.unicore.uftp.client.UFTPSessionClient;
 import eu.unicore.uftp.server.ClientServerTestBase;
@@ -26,7 +26,7 @@ public class TestServerSettings extends ClientServerTestBase {
 	
 	protected static InetAddress[] client_host;
 	
-	@BeforeClass
+	@BeforeAll
 	public static void setupClientHost()throws Exception{
 		client_host=new InetAddress[]{InetAddress.getByName("172.217.22.99")};
 	}
@@ -42,7 +42,7 @@ public class TestServerSettings extends ClientServerTestBase {
 		try(UFTPSessionClient client=new UFTPSessionClient(host, srvPort)){
 			client.setSecret(secret);
 			client.connect();
-			Assert.fail("Expected exception due to failing IP check");
+			fail("Expected exception due to failing IP check");
 		}catch(IOException e) {
 			System.out.println("Got as expected: "+Log.createFaultMessage("", e));
 		}

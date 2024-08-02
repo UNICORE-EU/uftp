@@ -1,7 +1,7 @@
 package eu.unicore.uftp.authserver;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.net.InetAddress;
@@ -11,9 +11,9 @@ import java.util.Map;
 import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.json.JSONObject;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -108,7 +108,7 @@ public class TestService {
 	static int listenPort = 63320;
 	protected static Kernel k;
 
-	@BeforeClass
+	@BeforeAll
 	public static void startUFTPD() throws Exception {
 		InetAddress host = InetAddress.getByName("localhost");
 		server = new UFTPServer(host, cmdPort, host, listenPort);
@@ -118,7 +118,7 @@ public class TestService {
 		k.start();
 	}
 
-	@AfterClass
+	@AfterAll
 	public static void stopUFTPD() throws Exception {
 		if(server!=null)server.stop();
 		if(k!=null)k.shutdown();

@@ -1,5 +1,7 @@
 package eu.unicore.uftp.rsync;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -8,10 +10,9 @@ import java.util.Random;
 import java.util.concurrent.Future;
 
 import org.apache.commons.io.FileUtils;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import eu.unicore.uftp.dpc.Utils;
 
@@ -19,13 +20,13 @@ public class TestRsync {
 	
 	static File dataDir=new File("target","data");
 	
-	@Before
+	@BeforeEach
 	public void init(){
 		FileUtils.deleteQuietly(dataDir);
 		dataDir.mkdirs();
 	}
 	
-	@After
+	@AfterEach
 	public void cleanup(){
 		//FileUtils.deleteQuietly(dataDir);
 	}
@@ -90,7 +91,7 @@ public class TestRsync {
 		System.out.println(masterStats);
 		String synched=Utils.md5(slaveFile);
 		System.out.println("Synched : "+synched);
-		Assert.assertEquals(masterMd5, synched);
+		assertEquals(masterMd5, synched);
 		System.out.println();
 	}
 
@@ -113,8 +114,8 @@ public class TestRsync {
 		System.out.println("Original: "+original);
 		String synched=Utils.md5(slaveFile);
 		System.out.println("Synched : "+synched);
-		Assert.assertEquals(masterMd5, synched);
-		Assert.assertEquals(masterStats.matches, 8191);	
+		assertEquals(masterMd5, synched);
+		assertEquals(masterStats.matches, 8191);	
 	}
 	
 	@Test
@@ -134,8 +135,8 @@ public class TestRsync {
 		System.out.println("Original: "+original);
 		String synched=Utils.md5(slaveFile);
 		System.out.println("Synched : "+synched);
-		Assert.assertEquals(masterMd5, synched);
-		Assert.assertEquals(0, masterStats.misses);
+		assertEquals(masterMd5, synched);
+		assertEquals(0, masterStats.misses);
 	}
 
 	@Test
@@ -155,8 +156,8 @@ public class TestRsync {
 		System.out.println("Original: "+original);
 		String synched=Utils.md5(slaveFile);
 		System.out.println("Synched : "+synched);
-		Assert.assertEquals(masterMd5, synched);
-		Assert.assertEquals(1, masterStats.misses);
+		assertEquals(masterMd5, synched);
+		assertEquals(1, masterStats.misses);
 	}
 	
 	
@@ -180,7 +181,7 @@ public class TestRsync {
 		System.out.println("Original: "+original);
 		String synched=Utils.md5(slaveFile);
 		System.out.println("Synched : "+synched);
-		Assert.assertEquals(masterMd5, synched);
+		assertEquals(masterMd5, synched);
 	}
 
 	/**
