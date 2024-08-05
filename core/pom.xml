@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>eu.unicore.uftp</groupId>
   <artifactId>uftp-core</artifactId>
-  <version>2.20.1-SNAPSHOT</version>
+  <version>2.20.1</version>
   <packaging>jar</packaging>
   <name>UFTP core library and Java UFTPD server</name>
 
@@ -25,7 +25,7 @@
   <scm>
     <connection>scm:git:https://www.github.com/UNICORE-EU/uftp</connection>
     <developerConnection>scm:git:https://www.github.com/UNICORE-EU/uftp</developerConnection>
-    <tag>HEAD</tag>
+    <tag>uftp-core-2.20.1</tag>
   </scm>
 
   <dependencies>
