@@ -23,8 +23,8 @@
   </properties>
 
   <scm>
-    <connection>scm:git:https://www.github.com/UNICORE-EU/uftp</connection>
-    <developerConnection>scm:git:https://www.github.com/UNICORE-EU/uftp</developerConnection>
+    <connection>scm:git:git://github.com/UNICORE-EU/uftp.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/UNICORE-EU/uftp.git</developerConnection>
     <tag>uftp-core-2.20.1</tag>
   </scm>
 
