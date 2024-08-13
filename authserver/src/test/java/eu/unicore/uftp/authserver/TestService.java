@@ -6,6 +6,7 @@ import java.io.File;
 import java.net.InetAddress;
 
 import org.apache.hc.core5.http.ClassicHttpResponse;
+import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.json.JSONObject;
 import org.junit.jupiter.api.AfterAll;
@@ -19,6 +20,7 @@ import eu.unicore.services.Kernel;
 import eu.unicore.services.rest.client.BaseClient;
 import eu.unicore.services.rest.client.IAuthCallback;
 import eu.unicore.services.rest.client.UsernamePassword;
+import eu.unicore.services.rest.security.jwt.JWTUtils;
 import eu.unicore.services.rest.security.sshkey.PasswordSupplierImpl;
 import eu.unicore.services.rest.security.sshkey.SSHKey;
 import eu.unicore.services.server.JettyServer;
@@ -39,9 +41,14 @@ public class TestService {
 		System.out.println("Service reply: "+o.toString(2));
 
 		JSONObject serverInfo = o.getJSONObject("TEST");
+		// check attributes
+		assertEquals("user1", serverInfo.getString("uid"));
+		assertEquals("hpc1", serverInfo.getString("gid"));
+		assertEquals(209715200, serverInfo.getLong("rateLimit"));
+		
+		// authenticate
 		String authUrl = serverInfo.getString("href");
 		client.setURL(authUrl);
-		// now do an actual authn post
 		Gson gson = new GsonBuilder().create();
 		AuthRequest req = new AuthRequest();
 		req.serverPath="/tmp/foo";
@@ -83,6 +90,20 @@ public class TestService {
 	public void testReloadConfig() throws Exception {
 		AuthServiceConfig conf = k.getAttribute(AuthServiceConfig.class);
 		conf.reloadConfig(k);
+	}
+
+	@Test
+	public void testGetToken() throws Exception {
+		JettyServer server=k.getServer();
+		String url = server.getUrls()[0].toExternalForm()+"/rest/auth/token";
+		IAuthCallback auth = new UsernamePassword("demouser", "test123");
+		BaseClient client = new BaseClient(url, k.getClientConfiguration(), auth);
+		try(ClassicHttpResponse res = client.get(ContentType.TEXT_PLAIN)){
+			String tokS = EntityUtils.toString(res.getEntity(), "UTF-8");
+			JSONObject tok= JWTUtils.getPayload(tokS);
+			System.out.println("Issued token payload: "+tok.toString(2));
+			assertEquals("CN=Demo User, O=UNICORE, C=EU", tok.getString("sub"));
+		}
 	}
 
 	protected static UFTPServer server;
