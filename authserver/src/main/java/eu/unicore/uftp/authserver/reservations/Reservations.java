@@ -73,7 +73,7 @@ public class Reservations {
 							newReservations.add(res);
 						}
 					}catch(Exception ex) {
-						log.warn("Error parsing: "+String.valueOf(x));
+						log.warn("Could not parse reservation from: "+String.valueOf(x));
 					}
 				});
 			}

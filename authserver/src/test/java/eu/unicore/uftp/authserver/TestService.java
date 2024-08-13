@@ -1,12 +1,9 @@
 package eu.unicore.uftp.authserver;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.net.InetAddress;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
@@ -19,15 +16,12 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import eu.unicore.services.Kernel;
-import eu.unicore.services.admin.AdminAction;
-import eu.unicore.services.admin.AdminActionResult;
 import eu.unicore.services.rest.client.BaseClient;
 import eu.unicore.services.rest.client.IAuthCallback;
 import eu.unicore.services.rest.client.UsernamePassword;
 import eu.unicore.services.rest.security.sshkey.PasswordSupplierImpl;
 import eu.unicore.services.rest.security.sshkey.SSHKey;
 import eu.unicore.services.server.JettyServer;
-import eu.unicore.uftp.authserver.admin.ShowUserInfo;
 import eu.unicore.uftp.authserver.messages.AuthRequest;
 import eu.unicore.uftp.authserver.messages.CreateTunnelRequest;
 import eu.unicore.uftp.server.UFTPServer;
@@ -62,18 +56,6 @@ public class TestService {
 		try(ClassicHttpResponse response = client.post(new JSONObject(gson.toJson(req)))){
 			System.out.println("Service reply: " + EntityUtils.toString(response.getEntity()));
 		}
-	}
-
-
-	@Test
-	public void testAdminShowUserInfo() {
-		AdminAction a = new ShowUserInfo();
-		Map<String,String>params = new HashMap<>();
-		params.put("uid", System.getProperty("user.name"));
-		AdminActionResult res = a.invoke(params, k);
-		assertTrue(res.successful());
-		System.out.println(res.getMessage());
-		System.out.println(res.getResults());
 	}
 
 	@Test

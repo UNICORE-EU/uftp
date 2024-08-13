@@ -1,6 +1,5 @@
 package eu.unicore.uftp.authserver.admin;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
@@ -28,23 +27,23 @@ public class ShowUserInfo implements AdminAction {
 	public AdminActionResult invoke(Map<String, String> params, Kernel kernel) {
 		String userID = params.get("uid");
 		String serverName = params.get("serverName");
-		
+
 		boolean success = true;
 		String message = "Getting info for <" + userID + ">"
-				 + (serverName!=null? " on server "+serverName : "");
+				 + (serverName!=null? " on server <"+serverName+">" : "");
 		AdminActionResult res = new AdminActionResult(success, message);
-		
 		Collection<UFTPBackend>servers = new ArrayList<>();
-		try {
-			if(serverName!=null) {
-				UFTPBackend server = getServer(serverName, kernel);
-				if(server!=null)servers.add(server);
+		if(serverName!=null) {
+			UFTPBackend server = getServer(serverName, kernel);
+			if(server!=null) {
+				servers.add(server);
 			}
 			else {
-				servers = getConfig(kernel).getServers();
+				return new AdminActionResult(false, "No such server: "+serverName);
 			}
-		}catch(Exception ex) {
-			 return new AdminActionResult(false, Log.createFaultMessage("Error accessing uftpd server(s)", ex));
+		}
+		else {
+			servers = getConfig(kernel).getServers();
 		}
 		for(UFTPBackend s: servers) {
 			String key = s.getServerName();
@@ -61,18 +60,14 @@ public class ShowUserInfo implements AdminAction {
 		return res;
 	}
 
-	protected AuthServiceConfig getConfig(Kernel kernel){
+	private AuthServiceConfig getConfig(Kernel kernel){
 		return kernel.getAttribute(AuthServiceConfig.class);
 	}
 
-	protected boolean haveServer(String serverName, Kernel kernel){
-		return getConfig(kernel).getServer(serverName)!=null;
-	}
-	
-	protected UFTPBackend getServer(String serverName, Kernel kernel) throws IOException {
+	private UFTPBackend getServer(String serverName, Kernel kernel) {
 		return getConfig(kernel).getServer(serverName);
 	}
-	
+
 	@Override
 	public String getDescription() {
 		return "parameters: uid, [serverName]";

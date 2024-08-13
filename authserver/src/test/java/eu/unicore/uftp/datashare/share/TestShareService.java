@@ -39,22 +39,21 @@ import eu.unicore.uftp.datashare.db.ShareDAO;
 import eu.unicore.uftp.server.UFTPServer;
 
 public class TestShareService {
-	
+
 	Kernel k;
-	
+
 	@BeforeEach
 	public void startKernel() throws Exception {
 		FileUtils.deleteQuietly(new File("target/data"));
 		k = new Kernel("src/test/resources/container.properties");
 		k.startSynchronous();
 	}
-	
+
 	@AfterEach
 	public void shutdownKernel() throws Exception {
 		k.shutdown();
 	}
-	
-	
+
 	@Test
 	public void testSetup() throws Exception {
 		checkShareDBSetup();
@@ -67,13 +66,13 @@ public class TestShareService {
 		checkAccessViaAttributes();
 		checkGetInfo();
 	}
-	
+
 	@Test
 	public void testDownload() throws Exception {
 		checkDownload();
 		checkDownloadPartial();
 	}
-	
+
 	@Test
 	public void testUpload() throws Exception {
 		checkUpload();
@@ -120,6 +119,8 @@ public class TestShareService {
 		bc.setURL(resource);
 		String loc = bc.create(o);
 		System.out.println(loc);
+		String id = new File(loc).getName();
+
 		// check we have an entry
 		ACLStorage acl = k.getAttribute(ShareServiceProperties.class).getDB("TEST");
 		Collection<ShareDAO>entries = acl.readAll("/tmp/");
@@ -139,15 +140,20 @@ public class TestShareService {
 		System.out.println(jShares);
 		JSONArray shares = jShares.getJSONArray("shares");
 		assertEquals(1,shares.length());
+		
+		// delete share by via its unique ID
+		bc = new BaseClient(url, k.getClientConfiguration(), getSharingUserAuth());
+		resource  = url+"/share/TEST/"+id;
+		bc.setURL(resource);
+		bc.delete();
 
-		// delete share by setting access to NONE
-		o.put("access","NONE");
-		bc.postQuietly(o);
+		// get the entry via the service
+		resource  = url+"/share/TEST";
+		bc.setURL(resource);
 		jShares = bc.getJSON();
 		System.out.println(jShares);
 		shares = jShares.getJSONArray("shares");
 		assertEquals(0,shares.length());
-
 	}
 
 
@@ -164,10 +170,21 @@ public class TestShareService {
 		o.put("user","CN=Other User, O=Testing");
 		o.put("group","hpc1");
 		bc.setURL(resource);
-		bc.postQuietly(o);
+		String loc = bc.create(o);
+		String id = new File(loc).getName();
 
-		// as target user, authenticate a transfer
+		// as target user get a directory listing
 		bc = new BaseClient(url, k.getClientConfiguration(), getTargetUserAuth());
+		
+		resource = url + "/access/TEST/"+id+"/";
+		System.out.println("Getting directory listing from "+resource);
+		bc.setURL(resource);
+		try(ClassicHttpResponse res = bc.get(ContentType.TEXT_HTML)){
+			String body = EntityUtils.toString(res.getEntity());
+			System.out.println(body);
+		}
+		
+		// as target user, authenticate a transfer
 		resource  = url+"/access/TEST";
 		AuthRequest req = new AuthRequest();
 		req.serverPath="/tmp/foo";

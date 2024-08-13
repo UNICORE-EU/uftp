@@ -11,14 +11,14 @@
   <parent>
     <groupId>eu.unicore</groupId>
     <artifactId>unicore-parent</artifactId>
-    <version>2.3</version>
+    <version>3.0.1</version>
   </parent>
 
   
   <properties>
-    <use.version>5.0.2</use.version>
-    <seclib.version>7.1.0</seclib.version>
-    <uftp.version>2.20.0</uftp.version>
+    <use.version>5.1.0</use.version>
+    <seclib.version>7.1.1</seclib.version>
+    <uftp.version>2.20.1</uftp.version>
     <datashare.version>0.20.0</datashare.version>
     <package.version>${project.version}</package.version>
     <package.release>1</package.release>

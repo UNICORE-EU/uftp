@@ -4,9 +4,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.File;
 import java.text.DateFormat;
 import java.util.Date;
 
+import org.apache.commons.io.FileUtils;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 
@@ -70,6 +73,30 @@ public class TestReservations {
 
 		rr.cleanup();
 		assertEquals(2, rr.getReservations().size());
+	}
+
+	@Test
+	public void testLoadFromFile() throws Exception {
+		Reservation r1 = new Reservation(
+				System.currentTimeMillis()-10,
+				System.currentTimeMillis()+1000*300,
+				1024*1024,
+				"me","you");
+		assertTrue(r1.isActive());
+		System.out.println(r1.toJSON().toString(2));
+		JSONObject jRes = new JSONObject();
+		JSONArray jArr = new JSONArray();
+		jArr.put(r1.toJSON());
+		String invalid = "{'from': '2024-01-01 12:00', 'to': '2023-01-01 12:00',"
+				+ "'rateLimit': '1m', 'uid':'noone'}";
+		jArr.put(new JSONObject(invalid));
+		jRes.put("reservations", jArr);
+		File resFile = new File("target", "test_reservations");
+		FileUtils.writeStringToFile(resFile, jRes.toString(2), "UTF-8");
+		Reservations r = new Reservations(resFile.getPath());
+		assertEquals(1, r.getReservations().size());
+		long limit = r.getRateLimit("someone");
+		assertEquals(1024*1024, limit);
 	}
 
 }
