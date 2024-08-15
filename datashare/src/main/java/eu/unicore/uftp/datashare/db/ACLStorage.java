@@ -39,7 +39,7 @@ public class ACLStorage {
 		pd.setTableName("SHARES_"+name);
 		storage = pf.getPersist(ShareDAO.class, pd);
 	}
-	
+
 	public void deleteAccess(String path, Target target, Owner owner) throws Exception {
 		Collection<ShareDAO> grants = readAll(path, false, owner);
 		for(ShareDAO grant: grants) {
@@ -48,7 +48,7 @@ public class ACLStorage {
 			}
 		}
 	}
-	
+
 	/**
 	 * @param accessType
 	 * @param path
@@ -103,7 +103,7 @@ public class ACLStorage {
 	}
 	
 	public ShareDAO read(String uniqueID) throws Exception {
-		ShareDAO d = getPersist().read(uniqueID);
+		ShareDAO d = storage.read(uniqueID);
 		if(d!=null && d.isExpired()) {
 			delete(uniqueID);
 			d = null;
@@ -113,9 +113,9 @@ public class ACLStorage {
 
 	public int incrementAccessCount(String uniqueID) {
 		try{
-			ShareDAO dao = getPersist().getForUpdate(uniqueID);
+			ShareDAO dao = storage.getForUpdate(uniqueID);
 			dao.incrementAccessCount();
-			getPersist().write(dao);
+			storage.write(dao);
 			return dao.getAccessCount();
 		}catch(Exception ex) {}
 		return 0;
@@ -147,11 +147,11 @@ public class ACLStorage {
 		Collections.sort(result, MostSpecificPath);
 		return result;
 	}
-	
+
 	public List<ShareDAO>readAll(String path, boolean recurse) throws Exception {
 		return readAll(path, recurse, null);
 	}
-	
+
 	public List<ShareDAO>readAll(Target target) throws Exception {
 		List<ShareDAO> result = new ArrayList<>();
 		Collection<String> ids = storage.getIDs("target", target.getID());
@@ -168,7 +168,7 @@ public class ACLStorage {
 		}
 		return result;
 	}
-	
+
 	public Collection<ShareDAO>readAll(Owner owner) throws Exception {
 		Collection<ShareDAO> result = new ArrayList<>();
 		Collection<String> ids = storage.getIDs("owner", owner.getName());
@@ -185,20 +185,20 @@ public class ACLStorage {
 		}
 		return result;
 	}
-	
+
 	public void delete(String id) throws Exception {
-		getPersist().remove(id);
+		storage.remove(id);
 	}
-	
+
 	/**
 	 * Deletes the DB content. Be careful. Be very careful.
 	 * @throws PersistenceException
 	 */
 	public void deleteAllData()throws Exception {
-		getPersist().removeAll();
+		storage.removeAll();
 	}
-	
-	protected Persist<ShareDAO>getPersist(){
+
+	public Persist<ShareDAO> getPersist(){
 		return storage;
 	}
 
@@ -208,5 +208,5 @@ public class ACLStorage {
 			return o2.getPath().length()-o1.getPath().length();
 		}	
 	};
-	
+
 }
