@@ -1,7 +1,9 @@
 package eu.unicore.uftp.datashare.share;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayInputStream;
@@ -30,8 +32,8 @@ import eu.emi.security.authn.x509.impl.X500NameUtils;
 import eu.unicore.services.Kernel;
 import eu.unicore.services.rest.client.BaseClient;
 import eu.unicore.services.rest.client.IAuthCallback;
+import eu.unicore.services.rest.client.RESTException;
 import eu.unicore.services.rest.client.UsernamePassword;
-import eu.unicore.services.server.JettyServer;
 import eu.unicore.uftp.authserver.messages.AuthRequest;
 import eu.unicore.uftp.authserver.share.ShareServiceProperties;
 import eu.unicore.uftp.datashare.db.ACLStorage;
@@ -47,6 +49,10 @@ public class TestShareService {
 		FileUtils.deleteQuietly(new File("target/data"));
 		k = new Kernel("src/test/resources/container.properties");
 		k.startSynchronous();
+		ShareServiceProperties ssp = k.getAttribute(ShareServiceProperties.class);
+		ssp.getDB("TEST").deleteAllData();
+		ACLStorage acl = ssp.getDB("TEST");
+		assertNotNull(acl);	
 	}
 
 	@AfterEach
@@ -56,8 +62,14 @@ public class TestShareService {
 
 	@Test
 	public void testSetup() throws Exception {
-		checkShareDBSetup();
 		checkGETInfo();
+		final BaseClient bc = getShareClient();
+		bc.setURL(getBaseURL()+"/share/NOSUCHSERVER");
+		JSONObject o = new JSONObject();
+		o.put("path","/tmp/");
+		assertThrows(RESTException.class, ()->{
+			bc.create(o);
+		});
 	}
 
 	@Test
@@ -77,21 +89,48 @@ public class TestShareService {
 	public void testUpload() throws Exception {
 		checkUpload();
 	}
-	
-	private void checkShareDBSetup() throws Exception{
-		ShareServiceProperties ssp = k.getAttribute(ShareServiceProperties.class);
-		assertNotNull(ssp);
-		ACLStorage acl = ssp.getDB("TEST");
-		assertNotNull(acl);	
+
+	@Test
+	public void testUpdateShare() throws Exception {
+		BaseClient bc = getShareClient();
+		bc.setURL(getBaseURL()+"/share/TEST");
+		// create
+		JSONObject o = new JSONObject();
+		o.put("path","/tmp/");
+		o.put("user","CN=Other User, O=Testing");
+		o.put("group","hpc1");
+		String loc = bc.create(o);
+		System.out.println(loc);
+		String id = new File(loc).getName();
+		// check we have an entry
+		ACLStorage acl = k.getAttribute(ShareServiceProperties.class).getDB("TEST");
+		Collection<ShareDAO>entries = acl.readAll("/tmp/");
+		assertEquals(1,entries.size());
+		ShareDAO dao = entries.iterator().next();
+		assertEquals("/tmp/",dao.getPath());
+
+		// update via REST API
+		JSONObject upd = new JSONObject();
+		upd.put("path", "/tmp/newpath");
+		upd.put("lifetime", "3600");
+		upd.put("nosuchproperty", "foo");
+		bc.setURL(bc.getURL()+"/"+id);
+		try(ClassicHttpResponse res = bc.put(upd)){
+			JSONObject reply = bc.asJSON(res);
+			assertEquals("OK", reply.get("path"));
+			assertEquals("OK", reply.get("lifetime"));
+			assertFalse("OK".equals(reply.get("nosuchproperty")));
+		}
+		// check it is updated in DB
+		dao = acl.read(id);
+		assertEquals("/tmp/newpath", dao.getPath());
+		assertTrue(dao.getExpires()>0);
 	}
 
 	// do a get to find the configured servers
 	private void checkGETInfo() throws Exception {
-		JettyServer server=k.getServer();
-		String url = server.getUrls()[0].toExternalForm()+"/rest";
-		BaseClient bc = new BaseClient(url, k.getClientConfiguration(), getSharingUserAuth());
-		String resource  = url+"/share";
-		bc.setURL(resource);
+		BaseClient bc = getShareClient();
+		bc.setURL(getBaseURL()+"/share");
 		JSONObject o = bc.getJSON();
 		JSONObject s = o.getJSONObject("TEST");
 		String authUrl = s.getString("href");
@@ -100,23 +139,17 @@ public class TestShareService {
 		// GET shares for the "TEST" UFTP server
 		bc.setURL(authUrl);
 		System.out.println(bc.getJSON());
-
 	}
 
 	private void checkPOST() throws Exception {
-		JettyServer server=k.getServer();
-		String url = server.getUrls()[0].toExternalForm()+"/rest";
-		BaseClient bc = new BaseClient(url, k.getClientConfiguration(), getSharingUserAuth());
-		ShareServiceProperties ssp = k.getAttribute(ShareServiceProperties.class);
-		ssp.getDB("TEST").deleteAllData();
-		
-		String resource  = url+"/share/TEST";
+		BaseClient bc = getShareClient();
 		JSONObject o = new JSONObject();
 		o.put("path","/tmp/");
 		o.put("access","WRITE");
 		o.put("user","CN=Other User, O=Testing");
 		o.put("group","hpc1");
-		bc.setURL(resource);
+		o.put("lifetime", "3600");
+		bc.setURL(getBaseURL()+"/share/TEST");
 		String loc = bc.create(o);
 		System.out.println(loc);
 		String id = new File(loc).getName();
@@ -132,87 +165,78 @@ public class TestShareService {
 		assertEquals(X500NameUtils.getComparableForm("CN=Demo User, O=UNICORE, C=EU"),dao.getOwnerID());
 		assertEquals("user1",dao.getUid());
 		assertEquals("hpc1",dao.getGid());
+		assertTrue(dao.getExpires()>0);
 
-		resource  = url+"/share/TEST";
 		// get the entry via the service
-		bc.setURL(resource);
 		JSONObject jShares = bc.getJSON();
 		System.out.println(jShares);
 		JSONArray shares = jShares.getJSONArray("shares");
 		assertEquals(1,shares.length());
-		
+
 		// delete share by via its unique ID
-		bc = new BaseClient(url, k.getClientConfiguration(), getSharingUserAuth());
-		resource  = url+"/share/TEST/"+id;
-		bc.setURL(resource);
+		bc.setURL( getBaseURL()+"/share/TEST/"+id);
 		bc.delete();
 
-		// get the entry via the service
-		resource  = url+"/share/TEST";
-		bc.setURL(resource);
+		// check updated list of entries
+		bc.setURL(getBaseURL()+"/share/TEST");
 		jShares = bc.getJSON();
 		System.out.println(jShares);
 		shares = jShares.getJSONArray("shares");
 		assertEquals(0,shares.length());
 	}
 
-
 	private void checkAccessViaAttributes() throws Exception {
-		JettyServer server=k.getServer();
-		String url = server.getUrls()[0].toExternalForm()+"/rest";
-
 		// as sharing user, create a share
-		BaseClient bc = new BaseClient(url, k.getClientConfiguration(), getSharingUserAuth());
-		String resource  = url+"/share/TEST";
+		BaseClient bc = getShareClient();
 		JSONObject o = new JSONObject();
 		o.put("path","/tmp/");
 		o.put("access","READ");
 		o.put("user","CN=Other User, O=Testing");
 		o.put("group","hpc1");
-		bc.setURL(resource);
+		bc.setURL( getBaseURL()+"/share/TEST");
 		String loc = bc.create(o);
 		String id = new File(loc).getName();
 
-		// as target user get a directory listing
-		bc = new BaseClient(url, k.getClientConfiguration(), getTargetUserAuth());
+		// as target user, list accessible shares
+		bc = getTargetUserClient();
+		bc.setURL(getBaseURL() + "/share/TEST");
+		System.out.println("Accessible shares:");
+		System.out.println(bc.getJSON());
 		
-		resource = url + "/access/TEST/"+id+"/";
+		// as target user, get a directory listing
+		String resource = getBaseURL() + "/access/TEST/"+id+"/";
 		System.out.println("Getting directory listing from "+resource);
 		bc.setURL(resource);
 		try(ClassicHttpResponse res = bc.get(ContentType.TEXT_HTML)){
 			String body = EntityUtils.toString(res.getEntity());
 			System.out.println(body);
 		}
-		
-		// as target user, authenticate a transfer
-		resource  = url+"/access/TEST";
+		// authenticate a transfer
 		AuthRequest req = new AuthRequest();
 		req.serverPath="/tmp/foo";
 		req.send = true;
 		Gson gson = new GsonBuilder().create();
 		JSONObject transferReq = new JSONObject(gson.toJson(req));
 		System.out.println(transferReq);
-		bc.setURL(resource);
+		bc.setURL(getBaseURL()+"/access/TEST");
 		bc.postQuietly(transferReq);
-		
+
 		// as original sharing user, delete share by setting access to NONE
-		bc = new BaseClient(url, k.getClientConfiguration(), getSharingUserAuth());
-		resource  = url+"/share/TEST";
+		bc = getShareClient();
+		resource  = getBaseURL()+"/share/TEST";
+		bc.setURL(resource);
 		o.put("access","NONE");
 		bc.setURL(resource);
 		bc.postQuietly(o);
 	}
 	
 	private JSONObject createShare(File file, String access, String user) throws Exception {
-		JettyServer server=k.getServer();
-		String url = server.getUrls()[0].toExternalForm()+"/rest";
-		BaseClient bc = new BaseClient(url, k.getClientConfiguration(), getSharingUserAuth());
-		String resource  = url+"/share/TEST";
+		BaseClient bc = getShareClient();
+		bc.setURL(getBaseURL()+"/share/TEST");
 		JSONObject o = new JSONObject();
 		o.put("path",file.getAbsolutePath());
 		o.put("access",access);
 		o.put("user",user);
-		bc.setURL(resource);
 		String shareLink = bc.create(o);
 		System.out.println(shareLink);
 		bc.setURL(shareLink);
@@ -238,9 +262,9 @@ public class TestShareService {
 		File f = new File("./pom.xml");
 		JSONObject share = createShare(f, "READ", "CN=Demo User, O=UNICORE, C=EU");
 		String shareLink = share.getJSONObject("share").getString("http");
-		BaseClient bc = new BaseClient(shareLink, k.getClientConfiguration(), getSharingUserAuth());
+		BaseClient bc = getShareClient();
+		bc.setURL(shareLink);
 		Map<String,String>headers = new HashMap<>();
-
 		if(length > 0) {
 			String range = "bytes="+offset+"-"+(offset+length-1);
 			headers.put("range", range);
@@ -259,25 +283,33 @@ public class TestShareService {
 		JSONObject share = createShare(f, "WRITE", "CN=Demo User, O=UNICORE, C=EU");
 		System.out.println(share.toString(2));
 		String shareLink = share.getJSONObject("share").getString("http");
-		BaseClient bc = new BaseClient(shareLink, k.getClientConfiguration(), getSharingUserAuth());
-		
+		BaseClient bc = getShareClient();
+		bc.setURL(shareLink);
 		// upload file
 		ByteArrayInputStream content = new ByteArrayInputStream("some content".getBytes());
 		bc.setURL(shareLink+"/test.txt");
 		bc.putQuietly(content, ContentType.APPLICATION_OCTET_STREAM);
 		// check it
 		assertTrue(FileUtils.readFileToString(new File(f, "test.txt"), "UTF-8").contains("some content"));
-		// delete share via URL
-		// bc.delete(shareLink);
 	}
 
-	
+	private String getBaseURL() {
+		return k.getServer().getUrls()[0].toExternalForm()+"/rest";
+	}
+
+	private BaseClient getShareClient() {
+		return new BaseClient(getBaseURL(), k.getClientConfiguration(), getSharingUserAuth());
+	}
+
+	private BaseClient getTargetUserClient() {
+		return new BaseClient(getBaseURL(), k.getClientConfiguration(), getTargetUserAuth());
+	}
+
 	private IAuthCallback getSharingUserAuth(){
 		String userName = "demouser";
 		String password = "test123";
 		return new UsernamePassword(userName, password) ;
 	}
-	
 
 	private IAuthCallback getTargetUserAuth(){
 		String userName = "otheruser";

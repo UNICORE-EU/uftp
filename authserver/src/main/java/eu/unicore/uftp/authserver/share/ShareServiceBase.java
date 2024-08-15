@@ -89,7 +89,6 @@ public abstract class ShareServiceBase extends ServiceBase {
 			transferRequest.setIncludes(targetFile.getName());
 			AuthResponse response = new TransferInitializer().initTransfer(transferRequest,uftp);            
 			InetAddress[] server = new InetAddress[]{InetAddress.getByName(response.serverHost)};
-			
 			final Range range = new Range(rangeHeader);
 			final String remoteFile = new File(share.getPath()).getName();
 			final UFTPSessionClient uc = new UFTPSessionClient(server, response.serverPort);
@@ -136,7 +135,7 @@ public abstract class ShareServiceBase extends ServiceBase {
 		}
 		return r;
 	}
-	
+
 	/**
 	 * upload data to the shared file using the Unix user id and group from the share
 	 */
@@ -205,14 +204,6 @@ public abstract class ShareServiceBase extends ServiceBase {
 		return normalize(targetUser).equals(normalize(currentUser));
 	}
 
-	protected ShareDAO createShare(JSONObject o) throws JSONException {
-		ShareDAO share = new ShareDAO();
-		share.setPath(o.getString("path"));
-		share.setAccess(AccessType.valueOf(o.optString("access", "READ")));
-		share.setTargetID(o.getString("user"));
-		return share;
-	}
-	
 	protected JSONObject toJSON(ShareDAO share, String serverName) throws JSONException {
 		JSONObject o = new JSONObject();
 		o.put("user", share.getTargetID());
@@ -228,7 +219,7 @@ public abstract class ShareServiceBase extends ServiceBase {
 		addCommon(o, share, serverName);
 		return o;
 	}
-	
+
 	protected void addCommon(JSONObject o, ShareDAO share, String serverName) throws JSONException{
 		o.put("path", share.getPath());
 		o.put("access", share.getAccess());
@@ -242,7 +233,7 @@ public abstract class ShareServiceBase extends ServiceBase {
 		String auth = (baseURL+"/"+serverName+":"+share.getPath()).replaceFirst("/rest/share/", "/rest/access/");
 		o.put("uftp", auth);
 	}
-	
+
 	protected JSONObject getUserInfo(UserAttributes ua) throws Exception {
 		JSONObject o = new JSONObject();
 		o.put("uid", ua.uid);
@@ -251,12 +242,11 @@ public abstract class ShareServiceBase extends ServiceBase {
 		o.put("dn", getNormalizedCurrentUserName());
 		return o;
 	}
-	
+
 	protected ShareServiceProperties getShareServiceProperties(){
 		return kernel.getAttribute(ShareServiceProperties.class);
 	}
-	
-	
+
 	protected void logUsage(String type, String path, ShareDAO share){
 		if(!logger.isInfoEnabled())return;
 		if(path==null)path="n/a";

@@ -3,6 +3,7 @@ package eu.unicore.uftp.authserver.share;
 import java.net.InetAddress;
 import java.net.URI;
 import java.util.Collection;
+import java.util.Iterator;
 
 import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
@@ -10,9 +11,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import eu.unicore.services.security.util.AuthZAttributeStore;
-import eu.unicore.uftp.authserver.UFTPBackend;
 import eu.unicore.uftp.authserver.TransferInitializer;
 import eu.unicore.uftp.authserver.TransferRequest;
+import eu.unicore.uftp.authserver.UFTPBackend;
 import eu.unicore.uftp.authserver.UFTPDInstance;
 import eu.unicore.uftp.authserver.UserAttributes;
 import eu.unicore.uftp.authserver.messages.AuthRequest;
@@ -31,6 +32,7 @@ import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
@@ -58,7 +60,7 @@ public class ShareServiceImpl extends ShareServiceBase {
 		UFTPBackend server = getLogicalServer(serverName);
 		ACLStorage shareDB = getShareDB(serverName);
 		if(shareDB==null || server==null){
-			return handleError(404, "No sharing for '"+serverName+"', please check your URL", null, logger);
+			throw new WebApplicationException(404);
 		}
 		try{
 			UFTPDInstance uftp = getUFTPD(serverName);
@@ -185,6 +187,68 @@ public class ShareServiceImpl extends ShareServiceBase {
 		}
 	}
 
+	/**
+	 * update a particular share for the current user
+	 */
+	@PUT
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/{serverName}/{uniqueID}")
+	public Response updateShare(@PathParam("serverName") String serverName, @PathParam("uniqueID") String uniqueID,
+			String json) {
+		UFTPBackend server = getLogicalServer(serverName);
+		ACLStorage shareDB = getShareDB(serverName);
+		if(shareDB==null || server==null){
+			throw new WebApplicationException(404);
+		}
+		try{
+			UserAttributes ua = assembleAttributes(server, null);
+			Owner owner = new Owner(getNormalizedCurrentUserName(), ua.uid, ua.gid);
+			ShareDAO share = shareDB.read(uniqueID);
+			if(share == null){
+				throw new WebApplicationException(404);
+			}
+			if(!share.getOwnerID().equals(owner.getName())){
+				throw new WebApplicationException(401);
+			}
+			JSONObject updates = new JSONObject(json);
+			Iterator<?> i = updates.keys();
+			JSONObject reply = new JSONObject();
+			share = shareDB.getPersist().getForUpdate(uniqueID);
+			try{
+				while(i.hasNext()){
+					boolean found = true;
+					String propertyName = String.valueOf(i.next());
+					String val = updates.getString(propertyName);
+					if("path".equals(propertyName)) {
+						share.setPath(val);
+					}
+					else if("lifetime".equals(propertyName)) {
+						long lifetime = Long.valueOf(val);
+						if(lifetime>0) {
+							share.setExpires(lifetime + System.currentTimeMillis()/1000);
+						}
+						else {
+							share.setExpires(0);
+						}
+					}
+					else {
+						found = false;
+					}
+					if(!found) {
+						reply.put(propertyName, "Property not found!");
+					}else {
+						reply.put(propertyName, "OK");
+					}
+				}
+			}finally {
+				shareDB.getPersist().write(share);
+			}
+			return Response.ok().entity(reply.toString()).build();
+		}catch(Exception ex){
+			return handleError(500, "", ex, logger);
+		}
+	}
 
 	/**
 	 * GET info about the configured servers
@@ -227,7 +291,7 @@ public class ShareServiceImpl extends ShareServiceBase {
 		ACLStorage shareDB = getShareDB(serverName);
 		if(shareDB==null || server==null){
 			throw new WebApplicationException(404);
-		};
+		}
 		if(AuthZAttributeStore.getTokens()==null){
 			throw new WebApplicationException(Status.UNAUTHORIZED);
 		}

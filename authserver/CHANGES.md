@@ -9,6 +9,7 @@ https://uftp-docs.readthedocs.io
 
 Auth Server 3.0.0 (released MMM dd, 2024)
 -----------------------------------------
+ - new feature: allow to update a share via PUT
  - update to UNICORE 10.1 libs
 
 Auth Server 2.9.0 patch1 (released Mar 15, 2024)

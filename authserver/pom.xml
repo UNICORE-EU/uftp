@@ -19,7 +19,7 @@
     <use.version>5.1.0</use.version>
     <seclib.version>7.1.1</seclib.version>
     <uftp.version>2.20.1</uftp.version>
-    <datashare.version>0.20.0</datashare.version>
+    <datashare.version>0.20.1</datashare.version>
     <package.version>${project.version}</package.version>
     <package.release>1</package.release>
     <automatic.module.name>${project.groupId}.authserver</automatic.module.name>
