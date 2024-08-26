@@ -81,14 +81,13 @@ public class UFTPBackend implements UserInfoSource {
 					break;
 				}
 				UFTPDInstance server = createUFTPD(name+"-"+num, prefix, properties);
-				server.setLogicalName(name);
 				instances.add(server);
 				num++;
 			}
 		}
 		log.info("Configured <{}> UFTPD server(s) as {}", instances.size(), name);
 	}
-	
+
 	private UFTPDInstance createUFTPD(String name, String prefix, Properties properties) {
 		UFTPDInstance server = new UFTPDInstance(name, kernel);
 		mapSettings(server, prefix, properties);
@@ -223,7 +222,7 @@ public class UFTPBackend implements UserInfoSource {
 
 	public List<String> getActiveReservationInfo(String uid) {
 		List<String> res = new ArrayList<>();
-		if(uid!=null && reservations!=null) {
+		if(uid!=null) {
 			reservations.getReservations().forEach( (x) -> {
 				if(x.isOwner(uid)) {
 					res.add(x.toString());

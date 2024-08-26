@@ -1,0 +1,10 @@
+{
+"reservations": [
+  {
+    "name": "permanent-reservation-for-testing",
+    "uid": "user1",
+    "from": "2024-01-01 12:00",
+    "to": "2051-01-01 12:00"
+  }
+]
+}

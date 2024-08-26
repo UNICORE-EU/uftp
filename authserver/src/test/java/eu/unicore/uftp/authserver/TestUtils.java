@@ -9,7 +9,6 @@ import java.util.Properties;
 
 import org.junit.jupiter.api.Test;
 
-import eu.unicore.uftp.authserver.share.IdentityExtractor.EmailExtractor;
 import eu.unicore.uftp.authserver.share.ShareServiceBase;
 import eu.unicore.uftp.datashare.AccessType;
 import eu.unicore.util.Pair;
@@ -37,24 +36,6 @@ public class TestUtils {
 			assertTrue(ex instanceof IllegalArgumentException);
 		}
 	}
-	
-	@Test
-	public void testEmailExtract() throws Exception {
-		String[] in = {"f.oo@bar.org",
-				"UID=f.oo@bar.org",
-				"UID=f.oo@bar.org,C=EU",
-				"OU=x,UID=f.oo@bar.org,C=EU",
-		};
-		String email = "f.oo@bar.org";
-		for(String i: in){
-			String o = EmailExtractor.extractEmail(i);
-			assertEquals(email, o, "failed for input <"+i+">");
-		}
-		
-		String x = "OU=x,CN=foo,C=EU";
-		assertEquals(x, EmailExtractor.extractEmail(x), "failed for input <"+x+">");
-		
-	}
 
 	@Test
 	public void testAccessLevels() {
@@ -74,7 +55,7 @@ public class TestUtils {
 			assertEquals(indices[x], sn1.getM2());
 		}
 	}
-	
+
 	@Test
 	public void testAuthServerProperties() {
 		Properties p = new Properties();

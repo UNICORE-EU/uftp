@@ -15,7 +15,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import eu.emi.security.authn.x509.impl.X500NameUtils;
-import eu.unicore.security.Client;
 import eu.unicore.services.security.util.AuthZAttributeStore;
 import eu.unicore.uftp.authserver.ServiceBase;
 import eu.unicore.uftp.authserver.TransferInitializer;
@@ -46,10 +45,7 @@ public abstract class ShareServiceBase extends ServiceBase {
 	protected static final Logger logger = Log.getLogger(Log.SERVICES, ShareService.class);
 
 	protected String getNormalizedCurrentUserName() throws Exception {
-		ShareServiceProperties ssp = kernel.getAttribute(ShareServiceProperties.class);
-		Client c = AuthZAttributeStore.getClient();
-		String identity = ssp.getIdentityExtractor().extractIdentity(c);
-		return normalize(identity);
+		return normalize(AuthZAttributeStore.getClient().getDistinguishedName());
 	}
 
 	/**
@@ -78,7 +74,6 @@ public abstract class ShareServiceBase extends ServiceBase {
 		Response r = null;
 		try{
 			boolean wantRange = rangeHeader!=null;
-
 			AuthRequest authRequest = new AuthRequest();
 			authRequest.send = true;
 			File targetFile = new File(share.getPath());

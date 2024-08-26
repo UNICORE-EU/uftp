@@ -87,7 +87,8 @@ public class TestShareService {
 
 	@Test
 	public void testUpload() throws Exception {
-		checkUpload();
+		checkUploadSingle();
+		checkUploadToDir();
 	}
 
 	@Test
@@ -276,7 +277,26 @@ public class TestShareService {
 		}
 	}
 
-	private void checkUpload() throws Exception {
+	private void checkUploadSingle() throws Exception {
+		File f = new File("target/test-uploads");
+		FileUtils.deleteQuietly(f);
+		f.mkdirs();
+		f = new File("target/test-uploads/test.txt");
+		FileUtils.write(f, "", "UTF-8"); // can only share existing file
+		JSONObject share = createShare(f, "WRITE", "CN=Demo User, O=UNICORE, C=EU");
+		System.out.println(share.toString(2));
+		String shareLink = share.getJSONObject("share").getString("http");
+		BaseClient bc = getShareClient();
+		bc.setURL(shareLink);
+		// upload file
+		ByteArrayInputStream content = new ByteArrayInputStream("some content".getBytes());
+		bc.setURL(shareLink);
+		bc.putQuietly(content, ContentType.APPLICATION_OCTET_STREAM);
+		// check it
+		assertTrue(FileUtils.readFileToString(f, "UTF-8").contains("some content"));
+	}
+
+	private void checkUploadToDir() throws Exception {
 		File f = new File("target/test-uploads");
 		FileUtils.deleteQuietly(f);
 		f.mkdirs();

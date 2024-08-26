@@ -6,7 +6,6 @@ import java.util.Properties;
 
 import org.apache.logging.log4j.Logger;
 
-import eu.unicore.uftp.authserver.share.IdentityExtractor.IdentityType;
 import eu.unicore.uftp.datashare.db.ACLStorage;
 import eu.unicore.util.Log;
 import eu.unicore.util.configuration.ConfigurationException;
@@ -54,10 +53,8 @@ public class ShareServiceProperties extends PropertiesHelper {
 				setDescription("Should WRITE access be allowed."));
 		META.put(PROP_CLIENTIP, new PropertyMD("localhost").
 				setDescription("Client IP to use when validating."));
-		META.put(PROP_USER_IDENTITY_TYPE, new PropertyMD("EMAIL").setEnum(IdentityExtractor.IdentityType.EMAIL).		
-				setDescription("Which kind of user identification is used for sharing"));
-		META.put(PROP_USER_IDENTITY_EXTRACTOR, new PropertyMD().setClass(IdentityExtractor.class).
-				setDescription("Which kind of user identification is used for sharing"));
+		META.put(PROP_USER_IDENTITY_TYPE, new PropertyMD().setDeprecated().setDescription("DEPRECATED, no effect"));
+		META.put(PROP_USER_IDENTITY_EXTRACTOR, new PropertyMD().setDeprecated().setDescription("DEPRECATED, no effect"));
 		META.put(PROP_UFTPD_PREFIX, new PropertyMD().setCanHaveSubkeys().
 				setDescription("Properties with this prefix are used to configure the server. See separate documentation for details."));
 	}
@@ -112,21 +109,6 @@ public class ShareServiceProperties extends PropertiesHelper {
 		Properties p = new Properties();
 		p.putAll(rawProperties);
 		return new ACLStorage(name, p);
-	}
-
-	private IdentityExtractor extractor;
-	
-	public synchronized IdentityExtractor getIdentityExtractor(){
-		if(extractor==null){
-			try{
-				IdentityType type = getEnumValue(PROP_USER_IDENTITY_TYPE, IdentityType.class);
-				Class<? extends IdentityExtractor> c = getClassValue(PROP_USER_IDENTITY_EXTRACTOR, IdentityExtractor.class);
-				extractor = IdentityExtractor.Factory.create(type, c);
-			}catch(Exception ex){
-				throw new RuntimeException(ex);
-			}
-		}
-		return extractor;
 	}
 
 }

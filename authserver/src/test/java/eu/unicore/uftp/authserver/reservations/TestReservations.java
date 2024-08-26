@@ -59,9 +59,9 @@ public class TestReservations {
 				1024*1024,
 				"no1","no2");
 		assertFalse(old.isActive());
-		rr.getReservations().add(r1);
-		rr.getReservations().add(r2);
-		rr.getReservations().add(old);
+		rr.reservations.add(r1);
+		rr.reservations.add(r2);
+		rr.reservations.add(old);
 		assertEquals(3, rr.getReservations().size());
 
 		long limit = rr.getRateLimit("hpc1");

@@ -1,6 +1,7 @@
 package eu.unicore.uftp.authserver;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.net.InetAddress;
@@ -32,6 +33,11 @@ public class TestService {
 
 	@Test
 	public void testAuthService() throws Exception {
+		System.out.println(k.getConnectionStatus());
+		String desc = k.getAttribute(AuthServiceConfig.class).getStatusDescription();
+		assertTrue(desc.contains("TEST"));
+		assertTrue(desc.contains("MULTI"));
+		System.out.println("Configured "+desc);
 		// do a get to find the configured servers
 		JettyServer server=k.getServer();
 		String url = server.getUrls()[0].toExternalForm()+"/rest/auth";

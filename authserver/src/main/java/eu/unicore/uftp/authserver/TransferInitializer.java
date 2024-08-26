@@ -18,7 +18,7 @@ import eu.unicore.util.Log;
 public class TransferInitializer {
 
     private static final Logger logger = Log.getLogger("authservice", TransferInitializer.class);
-    
+
     /**
      * Method for initializing UFTP transfer on command port.
      *     
@@ -30,21 +30,13 @@ public class TransferInitializer {
     public AuthResponse initTransfer(UFTPBaseRequest request, UFTPDInstance server) throws UnknownHostException, IOException {
     	String response = server.sendRequest(request);
         String[] split = response.split("::");
-        if (response.isEmpty()||split.length<2) {
+        if (response.isEmpty()||split.length<2 || !split[0].startsWith("OK")) {
             logger.error("UFTPD server did not provide the expected response (check certificate?), got: <"+response+">");
             return new AuthResponse(false, "UFTPD Server "+server.getServerName()+": <"+response+">");
         }
-        AuthResponse ret = null;
-        String status = split[0];
-        //response is "OK::<serverPort>;
-        if (status.startsWith("OK")) {
-            int port = Integer.parseInt(split[1].trim());
-            ret = new AuthResponse(true, "", server.getHost(), port, "");
-        }
-        else{
-        	ret = new AuthResponse(false, split[1]);
-        }
-        return ret;
+        // response is "OK::<serverPort>;
+        int port = Integer.parseInt(split[1].trim());
+        return new AuthResponse(true, "", server.getHost(), port, "");
     }
 
 }

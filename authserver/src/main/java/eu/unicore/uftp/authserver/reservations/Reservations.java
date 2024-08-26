@@ -3,8 +3,11 @@ package eu.unicore.uftp.authserver.reservations;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.logging.log4j.Logger;
@@ -25,7 +28,7 @@ public class Reservations {
 
 	private final static Logger log = Log.getLogger("authservice", Reservations.class);
 
-	private List<Reservation>reservations = new CopyOnWriteArrayList<>();
+	Collection<Reservation>reservations = new ArrayList<>();
 
 	private final String sourceFileName;
 
@@ -40,16 +43,13 @@ public class Reservations {
 	}
 
 	public void cleanup() {
-		List<Reservation>updatedReservations = new CopyOnWriteArrayList<>();
-		for(Reservation r: reservations) {
+		for(Iterator<Reservation>i=reservations.iterator();i.hasNext();) {
+			Reservation r = i.next();
 			if(r.isTerminated()) {
 				log.info("Reservation expired: {}", r);
-			}
-			else {
-				updatedReservations.add(r);
+				i.remove();
 			}
 		}
-		reservations = updatedReservations;
 	}
 	
 	private void setupWatchDog() throws FileNotFoundException {
@@ -60,7 +60,7 @@ public class Reservations {
 	}
 	
 	public synchronized void loadReservations() {
-		List<Reservation> newReservations = new CopyOnWriteArrayList<>();
+		List<Reservation> newReservations = new ArrayList<>();
 		try (FileInputStream is = new FileInputStream(new File(sourceFileName))){
 			JSONObject json = new JSONObject(new JSONTokener(is));
 			JSONArray r = json.optJSONArray("reservations");
@@ -77,17 +77,17 @@ public class Reservations {
 					}
 				});
 			}
-			reservations = newReservations;
+			reservations = newReservations;	
 		}catch(Exception e) {
-			log.warn(Log.createFaultMessage("Error loading reservations from "+
+			log.error(Log.createFaultMessage("Error loading reservations from "+
 					sourceFileName, e));
 		}
 	}
-	
-	public List<Reservation> getReservations(){
-		return reservations;
+
+	public Collection<Reservation> getReservations(){
+		return Collections.unmodifiableCollection(reservations);
 	}
-	
+
 	/**
 	 * get the lowest active rate limit for the given user, or 0 if there is no limit
 	 *

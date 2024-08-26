@@ -83,19 +83,14 @@ public class AccessServiceImpl extends ShareServiceBase {
 				|| equal(share.getTargetID(), Client.ANONYMOUS_CLIENT_DN)){
 				ShareServiceProperties spp = kernel.getAttribute(ShareServiceProperties.class);
 				String clientIP = spp.getClientIP();
-				boolean returnListing = handlePath(path, share);
-				if(returnListing) {
-					r = getListing(share, uftp, clientIP);
+				handlePath(path, share);
+				logUsage("HTTP-download", share.getPath(), share);
+				r = doDownload(share, uftp, clientIP, range);
+				if(share.isOneTime()) {
+					shareDB.delete(uniqueID);
 				}
-				else {
-					logUsage("HTTP-download", share.getPath(), share);
-					r = doDownload(share, uftp, clientIP, range);
-					if(share.isOneTime()) {
-						shareDB.delete(uniqueID);
-					}
-					else{
-						shareDB.incrementAccessCount(uniqueID);
-					}
+				else{
+					shareDB.incrementAccessCount(uniqueID);
 				}
 			}else{
 				throw new WebApplicationException(Status.UNAUTHORIZED);
@@ -106,22 +101,18 @@ public class AccessServiceImpl extends ShareServiceBase {
 		return r;
 	}
 
-	private boolean handlePath(String path, ShareDAO share) throws WebApplicationException{
+	private void handlePath(String path, ShareDAO share) throws WebApplicationException{
 		if(path!=null){
 			if(share.isDirectory()){
 				String fullPath = FilenameUtils.normalize(share.getPath()+"/"+path, true);
 				share.setPath(fullPath);
-				return false;
 			}
 			else{
 				throw new WebApplicationException("Not a directory", 404);
 			}
 		}
-		else{
-			return share.isDirectory();
-		}
 	}
-	
+
 	/**
 	 * upload a file, which has to be either shared anonymously 
 	 * or with the current user

@@ -21,26 +21,15 @@ import eu.unicore.util.httpclient.ServerHostnameCheckingMode;
 public class UFTPDInstance extends UFTPDInstanceBase implements ExternalSystemConnector {
 
 	private final String serverName;
-	
-	private String logicalName;
 
 	private final Kernel kernel;
 	
 	public UFTPDInstance(String serverName, Kernel kernel){
 		super();
 		this.serverName = serverName;
-		this.logicalName = serverName;
 		this.kernel = kernel;
 	}
 
-	public void setLogicalName(String name) {
-		this.logicalName = name;
-	}
-
-	public String getName(){
-		return logicalName;
-	}
-	
 	public String getServerName(){
 		return serverName;
 	}

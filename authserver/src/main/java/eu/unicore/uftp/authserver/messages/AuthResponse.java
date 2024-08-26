@@ -3,7 +3,6 @@ package eu.unicore.uftp.authserver.messages;
 
 /**
  * @author mgolik
- *
  */
 public class AuthResponse {
 
@@ -24,11 +23,5 @@ public class AuthResponse {
         serverHost = server;
         serverPort = dataPort;
     }
-    
-    @Override
-    public String toString() {
-        return "AuthResponse{" + "success=" + success + ", reason=" + reason +
-               ", server=" + serverHost + ", port=" + serverPort+"}";
-    }   
 
 }

@@ -16,7 +16,7 @@ public class AccessService extends Application implements USERestApplication {
 
     @Override
     public Set<Class<?>> getClasses() {
-        Set<Class<?>> classes = new HashSet<Class<?>>();
+        Set<Class<?>> classes = new HashSet<>();
         classes.add(AccessServiceImpl.class);
         return classes;
     }
