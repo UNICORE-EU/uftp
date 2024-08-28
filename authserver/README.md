@@ -19,10 +19,10 @@ configured to use Unity for authenticating users.
 
 ## Download and installation
 
-Working binaries can be found in the [GitHub Releases](https://github.com/UNICORE-EU/uftp/releases) section
-or [downloaded from SourceForge](https://sourceforge.net/projects/unicore/files/Servers/UFTP-AuthServer)
+Working binaries can be found in the [GitHub Releases](https://github.com/UNICORE-EU/uftp/releases)
+section.
 
-To run, you'll also need a Java runtime (version 11 or later).
+To run, you'll need a Java runtime (version 11 or later).
 
 ## Documentation
 
