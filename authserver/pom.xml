@@ -88,8 +88,4 @@
      </plugins>
   </build>
 
-
-  <scm>
-    <tag>uftp-authserver-3.0.0</tag>
-  </scm>
 </project>
