@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>eu.unicore.uftp</groupId>
   <artifactId>uftp-authserver</artifactId>
-  <version>2.9.1-SNAPSHOT</version>
+  <version>3.0.0-SNAPSHOT</version>
   <packaging>jar</packaging>
   <name>UFTP Authentication Server</name>
   <url>https://www.unicore.eu</url>
@@ -13,7 +13,6 @@
     <artifactId>unicore-parent</artifactId>
     <version>3.0.1</version>
   </parent>
-
   
   <properties>
     <use.version>5.1.0</use.version>
@@ -24,14 +23,6 @@
     <package.release>1</package.release>
     <automatic.module.name>${project.groupId}.authserver</automatic.module.name>
   </properties>
-
-  <repositories>
-    <repository>
-      <id>unicore.eu</id>
-      <name>UNICORE repository</name>
-      <url>https://unicore-dev.zam.kfa-juelich.de/maven</url>
-    </repository>
-  </repositories>
 
   <dependencies>
     <dependency>

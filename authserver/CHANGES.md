@@ -7,9 +7,10 @@ https://github.com/UNICORE-EU/uftp/issues
 Full documentation is at:
 https://uftp-docs.readthedocs.io
 
-Auth Server 3.0.0 (released MMM dd, 2024)
+Auth Server 3.0.0 (released Aug 28, 2024)
 -----------------------------------------
  - new feature: allow to update a share via PUT
+ - fix: ssh key auth in JWT mode only works for first key
  - update to UNICORE 10.1 libs
 
 Auth Server 2.9.0 patch1 (released Mar 15, 2024)
