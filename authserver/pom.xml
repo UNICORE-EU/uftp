@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>eu.unicore.uftp</groupId>
   <artifactId>uftp-authserver</artifactId>
-  <version>3.0.0</version>
+  <version>3.0.1-SNAPSPHOT</version>
   <packaging>jar</packaging>
   <name>UFTP Authentication Server</name>
   <url>https://www.unicore.eu</url>
