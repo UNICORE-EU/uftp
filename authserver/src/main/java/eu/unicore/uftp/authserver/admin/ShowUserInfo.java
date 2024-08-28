@@ -9,7 +9,6 @@ import eu.unicore.services.admin.AdminAction;
 import eu.unicore.services.admin.AdminActionResult;
 import eu.unicore.uftp.authserver.AuthServiceConfig;
 import eu.unicore.uftp.authserver.UFTPBackend;
-import eu.unicore.uftp.authserver.UFTPDInstance;
 import eu.unicore.uftp.server.requests.UFTPGetUserInfoRequest;
 import eu.unicore.util.Log;
 
@@ -26,8 +25,10 @@ public class ShowUserInfo implements AdminAction {
 	@Override
 	public AdminActionResult invoke(Map<String, String> params, Kernel kernel) {
 		String userID = params.get("uid");
+		if(userID==null) {
+			return new AdminActionResult(false, "The 'uid' parameter is required.");
+		}
 		String serverName = params.get("serverName");
-
 		boolean success = true;
 		String message = "Getting info for <" + userID + ">"
 				 + (serverName!=null? " on server <"+serverName+">" : "");
@@ -49,9 +50,8 @@ public class ShowUserInfo implements AdminAction {
 			String key = s.getServerName();
 			String response = null;
 			try {
-				UFTPDInstance uftpd = s.getUFTPDInstance();
 				UFTPGetUserInfoRequest req = new UFTPGetUserInfoRequest(userID);
-				response = uftpd.sendRequest(req);
+				response = s.getUFTPDInstance().sendRequest(req);
 			}catch(Exception ex) {
 				response = Log.createFaultMessage("Error getting info for <"+userID+">", ex);
 			}

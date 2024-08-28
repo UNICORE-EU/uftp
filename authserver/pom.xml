@@ -54,7 +54,7 @@
     <dependency>
       <groupId>eu.unicore.services</groupId>
       <artifactId>use-rest</artifactId>
-      <version>${use.version}</version>
+      <version>${use.version}-p1</version>
     </dependency>
     <dependency>
       <groupId>eu.unicore.services</groupId>

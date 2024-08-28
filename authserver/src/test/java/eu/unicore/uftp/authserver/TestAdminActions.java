@@ -44,12 +44,15 @@ public class TestAdminActions {
 	}
 
 	@Test
-	public void testShowUserInfoError1() {
+	public void testShowUserInfoErrors() {
 		AdminAction a = new ShowUserInfo();
 		Map<String,String>params = new HashMap<>();
+		AdminActionResult res = a.invoke(params, k);
+		assertFalse(res.successful());
+		System.out.println(res.getMessage());
 		params.put("uid", System.getProperty("user.name"));
 		params.put("serverName", "X");
-		AdminActionResult res = a.invoke(params, k);
+		res = a.invoke(params, k);
 		assertFalse(res.successful());
 		System.out.println(res.getMessage());
 	}
