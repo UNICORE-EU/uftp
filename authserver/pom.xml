@@ -22,10 +22,10 @@
   </scm>
  
   <properties>
-    <use.version>5.1.0</use.version>
-    <seclib.version>7.1.1</seclib.version>
+    <use.version>5.1.1</use.version>
+    <seclib.version>7.1.2</seclib.version>
     <uftp.version>2.20.1</uftp.version>
-    <datashare.version>0.20.1</datashare.version>
+    <datashare.version>0.21.0</datashare.version>
     <package.version>${project.version}</package.version>
     <package.release>1</package.release>
     <automatic.module.name>${project.groupId}.authserver</automatic.module.name>
@@ -35,7 +35,7 @@
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter</artifactId>
-      <version>5.11.0</version>
+      <version>5.11.2</version>
       <scope>test</scope>
     </dependency>
     <dependency>

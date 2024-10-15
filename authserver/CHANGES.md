@@ -7,6 +7,11 @@ https://github.com/UNICORE-EU/uftp/issues
 Full documentation is at:
 https://uftp-docs.readthedocs.io
 
+Auth Server 3.0.1 (released MMM DD, 2024)
+-----------------------------------------
+ - fix: issued auth tokens do not contain asserted user name
+   for sshkey authentication
+
 Auth Server 3.0.0 (released Aug 28, 2024)
 -----------------------------------------
  - new feature: allow to update a share via PUT
