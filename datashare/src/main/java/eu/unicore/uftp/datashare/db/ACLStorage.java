@@ -37,7 +37,7 @@ public class ACLStorage {
 		PersistenceFactory pf = PersistenceFactory.get(pp);
 		PersistenceDescriptor pd = PersistenceDescriptor.get(ShareDAO.class);
 		pd.setTableName("SHARES_"+name);
-		storage = pf.getPersist(ShareDAO.class, pd);
+		storage = pf.getPersist(ShareDAO.class, "SHARES_"+name);
 	}
 
 	public void deleteAccess(String path, Target target, Owner owner) throws Exception {

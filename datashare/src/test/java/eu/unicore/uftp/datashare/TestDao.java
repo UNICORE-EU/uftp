@@ -24,9 +24,8 @@ public class TestDao {
 		PersistenceProperties cf=new PersistenceProperties();
 		cf.setDatabaseDirectory("./target/test_data");
 
-		@SuppressWarnings("unchecked")
-		Persist<ShareDAO>p=(Persist<ShareDAO>)(H2Persist.class.getConstructor().newInstance());
-		p.setDaoClass(ShareDAO.class);
+		@SuppressWarnings({"rawtypes","unchecked"})
+		Persist<ShareDAO>p = (Persist<ShareDAO>)new H2Persist(ShareDAO.class, null);
 		p.setConfigSource(cf);
 		p.init();
 		p.removeAll();
