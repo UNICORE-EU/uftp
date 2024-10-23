@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -44,7 +45,7 @@ public class TestSessionFeatures extends ClientServerTestBase{
 		File slaveFile=new File(dataDir,slaveName);
 		TestRsync.writeTextFiles(masterFile, slaveFile, 500, 3);
 		assertNotSame(Utils.md5(masterFile),Utils.md5(slaveFile));
-		String secret = String.valueOf(System.currentTimeMillis());
+		String secret = UUID.randomUUID().toString();
 		String cwd = dataDir.getAbsolutePath();
 		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret, cwd);
 		job.sendTo(host[0], jobPort);
@@ -68,7 +69,7 @@ public class TestSessionFeatures extends ClientServerTestBase{
 		File realSource=new File("target/testdata/"+realSourceName);
 		Utils.writeToFile("this is a test for the session client", realSource);
 		String target = "target/testdata/"+realSource.getName();
-		String secret = String.valueOf(System.currentTimeMillis());
+		String secret = UUID.randomUUID().toString();
 		String cwd = dataDir.getAbsolutePath();
 		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret, cwd);
 		job.sendTo(host[0], jobPort);
@@ -101,7 +102,7 @@ public class TestSessionFeatures extends ClientServerTestBase{
 		File target2=new File("target/foo_2");
 		FileUtils.deleteQuietly(target);
 		FileUtils.deleteQuietly(target2);
-		String secret = String.valueOf(System.currentTimeMillis());
+		String secret = UUID.randomUUID().toString();
 		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret,
 				new File(".").getAbsolutePath());
 		job.sendTo(host[0], jobPort);
@@ -148,7 +149,7 @@ public class TestSessionFeatures extends ClientServerTestBase{
 	@Test
 	public void testACLOperation() throws Exception {
 		File cwd=dataDir.getAbsoluteFile();
-		String secret = String.valueOf(System.currentTimeMillis());
+		String secret = UUID.randomUUID().toString();
 		Properties properties = new Properties();
 		properties.setProperty("client-ip",Utils.encodeInetAddresses(host));
 		properties.setProperty("send","true");
@@ -185,7 +186,7 @@ public class TestSessionFeatures extends ClientServerTestBase{
 		File originalFile = new File("target/testdata/source-"+System.currentTimeMillis());
 		String originalName = originalFile.getName();		
 		Utils.writeToFile("this is a test for the session client", originalFile);
-		String secret = String.valueOf(System.currentTimeMillis());
+		String secret = UUID.randomUUID().toString();
 		String cwd = dataDir.getAbsolutePath();
 		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret, cwd);
 		job.sendTo(host[0], jobPort);
@@ -208,7 +209,7 @@ public class TestSessionFeatures extends ClientServerTestBase{
 		String originalName = "testdata/source-"+System.currentTimeMillis();
 		File originalFile = new File("target/"+originalName);
 		Utils.writeToFile("this is a test for the session client", originalFile);
-		String secret = String.valueOf(System.currentTimeMillis());
+		String secret = UUID.randomUUID().toString();
 		String cwd = dataDir.getParentFile().getAbsolutePath();
 		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret, cwd);
 		job.sendTo(host[0], jobPort);
@@ -231,7 +232,7 @@ public class TestSessionFeatures extends ClientServerTestBase{
 		String originalName = "source-"+System.currentTimeMillis();
 		File originalFile = new File("target/testdata/"+originalName);
 		Utils.writeToFile("this is a test for the session client", originalFile);
-		String secret = String.valueOf(System.currentTimeMillis());
+		String secret = UUID.randomUUID().toString();
 		String cwd = dataDir.getAbsolutePath();
 		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret, cwd);
 		job.sendTo(host[0], jobPort);
@@ -279,7 +280,7 @@ public class TestSessionFeatures extends ClientServerTestBase{
 	private void unpackArchiveStream(String type) throws Exception {
 		String realSourceName="src/test/resources/archive."+type;
 		File realSource=new File(realSourceName);
-		String secret = String.valueOf(System.currentTimeMillis());
+		String secret = UUID.randomUUID().toString();
 		String cwd = dataDir.getAbsolutePath();
 		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret, cwd);
 		job.sendTo(host[0], jobPort);
@@ -308,7 +309,7 @@ public class TestSessionFeatures extends ClientServerTestBase{
 
 	@Test
 	public void testRestrictSession() throws Exception {
-		String secret = String.valueOf(System.currentTimeMillis());
+		String secret = UUID.randomUUID().toString();
 		String cwd = dataDir.getAbsolutePath();
 		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret, cwd);
 		job.setAccessPermissions(Session.Mode.NONE);
@@ -343,7 +344,8 @@ public class TestSessionFeatures extends ClientServerTestBase{
 		File sourceFile = new File(dataDir,"testsourcefile-"+System.currentTimeMillis());
 		makeTestFile2(sourceFile, 1024*500);
 		String target = "target/testdata/testfile-" + System.currentTimeMillis();
-		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", "secretCode",
+		String secret = UUID.randomUUID().toString();
+		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret,
 				sourceFile.getParentFile().getAbsolutePath());
 		job.setKey(key);
 		job.setEncryptionAlgorithm(EncryptionAlgorithm.AES);
@@ -354,7 +356,7 @@ public class TestSessionFeatures extends ClientServerTestBase{
 		Thread.sleep(1000);
 		try(UFTPSessionClient client = new UFTPSessionClient(host, srvPort);
 				FileOutputStream fos = new FileOutputStream(target)){
-			client.setSecret("secretCode");
+			client.setSecret(secret);
 			client.setNumConnections(numCon);
 			client.setKey(key);
 			client.setEncryptionAlgorithm(EncryptionAlgorithm.AES);
@@ -373,7 +375,7 @@ public class TestSessionFeatures extends ClientServerTestBase{
 		String fileName = "source-"+System.currentTimeMillis();
 		File dataFile = new File("target/testdata/"+fileName);
 		makeTestFile(dataFile, 32768, 10);
-		String secret = String.valueOf(System.currentTimeMillis());
+		String secret = UUID.randomUUID().toString();
 		String cwd = dataDir.getAbsolutePath();
 		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret, cwd);
 		job.sendTo(host[0], jobPort);
@@ -398,6 +400,58 @@ public class TestSessionFeatures extends ClientServerTestBase{
 				System.out.println(algo+" local: "+localMD+" remote: "+remoteMD);
 				assertEquals(localMD, remoteMD);
 			}
+		}
+	}
+
+	@Test
+	public void testRCP() throws Exception {
+		File originalFile = new File("target/testdata/source-"+System.currentTimeMillis());
+		String originalName = originalFile.getName();		
+		Utils.writeToFile("this is a test for the session client", originalFile);
+		String secret1 = UUID.randomUUID().toString();
+		String cwd = dataDir.getAbsolutePath();
+		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret1, cwd);
+		job.sendTo(host[0], jobPort);
+		String secret2 = UUID.randomUUID().toString();
+		UFTPSessionRequest job2 = new UFTPSessionRequest(host, "nobody", secret2, cwd);
+		job2.sendTo(host[0], jobPort);
+		String secret3 = UUID.randomUUID().toString();
+		UFTPSessionRequest job3 = new UFTPSessionRequest(host, "nobody", secret3, cwd);
+		job3.sendTo(host[0], jobPort);
+		Thread.sleep(1000);
+
+		try(UFTPSessionClient client = new UFTPSessionClient(host, srvPort)){
+			client.setSecret(secret1);
+			client.connect();
+			String newName = originalName+"-copy";
+			String rcpHost = String.format("%s:%s", host[0].getHostName(), srvPort);
+			client.sendFile(originalName, newName, rcpHost, secret2);
+			Thread.sleep(3000);
+			File newFile = new File("target/testdata/"+newName);
+			assertTrue(newFile.exists());
+			client.rm(newName);
+			assertFalse(newFile.exists());
+			client.receiveFile(newName, originalName, rcpHost, secret3);
+			Thread.sleep(3000);
+			assertTrue(newFile.exists());
+		}
+	}
+
+	@Test
+	public void testList() throws Exception {
+		String secret = UUID.randomUUID().toString();
+		String cwd = dataDir.getAbsolutePath();
+		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret, cwd);
+		job.sendTo(host[0], jobPort);
+		Thread.sleep(1000);
+
+		try(UFTPSessionClient client = new UFTPSessionClient(host, srvPort)){
+			client.setSecret(secret);
+			client.connect();
+			ByteArrayOutputStream os = new ByteArrayOutputStream();
+			client.mlsd(".", os);
+			os = new ByteArrayOutputStream();
+			client.list(".", os);
 		}
 	}
 

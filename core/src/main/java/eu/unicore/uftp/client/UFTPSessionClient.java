@@ -314,6 +314,24 @@ public class UFTPSessionClient extends AbstractUFTPClient implements Runnable {
 		return Long.parseLong(reply.getStatusLine().split(" ")[1]);
 	}
 
+	public void mlsd(String path, OutputStream os) throws Exception {
+		checkConnected();
+		openDataConnection();
+		setupForGet(os);
+		Reply reply = runCommand( "MLSD " + path);
+		reply.assertStatus(150);
+		moveData(-1);
+	}
+
+	public void list(String path, OutputStream os) throws Exception {
+		checkConnected();
+		openDataConnection();
+		setupForGet(os);
+		Reply reply = runCommand( "LIST " + path);
+		reply.assertStatus(150);
+		moveData(-1);
+	}
+
 	/**
 	 * change to the given remote directory
 	 *

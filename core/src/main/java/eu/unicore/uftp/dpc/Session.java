@@ -590,6 +590,7 @@ public class Session {
 		}
 		stream = new ByteArrayInputStream(bos.toByteArray());
 		numberOfBytes = bos.size();
+		keepAlive = false;
 		connection.sendControl(UFTPCommands.RETR_OK);
 		return true;
 	}
