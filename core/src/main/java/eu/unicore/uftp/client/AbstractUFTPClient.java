@@ -36,7 +36,6 @@ public abstract class AbstractUFTPClient implements Closeable {
 	private final InetAddress[] servers;
 	private final int port;
 	private int timeout = 3000;
-	private int authtimeout = 0;
 	private String secret;
 
 	protected long bandwidthLimit = -1;
@@ -74,7 +73,6 @@ public abstract class AbstractUFTPClient implements Closeable {
 
 	public void connect() throws IOException, AuthorizationFailureException {
 		client.setTimeout(timeout);
-		client.setAuthTimeout(authtimeout);
 		client.connect(servers, port, secret);
 		openDataConnection();
 	}
@@ -184,28 +182,8 @@ public abstract class AbstractUFTPClient implements Closeable {
 		this.numcons = num;
 	}
 
-	public int getNumConnections() {
-		return numcons;
-	}
-
-	public int getTimeout() {
-		return timeout;
-	}
-
 	public void setTimeout(int timeout) {
 		this.timeout = timeout;
-	}
-
-	public int getAuthtimeout() {
-		return authtimeout;
-	}
-
-	public void setAuthtimeout(int authtimeout) {
-		this.authtimeout = authtimeout;
-	}
-
-	public String getSecret() {
-		return secret;
 	}
 
 	public void setSecret(String secret) {
@@ -221,40 +199,16 @@ public abstract class AbstractUFTPClient implements Closeable {
 		this.key = key;
 	}
 
-	public byte[] getKey() {
-		return key;
-	}
-
-	public EncryptionAlgorithm getEncryptionAlgorithm() {
-		return algo;
-	}
-
 	public void setEncryptionAlgorithm(EncryptionAlgorithm algo) {
 		this.algo = algo;
-	}
-
-	public boolean isCompress() {
-		return compress;
 	}
 
 	public void setCompress(boolean compress) {
 		this.compress = compress;
 	}
 
-	public UFTPProgressListener getProgressListener() {
-		return progressListener;
-	}
-
 	public void setProgressListener(UFTPProgressListener progressListener) {
 		this.progressListener = progressListener;
-	}
-
-	public InetAddress[] getServerList() {
-		return servers;
-	}
-
-	public long getBandwidthLimit() {
-		return bandwidthLimit;
 	}
 
 	public void setBandwidthLimit(long limit) {
@@ -274,7 +228,7 @@ public abstract class AbstractUFTPClient implements Closeable {
 			throw new RuntimeException("UFTPD server does not support the '"+feature+"' feature.");
 		}
 	}
-	
+
 	/**
 	 * signal the client that it should cancel an operation
 	 */

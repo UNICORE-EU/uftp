@@ -7,21 +7,6 @@
  *
  * Jefferson Lab HPC Group, 12000 Jefferson Ave., Newport News, VA 23606
  **************************************************************************
- *
- * Description:
- *      Parallel Stream Individual Writer
- *
- * Author:  
- *      Jie Chen
- *      Jefferson Lab HPC Group
- *
- * Revision History:
- *   $Log: PWriter.java,v $
- *   Revision 1.1  2001/06/14 15:51:42  chen
- *   Initial import of jparss
- *
- *
- *
  */
 package eu.unicore.uftp.jparss;
 
@@ -113,10 +98,6 @@ public class PWriter implements Runnable {
 	 */
 	public synchronized void writeData() throws IOException {
 		boolean doit = true;
-
-		if (PConfig.debug == true)
-			System.out.println("Writer[" + String.valueOf(pos_)
-					+ "] is waiting");
 		while (buffer_ == null) {
 			try {
 				wait();
@@ -124,20 +105,12 @@ public class PWriter implements Runnable {
 				doit = false;
 			}
 		}
-
-		if (PConfig.debug == true)
-			System.out
-					.println("Writer[" + String.valueOf(pos_) + "] is awaken");
 		if (parent_.finished() == false && doit == true && len_ > 0) {
 			// now all writers should compete for resource fairly.
 			// we cannot use nofifyAll to wake up all writers since
 			// once all writers are awaken there is only one writer
 			// gets monitor.
-			try {
-				doWrite();
-			} catch (IOException e) {
-				throw e;
-			}
+			doWrite();
 		}
 	}
 
@@ -170,24 +143,11 @@ public class PWriter implements Runnable {
 			ostream_.writeInt(len_);
 			// write number bytes to come
 			ostream_.writeInt(tlen);
-
 			// write data
 			ostream_.write(buffer_, toffset, tlen);
-			if (PConfig.debug == true)
-				System.out.println("Writer " + String.valueOf(pos_)
-						+ " writes from " + String.valueOf(toffset) + " with "
-						+ String.valueOf(tlen) + " bytes and total bytes "
-						+ String.valueOf(len_));
-		} catch (IOException e) {
-			if (PConfig.debug == true) {
-				System.out.println("Writer " + String.valueOf(pos_)
-						+ " got IOException");
-				System.out.flush();
-			}
+		}finally {
 			reset();
-			throw e;
 		}
-		reset();
 	}
 
 	public void run() {

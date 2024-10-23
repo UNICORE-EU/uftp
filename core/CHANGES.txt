@@ -1,5 +1,11 @@
 Changelog
 ---------
+
+UFTP 2.20.2
+-----------
+ - update dependencies
+ - minor code cleanup
+
 UFTP 2.20.1
 -----------
  - move to Maven Central

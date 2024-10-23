@@ -121,10 +121,6 @@ public class SSLHelper {
 			if(p.getProperty("credential.path")!=null){
 				logger.info("Enabling SSL, using credential = "+p.getProperty("credential.path"));
 			}
-			else if (p.getProperty("javax.net.ssl.keyStore")!=null){
-				logger.info("Enabling SSL using javax.net.ssl properties - consider updating your config!");
-				p = convertOldStyleProperties(p);
-			}
 			else{
 				logger.warn("SSL properties file does not contain credential / keystore definition.");
 				sslEnabled = false;
@@ -138,39 +134,6 @@ public class SSLHelper {
 			securityProperties = new UFTPDSecProperties(p);
 		}
 		return sslEnabled;
-	}
-
-	private Properties convertOldStyleProperties(Properties oldProps) throws IOException {
-		Properties p = new Properties();
-		String keyStore = oldProps.getProperty("javax.net.ssl.keyStore");
-		if(keyStore==null){
-			throw new IOException("SSL properties file does not contain required properties!");
-		}
-		p.put("credential.path",keyStore);
-		logger.info("Enabling SSL, using keystore = " + keyStore);
-		String keyStorePassword = oldProps.getProperty("javax.net.ssl.keyStorePassword");
-		if (keyStorePassword == null) {
-			keyStorePassword = getFromCommandline();
-		}
-		p.put("credential.password", keyStorePassword);
-		String trustStore = oldProps.getProperty("javax.net.ssl.trustStore");
-		if (trustStore == null) {
-			throw new IOException("SSL properties file does not contain required properties!");
-		} else {
-			logger.info("Using truststore  = " + trustStore);
-			p.put("truststore.type", "keystore");
-			p.put("truststore.keystorePath", trustStore);
-			String trustStorePassword = oldProps.getProperty("javax.net.ssl.trustStorePassword");
-			if (trustStorePassword != null) {
-				p.put("truststore.keystorePassword", trustStorePassword);
-			}
-		}
-		return p;
-	}
-
-	private String getFromCommandline() {
-		System.out.println("Please enter the keystore password:");
-		return new String(System.console().readPassword());
 	}
 
 	public static class UFTPDSecProperties extends AuthnAndTrustProperties{

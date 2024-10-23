@@ -19,7 +19,6 @@ public class TestFileInfo {
 		assertTrue(fi.isDirectory());
 		System.out.println(fi);
 	}
-	
 
 	@Test
 	public void testParse2(){
@@ -35,4 +34,13 @@ public class TestFileInfo {
 		System.out.println(fi);
 	}
 
+	@Test
+	public void testOutputFormatting() throws Exception {
+		System.out.println("LS style date: "+FileInfo.getUnixDate(System.currentTimeMillis()));
+		String ftpDate = FileInfo.getFTPDate(System.currentTimeMillis());
+		System.out.println("MLST style date: "+ftpDate);
+		System.out.println(FileInfo.parseFTPDate(ftpDate));
+		String isoDate = FileInfo.getISO8601Date(System.currentTimeMillis());
+		System.out.println("ISO date: "+isoDate);
+	}
 }

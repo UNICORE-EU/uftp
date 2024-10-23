@@ -293,27 +293,17 @@ public class UFTPSessionClient extends AbstractUFTPClient implements Runnable {
 	 */
 	public List<FileInfo> getFileInfoList(String baseDir) throws IOException {
 		checkConnected();
-		List<FileInfo> res = new ArrayList<FileInfo>();
+		List<FileInfo> res = new ArrayList<>();
 		for (String ls : sendListFilesCommand(baseDir, true)) {
 			res.add(new FileInfo(ls));
 		}
 		return res;
 	}
 	
-	/**
-	 * TODO should use MLST
-	 * 
-	 * get file information for the given file/dir (which is relative to the
-	 * current dir)
-	 *
-	 * @param path - the path of the file to stat
-	 * @return file info 
-	 * @throws IOException
-	 */
 	public FileInfo stat(String path) throws IOException {
 		checkConnected();
-		String r = sendListFilesCommand(path, false).get(0);
-		return new FileInfo(r);
+		Reply r = runCommand("MLST "+path);
+		return FileInfo.fromMListEntry(r.getResults().get(0));
 	}
 
 	public long getFileSize(String pathName) throws IOException {
@@ -576,6 +566,7 @@ public class UFTPSessionClient extends AbstractUFTPClient implements Runnable {
 			return algorithm+" "+firstByte+"-"+lastByte+" "+hash+" "+path;
 		}
 
+		@Override
 		public String toString() {
 			return hash;
 		}
@@ -625,7 +616,7 @@ public class UFTPSessionClient extends AbstractUFTPClient implements Runnable {
 		}
 		time = System.currentTimeMillis() - time;
 		double rate = (double) total / (double) time;
-		logger.info("Finished, data rate " + (int) rate + " kB/sec. (" + total + " bytes in " + time + " ms.)");
+		logger.info("Finished, data rate {} kB/sec. ({} bytes in {} ms.)", (int)rate, total, time);
 		if(cancelled){
 			logger.info("Operation was cancelled.");
 			cancelled = false;

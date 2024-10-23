@@ -3,12 +3,14 @@ package eu.unicore.uftp.dpc;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.Socket;
 
 import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
@@ -18,6 +20,7 @@ import org.junit.jupiter.api.Test;
 
 import eu.unicore.uftp.client.FileInfo;
 import eu.unicore.uftp.dpc.Utils.EncryptionAlgorithm;
+import eu.unicore.uftp.jparss.PSocket;
 
 public class TestVarious {
 
@@ -114,5 +117,29 @@ public class TestVarious {
 		FileInfo f2 = FileInfo.fromMListEntry(s);
 		System.out.println(f2);
 		assertEquals(s, f2.toMListEntry());
+	}
+	
+	@Test
+	public void testJparsSocket() throws Exception {
+		try(PSocket p = new PSocket(null, false, null)){
+			p.init(123, 1);
+			p.addSocketStream(new Socket());
+			p.setKeepAlive(true);
+			p.getKeepAlive();
+			p.setTcpNoDelay(true);
+			p.getTcpNoDelay();
+			p.setSoTimeout(2000);
+			p.getSoTimeout();
+			p.setSoLinger(true, 200);
+			p.getSoLinger();
+			p.setSendBufferSize(2000);
+			p.getSendBufferSize();
+			p.setReceiveBufferSize(2000);
+			p.getReceiveBufferSize();
+			assertThrows(IllegalStateException.class, ()->p.getInetAddress());
+			assertThrows(IllegalStateException.class, ()->p.getPort());
+			assertThrows(IllegalStateException.class, ()->p.getLocalAddress());
+			assertThrows(IllegalStateException.class, ()->p.getLocalPort());
+		}
 	}
 }

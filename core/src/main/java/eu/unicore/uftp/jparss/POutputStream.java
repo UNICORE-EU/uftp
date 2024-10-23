@@ -7,21 +7,6 @@
  *
  * Jefferson Lab HPC Group, 12000 Jefferson Ave., Newport News, VA 23606
  **************************************************************************
- *
- * Description:
- *      Parallel Output Stream
- *
- * Author:  
- *      Jie Chen
- *      Jefferson Lab HPC Group
- *
- * Revision History:
- *   $Log: POutputStream.java,v $
- *   Revision 1.1  2001/06/14 15:51:42  chen
- *   Initial import of jparss
- *
- *
- *
  */
 package eu.unicore.uftp.jparss;
 
@@ -68,11 +53,9 @@ public class POutputStream extends OutputStream {
 	 */
 	public POutputStream(OutputStream[] streams) {
 		super();
-
-		int i;
 		outputs_ = new OutputStream[streams.length];
 		status_ = new boolean[streams.length];
-		for (i = 0; i < streams.length; i++) {
+		for (int i = 0; i < streams.length; i++) {
 			outputs_[i] = streams[i];
 			status_[i] = true;
 		}
@@ -80,7 +63,7 @@ public class POutputStream extends OutputStream {
 		if (PConfig.usethreads == true) {
 			Thread worker = null;
 			writers_ = new PWriter[outputs_.length];
-			for (i = 0; i < outputs_.length; i++) {
+			for (int i = 0; i < outputs_.length; i++) {
 				writers_[i] = new PWriter(this, outputs_[i], i, outputs_.length);
 				// fire this thread
 				worker = new Thread(writers_[i]);
@@ -104,19 +87,13 @@ public class POutputStream extends OutputStream {
 
 		byte[] tbuf = new byte[4];
 		if (PConfig.usethreads == true) {
-			int i;
 			// wake up all writers
 			done_ = true;
-			for (i = 0; i < writers_.length; i++)
+			for (int i = 0; i < writers_.length; i++)
 				writers_[i].set(tbuf, 0, 0);
 		}
-
-		try {
-			for (int i = 0; i < outputs_.length; i++)
-				outputs_[i].close();
-		} catch (IOException e) {
-			throw e;
-		}
+		for (int i = 0; i < outputs_.length; i++)
+			outputs_[i].close();
 	}
 
 	/**
@@ -151,12 +128,8 @@ public class POutputStream extends OutputStream {
 		if (outputs_ == null) {
 			throw new IOException("No internal output streams.");
 		}
-		try {
-			for (int i = 0; i < outputs_.length; i++)
-				outputs_[i].flush();
-		} catch (IOException e) {
-			throw e;
-		}
+		for (int i = 0; i < outputs_.length; i++)
+			outputs_[i].flush();
 	}
 
 	/**
@@ -164,33 +137,9 @@ public class POutputStream extends OutputStream {
 	 * write is that one byte is written to the output stream. The byte to be
 	 * written is the eight low-order bits of the argument b. The 24 high-order
 	 * bits of b are ignored.
-	 * 
-	 * This single byte will travel on command stream
 	 */
 	public void write(int b) throws IOException {
-		DataOutputStream ostream = null;
-
-		for (int i = 0; i < outputs_.length; i++) {
-			ostream = new DataOutputStream(outputs_[0]);
-
-			// write magic number
-			ostream.writeShort(PConfig.magic);
-			// write individual stream number
-			ostream.writeShort((short) i);
-			// write sequence number
-			ostream.writeInt(seq_);
-			// write total bytes for all streams
-			ostream.writeInt(1);
-
-			if (i == 0) {
-				// write number bytes
-				ostream.writeInt(1);
-				ostream.writeByte(b);
-			} else
-				ostream.writeInt(0);
-		}
-		// increase sequence number
-		seq_++;
+		write(new byte[] { (byte)(b & 0xFF)},0,1);
 	}
 
 	/**
@@ -237,36 +186,23 @@ public class POutputStream extends OutputStream {
 	protected void writeParallel(byte[]b,int off, int len)throws IOException{
 		// reset some variables
 		resetVariables();
-		int i=0;
 		// wake up all writer threads
-		for (i = 0; i < writers_.length; i++)
+		for (int i = 0; i < writers_.length; i++){
 			writers_[i].set(b, off, len);
-
-		if (PConfig.debug == true)
-			System.out.println("POutputStream is waking up all writers.");
-		// this thread is going to sleep
-		if (PConfig.debug == true)
-			System.out
-			.println("POutputStream is waiting for writers to finish.");
+		}
 		// this thread is going to sleep
 		waitWriters();
-
-		if (PConfig.debug == true)
-			System.out.println("POutputStream is finished write\n");
-
-		for (i = 0; i < status_.length; i++) {
+		for (int i = 0; i < status_.length; i++) {
 			if (status_[i] != true)
 				throw new IOException("Internal stream write error");
 		}
 	}
 
 	protected void writeSingleThreaded(byte[]b, int off, int len)throws IOException{
-		DataOutputStream ostream = null;
 		int toffset, tlen, chunk;
-		int i=0;
 		chunk = len / outputs_.length;
-		for (i = 0; i < outputs_.length; i++) {
-			ostream = new DataOutputStream(outputs_[i]);
+		for (int i = 0; i < outputs_.length; i++) {
+			DataOutputStream ostream = new DataOutputStream(outputs_[i]);
 
 			// offset for this stream
 			toffset = off + i * chunk;
@@ -276,11 +212,6 @@ public class POutputStream extends OutputStream {
 				tlen = len - i * chunk;
 			else
 				tlen = chunk;
-
-			if (PConfig.debug == true)
-			System.out.println("Writer " + String.valueOf(i)
-					+ " writes from " + String.valueOf(toffset)
-					+ " with " + String.valueOf(tlen) + " bytes");
 
 			// write magic number
 			ostream.writeShort(PConfig.magic);
@@ -308,9 +239,7 @@ public class POutputStream extends OutputStream {
 		while (writeCount_ < outputs_.length) {
 			try {
 				wait();
-			} catch (InterruptedException e) {
-				;
-			}
+			} catch (InterruptedException e) {}
 		}
 	}
 
@@ -325,8 +254,7 @@ public class POutputStream extends OutputStream {
 	 * Reset variables before write.
 	 */
 	private void resetVariables() {
-		int i;
-		for (i = 0; i < status_.length; i++)
+		for (int i = 0; i < status_.length; i++)
 			status_[i] = true;
 		writeCount_ = 0;
 	}

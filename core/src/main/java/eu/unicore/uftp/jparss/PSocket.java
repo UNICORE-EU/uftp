@@ -7,21 +7,6 @@
  *
  * Jefferson Lab HPC Group, 12000 Jefferson Ave., Newport News, VA 23606
  **************************************************************************
- *
- * Description:
- *      This is the socket a server socket returns
- *
- * Author:  
- *      Jie Chen
- *      Jefferson Lab HPC Group
- *
- * Revision History:
- *   $Log: PSocket.java,v $
- *   Revision 1.1  2001/06/14 15:51:42  chen
- *   Initial import of jparss
- *
- *
- *
  */
 package eu.unicore.uftp.jparss;
 
@@ -82,19 +67,11 @@ public class PSocket extends PBaseSocket {
 		return true;
 	}
 
-	/**
-	 * Close socket.
-	 */
+	@Override
 	public void close() throws IOException {
-		int i;
-
-		try {
-			if (sockets_ != null) {
-				for (i = 0; i < numStreams_; i++)
-					sockets_[i].close();
-			}
-		} catch (IOException e) {
-			throw e;
+		if (sockets_ != null) {
+			for (int i = 0; i < numStreams_; i++)
+				sockets_[i].close();
 		}
 	}
 }

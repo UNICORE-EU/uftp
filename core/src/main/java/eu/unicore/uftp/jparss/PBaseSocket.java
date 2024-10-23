@@ -7,24 +7,6 @@
  *
  * Jefferson Lab HPC Group, 12000 Jefferson Ave., Newport News, VA 23606
  **************************************************************************
- *
- * Description:
- *      Parallel Stream Client Socket
- *
- * Author:  
- *      Jie Chen
- *      Jefferson Lab HPC Group
- *
- * Revision History:
- *   $Log: PBaseSocket.java,v $
- *   Revision 1.2  2001/09/04 14:22:41  chen
- *   Add secure data transfer option
- *
- *   Revision 1.1  2001/06/14 15:51:41  chen
- *   Initial import of jparss
- *
- *
- *
  */
 package eu.unicore.uftp.jparss;
 
@@ -46,10 +28,10 @@ public class PBaseSocket extends Socket {
 		this.algo = algo;
 		this.compress = compress;
 	}
-	
-	// encrypt/decryption
-	final byte[] key;
+
 	final EncryptionAlgorithm algo;
+
+	final byte[] key;
 
 	final boolean compress;
 	
@@ -69,30 +51,18 @@ public class PBaseSocket extends Socket {
 	protected int numStreams_ = 0;
 
 	/**
-	 * Return number of parallel streams.
-	 */
-	public int getNumStreams() {
-		return numStreams_;
-	}
-
-	/**
 	 * Returns an input stream for this socket.
 	 */
 	public InputStream getInputStream() throws IOException {
 		InputStream[] tinputs = new InputStream[numStreams_];
-		try {
-			for (int i = 0; i < numStreams_; i++){
-				InputStream source=sockets_[i].getInputStream();
-				tinputs[i] = key!=null? Utils.getDecryptStream(source, key, algo) : source;
-				if(compress){
-					tinputs[i] = Utils.getDecompressStream(tinputs[i]);
-				}
+		for (int i = 0; i < numStreams_; i++){
+			InputStream source=sockets_[i].getInputStream();
+			tinputs[i] = key!=null? Utils.getDecryptStream(source, key, algo) : source;
+			if(compress){
+				tinputs[i] = Utils.getDecompressStream(tinputs[i]);
 			}
-		} catch (IOException e) {
-			throw e;
 		}
-		PInputStream input = new PInputStream(tinputs);
-		return input;
+		return new PInputStream(tinputs);
 	}
 
 	/**
@@ -101,19 +71,14 @@ public class PBaseSocket extends Socket {
 	public OutputStream getOutputStream() throws IOException {
 		// set up parallel data streams
 		OutputStream[] toutputs = new OutputStream[numStreams_];
-		try {
-			for (int i = 0; i < numStreams_; i++){
-				OutputStream sink=sockets_[i].getOutputStream();
-				toutputs[i] = key!=null ? Utils.getEncryptStream(sink, key, algo) : sink;
-				if(compress){
-					toutputs[i] = Utils.getCompressStream(toutputs[i]);
-				}
+		for (int i = 0; i < numStreams_; i++){
+			OutputStream sink=sockets_[i].getOutputStream();
+			toutputs[i] = key!=null ? Utils.getEncryptStream(sink, key, algo) : sink;
+			if(compress){
+				toutputs[i] = Utils.getCompressStream(toutputs[i]);
 			}
-		} catch (IOException e) {
-			throw e;
 		}
-		POutputStream output = new POutputStream(toutputs);
-		return output;
+		return new POutputStream(toutputs);
 	}
 
 	/**
@@ -148,13 +113,9 @@ public class PBaseSocket extends Socket {
 	 * Enable/disable TCP_NODELAY (disable/enable Nagle's algorithm).
 	 */
 	public void setTcpNoDelay(boolean on) throws SocketException {
-		try {
-			if (sockets_ != null) {
-				for (int i = 0; i < numStreams_; i++)
-					sockets_[i].setTcpNoDelay(on);
-			}
-		} catch (SocketException e) {
-			throw e;
+		if (sockets_ != null) {
+			for (int i = 0; i < numStreams_; i++)
+				sockets_[i].setTcpNoDelay(on);
 		}
 	}
 
@@ -163,13 +124,9 @@ public class PBaseSocket extends Socket {
 	 */
 	public boolean getTcpNoDelay() throws SocketException {
 		boolean nodelay=true;
-		try {
-			if (sockets_ != null) {
-				for (int i = 0; i < numStreams_; i++)
-					nodelay=nodelay & sockets_[i].getTcpNoDelay();
-			}
-		} catch (SocketException e) {
-			throw e;
+		if (sockets_ != null) {
+			for (int i = 0; i < numStreams_; i++)
+				nodelay=nodelay & sockets_[i].getTcpNoDelay();
 		}
 		return nodelay;
 	}
@@ -180,13 +137,9 @@ public class PBaseSocket extends Socket {
 	 * socket close.
 	 */
 	public void setSoLinger(boolean on, int linger) throws SocketException {
-		try {
-			if (sockets_ != null) {
-				for (int i = 0; i < numStreams_; i++)
-					sockets_[i].setSoLinger(on, linger);
-			}
-		} catch (SocketException e) {
-			throw e;
+		if (sockets_ != null) {
+			for (int i = 0; i < numStreams_; i++)
+				sockets_[i].setSoLinger(on, linger);
 		}
 	}
 
@@ -195,14 +148,10 @@ public class PBaseSocket extends Socket {
 	 * disabled. The setting only affects socket close.
 	 */
 	public int getSoLinger() throws SocketException {
-		try {
-			if (sockets_ != null && sockets_.length>0){
-				return sockets_[0].getSoLinger();
-			}
-			return -1;
-		} catch (SocketException e) {
-			throw e;
+		if (sockets_ != null && sockets_.length>0){
+			return sockets_[0].getSoLinger();
 		}
+		return -1;
 	}
 
 	/**
@@ -215,13 +164,9 @@ public class PBaseSocket extends Socket {
 	 * be &gt; 0. A timeout of zero is interpreted as an infinite timeout.
 	 */
 	public void setSoTimeout(int timeout) throws SocketException {
-		try {
-			if (sockets_ != null) {
-				for (int i = 0; i < numStreams_; i++)
-					sockets_[i].setSoTimeout(timeout);
-			}
-		} catch (SocketException e) {
-			throw e;
+		if (sockets_ != null) {
+			for (int i = 0; i < numStreams_; i++)
+				sockets_[i].setSoTimeout(timeout);
 		}
 	}
 
@@ -230,14 +175,10 @@ public class PBaseSocket extends Socket {
 	 * disabled (i.e., timeout of infinity).
 	 */
 	public int getSoTimeout() throws SocketException {
-		try {
-			if (sockets_ != null && sockets_.length>0) {
-				return sockets_[0].getSoTimeout();
-			}
-			return 0;
-		} catch (SocketException e) {
-			throw e;
+		if (sockets_ != null && sockets_.length>0) {
+			return sockets_[0].getSoTimeout();
 		}
+		return 0;
 	}
 
 	/**
@@ -254,13 +195,9 @@ public class PBaseSocket extends Socket {
 	 * the buffers were set to should call getSendBufferSize(). Parameters:
 	 */
 	public void setSendBufferSize(int size) throws SocketException {
-		try {
-			if (sockets_ != null) {
-				for (int i = 0; i < numStreams_; i++)
-					sockets_[i].setSendBufferSize(size);
-			}
-		} catch (SocketException e) {
-			throw e;
+		if (sockets_ != null) {
+			for (int i = 0; i < numStreams_; i++)
+				sockets_[i].setSendBufferSize(size);
 		}
 	}
 
@@ -269,15 +206,12 @@ public class PBaseSocket extends Socket {
 	 * size used by the platform for output on this Socket.
 	 */
 	public int getSendBufferSize() throws SocketException {
-		try {
-			if (sockets_ != null) {
-				for (int i = 0; i < numStreams_; i++)
-					sockets_[i].getSendBufferSize();
-			}
-			return 0;
-		} catch (SocketException e) {
-			throw e;
+		int res = 0;
+		if (sockets_ != null) {
+			for (int i = 0; i < numStreams_; i++)
+				res = Math.min(res, sockets_[i].getSendBufferSize());
 		}
+		return res;
 	}
 
 	/**
@@ -294,13 +228,9 @@ public class PBaseSocket extends Socket {
 	 * the buffers were set to should call getReceiveBufferSize().
 	 */
 	public void setReceiveBufferSize(int size) throws SocketException {
-		try {
-			if (sockets_ != null) {
-				for (int i = 0; i < numStreams_; i++)
-					sockets_[i].setReceiveBufferSize(size);
-			}
-		} catch (SocketException e) {
-			throw e;
+		if (sockets_ != null) {
+			for (int i = 0; i < numStreams_; i++)
+				sockets_[i].setReceiveBufferSize(size);
 		}
 	}
 
@@ -309,28 +239,21 @@ public class PBaseSocket extends Socket {
 	 * buffer size used by the platform for input on this Socket.
 	 */
 	public int getReceiveBufferSize() throws SocketException {
-		try {
-			if (sockets_ != null) {
-				for (int i = 0; i < numStreams_; i++)
-					sockets_[i].getReceiveBufferSize();
-			}
-			return 0;
-		} catch (SocketException e) {
-			throw e;
+		int res = 0;
+		if (sockets_ != null) {
+			for (int i = 0; i < numStreams_; i++)
+				res = Math.min(res, sockets_[i].getReceiveBufferSize());
 		}
+		return res;
 	}
 
 	/**
 	 * Enable/disable SO_KEEPALIVE.
 	 */
 	public void setKeepAlive(boolean on) throws SocketException {
-		try {
-			if (sockets_ != null) {
-				for (int i = 0; i < numStreams_; i++)
-					sockets_[i].setKeepAlive(on);
-			}
-		} catch (SocketException e) {
-			throw e;
+		if (sockets_ != null) {
+			for (int i = 0; i < numStreams_; i++)
+				sockets_[i].setKeepAlive(on);
 		}
 	}
 
@@ -339,15 +262,11 @@ public class PBaseSocket extends Socket {
 	 */
 	public boolean getKeepAlive() throws SocketException {
 		boolean keepalive=true;
-		try {
-			if (sockets_ != null) {
-				for (int i = 0; i < numStreams_; i++)
-					keepalive=keepalive & sockets_[i].getKeepAlive();
-			}
-			return keepalive;
-		} catch (SocketException e) {
-			throw e;
+		if (sockets_ != null) {
+			for (int i = 0; i < numStreams_; i++)
+				keepalive=keepalive & sockets_[i].getKeepAlive();
 		}
+		return keepalive;
 	}
 
 	/**
@@ -357,13 +276,9 @@ public class PBaseSocket extends Socket {
 	 * shutdownInput() on the socket, the stream will return EOF.
 	 */
 	public void shutdownInput() throws IOException {
-		try {
-			if (sockets_ != null) {
-				for (int i = 0; i < numStreams_; i++)
-					sockets_[i].shutdownInput();
-			}
-		} catch (IOException e) {
-			throw e;
+		if (sockets_ != null) {
+			for (int i = 0; i < numStreams_; i++)
+				sockets_[i].shutdownInput();
 		}
 	}
 
@@ -375,13 +290,9 @@ public class PBaseSocket extends Socket {
 	 * IOException.
 	 */
 	public void shutdownOutput() throws IOException {
-		try {
-			if (sockets_ != null) {
-				for (int i = 0; i < numStreams_; i++)
-					sockets_[i].shutdownOutput();
-			}
-		} catch (IOException e) {
-			throw e;
+		if (sockets_ != null) {
+			for (int i = 0; i < numStreams_; i++)
+				sockets_[i].shutdownOutput();
 		}
 	}
 

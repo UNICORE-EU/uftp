@@ -741,24 +741,21 @@ public class Session {
 		final String renameTo = tok[1];
 
 		try{
-			Runnable r = new Runnable(){
-				public void run(){
-					File from = new File(renameFrom);
-					if (!from.isAbsolute()) {
-						from = new File(currentDirectory, renameFrom);
-					}
-					File to = new File(renameTo);
-					if (!to.isAbsolute()) {
-						to = new File(currentDirectory, renameTo);
-					}
-					try{
-						Files.move(from.toPath(), to.toPath(), StandardCopyOption.ATOMIC_MOVE);
-					}catch(IOException ex){
-						throw new RuntimeException(ex);
-					}
+			fileAccess.asUser(()->{
+				File from = new File(renameFrom);
+				if (!from.isAbsolute()) {
+					from = new File(currentDirectory, renameFrom);
 				}
-			};
-			fileAccess.asUser(r);
+				File to = new File(renameTo);
+				if (!to.isAbsolute()) {
+					to = new File(currentDirectory, renameTo);
+				}
+				try{
+					Files.move(from.toPath(), to.toPath(), StandardCopyOption.ATOMIC_MOVE);
+				}catch(IOException ex){
+					throw new RuntimeException(ex);
+				}
+			});
 			connection.sendControl(UFTPCommands.OK);
 		}
 		catch(Exception ex){
@@ -774,20 +771,17 @@ public class Session {
 		final String target = tok[2];
 		try{
 			final long instant = FileInfo.toTime(time);
-			Runnable r = new Runnable(){
-				public void run(){
-					File targetFile = new File(target);
-					if (!targetFile.isAbsolute()) {
-						targetFile = new File(currentDirectory, target);
-					}
-					try{
-						Files.setLastModifiedTime(targetFile.toPath(),FileTime.fromMillis(instant));
-					}catch(IOException ex){
-						throw new RuntimeException(ex);
-					}
+			fileAccess.asUser(()->{
+				File targetFile = new File(target);
+				if (!targetFile.isAbsolute()) {
+					targetFile = new File(currentDirectory, target);
 				}
-			};
-			fileAccess.asUser(r);
+				try{
+					Files.setLastModifiedTime(targetFile.toPath(),FileTime.fromMillis(instant));
+				}catch(IOException ex){
+					throw new RuntimeException(ex);
+				}
+			});
 			connection.sendControl("213 Modify="+time+" "+target);
 		}
 		catch(Exception ex){

@@ -30,7 +30,6 @@ import org.apache.logging.log4j.Logger;
 
 import eu.unicore.uftp.server.DefaultFileAccess;
 import eu.unicore.uftp.server.FileAccess;
-import eu.unicore.uftp.server.SetUIDFileAccess;
 import eu.unicore.util.Log;
 
 public class Utils {
@@ -321,23 +320,12 @@ public class Utils {
 
 
 	public static FileAccess getFileAccess(Logger logger) {
-		FileAccess fa = null;
-		try {
-			fa = new SetUIDFileAccess();
-			if(logger!=null)logger.info("Will switch user IDs");
-		} catch (UnsatisfiedLinkError ex) {
-			if(logger!=null)logger.warn("Can't load native library for setuid switching, falling back to default mode: " + ex);
-		} catch (Error e) {
-			if(logger!=null)logger.warn("Error loading setuid switcher, falling back to default mode: " + e);
+		FileAccess fa = new DefaultFileAccess();
+		String user = System.getProperty("user.name");
+		if("root".equals(user)){
+			throw new Error("UFTPD accesses files with root privileges, this is not allowed!");
 		}
-		if (fa == null) {
-			fa = new DefaultFileAccess();
-			String user = System.getProperty("user.name");
-			if("root".equals(user)){
-				throw new Error("UFTPD accesses files with root privileges, this is not allowed!");
-			}
-			if(logger!=null)logger.info("NOT switching user IDs, will access all files as user <" + user + ">");
-		}
+		if(logger!=null)logger.info("UFTPD will access all files as user <{}>", user);
 		return fa;
 	}
 

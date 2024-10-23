@@ -2,18 +2,15 @@ package eu.unicore.uftp.server;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.RejectedExecutionException;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.Logger;
 
 import eu.unicore.uftp.dpc.UFTPConstants;
@@ -23,7 +20,6 @@ import eu.unicore.uftp.server.requests.UFTPGetUserInfoRequest;
 import eu.unicore.uftp.server.requests.UFTPPingRequest;
 import eu.unicore.uftp.server.requests.UFTPRequestBuilderRegistry;
 import eu.unicore.uftp.server.requests.UFTPSessionRequest;
-import eu.unicore.uftp.server.unix.UnixUser;
 import eu.unicore.util.Log;
 import eu.unicore.util.configuration.ConfigurationException;
 
@@ -237,40 +233,7 @@ public class UFTPServer implements Runnable {
 		StringBuilder sb = new StringBuilder();
 		sb.append("Version: ").append(getVersion());
 		sb.append("\nUser: ").append(username);
-		if(svrThread.getFileAccess() instanceof SetUIDFileAccess){
-			try{
-				UnixUser uu = new UnixUser(username);
-				sb.append("\nStatus: OK");
-				String home = uu.getHome();
-				sb.append("\nHome: "+home);
-				// get the accepted ssh keys
-				int i = 0;
-				for(String keyFile: keyFileList) {
-					try{
-						String path = home+"/"+keyFile;
-						InputStream in = svrThread.getFileAccess().readFile(path, 
-								uu.getLoginName(), null, FileAccess.DEFAULT_BUFFERSIZE); 
-						List<String> auth_keys = null;
-						try{
-							auth_keys = IOUtils.readLines(in, "UTF-8");
-						}catch(Exception ex) {
-							auth_keys = IOUtils.readLines(in, "US-ASCII");
-						}
-						for(String key: auth_keys){
-							if(key.startsWith("#"))continue;
-							sb.append("\nAccepted key "+i+": "+key);
-							i++;
-						}
-					}
-					catch(Exception ex){}
-				}
-			}catch(IllegalArgumentException ex){
-				sb.append("\nStatus: Error - no such user!");
-			}
-		}
-		else{
-			sb.append("\nStatus: n/a");
-		}
+		sb.append("\nStatus: n/a");
 		return sb.toString();
 	}
 
@@ -305,7 +268,7 @@ public class UFTPServer implements Runnable {
 					}
 				}
 				jobString = sb.toString();
-				if(logger.isDebugEnabled())logger.debug("CMD ==> " + jobString);
+				logger.debug("CMD ==> {}", jobString);
 				String response = "OK::"+String.valueOf(serverThread.getPort());
 				try {
 					Properties props = UFTPBaseRequest.loadProperties(jobString);
@@ -337,7 +300,7 @@ public class UFTPServer implements Runnable {
 			OutputStreamWriter ow = new OutputStreamWriter(os, "UTF-8");
 			ow.write(msg + "\n");
 			ow.flush();
-			if(logger.isDebugEnabled())logger.debug("CMD <== "+msg);
+			logger.debug("CMD <== {}", msg);
 		}
 	}
 }

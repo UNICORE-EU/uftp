@@ -103,13 +103,11 @@ public class TestAsync extends ClientServerTestBase{
 			AsyncUploader ad = new AsyncUploader();
 			ad.add(p.getM1(), queue, p.getM2(), client);
 			new Thread(ad, "Uploader").start();
-			
 			AsyncProducer producer = new AsyncProducer();
 			producer.add(fis.getChannel(), queue, realSource.length());
 			new Thread(producer, "Producer").start();
 			while(ad.getRunningTasks()>0)Thread.sleep(1000);
 			ad.stop();
-			
 			long rSize=client.getFileSize("test");
 			assertEquals(realSource.length(),rSize);
 		}

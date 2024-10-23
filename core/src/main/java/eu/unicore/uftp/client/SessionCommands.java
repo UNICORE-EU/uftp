@@ -62,19 +62,11 @@ public class SessionCommands {
 		}
 
 		public void run(){
-			FileOutputStream localTarget=null;
-			try{
-				localTarget=new FileOutputStream(new File(client.getBaseDirectory(),localName));
+			File f = new File(client.getBaseDirectory(),localName);
+			try(FileOutputStream localTarget=new FileOutputStream(f)){
 				client.get(remoteFile.getPath(), localTarget);
 			}catch(Exception ex){
 				throw new RuntimeException(ex);
-			}
-			finally{
-				if(localTarget!=null){
-					try{
-						localTarget.close();
-					}catch(Exception ex){}
-				}
 			}
 		}
 	}
@@ -102,23 +94,14 @@ public class SessionCommands {
 		}
 
 		public void run(){
-			FileInputStream localSource=null;
-			File localFile=new File(client.getBaseDirectory(),localFilename);
+			File f = new File(client.getBaseDirectory(),localFilename);
 			if(size<0){
-				size=localFile.length();
+				size = f.length();
 			}
-			try{
-				localSource=new FileInputStream(localFile);
+			try(FileInputStream localSource = new FileInputStream(f)){
 				client.put(remoteName, size, localSource);
 			}catch(Exception ex){
 				throw new RuntimeException(ex);
-			}
-			finally{
-				if(localSource!=null){
-					try{
-						localSource.close();
-					}catch(Exception ex){}
-				}
 			}
 		}
 	}
@@ -127,9 +110,8 @@ public class SessionCommands {
 	 * change local base dir
 	 */
 	public static class LCD extends CmdBase {
-		
 		String base;
-		
+
 		public LCD(List<String> args){
 			base=Utils.trim(args.get(0));
 		}
@@ -143,9 +125,6 @@ public class SessionCommands {
 	 * change local base dir
 	 */
 	public static class PWD extends CmdBase {
-		
-		public PWD(){}
-
 		public void run(){
 			try{
 				System.out.println(client.pwd());

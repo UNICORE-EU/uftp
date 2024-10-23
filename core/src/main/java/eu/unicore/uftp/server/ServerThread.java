@@ -18,7 +18,6 @@ import eu.unicore.uftp.dpc.DPCServer.Connection;
 import eu.unicore.uftp.dpc.ProtocolViolationException;
 import eu.unicore.uftp.dpc.Utils;
 import eu.unicore.uftp.server.requests.UFTPBaseRequest;
-import eu.unicore.uftp.server.unix.UnixUser;
 import eu.unicore.uftp.server.workers.WorkerFactories;
 
 /**
@@ -42,9 +41,7 @@ public class ServerThread extends Thread {
     private final Map<InetAddress, AtomicInteger> runningConnectionsMap;
 
     private final FileAccess fileAccess;
-    
-    private final boolean haveUnixUser;
-    
+
     private volatile boolean isHalt = false;
 
     private int maxStreams;
@@ -67,7 +64,6 @@ public class ServerThread extends Thread {
         runningConnectionsMap = new ConcurrentHashMap<>();
         setupExpiryCheck();
         fileAccess = Utils.getFileAccess(logger);
-        haveUnixUser = fileAccess instanceof SetUIDFileAccess;
         this.server = new DPCServer(ip, port, backlog, jobStore, advertiseAddress, pm, checkClientIP);
     }
 
@@ -152,10 +148,6 @@ public class ServerThread extends Thread {
     }
 
     public void addJob(UFTPBaseRequest job) {
-        if (haveUnixUser) {
-            UnixUser user = new UnixUser(job.getUser());
-            logger.debug("Have Unix user: {}", user.toString());
-        }
         jobStore.addJob(job);
     }
 

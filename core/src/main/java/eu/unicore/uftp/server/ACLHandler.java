@@ -2,8 +2,8 @@ package eu.unicore.uftp.server;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -26,40 +26,22 @@ public class ACLHandler {
 	
 	private final File aclFile;
 	private final FileWatcher watchDog;
-	private final boolean active;
-	private final Set<String>acceptedDNs=new HashSet<String>();
+	private final Set<String>acceptedDNs = new HashSet<>();
 
-	public ACLHandler()throws IOException{
-		this(new File("conf","uftpd.acl"));
-	}
-
-
-	public ACLHandler(File aclFile)throws IOException{
-		this.aclFile=aclFile;
+	public ACLHandler(File aclFile) throws FileNotFoundException {
 		if(!aclFile.exists()){
-			logger.warn("ACL not active: file <"+aclFile+"> does not exist");
-			active=false;
-			watchDog=null;
-			return;
+			throw new FileNotFoundException("ACL file does not exist: "+aclFile);
 		}
-		else{
-			active=true;
-			logger.info("Using ACL file "+aclFile);
-			readACL();
-			watchDog=new FileWatcher(aclFile, new Runnable(){
-				public void run(){
-					readACL();
-				}
-			});
-			watchDog.schedule(3000,TimeUnit.MILLISECONDS);
-		}
+		this.aclFile = aclFile;
+		logger.info("Using ACL file {}", aclFile);
+		readACL();
+		watchDog=new FileWatcher(aclFile, ()-> readACL());
+		watchDog.schedule(3000,TimeUnit.MILLISECONDS);
 	}
 
 	protected void readACL(){
 		synchronized(acceptedDNs){
-			BufferedReader br=null;
-			try{
-				br=new BufferedReader(new FileReader(aclFile));
+			try(BufferedReader br = new BufferedReader(new FileReader(aclFile))){
 				String theLine;
 				acceptedDNs.clear();
 				while(true){
@@ -69,26 +51,21 @@ public class ACLHandler {
 					if(line.startsWith("#"))continue;
 					if(!line.trim().equals("")){
 						try{
-							X500Principal p=new X500Principal(line);
-							acceptedDNs.add(p.getName());
-							logger.info("Allowing access for <"+line+">");	
+							acceptedDNs.add(new X500Principal(line).getName());
+							logger.info("Allowing access for <{}>", line);	
 						}catch(Exception ex){
-							logger.warn("Invalid entry <"+line+">",ex);
+							logger.warn("Invalid entry <{}>: {}", line, ex.getMessage());
 						}
 					}
 				}
 			}catch(Exception ex){
-				logger.fatal("ACL file read error!",ex);
-			}
-			finally{
-				Utils.closeQuietly(br);
+				logger.error("ACL file read error!",ex);
 			}
 		}
 	}
 
 	public void checkAccess(String userName) throws AuthorizationFailureException{
-		if(!active)return;
-		logger.debug("Check access from "+userName);
+		logger.debug("Check access from {}", userName);
 		synchronized (acceptedDNs) {
 			if(!acceptedDNs.contains(userName)){
 				String msg="Access denied!\n\nTo allow access for this " +
@@ -99,5 +76,4 @@ public class ACLHandler {
 			}
 		}
 	}
-
 }

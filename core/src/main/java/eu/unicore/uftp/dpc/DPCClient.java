@@ -10,7 +10,6 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
-import java.net.SocketOption;
 import java.net.SocketTimeoutException;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
@@ -38,8 +37,6 @@ public class DPCClient implements Closeable{
 
 	private int timeout;
 
-	private int authTimeout;
-
 	private Socket controlSocket;
 
 	private final List<Socket> dataSockets = new ArrayList<>();
@@ -54,17 +51,11 @@ public class DPCClient implements Closeable{
 
 	private final List<String> features = new ArrayList<>();
 
-	private int protocolVersion = 2;
-
 	// data connection buffer size - taken from environment UFTP_SO_BUFSIZE
 	private int so_buffer_size;
 
 	public DPCClient(){
-		protocol = new ClientProtocol(this);
-	}
-
-	public DPCClient(ClientProtocol protocol){
-		this.protocol = protocol;
+		this.protocol = new ClientProtocol(this);
 		try {
 			so_buffer_size = Integer.parseInt(Utils.getProperty("UFTP_SO_BUFSIZE", "-1"));
 		}catch(Exception ex) {
@@ -150,13 +141,11 @@ public class DPCClient implements Closeable{
 
 	protected void openControlSocket(InetAddress[] server, int port) throws IOException,
 	AuthorizationFailureException {
-		
 		InetAddress selectedServer = null;
 		StringBuilder errors = new StringBuilder();
-
 		// try to connect to one of the given server IPs, avoiding overly long timeouts
 		int tries = 0;
-		List<InetAddress> servers = new ArrayList<InetAddress>();
+		List<InetAddress> servers = new ArrayList<>();
 		servers.addAll(Arrays.asList(server));
 
 		outer:
@@ -168,9 +157,7 @@ public class DPCClient implements Closeable{
 					InetAddress s = iter.next();
 					try {
 						controlSocket = new Socket();
-						if(logger.isDebugEnabled()){
-							logger.debug("Attempt to connect to "+s.getHostAddress());
-						}
+						logger.debug("Attempt to connect to {}", s.getHostAddress());
 						controlSocket.connect(new InetSocketAddress(s, port), currentTimeoutValue);
 						controlSocket.setKeepAlive(true);
 						selectedServer = s;
@@ -196,7 +183,7 @@ public class DPCClient implements Closeable{
 		controlWriter = new BufferedWriter(new OutputStreamWriter(controlSocket.getOutputStream()));
 		controlReader = new BufferedReader(new InputStreamReader(controlSocket.getInputStream()));
 		
-		logger.info("FTP control connection established to " + selectedServer.getHostAddress() + ":" + port);
+		logger.info("FTP control connection established to {}:{}", selectedServer.getHostAddress(), port);
 		
 	}
 
@@ -210,12 +197,10 @@ public class DPCClient implements Closeable{
 	 */
 	public List<Socket>openDataConnections(int numParCons) throws IOException {
 		checkConnected();
-		logger.info("Opening <"+numParCons+"> data connection(s).");
-
+		logger.info("Opening <{}> data connection(s).", numParCons);
 		if (dataSockets.size() > 0) {
 			throw new IllegalStateException("There are already open data connections.");
 		}
-
 		//send numParCons using "NOOP <n>"
 		String noopMsg = "NOOP " + numParCons ;
 		sendControl(noopMsg);
@@ -223,14 +208,12 @@ public class DPCClient implements Closeable{
 		if (noopResponse.startsWith("223")) {
 			// adjust our number of connections since server may have imposed a limit
 			numParCons = Integer.parseInt(noopResponse.split(" ")[2]);
-			logger.info("Server limit: <"+numParCons+"> data connection(s).");
+			logger.info("Server limit: <{}> data connection(s).", numParCons);
 		}
-
-		//send "PASV" and open data connections
+		//open data connections
 		for (int i = 0; i < numParCons; i++) {
 			dataSockets.add(getNewConnection());
 		}
-
 		return dataSockets;
 	}
 
@@ -279,20 +262,6 @@ public class DPCClient implements Closeable{
 		throw new IOException("Could not parse response from server: <"+inputLine+">");	
 	}
 
-	@SuppressWarnings("unchecked")
-	protected void enableTCPQuickack(SocketChannel sChannel) {
-		try {
-			SocketOption<Boolean> tcp_quickack = null;
-			for(SocketOption<?>sopt: sChannel.supportedOptions()) {
-				if("TCP_QUICKACK".equals(sopt.name())){
-					tcp_quickack = (SocketOption<Boolean>)sopt;
-					sChannel.setOption(tcp_quickack, Boolean.TRUE);
-				}
-			}
-		}catch(Exception ex) {}
-	}
-
-
 	private Socket pasv() throws IOException {
 		sendControl(UFTPCommands.PASV);
 		String inputLine = readControl();
@@ -339,25 +308,8 @@ public class DPCClient implements Closeable{
 		return features;
 	}
 
-	public int getProtocolVersion(){
-		checkConnected();
-		return protocolVersion;
-	}
-
-	public int getTimeout() {
-		return timeout;
-	}
-
 	public void setTimeout(int timeout) {
 		this.timeout = timeout;
-	}
-
-	public int getAuthTimeout() {
-		return authTimeout;
-	}
-
-	public void setAuthTimeout(int authTimeout) {
-		this.authTimeout = authTimeout;
 	}
 
 	/**
@@ -367,9 +319,7 @@ public class DPCClient implements Closeable{
 	 * @throws java.io.IOException when sending failed
 	 */
 	public void sendControl(String message) throws IOException {
-		if (logger.isDebugEnabled() && message!=null) {
-			logger.debug("--> " + message.trim());
-		}
+		logger.debug("--> {}", message);
 		controlWriter.write(message + "\r\n");
 		controlWriter.flush();
 	}
@@ -387,16 +337,12 @@ public class DPCClient implements Closeable{
 	 */
 	public String readControl(boolean skipMulti) throws IOException {
 		String res = controlReader.readLine();
-		if (logger.isDebugEnabled() && res!=null) {
-			logger.debug("<-- " + res.trim());
-		}
+		logger.debug("<-- {}", res);
 		if(skipMulti && res!=null && '-'==res.charAt(3)) {
 			String endcode = res.substring(0, 3)+" ";
 			while(res!=null && !res.startsWith(endcode)) {
 				res = controlReader.readLine();
-				if (logger.isDebugEnabled() && res!=null) {
-					logger.debug("<-- " + res.trim());
-				}
+				logger.debug("<-- {}", res);
 			}
 		}
 		return res;

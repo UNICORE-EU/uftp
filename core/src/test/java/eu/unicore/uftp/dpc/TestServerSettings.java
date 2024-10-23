@@ -2,8 +2,8 @@ package eu.unicore.uftp.dpc;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -20,7 +20,6 @@ import eu.unicore.uftp.server.ClientServerTestBase;
 import eu.unicore.uftp.server.UFTPCommands;
 import eu.unicore.uftp.server.requests.UFTPPingRequest;
 import eu.unicore.uftp.server.requests.UFTPSessionRequest;
-import eu.unicore.util.Log;
 
 public class TestServerSettings extends ClientServerTestBase {
 	
@@ -38,17 +37,12 @@ public class TestServerSettings extends ClientServerTestBase {
 		UFTPSessionRequest job = new UFTPSessionRequest(client_host, "nobody", secret, ".");
 		job.sendTo(host[0], jobPort);
 		Thread.sleep(1000);
-
-		try(UFTPSessionClient client=new UFTPSessionClient(host, srvPort)){
-			client.setSecret(secret);
-			client.connect();
-			fail("Expected exception due to failing IP check");
-		}catch(IOException e) {
-			System.out.println("Got as expected: "+Log.createFaultMessage("", e));
-		}
-		catch(Exception e) {
-			System.out.println("Got wrong exception type: "+e.getClass().getName());
-		}
+		assertThrows(IOException.class, ()->{
+			try(UFTPSessionClient client=new UFTPSessionClient(host, srvPort)){
+				client.setSecret(secret);
+				client.connect();
+			}
+		});
 		server.setCheckClientIP(false);
 		try(UFTPSessionClient client=new UFTPSessionClient(host, srvPort)){
 			client.setSecret(secret);
@@ -115,4 +109,19 @@ public class TestServerSettings extends ClientServerTestBase {
 		}
 	}
 
+
+	@Test
+	public void testPASVConnect() throws Exception {
+		String secret = UUID.randomUUID().toString();
+		UFTPSessionRequest job = new UFTPSessionRequest(client_host, "nobody", secret, ".");
+		job.sendTo(host[0], jobPort);
+		Thread.sleep(1000);
+		server.setCheckClientIP(false);
+		try(UFTPSessionClient client=new UFTPSessionClient(host, srvPort)){
+			client.setSecret(secret);
+			client.connect();
+			client.getServerFeatures().remove(UFTPCommands.EPSV);
+			client.pwd();
+		}
+	}
 }

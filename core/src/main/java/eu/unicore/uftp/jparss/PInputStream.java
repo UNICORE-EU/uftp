@@ -7,21 +7,6 @@
  *
  * Jefferson Lab HPC Group, 12000 Jefferson Ave., Newport News, VA 23606
  **************************************************************************
- *
- * Description:
- *      Parallel Data Input Stream
- *
- * Author:  
- *      Jie Chen
- *      Jefferson Lab HPC Group
- *
- * Revision History:
- *   $Log: PInputStream.java,v $
- *   Revision 1.1  2001/06/14 15:51:42  chen
- *   Initial import of jparss
- *
- *
- *
  */
 package eu.unicore.uftp.jparss;
 
@@ -111,22 +96,15 @@ public class PInputStream extends InputStream {
 		if (inputs_ == null) {
 			throw new IOException("No internal input streams.");
 		}
-
 		byte[] tbuf = new byte[4];
 		if (PConfig.usethreads == true) {
-			int i;
 			// wake up all readers
 			done_ = true;
-			for (i = 0; i < readers_.length; i++)
+			for (int i = 0; i < readers_.length; i++)
 				readers_[i].set(tbuf, 0, 0);
 		}
-
-		try {
-			for (int i = 0; i < inputs_.length; i++)
-				inputs_[i].close();
-		} catch (IOException e) {
-			throw e;
-		}
+		for (int i = 0; i < inputs_.length; i++)
+			inputs_[i].close();
 	}
 
 	/**
@@ -147,75 +125,16 @@ public class PInputStream extends InputStream {
 	 * Reads the next byte of data from the input stream. The value byte is
 	 * returned as an int in the range 0 to 255. If no byte is available because
 	 * the end of the stream has been reached, the value -1 is returned. This
-	 * method blocks until input data is available, the end of thestream is
+	 * method blocks until input data is available, the end of the stream is
 	 * detected, or an exception is thrown.
-	 * 
-	 * This read only works if the input stream on the other end sends out one
-	 * byte of data, otherwise IOException will be thrown.
-	 * 
+	 *
 	 * Returns: the next byte of data, or -1 if the end of the stream is
 	 * reached.
 	 */
 	public int read() throws IOException {
-		int i;
-		short magic, pos;
-		int seq, totalnum, numtoread, expseq;
-		int value;
-		byte[] header = new byte[PConfig.pheaderlen];
-		DataInputStream headerStream = new DataInputStream(
-				new ByteArrayInputStream(header));
-		DataInputStream istream = null;
-
-		value = 0;
-		for (i = 0; i < inputs_.length; i++) {
-			istream = new DataInputStream(inputs_[i]);
-			try {
-				istream.readFully(header);
-			} catch (EOFException ee) {
-				System.err
-				.println("PInput read: Output stream closed connection");
-				throw new IOException("Connection closed");
-			} catch (IOException e) {
-				throw e;
-			}
-
-			try {
-				magic = headerStream.readShort();
-				pos = headerStream.readShort();
-				seq = headerStream.readInt();
-				totalnum = headerStream.readInt();
-				numtoread = headerStream.readInt();
-			} catch (IOException e) {
-				throw e;
-			}
-
-			if (PConfig.debug == true)
-				System.out.println("PInput read: Received header: magic: "
-						+ Integer.toHexString(magic) + " stream position: "
-						+ String.valueOf(pos) + " seq: " + String.valueOf(seq)
-						+ " number to read: " + String.valueOf(numtoread));
-
-			if (magic != PConfig.magic)
-				throw new IOException("magic number mismatch");
-			if (pos < 0 || pos >= inputs_.length)
-				throw new IOException("Stream position mismatch");
-			if (seq < 0)
-				throw new IOException("Sequence number error");
-			if (totalnum != 1)
-				throw new IOException("Total byte number error");
-			if (numtoread != 0 && numtoread != 1)
-				throw new IOException("Number to read receiving error");
-			// check sequence number
-			if ((expseq = seq_) == -1)
-				seq_ = seq;
-			else if (expseq != seq)
-				throw new IOException("Sequence number mismatch");
-
-			if (numtoread == 1)
-				value = inputs_[i].read();
-		}
-		seq_++;
-		return value;
+		byte[] b = new byte[1];
+		var v = read(b,0,1);
+		return v!=-1 ? b[0] : -1;
 	}
 
 	/**
@@ -228,13 +147,7 @@ public class PInputStream extends InputStream {
 	 * will be thrown.
 	 */
 	public int read(byte[] b) throws IOException {
-		int bytes = 0;
-		try {
-			bytes = read(b, 0, b.length);
-		} catch (IOException e) {
-			throw e;
-		}
-		return bytes;
+		return read(b, 0, b.length);
 	}
 
 	/**
@@ -259,46 +172,29 @@ public class PInputStream extends InputStream {
 	public int read(byte[] b, int off, int length) throws IOException {
 		if(PConfig.usethreads)return readMultiThreaded(b, off, length);
 
-		int i, chunk;
+		int chunk;
 		int toffset, tlen;
 		short magic, pos;
 		int seq, totalnum, numtoread, expseq;
-		int value;
+		int value = 0;
 		byte[] header = new byte[PConfig.pheaderlen];
-		DataInputStream istream = null;
+		
 		ByteArrayInputStream thstream = new ByteArrayInputStream(header);
 		DataInputStream headerStream = new DataInputStream(thstream);
-
-		value = 0;
-		for (i = 0; i < inputs_.length; i++) {
-			istream = new DataInputStream(inputs_[i]);
-
+		for (int i = 0; i < inputs_.length; i++) {
+			DataInputStream istream = new DataInputStream(inputs_[i]);
 			try {
 				istream.readFully(header);
 			} catch (EOFException ee) {
 				return -1;
-			} catch (IOException e) {
-				throw e;
 			}
 			// rewind the header stream
 			thstream.reset();
-			try {
-				magic = headerStream.readShort();
-				pos = headerStream.readShort();
-				seq = headerStream.readInt();
-				totalnum = headerStream.readInt();
-				numtoread = headerStream.readInt();
-			} catch (IOException e) {
-				throw e;
-			}
-
-			if (PConfig.debug == true)
-				System.out.println("PInput read: Reader["
-						+ String.valueOf(i) + "] Received header: magic: "
-						+ Integer.toHexString(magic) + " stream position: "
-						+ String.valueOf(pos) + " seq: "
-						+ String.valueOf(seq) + " number to read: "
-						+ String.valueOf(numtoread));
+			magic = headerStream.readShort();
+			pos = headerStream.readShort();
+			seq = headerStream.readInt();
+			totalnum = headerStream.readInt();
+			numtoread = headerStream.readInt();
 
 			if (magic != PConfig.magic)
 				throw new IOException("magic number mismatch");
@@ -331,21 +227,12 @@ public class PInputStream extends InputStream {
 			if (numtoread > tlen)
 				throw new IOException("Not enough buffer size");
 
-			if (PConfig.debug == true)
-				System.out.println("Reader[" + String.valueOf(i)
-						+ "] reads from " + String.valueOf(toffset)
-						+ " with buffer size " + String.valueOf(tlen)
-						+ " and tries to read " + String.valueOf(numtoread)
-						+ " bytes");
 			try {
 				istream.readFully(b, toffset, numtoread);
 			} catch (EOFException ee) {
 				System.err.println(ee);
 				throw new IOException("Unexpected EOF");
-			} catch (IOException e) {
-				throw e;
 			}
-
 			value += numtoread;
 		}
 		seq_++;
@@ -353,35 +240,19 @@ public class PInputStream extends InputStream {
 	}
 
 	protected int readMultiThreaded(byte[] b, int off, int length) throws IOException {
-		int i;
 		int value = 0;
 		// reset all values
 		resetVariables();
-
 		// wake up all readers
-		for (i = 0; i < readers_.length; i++)
+		for (int i = 0; i < readers_.length; i++)
 			readers_[i].set(b, off, length);
-
-		if (PConfig.debug == true)
-			System.out.println("PInputStream is waking up all readers.");
-
-		// this thread is going to sleep
-		if (PConfig.debug == true)
-			System.out
-			.println("PInputStream is waiting for readers to finish.");
-
 		waitReaders();
-
-		if (PConfig.debug == true)
-			System.out.println("PInputStream is finished reading\n");
-
 		//check for reader's EOF
 		boolean eof=true;
-		for (i = 0; i < readers_.length; i++)
+		for (int i = 0; i < readers_.length; i++)
 			eof&=readers_[i].isEOF();
 		if(eof)return -1;
-		
-		for (i = 0; i < status_.length; i++) {
+		for (int i = 0; i < status_.length; i++) {
 			if (status_[i] != true) {
 				throw new IOException("Internal input stream error (Non-matching number of connections?)");
 			}
@@ -395,8 +266,7 @@ public class PInputStream extends InputStream {
 	 * Reset variables before read.
 	 */
 	private void resetVariables() {
-		int i;
-		for (i = 0; i < status_.length; i++) {
+		for (int i = 0; i < status_.length; i++) {
 			status_[i] = true;
 			readLens_[i] = 0;
 		}
@@ -410,9 +280,7 @@ public class PInputStream extends InputStream {
 		while (readCount_ < inputs_.length) {
 			try {
 				wait();
-			} catch (InterruptedException e) {
-				;
-			}
+			} catch (InterruptedException e) {}
 		}
 	}
 

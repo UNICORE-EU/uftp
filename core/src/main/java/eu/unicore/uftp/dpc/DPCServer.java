@@ -369,9 +369,7 @@ public class DPCServer {
 		 * @throws java.io.IOException on socket errors
 		 */
 		public void sendControl(String message) throws IOException {
-			if (logger.isDebugEnabled()) {
-				logger.debug("--> " + message);
-			}
+			logger.debug("--> {}", message);
 			controlWriter.write(message+UFTPCommands.NEWLINE);
 			controlWriter.flush();
 		}
@@ -406,9 +404,7 @@ public class DPCServer {
 		 */
 		public String readControl() throws IOException {
 			String res = controlReader.readLine();
-			if (logger.isDebugEnabled() && res != null) {
-				logger.debug("<-- " + res);
-			}
+			logger.debug("<-- {}", res);
 			return res;
 		}
 

@@ -7,21 +7,6 @@
  *
  * Jefferson Lab HPC Group, 12000 Jefferson Ave., Newport News, VA 23606
  **************************************************************************
- *
- * Description:
- *      Parallel Stream Individual Reader
- *
- * Author:  
- *      Jie Chen
- *      Jefferson Lab HPC Group
- *
- * Revision History:
- *   $Log: PReader.java,v $
- *   Revision 1.1  2001/06/14 15:51:42  chen
- *   Initial import of jparss
- *
- *
- *
  */
 package eu.unicore.uftp.jparss;
 
@@ -131,10 +116,6 @@ public class PReader implements Runnable {
 	public synchronized int readData() throws IOException {
 		boolean doit = true;
 		int bytes = 0;
-
-		if (PConfig.debug == true)
-			System.out
-					.println("Readr[" + String.valueOf(pos_) + "] is waiting");
 		while (buffer_ == null) {
 			try {
 				wait();
@@ -142,10 +123,6 @@ public class PReader implements Runnable {
 				doit = false;
 			}
 		}
-
-		if (PConfig.debug == true)
-			System.out.println("Readr[" + String.valueOf(pos_) + "] is awaken");
-
 		if (parent_.finished() == false && doit == true && len_ > 0) {
 			// now all readrs should compete for resource fairly.
 			// we cannot use nofifyAll to wake up all readrs since
@@ -179,35 +156,12 @@ public class PReader implements Runnable {
 		headerArrayStream_.reset();
 
 		// read header
-		try {
-			istream_.readFully(header_);
-		} catch (EOFException ee) {
-			throw ee;
-		} catch (IOException e) {
-			System.err.println(e);
-			throw e;
-		}
-
-		try {
-			magic = headerStream_.readShort();
-			pos = headerStream_.readShort();
-			seq = headerStream_.readInt();
-			totalnum = headerStream_.readInt();
-			numtoread = headerStream_.readInt();
-		} catch (IOException e) {
-			throw e;
-		}
-
-		if (PConfig.debug == true)
-			System.out
-					.println("Reader[" + String.valueOf(pos_)
-							+ "] Received header: magic: "
-							+ Integer.toHexString(magic) + " stream position: "
-							+ String.valueOf(pos) + " seq: "
-							+ String.valueOf(seq) + " number to read: "
-							+ String.valueOf(numtoread)
-							+ " with total number of bytes "
-							+ String.valueOf(totalnum));
+		istream_.readFully(header_);
+		magic = headerStream_.readShort();
+		pos = headerStream_.readShort();
+		seq = headerStream_.readInt();
+		totalnum = headerStream_.readInt();
+		numtoread = headerStream_.readInt();
 
 		if (magic != PConfig.magic)
 			throw new IOException("Bad magic number");
@@ -238,21 +192,10 @@ public class PReader implements Runnable {
 		else
 			tlen = chunk;
 
-		if (PConfig.debug == true)
-			System.out.println("Reader[" + String.valueOf(pos_)
-					+ "] reads from " + String.valueOf(toffset)
-					+ " with buffer size " + String.valueOf(tlen));
-
 		if (numtoread > tlen)
 			throw new IOException("Read buffer overflow");
-		try {
-			istream_.readFully(buffer_, toffset, numtoread);
-		} catch (EOFException ee) {
-			throw ee;
-		} catch (IOException e) {
-			System.err.println(e);
-			throw e;
-		}
+		
+		istream_.readFully(buffer_, toffset, numtoread);
 		return numtoread;
 	}
 
