@@ -20,14 +20,11 @@ import eu.unicore.security.canl.AuthnAndTrustProperties;
 import eu.unicore.security.canl.SSLContextCreator;
 import eu.unicore.uftp.dpc.AuthorizationFailureException;
 import eu.unicore.uftp.dpc.Utils;
-import eu.unicore.util.configuration.ConfigurationException;
 import eu.unicore.util.httpclient.ServerHostnameCheckingMode;
 
 /**
  * Deals with reading the SSL config file and setting up the UFTPD command socket.
- * 
- * Supports both CANL properties and simple javax.net.ssl properties.
- * 
+ *
  * @author schuller
  */
 public class SSLHelper {
@@ -38,13 +35,12 @@ public class SSLHelper {
 	
 	private ACLHandler acl;
 
-	private UFTPDSecProperties securityProperties;
+	private AuthnAndTrustProperties securityProperties;
 	
 	public SSLHelper() throws IOException {
 		useSSL = initSSLProperties();
 		if (useSSL) {
-			File aclFile = new File(System.getProperty("uftpd.acl", "conf/uftpd.acl"));
-			acl = new ACLHandler(aclFile);
+			acl = new ACLHandler(new File(System.getProperty("uftpd.acl")));
 		}
 	}
 		
@@ -78,10 +74,8 @@ public class SSLHelper {
 	 * @throws IOException
 	 * @throws AuthorizationFailureException
 	 */
-	
 	public void checkAccess(Socket jobSocket) throws IOException, AuthorizationFailureException {
 		if (useSSL) {
-			//get the name of the other side
 			X500Principal x = (X500Principal) ((SSLSocket) jobSocket).getSession().getPeerPrincipal();
 			acl.checkAccess(x.getName());
 		}
@@ -112,14 +106,14 @@ public class SSLHelper {
 			if (!sslProps.exists()) {
 				throw new IOException("SSL properties file " + file + " does not exist!");
 			} else {
-				logger.info("Loading SSL settings from " + file);
+				logger.info("Loading SSL settings from <{}>", file);
 			}
 			p = new Properties();
 			try(InputStream in = new FileInputStream(sslProps)){
 				p.load(in);
 			}
 			if(p.getProperty("credential.path")!=null){
-				logger.info("Enabling SSL, using credential = "+p.getProperty("credential.path"));
+				logger.info("Enabling SSL, using credential = {}", p.getProperty("credential.path"));
 			}
 			else{
 				logger.warn("SSL properties file does not contain credential / keystore definition.");
@@ -131,16 +125,9 @@ public class SSLHelper {
 			sslEnabled = false;
 		}
 		if(sslEnabled){
-			securityProperties = new UFTPDSecProperties(p);
+			securityProperties = new AuthnAndTrustProperties(p);
 		}
 		return sslEnabled;
 	}
 
-	public static class UFTPDSecProperties extends AuthnAndTrustProperties{
-		public UFTPDSecProperties(Properties p) throws ConfigurationException
-		{
-			super(p);
-		}
-	}
-	
 }

@@ -1,7 +1,6 @@
 package eu.unicore.uftp.server;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
@@ -33,7 +32,6 @@ public abstract class ClientServerTestBase {
 		FileUtils.deleteQuietly(dataDir);
 		dataDir.mkdirs();
 		host=new InetAddress[]{InetAddress.getByName("localhost")};
-		assertNotNull(host);
 		startServer();
 		Thread.sleep(2000);
 	}
