@@ -12,7 +12,6 @@ import eu.unicore.security.SecurityException;
 import eu.unicore.services.security.util.AuthZAttributeStore;
 import eu.unicore.uftp.authserver.messages.AuthRequest;
 import eu.unicore.uftp.authserver.messages.AuthResponse;
-import eu.unicore.uftp.authserver.messages.CreateTunnelRequest;
 import eu.unicore.uftp.authserver.share.ShareServiceProperties;
 import eu.unicore.util.Log;
 import jakarta.ws.rs.Consumes;
@@ -80,51 +79,7 @@ public class AuthServiceImpl extends ServiceBase {
 			return handleError(500,"Cannot connect to UFTPD server",e,logger);
 		}	
 	}
-	
-	@POST
-	@Produces("application/json;charset=UTF-8")
-	@Path("/{serverName}/tunnel")
-	@Consumes(MediaType.APPLICATION_JSON)
-	public Response startTunnel(@PathParam("serverName") String serverName, String json) {
-		if(AuthZAttributeStore.getTokens()==null){
-			throw new WebApplicationException(Status.UNAUTHORIZED);
-		}
-		UFTPBackend server = getLogicalServer(serverName);
-		if(server==null){
-			throw new WebApplicationException(404);
-		}
-		String clientIP = AuthZAttributeStore.getTokens().getClientIP();
-		logger.debug("Incoming tunnel request from: {} {}", clientIP, json);
-		UserAttributes authData = null;
-		CreateTunnelRequest tunnelRequest = gson.fromJson(json, CreateTunnelRequest.class);
-		try {
-			UFTPDInstance uftpd = getUFTPD(serverName);
-			try{
-				authData = assembleAttributes(server, tunnelRequest.group);
-			}
-			catch(SecurityException se){
-				return handleError(400, "", se, logger);
-			}
-			if(authData.uid == null){
-				throw new WebApplicationException(Status.UNAUTHORIZED);
-			}
-			// allow to override actual client IP with the one from the request
-			if(tunnelRequest.client!=null){
-				clientIP = tunnelRequest.client;
-			}
-			TunnelRequest transferRequest = new TunnelRequest(tunnelRequest, authData, clientIP);
-			AuthResponse response = new TransferInitializer().initTransfer(transferRequest,uftpd);            
-			if(response.success) {
-				response.secret = transferRequest.getSecret();
-				return Response.ok().entity(response).build();
-			}else {
-				return handleError(500, response.reason, null, logger);
-			}
-		} catch (IOException e) {
-			return handleError(500,"Cannot connect to UFTPD server",e,logger);
-		}	
-	}
-	
+
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/")
@@ -174,7 +129,7 @@ public class AuthServiceImpl extends ServiceBase {
 	protected JSONObject getShareServiceInfo(String name) throws JSONException {
 		JSONObject info = new JSONObject();
 		ShareServiceProperties ssp = kernel.getAttribute(ShareServiceProperties.class);
-		boolean enabled = ssp!=null && ssp.getDB(name)!=null;
+		boolean enabled = ssp.getDB(name)!=null;
 		info.put("enabled", enabled);
 		if(enabled){
 			String url = kernel.getContainerProperties().getContainerURL()+"/rest/share/"+name;

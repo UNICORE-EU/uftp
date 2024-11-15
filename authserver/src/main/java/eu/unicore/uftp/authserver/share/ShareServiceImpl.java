@@ -313,7 +313,7 @@ public class ShareServiceImpl extends ShareServiceBase {
 	 * validate that the current user can access the path - and thus can share it
 	 */
 	protected String validate(UFTPDInstance uftp, String path, UserAttributes ua, AccessType access) throws Exception {
-		ShareServiceProperties spp = kernel.getAttribute(ShareServiceProperties.class);
+		ShareServiceProperties spp = getShareServiceProperties();
 		String clientIP = spp.getClientIP();
 		AuthRequest authRequest = new AuthRequest();
 		authRequest.serverPath = "/";

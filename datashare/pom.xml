@@ -5,7 +5,7 @@
   <artifactId>uftp-datashare</artifactId>
   <packaging>jar</packaging>
   <name>UFTP Datasharing</name>
-  <version>0.21.0</version>
+  <version>0.21.1-SNAPSHOT</version>
 
   <parent>
     <groupId>eu.unicore</groupId>
@@ -14,7 +14,7 @@
   </parent>
 
   <properties>
-    <uftp.version>2.20.1</uftp.version>
+    <uftp.version>2.20.2</uftp.version>
     <automatic.module.name>${project.groupId}.datashare</automatic.module.name>
   </properties>
 
@@ -22,7 +22,7 @@
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter</artifactId>
-      <version>5.11.2</version>
+      <version>5.11.3</version>
       <scope>test</scope>
     </dependency>
     <dependency>

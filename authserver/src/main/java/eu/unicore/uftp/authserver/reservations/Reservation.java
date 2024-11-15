@@ -8,7 +8,7 @@ import java.util.UUID;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import eu.unicore.services.utils.UnitParser;
+import eu.unicore.services.restclient.utils.UnitParser;
 import eu.unicore.uftp.authserver.UserAttributes;
 
 public class Reservation {

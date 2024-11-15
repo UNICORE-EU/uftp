@@ -18,15 +18,14 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import eu.unicore.services.Kernel;
-import eu.unicore.services.rest.client.BaseClient;
-import eu.unicore.services.rest.client.IAuthCallback;
-import eu.unicore.services.rest.client.UsernamePassword;
-import eu.unicore.services.rest.security.jwt.JWTUtils;
-import eu.unicore.services.rest.security.sshkey.PasswordSupplierImpl;
-import eu.unicore.services.rest.security.sshkey.SSHKey;
+import eu.unicore.services.restclient.BaseClient;
+import eu.unicore.services.restclient.IAuthCallback;
+import eu.unicore.services.restclient.UsernamePassword;
+import eu.unicore.services.restclient.jwt.JWTUtils;
+import eu.unicore.services.restclient.sshkey.PasswordSupplierImpl;
+import eu.unicore.services.restclient.sshkey.SSHKey;
 import eu.unicore.services.server.JettyServer;
 import eu.unicore.uftp.authserver.messages.AuthRequest;
-import eu.unicore.uftp.authserver.messages.CreateTunnelRequest;
 import eu.unicore.uftp.server.UFTPServer;
 
 public class TestService {
@@ -58,14 +57,6 @@ public class TestService {
 		Gson gson = new GsonBuilder().create();
 		AuthRequest req = new AuthRequest();
 		req.serverPath="/tmp/foo";
-		try(ClassicHttpResponse response = client.post(new JSONObject(gson.toJson(req)))){
-			System.out.println("Service reply: " + EntityUtils.toString(response.getEntity()));
-		}
-		authUrl = serverInfo.getString("href")+"/tunnel";
-		client.setURL(authUrl);
-		CreateTunnelRequest req2 = new CreateTunnelRequest();
-		req2.targetHost = "localhost";
-		req2.targetPort = 9001;
 		try(ClassicHttpResponse response = client.post(new JSONObject(gson.toJson(req)))){
 			System.out.println("Service reply: " + EntityUtils.toString(response.getEntity()));
 		}

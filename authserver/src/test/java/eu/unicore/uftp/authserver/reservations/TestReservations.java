@@ -13,7 +13,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 
-import eu.unicore.services.utils.UnitParser;
+import eu.unicore.services.restclient.utils.UnitParser;
 
 public class TestReservations {
 

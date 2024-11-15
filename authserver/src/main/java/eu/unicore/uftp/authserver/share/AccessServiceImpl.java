@@ -8,9 +8,9 @@ import org.apache.commons.io.FilenameUtils;
 
 import eu.unicore.security.Client;
 import eu.unicore.services.security.util.AuthZAttributeStore;
-import eu.unicore.uftp.authserver.UFTPBackend;
 import eu.unicore.uftp.authserver.TransferInitializer;
 import eu.unicore.uftp.authserver.TransferRequest;
+import eu.unicore.uftp.authserver.UFTPBackend;
 import eu.unicore.uftp.authserver.UFTPDInstance;
 import eu.unicore.uftp.authserver.UserAttributes;
 import eu.unicore.uftp.authserver.messages.AuthRequest;
@@ -81,7 +81,7 @@ public class AccessServiceImpl extends ShareServiceBase {
 			}
 			if(equal(share.getTargetID(), getNormalizedCurrentUserName())
 				|| equal(share.getTargetID(), Client.ANONYMOUS_CLIENT_DN)){
-				ShareServiceProperties spp = kernel.getAttribute(ShareServiceProperties.class);
+				ShareServiceProperties spp = getShareServiceProperties();
 				String clientIP = spp.getClientIP();
 				handlePath(path, share);
 				logUsage("HTTP-download", share.getPath(), share);
@@ -157,7 +157,7 @@ public class AccessServiceImpl extends ShareServiceBase {
 				( equal(share.getTargetID(), getNormalizedCurrentUserName())
 				|| equal(share.getTargetID(), Client.ANONYMOUS_CLIENT_DN))))
 			{
-				ShareServiceProperties spp = kernel.getAttribute(ShareServiceProperties.class);
+				ShareServiceProperties spp = getShareServiceProperties();
 				String clientIP = spp.getClientIP();
 				handlePath(path, share);
 				logUsage("HTTP-upload", share.getPath(), share);

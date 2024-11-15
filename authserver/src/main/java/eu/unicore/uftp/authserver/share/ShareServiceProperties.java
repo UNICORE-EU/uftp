@@ -6,6 +6,7 @@ import java.util.Properties;
 
 import org.apache.logging.log4j.Logger;
 
+import eu.unicore.services.Kernel;
 import eu.unicore.uftp.datashare.db.ACLStorage;
 import eu.unicore.util.Log;
 import eu.unicore.util.configuration.ConfigurationException;
@@ -109,6 +110,15 @@ public class ShareServiceProperties extends PropertiesHelper {
 		Properties p = new Properties();
 		p.putAll(rawProperties);
 		return new ACLStorage(name, p);
+	}
+	
+	public static synchronized ShareServiceProperties get(Kernel kernel) {
+		ShareServiceProperties ssp = kernel.getAttribute(ShareServiceProperties.class);
+		if(ssp==null){
+			ssp = new ShareServiceProperties(kernel.getContainerProperties().getRawProperties());
+			kernel.setAttribute(ShareServiceProperties.class, ssp);
+		}
+		return ssp;
 	}
 
 }

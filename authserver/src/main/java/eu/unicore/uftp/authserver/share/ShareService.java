@@ -27,11 +27,7 @@ public class ShareService extends Application implements USERestApplication {
      */
 	@Override
 	public void initialize(Kernel kernel)throws Exception {
-		ShareServiceProperties ssp = kernel.getAttribute(ShareServiceProperties.class);
-		if(ssp==null){
-			ssp = new ShareServiceProperties(kernel.getContainerProperties().getRawProperties());
-			kernel.setAttribute(ShareServiceProperties.class, ssp);
-		}
+		ShareServiceProperties.get(kernel);
 	}
 	
 }

@@ -20,18 +20,14 @@ public class AccessService extends Application implements USERestApplication {
         classes.add(AccessServiceImpl.class);
         return classes;
     }
-    
+
     /**
      * create the configuration object for the service
      * and store it for later use
      */
 	@Override
 	public void initialize(Kernel kernel)throws Exception {
-		ShareServiceProperties ssp = kernel.getAttribute(ShareServiceProperties.class);
-		if(ssp==null){
-			ssp = new ShareServiceProperties(kernel.getContainerProperties().getRawProperties());
-			kernel.setAttribute(ShareServiceProperties.class, ssp);
-		}
+		ShareServiceProperties.get(kernel);
 	}
-	
+
 }

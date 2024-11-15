@@ -30,10 +30,10 @@ import com.google.gson.GsonBuilder;
 
 import eu.emi.security.authn.x509.impl.X500NameUtils;
 import eu.unicore.services.Kernel;
-import eu.unicore.services.rest.client.BaseClient;
-import eu.unicore.services.rest.client.IAuthCallback;
-import eu.unicore.services.rest.client.RESTException;
-import eu.unicore.services.rest.client.UsernamePassword;
+import eu.unicore.services.restclient.BaseClient;
+import eu.unicore.services.restclient.IAuthCallback;
+import eu.unicore.services.restclient.RESTException;
+import eu.unicore.services.restclient.UsernamePassword;
 import eu.unicore.uftp.authserver.messages.AuthRequest;
 import eu.unicore.uftp.authserver.share.ShareServiceProperties;
 import eu.unicore.uftp.datashare.db.ACLStorage;
@@ -49,7 +49,7 @@ public class TestShareService {
 		FileUtils.deleteQuietly(new File("target/data"));
 		k = new Kernel("src/test/resources/container.properties");
 		k.startSynchronous();
-		ShareServiceProperties ssp = k.getAttribute(ShareServiceProperties.class);
+		ShareServiceProperties ssp = ShareServiceProperties.get(k);
 		ssp.getDB("TEST").deleteAllData();
 		ACLStorage acl = ssp.getDB("TEST");
 		assertNotNull(acl);	

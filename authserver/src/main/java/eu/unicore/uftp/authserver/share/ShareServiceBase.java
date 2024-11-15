@@ -188,7 +188,7 @@ public abstract class ShareServiceBase extends ServiceBase {
 	}
 
 	protected ACLStorage getShareDB(String serverName){
-		return kernel.getAttribute(ShareServiceProperties.class).getDB(serverName);
+		return getShareServiceProperties().getDB(serverName);
 	}
 
 	protected String normalize(String targetUser){
