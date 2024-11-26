@@ -3,6 +3,7 @@ package eu.unicore.uftp.datashare.share;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -127,6 +128,35 @@ public class TestShareService {
 		assertEquals("/tmp/newpath", dao.getPath());
 		assertTrue(dao.getExpires()>0);
 	}
+	
+	@Test
+	public void testOnetimeShare() throws Exception {
+		File f = new File("./pom.xml");
+		boolean onetime = true;
+		JSONObject share = createShare(f, "READ", "CN=Demo User, O=UNICORE, C=EU", onetime);
+		String shareLink = share.getJSONObject("share").getString("http");
+		String id = new File(shareLink).getName();
+		// check we have an entry
+		ACLStorage acl = k.getAttribute(ShareServiceProperties.class).getDB("TEST");
+		ShareDAO dao = acl.read(id);
+		assertTrue(dao.isOneTime());
+		BaseClient bc = getShareClient();
+		// download the file
+		bc.setURL(shareLink);
+		try(ClassicHttpResponse r = bc.get(null)){
+			String content = EntityUtils.toString(r.getEntity());
+			assertTrue(content.contains("modelVersion"));
+		}
+		// check it is gone in DB
+		dao = acl.read(id);
+		assertNull(dao);
+		RESTException re = assertThrows(RESTException.class, ()->{
+			try(ClassicHttpResponse r = bc.get(null)){
+				EntityUtils.toString(r.getEntity());
+			}	
+		});
+		assertEquals(404, re.getStatus());
+	}
 
 	// do a get to find the configured servers
 	private void checkGETInfo() throws Exception {
@@ -152,7 +182,6 @@ public class TestShareService {
 		o.put("lifetime", "3600");
 		bc.setURL(getBaseURL()+"/share/TEST");
 		String loc = bc.create(o);
-		System.out.println(loc);
 		String id = new File(loc).getName();
 
 		// check we have an entry
@@ -232,14 +261,18 @@ public class TestShareService {
 	}
 	
 	private JSONObject createShare(File file, String access, String user) throws Exception {
+		return createShare(file,access,user,false);
+	}
+
+	private JSONObject createShare(File file, String access, String user, boolean onetime) throws Exception {
 		BaseClient bc = getShareClient();
 		bc.setURL(getBaseURL()+"/share/TEST");
 		JSONObject o = new JSONObject();
 		o.put("path",file.getAbsolutePath());
 		o.put("access",access);
 		o.put("user",user);
+		o.put("onetime", onetime);
 		String shareLink = bc.create(o);
-		System.out.println(shareLink);
 		bc.setURL(shareLink);
 		return bc.getJSON();
 	}
@@ -264,7 +297,6 @@ public class TestShareService {
 		JSONObject share = createShare(f, "READ", "CN=Demo User, O=UNICORE, C=EU");
 		String shareLink = share.getJSONObject("share").getString("http");
 		BaseClient bc = getShareClient();
-		bc.setURL(shareLink);
 		Map<String,String>headers = new HashMap<>();
 		if(length > 0) {
 			String range = "bytes="+offset+"-"+(offset+length-1);
