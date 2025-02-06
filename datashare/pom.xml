@@ -14,7 +14,7 @@
   </parent>
 
   <properties>
-    <uftp.version>2.20.2</uftp.version>
+    <uftp.version>2.20.3</uftp.version>
     <automatic.module.name>${project.groupId}.datashare</automatic.module.name>
   </properties>
 
@@ -22,7 +22,7 @@
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter</artifactId>
-      <version>5.11.3</version>
+      <version>5.11.4</version>
       <scope>test</scope>
     </dependency>
     <dependency>
