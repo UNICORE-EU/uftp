@@ -1,6 +1,11 @@
 Changelog
 ---------
 
+UFTP 2.20.3
+-----------
+ - don't put cmd address into status message
+ - update dependencies
+
 UFTP 2.20.2
 -----------
  - update dependencies
