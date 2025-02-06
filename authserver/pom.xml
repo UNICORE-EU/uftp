@@ -24,7 +24,7 @@
   <properties>
     <use.version>5.2.0-2</use.version>
     <seclib.version>7.1.2</seclib.version>
-    <uftp.version>2.20.2</uftp.version>
+    <uftp.version>2.20.3</uftp.version>
     <datashare.version>0.21.0</datashare.version>
     <package.version>${project.version}</package.version>
     <package.release>1</package.release>
@@ -35,7 +35,7 @@
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter</artifactId>
-      <version>5.11.3</version>
+      <version>5.11.4</version>
       <scope>test</scope>
     </dependency>
     <dependency>

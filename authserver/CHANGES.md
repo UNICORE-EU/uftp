@@ -7,6 +7,12 @@ https://github.com/UNICORE-EU/uftp/issues
 Full documentation is at:
 https://uftp-docs.readthedocs.io
 
+
+Auth Server 3.0.2 (released mmm dd, 2025)
+-----------------------------------------
+ - fix: don't show cmd address in status
+ - fix: 'persistent' flag should default to false
+ 
 Auth Server 3.0.1 (released Nov 26, 2024)
 -----------------------------------------
  - fix: issued auth tokens do not contain asserted user name

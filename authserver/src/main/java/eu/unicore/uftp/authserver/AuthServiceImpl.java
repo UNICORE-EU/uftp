@@ -1,7 +1,9 @@
 package eu.unicore.uftp.authserver;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
@@ -83,7 +85,7 @@ public class AuthServiceImpl extends ServiceBase {
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/")
-	public Response getCatchAll() {
+	public Response getInfo() {
 		Response r = null;
 		JSONObject o = new JSONObject();
 		try{
@@ -137,6 +139,5 @@ public class AuthServiceImpl extends ServiceBase {
 		}
 		return info;
 	}
-
 
 }

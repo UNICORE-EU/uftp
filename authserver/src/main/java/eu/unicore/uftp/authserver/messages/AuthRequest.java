@@ -12,8 +12,7 @@ public class AuthRequest {
 	public String encryptionAlgorithm = null;
 	public String group = null;
 	public String client = null;
-	public boolean persistent = true;
-	
+	public boolean persistent = false;
 	public boolean sessionMode = false;
 	public boolean send = true;
 }
