@@ -107,7 +107,7 @@ public abstract class UFTPDInstanceBase {
 	}
 
 	public String toString(){
-		return "[UFTPD server: cmd"+(ssl?"(ssl)":"")+"="+commandHost+":"+commandPort+" listen="+host+":"+port+"]";
+		return "[UFTPD server: cmd"+(ssl?"(ssl)":"")+"="+commandHost+":"+commandPort+" ftp="+host+":"+port+"]";
 	}
 	
 	public boolean isUFTPAvailable(){
@@ -133,12 +133,11 @@ public abstract class UFTPDInstanceBase {
 		}
 		catch(IOException e){
 			ok = false;
-			String err = Log.createFaultMessage("Error", e);
-			statusMessage="CAN'T CONNECT TO UFTPD "+commandHost+":"+commandPort+" ["+err+"]";
+			statusMessage="CAN'T CONNECT TO UFTPD: "+Log.createFaultMessage("Error", e);
 		}
 		if(ok){
 			isUp = true;
-			statusMessage="Connected to UFTPD "+commandHost+":"+commandPort;
+			statusMessage="UFTPD connection OK";
 		}
 		else {
 			isUp = false;
@@ -199,8 +198,7 @@ public abstract class UFTPDInstanceBase {
 		try{
 			return task.call();
 		}catch(Exception ie){
-			String err = Log.createFaultMessage("Error", ie);
-			statusMessage = "CAN'T CONNECT TO UFTPD "+commandHost+":"+commandPort+" ["+err+"]";
+			statusMessage = "CAN'T CONNECT TO UFTPD: "+Log.createFaultMessage("Error", ie);
 			isUp = false;
 			throw new IOException(ie);
 		}
