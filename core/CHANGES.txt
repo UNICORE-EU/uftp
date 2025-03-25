@@ -1,6 +1,11 @@
 Changelog
 ---------
 
+UFTO 2.20.4
+-----------
+ - check server error after completed data movement
+ - remove unused run() mode of session client
+
 UFTP 2.20.3
 -----------
  - don't put cmd address into status message

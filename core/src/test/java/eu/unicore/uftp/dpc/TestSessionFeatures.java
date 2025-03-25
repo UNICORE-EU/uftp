@@ -15,17 +15,14 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
 
-import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 
-import eu.unicore.uftp.client.SessionCommands.Get;
 import eu.unicore.uftp.client.UFTPSessionClient;
 import eu.unicore.uftp.client.UFTPSessionClient.HashInfo;
 import eu.unicore.uftp.dpc.Session.Mode;
@@ -62,64 +59,6 @@ public class TestSessionFeatures extends ClientServerTestBase{
 			assertEquals(Utils.md5(masterFile),Utils.md5(slaveFile));
 		}
 	}
-
-	@Test
-	public void testClientGetCmd() throws Exception {
-		String realSourceName="source-"+System.currentTimeMillis();
-		File realSource=new File("target/testdata/"+realSourceName);
-		Utils.writeToFile("this is a test for the session client", realSource);
-		String target = "target/testdata/"+realSource.getName();
-		String secret = UUID.randomUUID().toString();
-		String cwd = dataDir.getAbsolutePath();
-		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret, cwd);
-		job.sendTo(host[0], jobPort);
-		Thread.sleep(1000);
-
-		try(UFTPSessionClient client = new UFTPSessionClient(host, srvPort)){
-			client.setSecret(secret);
-			client.connect();
-			client.setBaseDirectory(new File("target/testdata"));
-			List<String>args = new ArrayList<>();
-			args.add(realSourceName);
-			args.add(realSource.getName());
-			Get get = new Get(args);
-			get.setClient(client);
-			get.run();
-			//check size
-			long size=client.getFileSize(realSourceName);
-			assertEquals(realSource.length(),size);
-		}
-		// check that file exists and has correct content
-		String expected = Utils.md5(realSource);
-		checkFile(new File(target), expected);
-	}
-
-	@Test
-	public void testSessonCMDFile() throws Exception {
-		File commandFile=new File("src/test/resources/session_cmd_file");
-		File source=commandFile;
-		File target=new File("target/foo_1");
-		File target2=new File("target/foo_2");
-		FileUtils.deleteQuietly(target);
-		FileUtils.deleteQuietly(target2);
-		String secret = UUID.randomUUID().toString();
-		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret,
-				new File(".").getAbsolutePath());
-		job.sendTo(host[0], jobPort);
-		Thread.sleep(1000);
-
-		try(UFTPSessionClient client = new UFTPSessionClient(host, srvPort)){
-			client.setSecret(secret);
-			client.setBaseDirectory(new File("."));
-			client.setCommandFile(commandFile.getAbsolutePath());
-			client.run();
-			// check that file exists and has correct content
-			String expected = Utils.md5(source);
-			checkFile(target, expected);
-			checkFile(target2, expected);
-		}
-	}
-
 
 	@Test
 	public void testACLSetup() throws Exception {
@@ -394,11 +333,14 @@ public class TestSessionFeatures extends ClientServerTestBase{
 			for(String algo: algos) {
 				System.out.println("Hash algorithm set to: " + client.setHashAlgorithm(algo));
 				HashInfo hashInfo = client.getHash(fileName, 0, dataFile.length());
-				System.out.println("Remote hash: "+hashInfo.fullInfo());
+				System.out.println("Remote hash:   "+hashInfo.fullInfo());
+				HashInfo hashInfo2 = client.getHash(fileName);
+				System.out.println("Remote hash 2: "+hashInfo2.fullInfo());
 				String localMD = Utils.hexString(Utils.digest(dataFile, algo));
 				String remoteMD = hashInfo.toString();
 				System.out.println(algo+" local: "+localMD+" remote: "+remoteMD);
 				assertEquals(localMD, remoteMD);
+				assertEquals(hashInfo2.toString(), remoteMD);
 			}
 		}
 	}

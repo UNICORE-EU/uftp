@@ -1,8 +1,6 @@
 package eu.unicore.uftp.client;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -31,15 +29,13 @@ import eu.unicore.util.Pair;
  *
  * @author schuller
  */
-public class UFTPSessionClient extends AbstractUFTPClient implements Runnable {
+public class UFTPSessionClient extends AbstractUFTPClient {
 
 	private static final Logger logger = Utils.getLogger(Utils.LOG_CLIENT, UFTPSessionClient.class);
-	 
+
 	protected final byte[] buffer = new byte[BUFFSIZE];
-	private String commandFile;
 	private File baseDirectory;
 	protected boolean keepAlive = false;
-	
 	protected boolean rfcCompliantRange = false;
 
 	/**
@@ -50,13 +46,6 @@ public class UFTPSessionClient extends AbstractUFTPClient implements Runnable {
 	 */
 	public UFTPSessionClient(InetAddress[] servers, int port) {
 		super(servers, port);
-	}
-
-	public void setCommandFile(String commandFile) {
-		if (commandFile == null) {
-			throw new IllegalArgumentException("Commandfile is required");
-		}
-		this.commandFile = commandFile;
 	}
 
 	@Override
@@ -70,44 +59,6 @@ public class UFTPSessionClient extends AbstractUFTPClient implements Runnable {
 		}
 	}
 
-	@Override
-	public void run() {
-		if (commandFile == null) {
-			throw new IllegalArgumentException("Commandfile is required");
-		}
-
-		try {
-			logger.info("Connecting...");
-			connect();
-			try (BufferedReader localReader = new BufferedReader(new FileReader(commandFile)))
-			{
-				String line;
-				do {
-					line = localReader.readLine();
-					if (line == null) {
-						break;
-					}
-					if (line.trim().isEmpty()) {
-						continue;
-					}
-					List<String> args = Utils.parseLine(line);
-					Runnable cmd = SessionCommands.createCMD(args, this);
-					if (cmd == null) {
-						logger.error("No command for args " + args);
-					} else {
-						logger.info("Executing "+line);
-						cmd.run();
-					}
-				} while (true);
-			}
-			logger.info("Exiting UFTP session.");
-		} catch (AuthorizationFailureException ex) {
-			throw new RuntimeException("Authorization error running session", ex);
-		} catch (IOException ex) {
-			throw new RuntimeException("Error running session", ex);
-		}
-	}
-
 	public void resetDataConnections() throws IOException {
 		if(!keepAlive)return;
 		super.closeData();
@@ -118,7 +69,7 @@ public class UFTPSessionClient extends AbstractUFTPClient implements Runnable {
 		client.sendControl("QUIT");
 		super.close();
 	}
-	
+
 	/**
 	 * get the remote file and write it to the given local stream
 	 *
@@ -147,7 +98,7 @@ public class UFTPSessionClient extends AbstractUFTPClient implements Runnable {
 		long size = prepareGet(remoteFile, offset, length, localTarget);
 		return moveData(size);
 	}
-	
+
 	/**
 	 * negotiate a download of the given (part of a) file with the server, 
 	 * and return the connected SocketChannel ready for use with a selector
@@ -626,9 +577,7 @@ public class UFTPSessionClient extends AbstractUFTPClient implements Runnable {
 			}
 		}
 		writer.flush();
-		
 		Utils.finishWriting(writer);
-	    
 		if (notify) {
 			progressListener.notifyTotalBytesTransferred(total);
 		}
@@ -645,15 +594,20 @@ public class UFTPSessionClient extends AbstractUFTPClient implements Runnable {
 			closeData();
 			closed = true;
 		}
-		if(closed || !streamingMode)client.readControl();
+		if(closed || !streamingMode) {
+			Reply reply = Reply.read(client);
+			if(reply.isError()) {
+				throw new IOException("Server error: "+reply.getStatusLine());
+			}
+		}
 		return total;
 	}
-	
+
 	public String readControl() throws IOException {
 		return client.readControl();
 	}
 
-	//sleep time to bring down rate
+	// sleep time to bring down rate
 	private long sleepTime = 0;
 
 	/**
@@ -664,18 +618,15 @@ public class UFTPSessionClient extends AbstractUFTPClient implements Runnable {
 	 * @param startTime - start time of the transfer
 	 */
 	protected void controlRate(long total, long startTime) throws InterruptedException {
-		//all rates are bytes/second
-
+		// all rates are bytes/second
 		// this is not intended to be high-precision
 		long interval = System.currentTimeMillis() - startTime;
 		if (interval ==0) interval = 1;
 		long rate = 1000 * total / interval;
 		if (rate < bandwidthLimit) {
-			//decrease sleep time
 			sleepTime = sleepTime / 2;
 			return;
 		}
-		//else increase sleep time and wait
 		sleepTime += 5;
 		Thread.sleep(sleepTime);
 	}
@@ -744,5 +695,4 @@ public class UFTPSessionClient extends AbstractUFTPClient implements Runnable {
 	public void setRFCRangeMode(boolean rfcMode){
 		this.rfcCompliantRange = rfcMode;
 	}
-	
 }
