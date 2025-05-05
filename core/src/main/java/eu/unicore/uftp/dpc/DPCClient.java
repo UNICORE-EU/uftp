@@ -25,13 +25,14 @@ import eu.unicore.uftp.server.UFTPCommands;
 import eu.unicore.util.Log;
 
 /**
- * Client allowing parallel data transfer with dynamic port configuration using
- * FTP
+ * Internal client class handling the low-level FTP operations,
+ * like establishing the control connection and opening data connections.
+ * This class is usually not used directly by end-user code.
  *
  * @author Tim Pohlmann, 2010, Forschungszentrum Juelich - JSC
  * @author schuller
  */
-public class DPCClient implements Closeable{
+public final class DPCClient implements Closeable {
 
 	private static final Logger logger = Utils.getLogger(Utils.LOG_CLIENT, DPCClient.class);
 
@@ -56,11 +57,7 @@ public class DPCClient implements Closeable{
 
 	public DPCClient(){
 		this.protocol = new ClientProtocol(this);
-		try {
-			so_buffer_size = Integer.parseInt(Utils.getProperty("UFTP_SO_BUFSIZE", "-1"));
-		}catch(Exception ex) {
-			so_buffer_size = -1;
-		}
+		so_buffer_size = Integer.parseInt(Utils.getProperty("UFTP_SO_BUFSIZE", "-1"));
 	}
 
 	/**
@@ -81,24 +78,17 @@ public class DPCClient implements Closeable{
 			throw new IllegalStateException("Already connected");
 		}
 		ProxyType proxyType = ProxyType.NONE;
-		if(checkProxy()) {
+		if(usingProxy()) {
 			InetAddress proxy = InetAddress.getByName(ftpProxyHost);
 			openControlSocket(new InetAddress[] {proxy}, ftpProxyPort);
 			String reply = protocol.initialHandshake();
 			logger.debug(reply);
 			proxyType = determineProxyType(reply);
-			if(proxyType==null)throw new IOException("Unsupported proxy implementation!");
-			switch (proxyType) {
-				case DELEGATE:
-					protocol.login("USER anonymous", ftpProxyPass);
-					protocol.login("user anonymous@"+server[0].getHostAddress()+":"+port, secret);
-					break;
-				case FROX:
-					protocol.login("user anonymous@"+server[0].getHostAddress()+":"+port, secret);
-					break;
-				case NONE:
-					break;
+			if (ProxyType.DELEGATE==proxyType) {
+				protocol.login("USER anonymous", ftpProxyPass);
 			}
+			protocol.login("user anonymous@"+server[0].getHostAddress()+":"+port, secret);
+			features.addAll(getFroxFeatures());
 		}
 		else {
 			openControlSocket(server, port);
@@ -108,9 +98,6 @@ public class DPCClient implements Closeable{
 		if(proxyType!=ProxyType.FROX) {
 			features.addAll(protocol.checkFeatures());
 		}
-		else {
-			features.addAll(getFroxFeatures());
-		}
 		connected = true;
 		logger.info("Connection established.");
 	}
@@ -119,8 +106,8 @@ public class DPCClient implements Closeable{
 	int ftpProxyPort;
 	String ftpProxyUser = "anonymous";
 	String ftpProxyPass = "";
-	
-	protected boolean checkProxy() {
+
+	private boolean usingProxy() {
 		ftpProxyHost = Utils.getProperty(UFTPConstants.ENV_UFTP_PROXY, null);
 		if(ftpProxyHost==null)return false;
 		ftpProxyPort = Integer.parseInt(Utils.getProperty(UFTPConstants.ENV_UFTP_PROXY_PORT, "21"));
@@ -132,14 +119,14 @@ public class DPCClient implements Closeable{
 	static enum ProxyType {
 		NONE, DELEGATE, FROX	
 	}
-	
-	protected ProxyType determineProxyType(String serverInfo) {
+
+	private ProxyType determineProxyType(String serverInfo) {
 		if(serverInfo.contains("DeleGate"))return ProxyType.DELEGATE;
 		if(serverInfo.contains("Frox"))return ProxyType.FROX;
 		return ProxyType.FROX;
 	}
 
-	protected void openControlSocket(InetAddress[] server, int port) throws IOException,
+	private void openControlSocket(InetAddress[] server, int port) throws IOException,
 	AuthorizationFailureException {
 		InetAddress selectedServer = null;
 		StringBuilder errors = new StringBuilder();
@@ -167,12 +154,7 @@ public class DPCClient implements Closeable{
 					} catch (Exception ex) {
 						// this should take care of "cleaner" network level errors
 						iter.remove();
-						try {
-							if (controlSocket != null) {
-								controlSocket.close();
-							}
-						} catch (Exception ignored) {
-						}
+						Utils.closeQuietly(controlSocket);
 						errors.append("[").append(s).append(": ").append(Log.createFaultMessage(s.toString(), ex)).append("]");
 					}
 				}
@@ -182,9 +164,7 @@ public class DPCClient implements Closeable{
 		}
 		controlWriter = new BufferedWriter(new OutputStreamWriter(controlSocket.getOutputStream()));
 		controlReader = new BufferedReader(new InputStreamReader(controlSocket.getInputStream()));
-		
 		logger.info("FTP control connection established to {}:{}", selectedServer.getHostAddress(), port);
-		
 	}
 
 	/**
@@ -218,18 +198,13 @@ public class DPCClient implements Closeable{
 	}
 
 	/**
-	 * open new connection
+	 * open new data connection
 	 *
 	 * @return newly opened socket
 	 * @throws IOException
 	 */
 	public Socket getNewConnection() throws IOException {
-		if(features.contains(UFTPCommands.EPSV)){
-			return epsv();
-		}
-		else{
-			return pasv();
-		}
+		return features.contains(UFTPCommands.EPSV) ? epsv() : pasv();
 	}
 
 	private static final Pattern epsv_response = Pattern.compile("(\\d+)\\D+(\\d+).*"); 
@@ -323,28 +298,13 @@ public class DPCClient implements Closeable{
 		controlWriter.write(message + "\r\n");
 		controlWriter.flush();
 	}
-	
+
 	/**
 	 * read a single line from the control channel
 	 */
 	public String readControl() throws IOException {
-		return readControl(false);
-	}
-
-	/**
-	 * read a single line from the control channel
-	 * @param skipMulti - if true, multiline replies are skipped over, returning only the last line
-	 */
-	public String readControl(boolean skipMulti) throws IOException {
 		String res = controlReader.readLine();
 		logger.debug("<-- {}", res);
-		if(skipMulti && res!=null && '-'==res.charAt(3)) {
-			String endcode = res.substring(0, 3)+" ";
-			while(res!=null && !res.startsWith(endcode)) {
-				res = controlReader.readLine();
-				logger.debug("<-- {}", res);
-			}
-		}
 		return res;
 	}
 
@@ -353,7 +313,7 @@ public class DPCClient implements Closeable{
 			throw new IllegalStateException("Not connected");
 		}
 	}
-	
+
 	private List<String> getFroxFeatures(){
 		return Arrays.asList(new String[]{ UFTPCommands.PASV,
 				UFTPCommands.RANGSTREAM, 

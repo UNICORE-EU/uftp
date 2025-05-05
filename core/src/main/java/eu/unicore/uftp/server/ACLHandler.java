@@ -34,19 +34,17 @@ public class ACLHandler {
 		}
 		this.aclFile = aclFile;
 		logger.info("Using ACL file {}", aclFile);
-		readACL();
 		watchDog=new FileWatcher(aclFile, ()-> readACL());
 		watchDog.schedule(3000,TimeUnit.MILLISECONDS);
+		watchDog.run();
 	}
 
-	protected void readACL(){
+	private void readACL(){
 		synchronized(acceptedDNs){
 			try(BufferedReader br = new BufferedReader(new FileReader(aclFile))){
 				String theLine;
 				acceptedDNs.clear();
-				while(true){
-					theLine=br.readLine();
-					if(theLine==null)break;
+				while((theLine=br.readLine())!=null){
 					String line=theLine.trim();
 					if(line.startsWith("#"))continue;
 					if(!line.trim().equals("")){

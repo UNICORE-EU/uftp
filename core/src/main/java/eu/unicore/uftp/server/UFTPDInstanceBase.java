@@ -6,7 +6,6 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.Callable;
 
 import javax.net.ssl.SSLSocketFactory;
 
@@ -26,13 +25,13 @@ import eu.unicore.util.Log;
 public abstract class UFTPDInstanceBase {
 
 	protected static final Logger log = Log.getLogger(Log.SERVICES, UFTPDInstanceBase.class);
-	
+
 	private String host;
-	
+
 	private int port;
-	
+
 	private String commandHost;
-	
+
 	private int commandPort;
 
 	private boolean ssl=true;
@@ -46,7 +45,7 @@ public abstract class UFTPDInstanceBase {
 	private long lastChecked;
 
 	private final Map<String,String>serverInfo = new HashMap<>();
-	
+
 	/**
 	 * the address of the FTP socket
 	 */
@@ -84,7 +83,7 @@ public abstract class UFTPDInstanceBase {
 	public void setCommandPort(int commandPort) {
 		this.commandPort = commandPort;
 	}
-	
+
 	public boolean isSsl() {
 		return ssl;
 	}
@@ -100,7 +99,7 @@ public abstract class UFTPDInstanceBase {
 	public void setDescription(String description) {
 		this.description = description;
 	}
-	
+
 	public String getConnectionStatusMessage(){
 		checkConnection();
 		return statusMessage;
@@ -109,12 +108,12 @@ public abstract class UFTPDInstanceBase {
 	public String toString(){
 		return "[UFTPD server: cmd"+(ssl?"(ssl)":"")+"="+commandHost+":"+commandPort+" ftp="+host+":"+port+"]";
 	}
-	
+
 	public boolean isUFTPAvailable(){
 		checkConnection();
 		return isUp;
 	}
-	
+
 	protected void checkConnection(){
 		if (lastChecked+60000>System.currentTimeMillis())
 			return;
@@ -159,11 +158,7 @@ public abstract class UFTPDInstanceBase {
 	}
 
 	public int getSessionLimit() {
-		int limit = -1;
-		try {
-			limit = Integer.parseInt(serverInfo.getOrDefault("MaxSessionsPerClient", "-1"));
-		}catch(Exception ex) {}
-		return limit;
+		return Integer.parseInt(serverInfo.getOrDefault("MaxSessionsPerClient", "-1"));
 	}
 
 	public String getVersion() {
@@ -180,23 +175,16 @@ public abstract class UFTPDInstanceBase {
 	}
 
 	private String doSendRequest(final UFTPBaseRequest request)throws IOException{
-		final int timeout = getPingTimeout();
-		Callable<String>task = new Callable<>(){
-			@Override
-			public String call() throws Exception {
-				try (Socket socket = ssl ? 
-						getSSLSocketFactory().createSocket(commandHost, commandPort):
-						new Socket(InetAddress.getByName(commandHost),commandPort))
-				{
-					socket.setSoTimeout(1000*timeout);
-					log.debug("Sending {} request to {}:{}, SSL={}",
-							request.getClass().getSimpleName(), commandHost, commandPort, ssl);
-					return request.sendTo(socket);
-				}
-			}
-		};
 		try{
-			return task.call();
+			try (Socket socket = ssl ? 
+					getSSLSocketFactory().createSocket(commandHost, commandPort):
+					new Socket(InetAddress.getByName(commandHost),commandPort))
+			{
+				socket.setSoTimeout(1000*getPingTimeout());
+				log.debug("Sending {} request to {}:{}, SSL={}",
+						request.getClass().getSimpleName(), commandHost, commandPort, ssl);
+				return request.sendTo(socket);
+			}
 		}catch(Exception ie){
 			statusMessage = "CAN'T CONNECT TO UFTPD: "+Log.createFaultMessage("Error", ie);
 			isUp = false;

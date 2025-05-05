@@ -52,9 +52,9 @@ public class DPCServer {
 	private final JobStore jobMap;
 
 	private boolean checkClientIP;
-	
+
 	private boolean rfcMode= false;
-	
+
 	/**
 	 * String-Array holding response messages used to establish the pseudo-FTP
 	 * connection
@@ -67,9 +67,6 @@ public class DPCServer {
 	private InetAddress ip;
 
 	private final String advertiseAddress;
-
-	// data connection buffer size - taken from environment UFTP_SO_BUFSIZE
-	private int so_buffer_size;
 
 	/**
 	 * create a new server listening on the given interface
@@ -104,12 +101,6 @@ public class DPCServer {
 		}
 		this.portManager = pm!=null ? pm : new PortManager();
 		this.checkClientIP = checkClientIP;
-		try {
-			so_buffer_size = Integer.parseInt(Utils.getProperty("UFTP_SO_BUFSIZE", "-1"));
-		}catch(Exception ex) {
-			so_buffer_size = -1;
-		}
-
 	}
 
 	/**
@@ -132,7 +123,7 @@ public class DPCServer {
 		}
 		return new Connection(controlSocket, getFeatures(), checkClientIP);
 	}
-	
+
 	/**
 	 * close the server socket, disallowing any new connections. Existing
 	 * connections are kept
@@ -179,11 +170,11 @@ public class DPCServer {
 			}
 		}
 	}
-	
+
 	public boolean isCheckClientIP(){
 		return checkClientIP;
 	}
-	
+
 	void addJob(UFTPSessionRequest job){
 		jobMap.addJob(job);
 	}
@@ -210,8 +201,6 @@ public class DPCServer {
 
 		private final Socket controlSocket;
 
-		private volatile boolean established = false;
-
 		private final List<Socket> dataSockets = new ArrayList<>();
 
 		/**
@@ -227,7 +216,7 @@ public class DPCServer {
 		private final Collection<String> features = new HashSet<>();
 
 		private boolean checkClientIP = true;
-		
+
 		private Connection(Socket controlSocket, final String[] features, boolean checkClientIP) throws IOException {
 			this.controlSocket = controlSocket;
 			controlWriter = new BufferedWriter(new OutputStreamWriter(controlSocket.getOutputStream()));
@@ -248,13 +237,12 @@ public class DPCServer {
 		 * @throws IOException
 		 */
 		public UFTPBaseRequest establish() throws AuthorizationFailureException, IOException {
-			logger.info("Establishing control connection with " + controlSocket.getRemoteSocketAddress());
+			logger.info("Establishing control connection with {}", controlSocket.getRemoteSocketAddress());
 			ServerProtocol sp = new ServerProtocol();
 			UFTPBaseRequest job = sp.establish(this);
-			established = job!=null;
 			return job;
 		}
-		
+
 		public boolean isCheckClientIP(){
 			return checkClientIP;
 		}
@@ -263,82 +251,6 @@ public class DPCServer {
 			return dataSockets;
 		}
 
-		/**
-		 * Server part of opening data connections. On the client side, the
-		 * corresponding method DPCClient.openDataConnections() has to be
-		 * called. No connections to this control connections must exist, use
-		 * close(controlSocket) to close them. The client can choose the number
-		 * of data connections, however, these must not exceed maxParcons. If
-		 * maxParCons is exceeded, the number of connections is limited to
-		 * maxParCons. A {@link ProtocolViolationException} is thrown when the
-		 * client does not adhere to the protocol.
-		 *
-		 * @param maxParCons maximum number of data connections
-		 * @return list of data sockets
-		 * @throws IOException
-		 * @throws ProtocolViolationException when protocol is violated, or data
-		 * connections already exist
-		 */
-		public List<Socket> openDataConnections(int maxParCons) throws IOException {
-			if (!established) {
-				throw new IllegalStateException("Connection is not established.");
-			}
-
-			if (dataSockets.size()>0) {
-				throw new ProtocolViolationException("Cannot open new connections.");
-			}
-
-			//read numParCon from the client message "NOOP <n>" where 'n' is the requested number of connections 
-			int numParCons = 1;
-			String msg = readControl();
-			
-			if (msg.startsWith("NOOP ")) {
-				numParCons = handleNoop(this, msg, maxParCons);
-			} 
-			
-			//receive EPSV/PASV and open data connections
-			dataSockets.clear();
-			for (int i = 0; i < numParCons; i++) {
-				String inputLine = readControl();
-				Socket r = createNewDataConnection(inputLine);
-				if (r == null) {
-					String err = "Expected "+UFTPCommands.EPSV+" or "+UFTPCommands.PASV;
-					sendError(err);
-					closeData();
-					Utils.closeQuietly(controlSocket);
-					throw new ProtocolViolationException(err);
-				}
-				else{
-					if(so_buffer_size>0) {
-						try {
-							r.setSendBufferSize(so_buffer_size);
-							r.setReceiveBufferSize(so_buffer_size);
-						}catch(SocketException e) {}
-					}
-					dataSockets.add(r);
-				}
-			}
-			return dataSockets;
-		}
-
-		private int handleNoop(Connection connection, String noopMsg, int maxParCons) throws IOException {
-			int numParCons=1;
-			try{
-				numParCons = Integer.parseInt(noopMsg.split(" ")[1]);
-				String noopResponse = "222";			//accept numParCons
-				if (numParCons > maxParCons) {
-					numParCons = maxParCons;
-					noopResponse = "223";				//limit numParCons
-				}
-				noopResponse += " Opening " + numParCons + " data connections";
-				connection.sendControl(noopResponse);
-			}catch(Exception ex){
-				// some other noop message, ignore it
-				connection.sendControl("200 OK");
-			}
-			return numParCons;
-		}
-		
 		/**
 		 * quietly close all our data connections
 		 */
@@ -383,7 +295,6 @@ public class DPCServer {
 		public void sendError(String message) throws IOException {
 			sendControl(UFTPCommands.ERROR+" "+message);
 		}
-		
 
 		/**
 		 * sends error message (with code) over the control connection
@@ -418,41 +329,10 @@ public class DPCServer {
 			controlSocket.setSoTimeout(timeout);
 		}
 
-		/**
-		 * make a new (data) connection
-		 *
-		 * @return new Data socket
-		 * @throws IOException
-		 */
-		protected Socket createNewDataConnection() throws IOException {
-			String inputLine = readControl();
-			return createNewDataConnection(inputLine);
+		public void addNewDataConnection(String cmd) throws IOException {
+			dataSockets.add(cmd.equals(UFTPCommands.EPSV) ? epsv() : pasv());
 		}
 
-		public Socket createNewDataConnection(String cmd) throws IOException {
-			Socket r = null;
-			if (cmd.equals(UFTPCommands.PASV)) {
-				r = pasv();
-			}
-			else if (cmd.equals(UFTPCommands.EPSV)) {
-				r = epsv();
-			}
-			return r;
-		}
-		
-		public void addNewDataConnection(String cmd) throws IOException {
-			Socket r = null;
-			if (cmd.equals(UFTPCommands.PASV)) {
-				r = pasv();
-			}
-			else if (cmd.equals(UFTPCommands.EPSV)) {
-				r = epsv();
-			}
-			if(r!=null){
-				dataSockets.add(r);
-			}
-		}
-		
 		private Socket pasv() throws IOException {
 			Socket r = null;
 			ServerSocket tmp = null;
@@ -502,7 +382,7 @@ public class DPCServer {
 
 				String outputLine = "229 Entering Extended Passive Mode (|||" + localPort + "|)";
 				sendControl(outputLine);
-				
+
 				//wait for client to connect
 				int attempts = 0;
 				while(attempts < 3){
@@ -523,14 +403,6 @@ public class DPCServer {
 				}
 			}
 			return r;
-		}
-
-		public List<UFTPBaseRequest> getJobsForClientAddress(InetAddress clientAddress){
-			return jobMap.getJobs(clientAddress);
-		}
-		
-		public List<UFTPBaseRequest> getJobsForControlSocketAddress(){
-			return jobMap.getJobs(controlSocket.getInetAddress());
 		}
 
 		public UFTPBaseRequest getJob(String secret){

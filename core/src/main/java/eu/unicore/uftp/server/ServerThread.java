@@ -38,9 +38,9 @@ public class ServerThread extends Thread {
 
     private final JobStore jobStore = new JobStore();
 
-    private final Map<InetAddress, AtomicInteger> runningConnectionsMap;
+    private final Map<InetAddress, AtomicInteger> runningConnectionsMap = new ConcurrentHashMap<>();
 
-    private final FileAccess fileAccess;
+    private final FileAccess fileAccess = Utils.getFileAccess(logger);
 
     private volatile boolean isHalt = false;
 
@@ -51,19 +51,12 @@ public class ServerThread extends Thread {
 
     /**
      * create a new server thread
-     *
-     * @param ip - server IP address
-     * @param port - server listen port
-     * @param backlog - server socket backlog
-     * @param maxStreams - maximum number of TCP streams per transfer
      * @throws IOException
      */
 	public ServerThread(InetAddress ip, int port, int backlog, int maxStreams,
 			String advertiseAddress, PortManager pm, boolean checkClientIP) throws IOException {
 		this.maxStreams = maxStreams;
-        runningConnectionsMap = new ConcurrentHashMap<>();
         setupExpiryCheck();
-        fileAccess = Utils.getFileAccess(logger);
         this.server = new DPCServer(ip, port, backlog, jobStore, advertiseAddress, pm, checkClientIP);
     }
 
@@ -77,13 +70,7 @@ public class ServerThread extends Thread {
             while (!isHalt) {
                 try {
                     final Connection connection = server.accept();
-                    Runnable r = new Runnable() {
-                        @Override
-                        public void run() {
-                            processConnection(connection, maxStreams);
-                        }
-                    };
-                    Utils.getExecutor().execute(r);
+                    Utils.getExecutor().execute(()->processConnection(connection, maxStreams));
                 } catch (SocketTimeoutException ste) {
                     //timeout, just re-try if not halted
                 } catch (IOException e) {
@@ -170,41 +157,13 @@ public class ServerThread extends Thread {
     public void setTimeout(int time) {
         server.setTimeout(time);
     }
-
-    /**
-     * return the server timeout
-     *
-     * @return Timeout in ms
-     */
-    public int getTimeout() {
-        return server.getTimeout();
-    }
     
     public int getPort() {
         return server.getPort();
     }
-    
-    public String getHost()  {
-        return server.getHost();
-    }
-
-    public int getMaxControlConnectionsPerClient() {
-        return maxControlConnectionsPerClient;
-    }
 
     public void setMaxControlConnectionsPerClient(int maxControlConnectionsPerClient) {
         this.maxControlConnectionsPerClient = maxControlConnectionsPerClient;
-    }
-
-    public void setMaxStreamsPerConnection(int maxStreams) {
-        if (maxStreams < 1) {
-            throw new IllegalArgumentException("Maximum streams per connection must be >=1, got: " + maxStreams);
-        }
-        this.maxStreams = maxStreams;
-    }
-
-    public int getBufferSize() {
-        return bufferSize;
     }
 
     public void setBufferSize(int bufferSize) {
@@ -238,25 +197,11 @@ public class ServerThread extends Thread {
     }
 
     private final void setupExpiryCheck() {
-        Runnable r = ()-> {
-        	try{
-        		jobStore.checkForExpiredJobs();
-        	}catch(Exception ex) {}
-
-        };
-        long delay = Math.max(jobStore.getJobLifetime()/3, 60);
-        Utils.getExecutor().scheduleWithFixedDelay(r, delay, 60, TimeUnit.SECONDS);
-    }
-
-    public void cleanConnectionCounters() {
-        var iterator = runningConnectionsMap.entrySet().iterator();
-        while (iterator.hasNext()) {
-            var entry = iterator.next();
-            AtomicInteger counter = entry.getValue();
-            if (counter.get() == 0) {
-                iterator.remove();
-            }
-        }
+    	Utils.getExecutor().scheduleWithFixedDelay(()-> {
+    		try{
+    			jobStore.checkForExpiredJobs();
+    		}catch(Exception ex) {}},
+    			Math.max(jobStore.getJobLifetime()/3, 60), 60, TimeUnit.SECONDS);
     }
 
     public FileAccess getFileAccess() {

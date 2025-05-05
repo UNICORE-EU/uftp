@@ -13,14 +13,14 @@ import eu.unicore.uftp.dpc.Utils;
  * 
  * @author schuller
  */
-public class FileWatcher implements Runnable{
+public class FileWatcher implements Runnable {
 
 	private final File target;
-	
+
 	private final Runnable action;
-	
+
 	private long lastAccessed;
-		
+
 	public FileWatcher(File target, Runnable action)throws FileNotFoundException{
 		if(!target.exists() || !target.canRead()){
 			throw new FileNotFoundException("File "+target.getAbsolutePath()+
@@ -28,22 +28,22 @@ public class FileWatcher implements Runnable{
 		}
 		this.target=target;
 		this.action=action;
-		lastAccessed=target.lastModified();
 	}
-	
+
 	public void schedule(int delay, TimeUnit timeunit){
 		Utils.getExecutor().scheduleWithFixedDelay(this, delay, delay, timeunit);
 	}
-	
+
 	/**
 	 * check if target file has been touched and invoke 
 	 * the action if it has
 	 */
+	@Override
 	public void run(){
 		if(target.lastModified()>lastAccessed){
-			lastAccessed=target.lastModified();
+			lastAccessed = target.lastModified();
 			action.run();
 		}
 	}
-	
+
 }

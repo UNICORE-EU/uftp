@@ -83,14 +83,13 @@ public class AsyncProducer implements Runnable {
 			return (n<0 || toRead<=0 || !source.isOpen());
 		}catch(IOException ioe) {
 			logger.error("Error handling selection event: "+ioe);
-			ioe.printStackTrace();
 			return false;
 		}
 	}
 
 	static class Holder{
-		public FileChannel source;
-		public Deque<ByteBuffer> sink;
+		public final FileChannel source;
+		public final Deque<ByteBuffer> sink;
 		public Long toRead;
 		public Holder(FileChannel source, Deque<ByteBuffer> sink, Long toRead) {
 			this.source = source;

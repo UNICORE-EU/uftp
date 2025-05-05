@@ -107,7 +107,6 @@ public class AsyncDownloader implements Runnable {
 			}
 		}catch(IOException ioe) {
 			logger.error("Error handling selection event: "+ioe);
-			ioe.printStackTrace();
 		}
 	}
 	

@@ -56,14 +56,14 @@ public class ClientProtocol {
 	 */
 	public void login(String user, String password) throws IOException {
         client.sendControl(user);
-        String response = client.readControl(true);
+        String response = client.readControl();
         if(response.startsWith("331")){
         	client.sendControl("PASS "+password);
         }
         else{
             throw new ProtocolViolationException("'" + response + "' does not comply with protocol.");
         }
-        response = client.readControl(true);
+        response = client.readControl();
         if(!response.startsWith("230")){
             throw new ProtocolViolationException( "Login failed: "+response);
         }
@@ -78,7 +78,7 @@ public class ClientProtocol {
     protected void readFeatures() throws IOException {
         String response;
         client.sendControl(UFTPCommands.SYST);
-        response = client.readControl(true);
+        response = client.readControl();
         client.sendControl(UFTPCommands.FEATURES_REQUEST);
         response = client.readControl();
         if (!response.startsWith("211")) {

@@ -42,6 +42,7 @@ public class UFTPServer implements Runnable {
 	private static final Logger logger = Utils.getLogger(Utils.LOG_SERVER, UFTPServer.class);
 
 	private static String VER = UFTPServer.class.getPackage().getImplementationVersion();
+
 	/**
 	 * Error codes
 	 */
@@ -49,10 +50,11 @@ public class UFTPServer implements Runnable {
 	public final static int LISTENSOCKERR = 2;
 	public final static int THREADERR = 3;
 	public final static int CMDSOCKERR = 4;
+
 	/**
 	 * Backlog for the server sockets
 	 */
-	public final static int BACKLOG = 50;
+	private final static int BACKLOG = 50;
 	private final InetAddress cmdip;
 	private final InetAddress srvip;
 	private final int cmdport;
@@ -64,7 +66,7 @@ public class UFTPServer implements Runnable {
 	//timeout when reading jobs
 	int jobReadTimeout = 15000;
 	//limit on streams per client
-	int maxStreams = 8;
+	int maxStreams = 4;
 	//limit on control connections per client IP
 	int maxControlConnectionsPerClient = 16;
 	//buffersize for reading/writing files
@@ -74,7 +76,7 @@ public class UFTPServer implements Runnable {
 	private volatile boolean stopped = false;
 	private String advertiseAddress;
 	private String[] keyFileList;
-	
+
 	public UFTPServer(InetAddress cmdip, int cmdport, InetAddress srvip,
 			int srvport, String advertiseAddress, PortManager portManager, boolean checkClientIP) throws IOException {
 		this.cmdip = cmdip;
@@ -111,23 +113,22 @@ public class UFTPServer implements Runnable {
 		svrThread.setTimeout(timeout);
 		svrThread.setMaxControlConnectionsPerClient(maxControlConnectionsPerClient);
 		svrThread.setBufferSize(bufferSize);
-
 		svrThread.start();
-		logger.info("UFTPD Listener server socket started on " + srvip.getHostName() + ":" + srvport);
+		logger.info("UFTPD Listener server socket started on {}:{}", srvip.getHostName(), srvport);
 
 		ServerSocket cmdSocket = null;
 		try {
 			cmdSocket = sslHelper.createCommandSocket(cmdport,BACKLOG,cmdip);
 			//TODO set timeout values
-			logger.info("UFTPD Command server socket started on " + cmdip.getHostName() + ":" + cmdport);
+			logger.info("UFTPD Command server socket started on {}:{}", cmdip.getHostName(), cmdport);
 		} catch (IOException e) {
 			logger.error("Error starting command socket. Please check the parameters for command host and port.", e);
 			System.exit(CMDSOCKERR);
 		}
-		logger.info("Maximum connections per client: " + maxControlConnectionsPerClient);
-		logger.info("Maximum streams per connection: " + maxStreams);
-		logger.info("File buffer size per client: " + bufferSize + " kB");
-		logger.info("Client IP check is " + (checkClientIP ? "ENABLED" : "DISABLED"));
+		logger.info("Maximum connections per client: {}", maxControlConnectionsPerClient);
+		logger.info("Maximum streams per connection: {}", maxStreams);
+		logger.info("File buffer size per client: {} kB", bufferSize);
+		logger.info("Client IP check is {}", (checkClientIP ? "ENABLED" : "DISABLED"));
 
 		// setup key file list for getUserinfo()
 		String fileListS = Utils.getProperty(UFTPConstants.ENV_UFTP_KEYFILES, null);
@@ -140,14 +141,14 @@ public class UFTPServer implements Runnable {
 			throw new ConfigurationException("Cannot parse file list from UFTP_KEYFILES", ex);
 		}
 		for(String s: keyFileList) {
-			logger.info("Reading user's keys from $HOME/"+s);
+			logger.info("Reading user's keys from $HOME/{}", s);
 		}
 		while (!stopped) {
 			Socket jobSocket = null;
 			try {
 				jobSocket = cmdSocket.accept();
 				try {
-					logger.debug("New control connection from " + jobSocket.getInetAddress());
+					logger.debug("New control connection from {}", jobSocket.getInetAddress());
 					jobSocket.setSoTimeout(jobReadTimeout);
 					jobSocket.setKeepAlive(true);
 					sslHelper.checkAccess(jobSocket);
@@ -177,7 +178,7 @@ public class UFTPServer implements Runnable {
 	public void setTimeout(int timeout) {
 		this.timeout = timeout;
 	}
-	
+
 	public void setCheckClientIP(boolean checkIP){
 		if(svrThread!=null)svrThread.setCheckClientIP(checkIP);
 	}
@@ -185,7 +186,7 @@ public class UFTPServer implements Runnable {
 	public void setRFCRangeMode(boolean rfcMode){
 		if(svrThread!=null)svrThread.setRFCRangeMode(rfcMode);
 	}
-	
+
 	/**
 	 * stops the server. Both command and listener sockets are closed.
 	 */
@@ -212,8 +213,7 @@ public class UFTPServer implements Runnable {
 	}
 
 	public static void printHeader() {
-		String message = "**** UFTPD Version "+getVersion()+ " starting";
-		logger.info(message);
+		logger.info("**** UFTPD Version {} starting", getVersion());
 	}
 
 	public String getServerInfo() {
@@ -229,7 +229,6 @@ public class UFTPServer implements Runnable {
 	}
 
 	public String getUserInfo(String username) {
-
 		StringBuilder sb = new StringBuilder();
 		sb.append("Version: ").append(getVersion());
 		sb.append("\nUser: ").append(username);

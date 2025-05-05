@@ -99,14 +99,13 @@ public class AsyncUploader implements Runnable {
 			}
 		}catch(IOException ioe) {
 			logger.error("Error handling selection event: "+ioe);
-			ioe.printStackTrace();
 		}
 	}
 	
 	static class Holder{
-		public Deque<ByteBuffer> source;
+		public final Deque<ByteBuffer> source;
 		public Long toWrite;
-		public UFTPSessionClient client;
+		public final UFTPSessionClient client;
 		public Holder(Deque<ByteBuffer> source, Long toWrite, UFTPSessionClient client) {
 			this.source = source;
 			this.toWrite = toWrite;

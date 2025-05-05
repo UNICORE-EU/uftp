@@ -44,12 +44,12 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 
 	private static final Logger logger = Utils.getLogger(Utils.LOG_SERVER, UFTPWorker.class);
 
-	protected final ServerThread server;
+	private final ServerThread server;
 	
 	/**
 	 * client connection
 	 */
-	protected final Connection connection;
+	private final Connection connection;
 
 	/**
 	 * Job for this connection
@@ -175,7 +175,7 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 			}
 		} catch (Exception ex) {
 			logger.error("Error processing session-mode action <"+action+
-					"> for connection from " + connection.getAddress(), null, ex);
+					"> for connection from " + connection.getAddress(), ex);
 			cleanup();
 		}
 	}

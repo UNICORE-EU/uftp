@@ -4,11 +4,13 @@ import javax.net.ssl.SSLSocketFactory;
 
 import org.junit.jupiter.api.Test;
 
+import eu.unicore.uftp.server.requests.UFTPPingRequest;
+
 /**
  * @author schuller
  */
 public class UFTPDInstanceBaseTest extends ClientServerTestBase {
-	
+
 	@Test
 	public void test1() throws Exception {
 		UFTPDInstanceBase i = new UFTPDInstanceBase() {
@@ -24,6 +26,7 @@ public class UFTPDInstanceBaseTest extends ClientServerTestBase {
 		System.out.println(i.getConnectionStatusMessage()
 				+", v"+i.getVersion()
 				+", max. sessions="+i.getSessionLimit());
+		i.sendRequest(new UFTPPingRequest());
 	}
 
 }

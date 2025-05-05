@@ -41,6 +41,11 @@ public class TestSessionBasics extends ClientServerTestBase{
 	}
 
 	@Test
+	public void testClientReadStreamLimit() throws Exception {
+		_clientRead(8, false);
+	}
+
+	@Test
 	public void testClientReadParallelNoThreads() throws Exception {
 		PConfig.usethreads = false;
 		_clientRead(2, false);
