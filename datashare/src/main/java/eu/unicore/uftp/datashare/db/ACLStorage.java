@@ -101,7 +101,7 @@ public class ACLStorage {
 		}
 		return null;
 	}
-	
+
 	public ShareDAO read(String uniqueID) throws Exception {
 		ShareDAO d = storage.read(uniqueID);
 		if(d!=null && d.isExpired()) {
@@ -202,11 +202,8 @@ public class ACLStorage {
 		return storage;
 	}
 
-	public static Comparator<ShareDAO> MostSpecificPath = new Comparator<>(){
-		@Override
-		public int compare(ShareDAO o1, ShareDAO o2) {
+	public final static Comparator<ShareDAO> MostSpecificPath = (o1, o2)->{
 			return o2.getPath().length()-o1.getPath().length();
-		}	
 	};
 
 }

@@ -91,10 +91,6 @@ public class ShareDAO {
 		this.targetID = targetID;
 	}
 
-	public void setID(String ID) {
-		this.ID = ID;
-	}
-
 	public void setAccess(AccessType access) {
 		this.access = access;
 	}
