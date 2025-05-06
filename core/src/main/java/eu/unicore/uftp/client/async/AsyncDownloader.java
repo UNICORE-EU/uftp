@@ -111,9 +111,9 @@ public class AsyncDownloader implements Runnable {
 	}
 	
 	static class Holder{
-		public WritableByteChannel sink;
+		public final WritableByteChannel sink;
 		public Long toRead;
-		public UFTPSessionClient client;
+		public final UFTPSessionClient client;
 		public Holder(WritableByteChannel sink, Long toRead, UFTPSessionClient client) {
 			this.sink = sink;
 			this.toRead = toRead;
