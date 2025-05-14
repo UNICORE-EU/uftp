@@ -8,10 +8,12 @@ Full documentation is at:
 https://uftp-docs.readthedocs.io
 
 
-Auth Server 3.0.2 (released mmm dd, 2025)
+Auth Server 3.1.0 (released May dd, 2025)
 -----------------------------------------
  - fix: don't show cmd address in status
  - fix: 'persistent' flag should default to false
+ - new feature: add admin action to modify share
+ - updated to UNICORE 10.2.0 base libraries
  
 Auth Server 3.0.1 (released Nov 26, 2024)
 -----------------------------------------

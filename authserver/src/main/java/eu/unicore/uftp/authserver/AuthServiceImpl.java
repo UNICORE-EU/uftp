@@ -1,9 +1,7 @@
 package eu.unicore.uftp.authserver;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
@@ -110,11 +108,9 @@ public class AuthServiceImpl extends ServiceBase {
 					if(ua.includes!=null)server.put("allowed",ua.includes);
 					if(ua.excludes!=null)server.put("forbidden",ua.excludes);
 					List<String> reservationInfo = i.getActiveReservationInfo(ua.uid);
-					if(reservationInfo.size()>0) {
-						JSONArray jres = new JSONArray();
-						reservationInfo.forEach( x-> jres.put(x));
-						server.put("reservations", jres);
-					}
+					JSONArray jres = new JSONArray();
+					reservationInfo.forEach( x-> jres.put(x));
+					server.put("reservations", jres);
 				}catch(Exception ex){}
 				server.put("dataSharing",getShareServiceInfo(name));
 				o.put(name, server);
