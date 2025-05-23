@@ -36,7 +36,7 @@ public class TestAdminActions {
 		System.out.println(res.getMessage());
 		System.out.println(res.getResults());
 	}
-	
+
 	@Test
 	public void testShowUserInfo2() {
 		AdminAction a = new ShowUserInfo();
@@ -62,7 +62,6 @@ public class TestAdminActions {
 		assertFalse(res.successful());
 		System.out.println(res.getMessage());
 	}
-
 	
 	@Test
 	public void testModifyShare() throws Exception {
@@ -77,7 +76,7 @@ public class TestAdminActions {
 		d1.setTargetID("cn=anon");
 		System.out.println("Added share: "+d1);
 		db.getPersist().write(d1);
-		
+
 		AdminAction a = new ModifyShare();
 		System.out.println("Invoking "+a.getName()+" "+a.getDescription());
 		Map<String,String>params = new HashMap<>();
@@ -106,8 +105,6 @@ public class TestAdminActions {
 		assertEquals(res.getMessage(), d2.toString());
 	}
 
-	
-	
 	protected static UFTPServer server;
 	static int cmdPort = 63321;
 	static int listenPort = 63320;

@@ -14,7 +14,7 @@ import java.util.TimeZone;
 
 /**
  * Holds information about a file such as name, size, last modified...
- *  
+ *
  * @author schuller
  */
 public class FileInfo {
@@ -33,11 +33,9 @@ public class FileInfo {
 	private boolean writable = true;
 	private boolean executable = false;
 
-	// TODO obviously
-	private String owner="schuller", group="schuller";
+	private String owner="uftp", group="uftp";
 
-	public FileInfo(){
-	}
+	public FileInfo(){}
 
 	public FileInfo(String ls){
 		parseLSEntry(ls);
@@ -138,7 +136,7 @@ public class FileInfo {
 		this.executable = executable;
 	}
 
-	public String getIsDirectory(){
+	private String getIsDirectory(){
 		StringBuilder perm = new StringBuilder();
 		perm.append(isDirectory?"d":"-");
 		return perm.toString();
@@ -211,7 +209,7 @@ public class FileInfo {
 			info.writable = perm.contains("w");
 			info.executable = perm.contains("x");
 			info.readable = perm.contains("r");
-		}catch(Exception e) {e.printStackTrace();}
+		}catch(Exception e) {}
 		return info;
 	}
 
@@ -379,46 +377,38 @@ public class FileInfo {
 		Calendar cal = new GregorianCalendar(TIME_ZONE_UTC);
 		cal.setTimeInMillis(millis);
 
-
-		// year
 		sb.append(cal.get(Calendar.YEAR));
 
-		// month
 		int month = cal.get(Calendar.MONTH) + 1;
 		if (month < 10) {
 			sb.append('0');
 		}
 		sb.append(month);
 
-		// date
 		int date = cal.get(Calendar.DATE);
 		if (date < 10) {
 			sb.append('0');
 		}
 		sb.append(date);
 
-		// hour
 		int hour = cal.get(Calendar.HOUR_OF_DAY);
 		if (hour < 10) {
 			sb.append('0');
 		}
 		sb.append(hour);
 
-		// minute
 		int min = cal.get(Calendar.MINUTE);
 		if (min < 10) {
 			sb.append('0');
 		}
 		sb.append(min);
 
-		// second
 		int sec = cal.get(Calendar.SECOND);
 		if (sec < 10) {
 			sb.append('0');
 		}
 		sb.append(sec);
 
-		// millisecond
 		sb.append('.');
 		int milli = cal.get(Calendar.MILLISECOND);
 		if (milli < 100) {
@@ -456,17 +446,12 @@ public class FileInfo {
 		sb.append(' ');
 		sb.append(path);
 		sb.append("\r\n");
-
 		return sb.toString();
 	}
-	
-    /**
-     * Get permission string.
-     */
+
     private char[] getPermission() {
         char permission[] = new char[10];
         Arrays.fill(permission, '-');
-
         permission[0] = isDirectory ? 'd' : '-';
         permission[1] = readable?  'r' : '-';
         permission[2] = writable ? 'w' : '-';
