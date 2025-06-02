@@ -13,14 +13,14 @@
     <artifactId>unicore-parent</artifactId>
     <version>3.0.4</version>
   </parent>
-  
+
   <scm>
     <connection>scm:git:https://www.github.com/UNICORE-EU/uftp</connection>
     <developerConnection>scm:git:https://www.github.com/UNICORE-EU/uftp</developerConnection>
     <url>https://github.com/UNICORE-EU/uftp</url>
     <tag>HEAD</tag>
   </scm>
- 
+
   <properties>
     <use.version>5.3.0</use.version>
     <uftp.version>2.21.0</uftp.version>

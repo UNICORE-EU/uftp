@@ -8,8 +8,8 @@ Full documentation is at:
 https://uftp-docs.readthedocs.io
 
 
-Auth Server 3.1.0 (released May dd, 2025)
------------------------------------------
+Auth Server 3.1.0 (released June 02, 2025)
+------------------------------------------
  - fix: don't show cmd address in status
  - fix: 'persistent' flag should default to false
  - new feature: add admin action to modify share
