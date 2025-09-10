@@ -62,7 +62,7 @@ public class TestAdminActions {
 		assertFalse(res.successful());
 		System.out.println(res.getMessage());
 	}
-	
+
 	@Test
 	public void testModifyShare() throws Exception {
 		// add a share

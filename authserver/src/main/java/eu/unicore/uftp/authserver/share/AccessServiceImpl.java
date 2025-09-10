@@ -70,14 +70,17 @@ public class AccessServiceImpl extends ShareServiceBase {
 		UFTPBackend server = getLogicalServer(serverName);
 		ACLStorage shareDB = getShareDB(serverName);
 		if(shareDB==null || server==null){
-			return handleError(404, "No server or no data sharing for '"+serverName+"'", null, logger);
+			return createErrorResponse(404, "No server or no data sharing for '"+serverName+"'");
+		}
+		if(!server.isAvailable()) {
+			return createErrorResponse(503, server.getStatusDescription());
 		}
 		Response r = null;
 		try{
 			UFTPDInstance uftp = getUFTPD(serverName);
 			ShareDAO share = shareDB.read(uniqueID);
 			if(share==null){
-				return handleError(404, "No such share '"+uniqueID+"'", null, logger);
+				return createErrorResponse(404, "No such share '"+uniqueID+"'");
 			}
 			if(equal(share.getTargetID(), getNormalizedCurrentUserName())
 				|| equal(share.getTargetID(), Client.ANONYMOUS_CLIENT_DN)){
@@ -144,7 +147,10 @@ public class AccessServiceImpl extends ShareServiceBase {
 		UFTPBackend server = getLogicalServer(serverName);
 		ACLStorage shareDB = getShareDB(serverName);
 		if(shareDB==null || server==null) {
-			return handleError(404, "No server or no data sharing for '"+serverName+"'", null, logger);
+			throw new WebApplicationException(404);
+		}
+		if(!server.isAvailable()) {
+			throw new WebApplicationException(503);
 		}
 		Response r = null;
 		try{
@@ -187,7 +193,10 @@ public class AccessServiceImpl extends ShareServiceBase {
 		UFTPBackend server = getLogicalServer(serverName);
 		ACLStorage shareDB = getShareDB(serverName);
 		if(shareDB==null || server==null){
-			return handleError(404, "No sharing for / no server '"+serverName+"', please check your URL", null, logger);
+			return createErrorResponse(404, "No sharing for / no server '"+serverName+"', please check your URL");
+		}
+		if(!server.isAvailable()) {
+			return createErrorResponse(503, server.getStatusDescription());
 		}
 		String clientIP = AuthZAttributeStore.getTokens().getClientIP();
 		Response r = null;
@@ -200,16 +209,16 @@ public class AccessServiceImpl extends ShareServiceBase {
 			Target target = new SharingUser(targetID);
 			Collection<ShareDAO> shares = shareDB.readAll(path);
 			if(shares.size()==0){
-				return handleError(404, "No such share '"+path+"', please check your URL", null, logger);
+				return createErrorResponse(404, "No such share '"+path+"', please check your URL");
 			}
 			ShareDAO share = shareDB.filter(shares, target);
 			if(share==null){
-				return handleError(401, "Not allowed to access '"+path+"'", null, logger);
+				return createErrorResponse(401, "Not allowed to access '"+path+"'");
 			}
 			else{
 				AccessType access = AccessType.valueOf(share.getAccess());
 				if(!authRequest.send && access.compareTo(AccessType.WRITE)<0){
-					return handleError(401, "Not allowed to write to '"+path+"'", null, logger);
+					return createErrorResponse(401, "Not allowed to write to '"+path+"'");
 				}
 				File requested = new File(path);
 				String parent = requested.getParent();

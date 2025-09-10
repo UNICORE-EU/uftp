@@ -3,6 +3,7 @@ package eu.unicore.uftp.authserver;
 import java.util.Collection;
 
 import eu.unicore.services.Kernel;
+import eu.unicore.services.StartupTask;
 import eu.unicore.services.rest.RestService;
 import eu.unicore.services.rest.security.UserPublicKeyCache;
 import eu.unicore.services.rest.security.UserPublicKeyCache.UserInfoSource;
@@ -10,8 +11,8 @@ import eu.unicore.services.utils.deployment.DeploymentDescriptorImpl;
 import eu.unicore.services.utils.deployment.FeatureImpl;
 
 /**
- * job execution
- * 
+ * deploys the auth service
+ *
  * @author schuller
  */
 public class AuthServerFeature extends FeatureImpl {
@@ -20,6 +21,7 @@ public class AuthServerFeature extends FeatureImpl {
 		this.name = "AuthServer";
 	}
 
+	@Override
 	public void setKernel(Kernel kernel) {
 		super.setKernel(kernel);
 		services.add(new AuthSD(kernel));
@@ -32,7 +34,7 @@ public class AuthServerFeature extends FeatureImpl {
 			this();
 			setKernel(kernel);
 		}
-		
+
 		public AuthSD() {
 			super();
 			this.name = "auth";
@@ -42,7 +44,7 @@ public class AuthServerFeature extends FeatureImpl {
 	}
 
 	
-	public static class AuthServerStartup implements Runnable {
+	public static class AuthServerStartup implements StartupTask {
 
 		private final Kernel kernel;
 
@@ -50,6 +52,7 @@ public class AuthServerFeature extends FeatureImpl {
 			this.kernel = kernel;
 		}
 
+		@Override
 		public void run() {
 			UserPublicKeyCache cache = UserPublicKeyCache.get(kernel);
 			Collection<UserInfoSource>sources = cache.getUserInfoSources();

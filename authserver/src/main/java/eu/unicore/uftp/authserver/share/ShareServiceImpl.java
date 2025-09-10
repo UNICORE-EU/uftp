@@ -71,12 +71,11 @@ public class ShareServiceImpl extends ShareServiceBase {
 			String requestedGroup = json.optString("group", null);
 			UserAttributes ua = assembleAttributes(server, requestedGroup);
 			if("nobody".equalsIgnoreCase(ua.uid)){
-				// cannot share as nobody!
-				return handleError(401, "Your User ID cannot share, please check your access level", null, logger);
+				return createErrorResponse(401, "Your User ID cannot share, please check your access level");
 			}
 			AccessType accessType = AccessType.valueOf(json.optString("access", "READ"));
 			if(AccessType.WRITE.equals(accessType)&&!getShareServiceProperties().isWriteAllowed()){
-				return handleError(401, "Writable shares not allowed", null, logger);
+				return createErrorResponse(401, "Writable shares not allowed");
 			}
 			String user = json.getString("user");
 			Target target = new SharingUser(normalize(user));
@@ -278,7 +277,6 @@ public class ShareServiceImpl extends ShareServiceBase {
 		}
 	}
 
-
 	/**
 	 * delete a share
 	 */
@@ -299,7 +297,7 @@ public class ShareServiceImpl extends ShareServiceBase {
 			ShareDAO d = shareDB.read(uniqueID);
 			if(d!=null) {
 				if(!d.getOwnerID().equals(getNormalizedCurrentUserName())){
-					return handleError(401, "", null, logger);
+					return createErrorResponse(401, "");
 				}
 			}
 			shareDB.delete(uniqueID);

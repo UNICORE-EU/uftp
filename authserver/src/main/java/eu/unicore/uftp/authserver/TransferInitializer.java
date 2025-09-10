@@ -26,7 +26,7 @@ public class TransferInitializer {
     	String response = server.sendRequest(request);
         String[] split = response.split("::");
         if (response.isEmpty()||split.length<2 || !split[0].startsWith("OK")) {
-        	return new AuthResponse(false, "UFTPD Server "+server.getServerName()+": <"+response+">");
+        	return new AuthResponse(false, server.getExternalSystemName()+": <"+response+">");
         }
         // response is "OK::<serverPort>;
         int port = Integer.parseInt(split[1].trim());

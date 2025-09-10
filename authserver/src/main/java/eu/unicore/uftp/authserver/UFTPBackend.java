@@ -53,6 +53,9 @@ public class UFTPBackend implements UserInfoSource {
 	}
 
 	public void configure(String name, Properties properties) {
+		if(name.contains("-")) {
+			throw new ConfigurationException("Server name cannot contain the '-' character, sorry.");
+		}
 		String prefix = "authservice.server." + name + ".";
 		String desc = properties.getProperty(prefix+"description", "n/a");
 		setDescription(desc);
@@ -68,7 +71,7 @@ public class UFTPBackend implements UserInfoSource {
 				log.warn("Static reservations file <"+path+"> not found. Skipping.");
 			}
 		}
-		
+
 		if(properties.getProperty(prefix+"host")!=null) {
 			UFTPDInstance server = createUFTPD(name, prefix, properties);
 			instances.add(server);
@@ -104,12 +107,11 @@ public class UFTPBackend implements UserInfoSource {
 		for(String i: internal)params.remove(prefix+i);
 		Utilities.mapParams(thing, params, log);
 	}
-	
-	
+
 	public String getServerName(){
 		return serverName;
 	}
-	
+
 	public String getDescription() {
 		return description;
 	}
@@ -117,7 +119,7 @@ public class UFTPBackend implements UserInfoSource {
 	public void setDescription(String description) {
 		this.description = description;
 	}
-	
+
 	public String getStatusDescription(){
 		checkConnection();
 		return statusMessage;
@@ -133,7 +135,7 @@ public class UFTPBackend implements UserInfoSource {
 		return "[UFTPD Server '"+serverName+"' "+getStatusDescription()+"]";
 	}
 
-	public boolean isUFTPAvailable(){
+	public boolean isAvailable(){
 		checkConnection();
 		return isUp;
 	}
@@ -141,7 +143,7 @@ public class UFTPBackend implements UserInfoSource {
 	private synchronized void checkConnection(){
 		isUp = false;
 		int avail = 0;
-		
+
 		for(UFTPDInstance i: instances){
 			String state = "DOWN";
 			if(i.isUFTPAvailable()) {
@@ -161,7 +163,7 @@ public class UFTPBackend implements UserInfoSource {
 	}
 
 	int index = 0;
-	
+
 	public synchronized UFTPDInstance getUFTPDInstance() throws IOException {
 		int c=0;
 		while(c<=instances.size()) {
@@ -175,13 +177,10 @@ public class UFTPBackend implements UserInfoSource {
 		}
 		throw new IOException("None of the configured UFTPD servers is available!");
 	}
-	
-	public synchronized UFTPDInstance getUFTPDInstance(Integer index) throws IOException {
+
+	public UFTPDInstance getUFTPDInstance(Integer index) throws IOException {
 		if(index==null) {
 			return getUFTPDInstance();
-		}
-		if(index>instances.size()) {
-			throw new IOException("Requested UFTP server instance does not exist!");
 		}
 		UFTPDInstance i = instances.get(index-1);
 		if(!i.isUFTPAvailable()) {
@@ -189,7 +188,10 @@ public class UFTPBackend implements UserInfoSource {
 		}
 		return i;
 	}
-	
+
+	public boolean hasInstance(Integer index){
+		return index==null || index<=instances.size();
+	}
 	
 	@Override
 	public List<String> getAcceptedKeys(String requestedUserName){
@@ -211,11 +213,7 @@ public class UFTPBackend implements UserInfoSource {
 		}
 		return acceptedKeys;
 	}
-	
-	public Reservations getReservations() {
-		return reservations;
-	}
-	
+
 	public long getRateLimit(String uid) {
 		return reservations!=null ? reservations.getRateLimit(uid) : -1;
 	}
@@ -241,15 +239,18 @@ public class UFTPBackend implements UserInfoSource {
 		}
 		return limit;
 	}
-	
+
 	public String getVersion() {
 		// note: we ignore potentially different versions for 
 		// the various instances
+		String res = "n/a";
 		for(UFTPDInstance i: instances) {
 			String v = i.getVersion();
-			if(!"n/a".equals(v))return v;
+			if(!"n/a".equals(v)) {
+				res = v;
+				break;
+			}
 		}
-		return "n/a";
+		return res;
 	}
-	
 }

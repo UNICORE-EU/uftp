@@ -7,6 +7,10 @@ https://github.com/UNICORE-EU/uftp/issues
 Full documentation is at:
 https://uftp-docs.readthedocs.io
 
+Auth Server 3.2.0 (released MMM dd, 2025)
+------------------------------------------
+ - fix: re-add default certificate to tar.gz bundle
+ - update to UNICORE 10.3.0 base libs
 
 Auth Server 3.1.0 (released June 02, 2025)
 ------------------------------------------

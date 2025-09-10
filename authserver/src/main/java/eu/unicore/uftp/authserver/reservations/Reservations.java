@@ -28,7 +28,7 @@ public class Reservations {
 
 	private final static Logger log = Log.getLogger("authservice", Reservations.class);
 
-	Collection<Reservation>reservations = new ArrayList<>();
+	Collection<Reservation> reservations = new ArrayList<>();
 
 	private final String sourceFileName;
 

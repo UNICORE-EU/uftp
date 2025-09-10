@@ -23,28 +23,27 @@ public class UFTPDInstance extends UFTPDInstanceBase implements ExternalSystemCo
 	private final String serverName;
 
 	private final Kernel kernel;
-	
+
 	public UFTPDInstance(String serverName, Kernel kernel){
 		super();
 		this.serverName = serverName;
 		this.kernel = kernel;
 	}
 
-	public String getServerName(){
-		return serverName;
-	}
-		
+	@Override
 	public Status getConnectionStatus() {
 		checkConnection();
 		return isUp ? Status.OK : Status.DOWN;
 	}
-	
+
+	@Override
 	public String getExternalSystemName() {
 		return  "UFTPD server '"+serverName+"'";
 	}
-	
+
 	private SSLSocketFactory socketfactory = null;
-	
+
+	@Override
 	protected synchronized SSLSocketFactory getSSLSocketFactory() {
 		if(socketfactory==null) {
 			IClientConfiguration cfg = kernel.getClientConfiguration();
@@ -54,13 +53,11 @@ public class UFTPDInstance extends UFTPDInstanceBase implements ExternalSystemCo
 		}
 		return socketfactory;
 	}
-	
-	private static SecureRandom random=null;
 
-	private synchronized SecureRandom getRandom(){
-		if(random==null){
-			random=new SecureRandom();
-		}
+	private static SecureRandom random;
+
+	private synchronized SecureRandom getRandom() {
+		if(random==null)random = new SecureRandom();
 		return random;
 	}
 }

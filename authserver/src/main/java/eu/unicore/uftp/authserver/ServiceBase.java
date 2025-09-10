@@ -85,7 +85,8 @@ public abstract class ServiceBase extends ApplicationBaseResource implements Ker
 	 */
 	protected UFTPBackend getLogicalServer(String serverName) {
 		Pair<String,Integer> sn = getServerSpec(serverName);
-		return getConfig().getServer(sn.getM1());
+		UFTPBackend u = getConfig().getServer(sn.getM1());
+		return u!=null && u.hasInstance(sn.getM2()) ? u : null;
 	}
 
 	/**
@@ -95,8 +96,7 @@ public abstract class ServiceBase extends ApplicationBaseResource implements Ker
 	 */
 	protected UFTPDInstance getUFTPD(String serverName) throws IOException {
 		Pair<String,Integer> sn = getServerSpec(serverName);
-		UFTPBackend server = getConfig().getServer(sn.getM1());
-		return server!=null? server.getUFTPDInstance(sn.getM2()) : null;
+		return getConfig().getServer(sn.getM1()).getUFTPDInstance(sn.getM2());
 	}
 	
 	@Override

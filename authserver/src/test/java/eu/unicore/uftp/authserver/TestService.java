@@ -1,6 +1,7 @@
 package eu.unicore.uftp.authserver;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
@@ -20,6 +21,7 @@ import com.google.gson.GsonBuilder;
 import eu.unicore.services.Kernel;
 import eu.unicore.services.restclient.BaseClient;
 import eu.unicore.services.restclient.IAuthCallback;
+import eu.unicore.services.restclient.RESTException;
 import eu.unicore.services.restclient.UsernamePassword;
 import eu.unicore.services.restclient.jwt.JWTUtils;
 import eu.unicore.services.restclient.sshkey.PasswordSupplierImpl;
@@ -60,6 +62,42 @@ public class TestService {
 		try(ClassicHttpResponse response = client.post(new JSONObject(gson.toJson(req)))){
 			System.out.println("Service reply: " + EntityUtils.toString(response.getEntity()));
 		}
+	}
+
+	@Test
+	public void testUFTPCluster() throws Exception {
+		// do a get to find the configured servers
+		JettyServer server=k.getServer();
+		String url = server.getUrls()[0].toExternalForm()+"/rest/auth";
+		IAuthCallback auth = new UsernamePassword("demouser", "test123");
+		BaseClient client = new BaseClient(url, k.getClientConfiguration(), auth);
+		JSONObject o = client.getJSON();
+		JSONObject serverInfo = o.getJSONObject("MULTI");
+		System.out.println("UFTPP Cluster info: "+serverInfo.toString(2));
+		// authenticate
+		String authUrl = serverInfo.getString("href");
+		client.setURL(authUrl);
+		Gson gson = new GsonBuilder().create();
+		AuthRequest req = new AuthRequest();
+		req.serverPath="/tmp/foo";
+		try(ClassicHttpResponse response = client.post(new JSONObject(gson.toJson(req)))){
+			System.out.println("Service reply: " + EntityUtils.toString(response.getEntity()));
+		}
+		// access one instance directly
+		authUrl = serverInfo.getString("href")+"-2";
+		client.setURL(authUrl);
+		try(ClassicHttpResponse response = client.post(new JSONObject(gson.toJson(req)))){
+			System.out.println("Service reply: " + EntityUtils.toString(response.getEntity()));
+		}
+		// access non existent instance
+		authUrl = serverInfo.getString("href")+"-42";
+		client.setURL(authUrl);
+		RESTException re = assertThrows(RESTException.class, ()->{
+			try(ClassicHttpResponse response = client.post(new JSONObject(gson.toJson(req)))){
+				System.out.println("Service reply: " + EntityUtils.toString(response.getEntity()));
+			}
+		});
+		System.out.println(re);
 	}
 
 	@Test

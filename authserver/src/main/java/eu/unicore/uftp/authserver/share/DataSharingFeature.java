@@ -6,8 +6,8 @@ import eu.unicore.services.utils.deployment.DeploymentDescriptorImpl;
 import eu.unicore.services.utils.deployment.FeatureImpl;
 
 /**
- * job execution
- * 
+ * deploys the data sharing and access services
+ *
  * @author schuller
  */
 public class DataSharingFeature extends FeatureImpl {
@@ -15,7 +15,7 @@ public class DataSharingFeature extends FeatureImpl {
 	public DataSharingFeature() {
 		this.name = "DataSharing";
 	}
-	
+
 	@Override
 	public void setKernel(Kernel kernel) {
 		super.setKernel(kernel);
@@ -29,7 +29,7 @@ public class DataSharingFeature extends FeatureImpl {
 			this();
 			setKernel(kernel);
 		}
-		
+
 		public ShareSD() {
 			super();
 			this.name = "share";
@@ -37,14 +37,14 @@ public class DataSharingFeature extends FeatureImpl {
 			this.implementationClass = ShareService.class;
 		}
 	}
-	
+
 	public static class AccessSD extends DeploymentDescriptorImpl {
 
 		public AccessSD(Kernel kernel){
 			this();
 			setKernel(kernel);
 		}
-		
+
 		public AccessSD() {
 			super();
 			this.name = "access";

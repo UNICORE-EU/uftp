@@ -44,10 +44,12 @@ public class AuthServiceImpl extends ServiceBase {
 		}
 		String clientIP = AuthZAttributeStore.getTokens().getClientIP();
 		logger.debug("Incoming request from: {} {}", clientIP, json);
-
 		UFTPBackend server = getLogicalServer(serverName);
 		if(server == null){
-			throw new WebApplicationException(404);
+			return createErrorResponse(404, "No such server: '"+serverName+"', please check your URL");
+		}
+		if(!server.isAvailable()) {
+			return createErrorResponse(503, server.getStatusDescription());
 		}
 		UserAttributes authData = null;
 		AuthRequest authRequest = gson.fromJson(json, AuthRequest.class);

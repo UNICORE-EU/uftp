@@ -110,7 +110,7 @@ public class AuthServiceConfig implements ISubSystem {
 		}
 		serverMap.putAll(newServerMap);
 	}
-	
+
 	protected UFTPBackend configure(String name) throws ConfigurationException {
 		UFTPBackend server = new UFTPBackend(name, kernel);
 		server.configure(name, kernel.getContainerProperties().getRawProperties());

@@ -1,0 +1,4 @@
+#
+# ACL file for the UFTPD
+#
+CN=AUTH,O=UNICORE,C=EU
