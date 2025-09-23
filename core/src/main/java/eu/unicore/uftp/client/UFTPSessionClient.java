@@ -100,6 +100,48 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 	}
 
 	/**
+	 * get a buffered input stream that reads from the given remote file
+	 * @param remoteFile
+	 * @param offset
+	 * @param length
+	 * @param bufferSize (use -1 for the default (32k))
+	 * @return BackedInputStream
+	 * @throws IOException
+	 */
+	public BackedInputStream getInputStream(String remoteFile, long offset, long length, int bufferSize) 
+	throws IOException {
+		if(bufferSize<0)bufferSize=32768;
+		final long size = prepareGet(remoteFile, offset, length, null);
+		return new BackedInputStream(bufferSize, length) {
+
+			@Override
+			protected long getTotalDataSize() throws IOException {
+				return size;
+			}
+
+			@Override
+			protected void fillBuffer() throws IOException {
+				// compute bytes to be read: either buffer size, or remainder of file
+				int numBytes = Math.toIntExact(Math.min(length-bytesRead,buffer.length));
+				avail = reader.read(buffer, 0, numBytes);
+				pos = 0;
+			}
+			
+			@Override
+			public void close() throws IOException{
+				logger.debug("Closing data connection.");
+				closeData();
+				Reply reply = Reply.read(client);
+				if(reply.isError()) {
+					throw new IOException("Server error: "+reply.getStatusLine());
+				}
+				reply.assertStatus(226);
+				super.close();
+			}
+		};
+	}
+
+	/**
 	 * negotiate a download of the given (part of a) file with the server, 
 	 * and return the connected SocketChannel ready for use with a selector
 	 *
@@ -151,7 +193,7 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 		channel.configureBlocking(false);
 		return new Pair<>(channel, size);
 	}
-	
+
 	/**
 	 * write data to a remote file
 	 *
@@ -166,7 +208,41 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 		preparePut(remoteFile, size, offset, localSource);
 		return moveData(size);
 	}
-	
+
+	/**
+	 * get an OutputStream for writing to the remote file
+	 *
+	 * @param remoteFile
+	 * @param size
+	 * @param offset
+	 * @return BackedOutputStream
+	 * @throws IOException
+	 */
+	public BackedOutputStream getOutputStream(String remoteFile, long size, Long offset, int bufferSize) throws IOException {
+		preparePut(remoteFile, size, offset, null);
+		if(bufferSize<0)bufferSize = 32768;
+		return new BackedOutputStream(bufferSize) {
+
+			@Override
+			protected void writeBuffer() throws IOException {
+				writer.write(buffer, 0, pos);
+			}
+
+			@Override
+			public void close() throws IOException{
+				super.close();
+				if(size>0)writer.close();
+				logger.debug("Closing data connection.");
+				closeData();
+				Reply reply = Reply.read(client);
+				if(reply.isError()) {
+					throw new IOException("Server error: "+reply.getStatusLine());
+				}
+				reply.assertStatus(226);
+			}
+		};
+	}
+
 	protected void preparePut(String remoteFile, long size, Long offset, InputStream localSource)
 	throws IOException {
 		checkConnected();
@@ -200,7 +276,7 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 		preparePut(remoteFile, -1, null, localSource);
 		return moveData(-1, closeDataWhenDone);
 	}
-	
+
 	/**
 	 * append data to remote file
 	 * 
@@ -220,7 +296,7 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 		setupForPut(localSource);
 		return moveData(size);
 	}
-	
+
 	/**
 	 * get the raw result of 'ls' for the given basedir (which is relative to
 	 * the current dir)
@@ -250,7 +326,7 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 		}
 		return res;
 	}
-	
+
 	public FileInfo stat(String path) throws IOException {
 		checkConnected();
 		Reply r = runCommand("MLST "+path);
@@ -378,6 +454,7 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 	public String pwd() throws IOException {
 		checkConnected();
 		Reply reply = runCommand("PWD");
+		reply.assertStatus(257);
 		return reply.getStatusLine().split(" ", 2)[1];
 	}
 
@@ -632,11 +709,16 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 	}
 
 	public Reply runCommand(String command) throws IOException {
+		return runCommand(command, null);
+	}
+	
+	public Reply runCommand(String command, int[]acceptableReturnCodes) throws IOException {
 		client.sendControl(command);
 		Reply reply = Reply.read(client);
 		if (reply.isError()) {
 			throw new IOException("Error: server reply " + reply);
 		}
+		reply.assertStatus(acceptableReturnCodes);
 		return reply;
 	}
 

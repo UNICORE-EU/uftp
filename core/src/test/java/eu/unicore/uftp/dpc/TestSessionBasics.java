@@ -8,13 +8,18 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.InetAddress;
 import java.util.List;
 import java.util.UUID;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 
+import eu.unicore.uftp.client.BackedInputStream;
+import eu.unicore.uftp.client.BackedOutputStream;
 import eu.unicore.uftp.client.FileInfo;
 import eu.unicore.uftp.client.UFTPSessionClient;
 import eu.unicore.uftp.dpc.Utils.EncryptionAlgorithm;
@@ -273,6 +278,39 @@ public class TestSessionBasics extends ClientServerTestBase{
 	}
 
 	@Test
+	public void testCientWriteOutputStream() throws Exception {
+		String targetName = "target/testdata/target-"+System.currentTimeMillis();
+		File target = new File(targetName);
+		String data = "this is a test for the session client";
+		String secret = String.valueOf(System.currentTimeMillis());
+		String cwd=dataDir.getAbsolutePath();
+		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret, cwd);
+		job.sendTo(host[0], jobPort);
+		Thread.sleep(1000);
+
+		try(UFTPSessionClient client = new UFTPSessionClient(host, srvPort)){
+			client.setSecret(secret);
+			client.connect();
+			try(BackedOutputStream os = client.getOutputStream(target.getName(), data.length(), 0l, -1)){
+				os.addCleanupHandler(()->{System.out.println("+++ Exiting");});
+				os.write(data.getBytes());
+			}
+			long rSize=client.getFileSize(target.getName());
+			assertEquals(data.length(),rSize);
+			assertEquals(Utils.md5(data.getBytes()), Utils.md5(target));
+			target.delete();
+			// with indefinite size - write till stream closes
+			try(BackedOutputStream os = client.getOutputStream(target.getName(), -1l, 0l, -1)){
+				os.addCleanupHandler(()->{System.out.println("+++ Exiting");});
+				os.write(data.getBytes());
+			}
+			rSize=client.getFileSize(target.getName());
+			assertEquals(data.length(),rSize);
+			assertEquals(Utils.md5(data.getBytes()), Utils.md5(target));
+		}
+	}
+
+	@Test
 	public void testMultiStreamEncrypted() throws Exception {
 		int numCon = 2;
 		byte[] key = Utils.createKey(EncryptionAlgorithm.BLOWFISH);
@@ -328,4 +366,33 @@ public class TestSessionBasics extends ClientServerTestBase{
 			client.openDataConnection();
 		}
 	}
+
+	@Test
+	public void testClientReadInputStream() throws Exception {
+		String fID = UUID.randomUUID().toString();
+		String realSourceName="target/testdata/source-"+fID;
+		File realSource=new File(realSourceName);
+		Utils.writeToFile("this is a test for the session client", realSource);
+		String secret = String.valueOf(System.currentTimeMillis());
+		String cwd = new File(".").getAbsolutePath();
+		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret, cwd);
+		job.sendTo(host[0], jobPort);
+		Thread.sleep(1000);
+		InetAddress[]server=host;
+		try(UFTPSessionClient client = new UFTPSessionClient(server, srvPort)){
+			client.setSecret(secret);
+			client.connect();
+			long size = client.getFileSize(realSourceName);
+			try(BackedInputStream is = client.getInputStream(realSourceName, 0, size, -1)){
+				is.addCleanupHandler(()->{System.out.println("+++ Exiting");});
+				byte[] buffer = new byte[Math.toIntExact(size)];
+				IOUtils.readFully(is, buffer);
+				String readMD5 = Utils.md5(buffer);
+				String expected = Utils.md5(realSource);
+				assertEquals(expected, readMD5);
+			}
+			System.out.println(client.pwd());
+		}
+	}
+
 }
