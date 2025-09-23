@@ -2,13 +2,10 @@ package eu.unicore.uftp.authserver.share;
 
 import java.io.File;
 import java.io.InputStream;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
 import java.net.InetAddress;
 import java.util.Collection;
 import java.util.List;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -23,6 +20,7 @@ import eu.unicore.uftp.authserver.UFTPDInstance;
 import eu.unicore.uftp.authserver.UserAttributes;
 import eu.unicore.uftp.authserver.messages.AuthRequest;
 import eu.unicore.uftp.authserver.messages.AuthResponse;
+import eu.unicore.uftp.client.BackedInputStream;
 import eu.unicore.uftp.client.FileInfo;
 import eu.unicore.uftp.client.UFTPSessionClient;
 import eu.unicore.uftp.datashare.AccessType;
@@ -93,35 +91,22 @@ public abstract class ShareServiceBase extends ServiceBase {
 			if(fi.isDirectory()) {
 				return getListing(share, uftp, clientIP);
 			}
-			PipedOutputStream sink = new PipedOutputStream();
-			PipedInputStream pin = new PipedInputStream(sink);
-			final Runnable task = new Runnable() {
-				public void run() {
-					logger.info("Starting download {} {}", remoteFile, range);
-					try{
-						if(range.haveRange) {
-							uc.get(remoteFile, range.offset, range.length, sink);
-						} else {
-							uc.get(remoteFile, sink);
-						}
-					}catch(Exception ex) {
-						Log.logException("Error downloading", ex, logger);
-					}
-					finally {
-						IOUtils.closeQuietly(uc);
-						IOUtils.closeQuietly(sink);
-					}
-				}
-			};
-			kernel.getContainerProperties().getThreadingServices().getExecutorService().submit(task);
-
+			long offset = 0;
+			long size = fi.getSize();
+			if(range.haveRange) {
+				offset = range.offset;
+				size = range.length;
+			}
+			BackedInputStream in = uc.getInputStream(remoteFile, offset, size, -1);
+			in.addCleanupHandler(()->{
+				uc.close();
+			});
 			String name = null;
 			try {
 				name = new File(share.getPath()).getName();
 			}catch(Exception ex) {}
-
 			ResponseBuilder rb = wantRange? Response.status(Status.PARTIAL_CONTENT) :Response.ok();
-			rb.entity(pin);
+			rb.entity(in);
 			if(name!=null)rb.header("Content-Disposition", "attachment; filename=\""+name+"\"");
 			// TODO need Content-Range header!? test with wget
 			r = rb.build();
