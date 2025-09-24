@@ -12,6 +12,9 @@ Auth Server 3.2.0 (released Sep 24, 2025)
  - improvement: don't use additional threads for shared file downloads 
  - fix: re-add default certificate and demo-ca cert to tar.gz bundle
  - fix: fail more cleanly if http share downloads run into session limit
+ - improvement: use standard config file names 'user-authfile.txt' and
+   'user-mapfile.txt'
+ - improvement: use JSON format for user attributes file
  - update to UNICORE 10.3.0 base libs
 
 Auth Server 3.1.0 (released June 02, 2025)
@@ -20,7 +23,7 @@ Auth Server 3.1.0 (released June 02, 2025)
  - fix: 'persistent' flag should default to false
  - new feature: add admin action to modify share
  - updated to UNICORE 10.2.0 base libraries
- 
+
 Auth Server 3.0.1 (released Nov 26, 2024)
 -----------------------------------------
  - fix: issued auth tokens do not contain asserted user name
