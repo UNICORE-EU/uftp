@@ -68,108 +68,92 @@ public abstract class ShareServiceBase extends ServiceBase {
 	 * @param uftp
 	 * @param clientIP
 	 */
-	protected Response doDownload(ShareDAO share, UFTPDInstance uftp, String clientIP, String rangeHeader){
-		Response r = null;
-		try{
-			boolean wantRange = rangeHeader!=null;
-			AuthRequest authRequest = new AuthRequest();
-			authRequest.send = true;
-			File targetFile = new File(share.getPath());
-			authRequest.serverPath = targetFile.getParentFile().getPath();
-			UserAttributes ua = new UserAttributes(share.getUid(), share.getGid(), null);
-			TransferRequest transferRequest = new TransferRequest(authRequest, ua, clientIP);
-			transferRequest.setAccessPermissions(Mode.WRITE);
-			transferRequest.setIncludes(targetFile.getName());
-			AuthResponse response = new TransferInitializer().initTransfer(transferRequest,uftp);            
-			InetAddress[] server = new InetAddress[]{InetAddress.getByName(response.serverHost)};
-			final Range range = new Range(rangeHeader);
-			final String remoteFile = new File(share.getPath()).getName();
-			final UFTPSessionClient uc = new UFTPSessionClient(server, response.serverPort);
-			uc.setSecret(transferRequest.getSecret());
-			uc.connect();
-			FileInfo fi = uc.stat(remoteFile);
-			if(fi.isDirectory()) {
-				return getListing(share, uftp, clientIP);
-			}
-			long offset = 0;
-			long size = fi.getSize();
-			if(range.haveRange) {
-				offset = range.offset;
-				size = range.length;
-			}
-			BackedInputStream in = uc.getInputStream(remoteFile, offset, size, -1);
-			in.addCleanupHandler(()->{
-				uc.close();
-			});
-			String name = null;
-			try {
-				name = new File(share.getPath()).getName();
-			}catch(Exception ex) {}
-			ResponseBuilder rb = wantRange? Response.status(Status.PARTIAL_CONTENT) :Response.ok();
-			rb.entity(in);
-			if(name!=null)rb.header("Content-Disposition", "attachment; filename=\""+name+"\"");
-			// TODO need Content-Range header!? test with wget
-			r = rb.build();
-		}catch(Exception ex){
-			r = handleError(500, "", ex, logger);
+	protected Response doDownload(ShareDAO share, UFTPDInstance uftp, String clientIP, String rangeHeader) throws Exception {
+		boolean wantRange = rangeHeader!=null;
+		AuthRequest authRequest = new AuthRequest();
+		authRequest.send = true;
+		File targetFile = new File(share.getPath());
+		authRequest.serverPath = targetFile.getParentFile().getPath();
+		UserAttributes ua = new UserAttributes(share.getUid(), share.getGid(), null);
+		TransferRequest transferRequest = new TransferRequest(authRequest, ua, clientIP);
+		transferRequest.setAccessPermissions(Mode.WRITE);
+		transferRequest.setIncludes(targetFile.getName());
+		AuthResponse response = new TransferInitializer().initTransfer(transferRequest,uftp);
+		response.assertSuccess();
+		InetAddress[] server = new InetAddress[]{InetAddress.getByName(response.serverHost)};
+		final Range range = new Range(rangeHeader);
+		final String remoteFile = new File(share.getPath()).getName();
+		final UFTPSessionClient uc = new UFTPSessionClient(server, response.serverPort);
+		uc.setSecret(transferRequest.getSecret());
+		uc.connect();
+		FileInfo fi = uc.stat(remoteFile);
+		if(fi.isDirectory()) {
+			return getListing(share, uftp, clientIP);
 		}
-		return r;
+		long offset = 0;
+		long size = fi.getSize();
+		if(range.haveRange) {
+			offset = range.offset;
+			size = range.length;
+		}
+		BackedInputStream in = uc.getInputStream(remoteFile, offset, size, -1);
+		in.addCleanupHandler(()->{
+			uc.close();
+		});
+		String name = null;
+		try {
+			name = new File(share.getPath()).getName();
+		}catch(Exception ex) {}
+		ResponseBuilder rb = wantRange? Response.status(Status.PARTIAL_CONTENT) :Response.ok();
+		rb.entity(in);
+		if(name!=null)rb.header("Content-Disposition", "attachment; filename=\""+name+"\"");
+		// TODO need Content-Range header!? test with wget
+		return rb.build();
 	}
 
 	/**
 	 * upload data to the shared file using the Unix user id and group from the share
 	 */
-	protected Response doUpload(InputStream content, ShareDAO share, UFTPDInstance uftp, String clientIP){
-		Response r = null;
-		try{
-			AuthRequest authRequest = new AuthRequest();
-			authRequest.send = false;
-			authRequest.serverPath = new File(share.getPath()).getParentFile().getPath();
-			String fileName = new File(share.getPath()).getName();
-			UserAttributes ua = new UserAttributes(share.getUid(), share.getGid(), null);
-			TransferRequest transferRequest = new TransferRequest(authRequest, ua, clientIP);
-			AuthResponse response = new TransferInitializer().initTransfer(transferRequest,uftp);            
-			InetAddress[] server = new InetAddress[]{InetAddress.getByName(response.serverHost)};
-			try (UFTPSessionClient uc = new UFTPSessionClient(server, response.serverPort)){
-				uc.setSecret(transferRequest.getSecret());
-				uc.connect();
-				uc.writeAll(fileName, content, true);
-				r = Response.ok().build();
-			}
-		}catch(Exception ex){
-			r = handleError(500, "", ex, logger);
+	protected Response doUpload(InputStream content, ShareDAO share, UFTPDInstance uftp, String clientIP) throws Exception {
+		AuthRequest authRequest = new AuthRequest();
+		authRequest.send = false;
+		authRequest.serverPath = new File(share.getPath()).getParentFile().getPath();
+		String fileName = new File(share.getPath()).getName();
+		UserAttributes ua = new UserAttributes(share.getUid(), share.getGid(), null);
+		TransferRequest transferRequest = new TransferRequest(authRequest, ua, clientIP);
+		AuthResponse response = new TransferInitializer().initTransfer(transferRequest,uftp);
+		response.assertSuccess();
+		InetAddress[] server = new InetAddress[]{InetAddress.getByName(response.serverHost)};
+		try (UFTPSessionClient uc = new UFTPSessionClient(server, response.serverPort)){
+			uc.setSecret(transferRequest.getSecret());
+			uc.connect();
+			uc.writeAll(fileName, content, true);
+			return Response.ok().build();
 		}
-		return r;
 	}
 
-	protected Response getListing(ShareDAO share, UFTPDInstance uftp, String clientIP){
-		Response r = null;
-		try{
-			AuthRequest authRequest = new AuthRequest();
-			authRequest.send = true;
-			authRequest.serverPath = new File(share.getPath()).getParentFile().getPath();
-			UserAttributes ua = new UserAttributes(share.getUid(), share.getGid(), null);
-			TransferRequest transferRequest = new TransferRequest(authRequest, ua, clientIP);
-			AuthResponse response = new TransferInitializer().initTransfer(transferRequest,uftp);            
-			InetAddress[] server = new InetAddress[]{InetAddress.getByName(response.serverHost)};
-			final String remoteFile = new File(share.getPath()).getName();
-			try(UFTPSessionClient uc = new UFTPSessionClient(server, response.serverPort)){
-				uc.setSecret(transferRequest.getSecret());
-				uc.connect();
-				FileInfo fi = uc.stat(remoteFile);
-				if(!fi.isDirectory())throw new Exception("Not a directory");
-				List<FileInfo> fileList = uc.getFileInfoList(remoteFile);
-				StringBuilder sb = new StringBuilder();
-				for(FileInfo f: fileList) {
-					sb.append(f.getLISTFormat());
-				}
-				ResponseBuilder rb = Response.ok(sb.toString());
-				r = rb.build();
+	protected Response getListing(ShareDAO share, UFTPDInstance uftp, String clientIP) throws Exception {
+		AuthRequest authRequest = new AuthRequest();
+		authRequest.send = true;
+		authRequest.serverPath = new File(share.getPath()).getParentFile().getPath();
+		UserAttributes ua = new UserAttributes(share.getUid(), share.getGid(), null);
+		TransferRequest transferRequest = new TransferRequest(authRequest, ua, clientIP);
+		AuthResponse response = new TransferInitializer().initTransfer(transferRequest,uftp);
+		response.assertSuccess();
+		InetAddress[] server = new InetAddress[]{InetAddress.getByName(response.serverHost)};
+		final String remoteFile = new File(share.getPath()).getName();
+		try(UFTPSessionClient uc = new UFTPSessionClient(server, response.serverPort)){
+			uc.setSecret(transferRequest.getSecret());
+			uc.connect();
+			FileInfo fi = uc.stat(remoteFile);
+			if(!fi.isDirectory())throw new Exception("Not a directory");
+			List<FileInfo> fileList = uc.getFileInfoList(remoteFile);
+			StringBuilder sb = new StringBuilder();
+			for(FileInfo f: fileList) {
+				sb.append(f.getLISTFormat());
 			}
-		}catch(Exception ex){
-			r = handleError(500, "", ex, logger);
+			return Response.ok(sb.toString()).build();
 		}
-		return r;
 	}
 
 	protected ACLStorage getShareDB(String serverName){
@@ -279,13 +263,6 @@ public abstract class ShareServiceBase extends ServiceBase {
 					length = last+1-offset;
 				}
 			}
-		}
-
-		public String toString() {
-			if(haveRange) {
-				return String.format("[offset=%s length=%s]", offset, length);
-			}
-			else return "";
 		}
 	}
 

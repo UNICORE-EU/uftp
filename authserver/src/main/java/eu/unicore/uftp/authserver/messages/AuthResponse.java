@@ -1,5 +1,6 @@
 package eu.unicore.uftp.authserver.messages;
 
+import java.io.IOException;
 
 /**
  * @author mgolik
@@ -22,6 +23,10 @@ public class AuthResponse {
         this.secret = secret;
         serverHost = server;
         serverPort = dataPort;
+    }
+
+    public void assertSuccess() throws IOException {
+    	if(!success)throw new IOException(reason);
     }
 
 }
