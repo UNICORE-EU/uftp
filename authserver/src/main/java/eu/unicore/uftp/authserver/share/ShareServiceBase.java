@@ -3,7 +3,10 @@ package eu.unicore.uftp.authserver.share;
 import java.io.File;
 import java.io.InputStream;
 import java.net.InetAddress;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
 import org.apache.logging.log4j.Logger;
@@ -12,6 +15,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import eu.emi.security.authn.x509.impl.X500NameUtils;
+import eu.unicore.services.rest.RESTUtils.HtmlBuilder;
 import eu.unicore.services.security.util.AuthZAttributeStore;
 import eu.unicore.uftp.authserver.ServiceBase;
 import eu.unicore.uftp.authserver.TransferInitializer;
@@ -30,6 +34,7 @@ import eu.unicore.uftp.datashare.db.ACLStorage;
 import eu.unicore.uftp.datashare.db.ShareDAO;
 import eu.unicore.uftp.dpc.Session.Mode;
 import eu.unicore.util.Log;
+import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.ResponseBuilder;
 import jakarta.ws.rs.core.Response.Status;
@@ -68,8 +73,7 @@ public abstract class ShareServiceBase extends ServiceBase {
 	 * @param uftp
 	 * @param clientIP
 	 */
-	protected Response doDownload(ShareDAO share, UFTPDInstance uftp, String clientIP, String rangeHeader) throws Exception {
-		boolean wantRange = rangeHeader!=null;
+	protected Response doDownload(ShareDAO share, UFTPDInstance uftp, String clientIP, String rangeHeader, String urlBase) throws Exception {
 		AuthRequest authRequest = new AuthRequest();
 		authRequest.send = true;
 		File targetFile = new File(share.getPath());
@@ -88,7 +92,7 @@ public abstract class ShareServiceBase extends ServiceBase {
 		uc.connect();
 		FileInfo fi = uc.stat(remoteFile);
 		if(fi.isDirectory()) {
-			return getListing(share, uftp, clientIP);
+			return getListing(share, uftp, clientIP, urlBase);
 		}
 		long offset = 0;
 		long size = fi.getSize();
@@ -104,10 +108,12 @@ public abstract class ShareServiceBase extends ServiceBase {
 		try {
 			name = new File(share.getPath()).getName();
 		}catch(Exception ex) {}
-		ResponseBuilder rb = wantRange? Response.status(Status.PARTIAL_CONTENT) :Response.ok();
+		ResponseBuilder rb = rangeHeader!=null? Response.status(Status.PARTIAL_CONTENT) : Response.ok();
 		rb.entity(in);
 		if(name!=null)rb.header("Content-Disposition", "attachment; filename=\""+name+"\"");
-		// TODO need Content-Range header!? test with wget
+		if(rangeHeader!=null) {
+			rb.header("Content-Range", String.format("bytes %d-%d/%d", offset, size+1, fi.getSize()));
+		}
 		return rb.build();
 	}
 
@@ -132,7 +138,7 @@ public abstract class ShareServiceBase extends ServiceBase {
 		}
 	}
 
-	protected Response getListing(ShareDAO share, UFTPDInstance uftp, String clientIP) throws Exception {
+	protected Response getListing(ShareDAO share, UFTPDInstance uftp, String clientIP, String urlBase) throws Exception {
 		AuthRequest authRequest = new AuthRequest();
 		authRequest.send = true;
 		authRequest.serverPath = new File(share.getPath()).getParentFile().getPath();
@@ -148,12 +154,32 @@ public abstract class ShareServiceBase extends ServiceBase {
 			FileInfo fi = uc.stat(remoteFile);
 			if(!fi.isDirectory())throw new Exception("Not a directory");
 			List<FileInfo> fileList = uc.getFileInfoList(remoteFile);
-			StringBuilder sb = new StringBuilder();
+			HtmlBuilder res = new HtmlBuilder();
+			res.table();
+			res.tr();
+			res.th().text("Name").end();
+			res.th().text("Modified").end();
+			res.th().text("Size").end();
+			res.end();
 			for(FileInfo f: fileList) {
-				sb.append(f.getLISTFormat());
+				toHtml(f, res, urlBase);
 			}
-			return Response.ok(sb.toString()).build();
+			res.end();
+			return Response.ok(res.build(), MediaType.TEXT_HTML).build();
 		}
+	}
+
+	private DateFormat dateFormat =  new SimpleDateFormat("yyyy-MM-dd HH:mm");
+
+	private void toHtml(FileInfo f, HtmlBuilder res, String urlBase) {
+		res.tr();
+		String txt = f.getPath();
+		if(f.isDirectory())txt=txt+"/";
+		String href = urlBase + txt;
+		res.td().href(href, txt).end();
+		res.td().text(dateFormat.format(new Date(f.getLastModified()))).end();
+		res.td().text(String.valueOf(f.getSize())).end();
+		res.end();
 	}
 
 	protected ACLStorage getShareDB(String serverName){
@@ -253,7 +279,6 @@ public abstract class ShareServiceBase extends ServiceBase {
 				String[] rangeSpec = rangeHeader.split("=");
 				if(!"bytes".equals(rangeSpec[0]))throw new IllegalArgumentException("Range header "+rangeHeader+ " cannot be parsed");
 				String range = rangeSpec[1];
-
 				String[] tok = range.split("-");
 				offset = Long.parseLong(tok[0]);
 				if(offset<0)throw new IllegalArgumentException("Range header "+rangeHeader+ " cannot be parsed");
@@ -265,5 +290,4 @@ public abstract class ShareServiceBase extends ServiceBase {
 			}
 		}
 	}
-
 }

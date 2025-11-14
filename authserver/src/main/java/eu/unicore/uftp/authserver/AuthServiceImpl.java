@@ -51,11 +51,10 @@ public class AuthServiceImpl extends ServiceBase {
 		if(!server.isAvailable()) {
 			return createErrorResponse(503, server.getStatusDescription());
 		}
-		UserAttributes authData = null;
 		AuthRequest authRequest = gson.fromJson(json, AuthRequest.class);
-		
 		try {
 			UFTPDInstance uftpd = getUFTPD(serverName);
+			UserAttributes authData = null;
 			try{
 				authData = assembleAttributes(server, authRequest.group);
 			}

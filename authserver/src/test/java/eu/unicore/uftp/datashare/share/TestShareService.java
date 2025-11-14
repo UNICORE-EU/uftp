@@ -305,6 +305,13 @@ public class TestShareService {
 		// download the file
 		bc.setURL(shareLink);
 		try(ClassicHttpResponse r = bc.get(null, headers)){
+			assertEquals("attachment; filename=\"pom.xml\"", r.getHeader("Content-Disposition").getValue());
+			if(length>0) {
+				String range = r.getHeader("Content-Range").getValue();
+				assertTrue(range.contains(String.format("bytes %d-%d", offset, length+1)));
+				String clength = r.getHeader("Content-Length").getValue();
+				assertEquals(String.valueOf(length), clength);
+			}
 			return EntityUtils.toString(r.getEntity());
 		}
 	}

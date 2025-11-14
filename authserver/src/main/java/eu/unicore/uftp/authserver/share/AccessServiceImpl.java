@@ -52,7 +52,7 @@ public class AccessServiceImpl extends ShareServiceBase {
 	@Path("/{serverName}/{uniqueID}")
 	public Response download(@PathParam("serverName") String serverName, @PathParam("uniqueID") String uniqueID,
 			@HeaderParam("range")String range) {
-		return downloadPath(serverName, uniqueID, null, range); 
+		return handleDownload(serverName, uniqueID, null, range);
 	}
 
 	/**
@@ -67,6 +67,10 @@ public class AccessServiceImpl extends ShareServiceBase {
 	@Path("/{serverName}/{uniqueID}/{path:.*}")
 	public Response downloadPath(@PathParam("serverName") String serverName, @PathParam("uniqueID") String uniqueID, 
 			@PathParam("path") String path, @HeaderParam("range")String range) {
+		return handleDownload(serverName, uniqueID, path, range);
+	}
+
+	private Response handleDownload(String serverName, String uniqueID, String path, String range) {
 		UFTPBackend server = getLogicalServer(serverName);
 		ACLStorage shareDB = getShareDB(serverName);
 		if(shareDB==null || server==null){
@@ -88,7 +92,9 @@ public class AccessServiceImpl extends ShareServiceBase {
 				String clientIP = spp.getClientIP();
 				handlePath(path, share);
 				logUsage("HTTP-download", share.getPath(), share);
-				r = doDownload(share, uftp, clientIP, range);
+				String urlBase = getBaseURL()+"/"+serverName+"/"+uniqueID+"/";
+				if(path!=null)urlBase = urlBase + path + "/";
+				r = doDownload(share, uftp, clientIP, range, urlBase);
 				if(share.isOneTime()) {
 					shareDB.delete(uniqueID);
 				}
@@ -107,8 +113,7 @@ public class AccessServiceImpl extends ShareServiceBase {
 	private void handlePath(String path, ShareDAO share) throws WebApplicationException{
 		if(path!=null){
 			if(share.isDirectory()){
-				String fullPath = FilenameUtils.normalize(share.getPath()+"/"+path, true);
-				share.setPath(fullPath);
+				share.setPath(FilenameUtils.normalize(share.getPath()+"/"+path, true));
 			}
 			else{
 				throw new WebApplicationException("Not a directory", 404);
