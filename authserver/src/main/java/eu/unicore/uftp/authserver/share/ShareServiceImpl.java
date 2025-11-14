@@ -140,9 +140,7 @@ public class ShareServiceImpl extends ShareServiceBase {
 			o.put("shares", jShares);
 			Collection<ShareDAO> shares = shareDB.readAll(owner);
 			for(ShareDAO share: shares){
-				try{
-					jShares.put(toJSON(share, serverName));
-				}catch(JSONException je){}
+				jShares.put(toJSON(share, serverName));
 			}
 			o.put("accessible", getAccessible(shareDB, serverName));
 			o.put("status", "OK");

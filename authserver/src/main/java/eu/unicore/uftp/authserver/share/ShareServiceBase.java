@@ -59,9 +59,7 @@ public abstract class ShareServiceBase extends ServiceBase {
 		Target target = new SharingUser(getNormalizedCurrentUserName());
 		Collection<ShareDAO> shares = shareDB.readAll(target);
 		for(ShareDAO share: shares){
-			try{
-				jShares.put(toJSONAccessible(share, serverName));
-			}catch(JSONException je){}
+			jShares.put(toJSONAccessible(share, serverName));
 		}
 		return jShares;
 	}
@@ -75,13 +73,13 @@ public abstract class ShareServiceBase extends ServiceBase {
 	 */
 	protected Response doDownload(ShareDAO share, UFTPDInstance uftp, String clientIP, String rangeHeader, String urlBase) throws Exception {
 		AuthRequest authRequest = new AuthRequest();
-		authRequest.send = true;
 		File targetFile = new File(share.getPath());
+		String fileName = targetFile.getName();
 		authRequest.serverPath = targetFile.getParentFile().getPath();
 		UserAttributes ua = new UserAttributes(share.getUid(), share.getGid(), null);
 		TransferRequest transferRequest = new TransferRequest(authRequest, ua, clientIP);
 		transferRequest.setAccessPermissions(Mode.WRITE);
-		transferRequest.setIncludes(targetFile.getName());
+		transferRequest.setIncludes(fileName);
 		AuthResponse response = new TransferInitializer().initTransfer(transferRequest,uftp);
 		response.assertSuccess();
 		InetAddress[] server = new InetAddress[]{InetAddress.getByName(response.serverHost)};
@@ -92,7 +90,9 @@ public abstract class ShareServiceBase extends ServiceBase {
 		uc.connect();
 		FileInfo fi = uc.stat(remoteFile);
 		if(fi.isDirectory()) {
-			return getListing(share, uftp, clientIP, urlBase);
+			Response r = getListing(remoteFile, uc, urlBase);
+			uc.close();
+			return r;
 		}
 		long offset = 0;
 		long size = fi.getSize();
@@ -104,13 +104,9 @@ public abstract class ShareServiceBase extends ServiceBase {
 		in.addCleanupHandler(()->{
 			uc.close();
 		});
-		String name = null;
-		try {
-			name = new File(share.getPath()).getName();
-		}catch(Exception ex) {}
 		ResponseBuilder rb = rangeHeader!=null? Response.status(Status.PARTIAL_CONTENT) : Response.ok();
 		rb.entity(in);
-		if(name!=null)rb.header("Content-Disposition", "attachment; filename=\""+name+"\"");
+		rb.header("Content-Disposition", "attachment; filename=\""+fileName+"\"");
 		if(rangeHeader!=null) {
 			rb.header("Content-Range", String.format("bytes %d-%d/%d", offset, size+1, fi.getSize()));
 		}
@@ -138,35 +134,20 @@ public abstract class ShareServiceBase extends ServiceBase {
 		}
 	}
 
-	protected Response getListing(ShareDAO share, UFTPDInstance uftp, String clientIP, String urlBase) throws Exception {
-		AuthRequest authRequest = new AuthRequest();
-		authRequest.send = true;
-		authRequest.serverPath = new File(share.getPath()).getParentFile().getPath();
-		UserAttributes ua = new UserAttributes(share.getUid(), share.getGid(), null);
-		TransferRequest transferRequest = new TransferRequest(authRequest, ua, clientIP);
-		AuthResponse response = new TransferInitializer().initTransfer(transferRequest,uftp);
-		response.assertSuccess();
-		InetAddress[] server = new InetAddress[]{InetAddress.getByName(response.serverHost)};
-		final String remoteFile = new File(share.getPath()).getName();
-		try(UFTPSessionClient uc = new UFTPSessionClient(server, response.serverPort)){
-			uc.setSecret(transferRequest.getSecret());
-			uc.connect();
-			FileInfo fi = uc.stat(remoteFile);
-			if(!fi.isDirectory())throw new Exception("Not a directory");
-			List<FileInfo> fileList = uc.getFileInfoList(remoteFile);
-			HtmlBuilder res = new HtmlBuilder();
-			res.table();
-			res.tr();
-			res.th().text("Name").end();
-			res.th().text("Modified").end();
-			res.th().text("Size").end();
-			res.end();
-			for(FileInfo f: fileList) {
-				toHtml(f, res, urlBase);
-			}
-			res.end();
-			return Response.ok(res.build(), MediaType.TEXT_HTML).build();
+	protected Response getListing(String remoteFile, UFTPSessionClient uc, String urlBase) throws Exception {
+		List<FileInfo> fileList = uc.getFileInfoList(remoteFile);
+		HtmlBuilder res = new HtmlBuilder();
+		res.table();
+		res.tr();
+		res.th().text("Name").end();
+		res.th().text("Modified").end();
+		res.th().text("Size").end();
+		res.end();
+		for(FileInfo f: fileList) {
+			toHtml(f, res, urlBase);
 		}
+		res.end();
+		return Response.ok(res.build(), MediaType.TEXT_HTML).build();
 	}
 
 	private DateFormat dateFormat =  new SimpleDateFormat("yyyy-MM-dd HH:mm");
@@ -238,15 +219,13 @@ public abstract class ShareServiceBase extends ServiceBase {
 	}
 
 	protected void logUsage(String type, String path, ShareDAO share){
-		if(!logger.isInfoEnabled())return;
-		if(path==null)path="n/a";
-		String uid = share.getUid();
-		String gid = share.getGid()!=null?share.getGid():"NONE";
-		String clientDN = AuthZAttributeStore.getClient().getDistinguishedName();
-		String clientIP = AuthZAttributeStore.getTokens().getClientIP();
-		String msg = String.format("USAGE [SHARE via %s] [%s][%s][%s:%s] %s",
-				type, clientDN, clientIP, uid, gid, path.replace(_tag, ""));
-		logger.info(msg);
+		logger.info("USAGE [SHARE via {}] [{}][{}][{}:{}] {}",
+				type,
+				AuthZAttributeStore.getClient().getDistinguishedName(),
+				AuthZAttributeStore.getTokens().getClientIP(),
+				share.getUid(),
+				share.getGid(),
+				path.replace(_tag, ""));
 	}
 
 	/**
