@@ -1,7 +1,22 @@
 Changelog
 ---------
 
-UFTO 2.20.4
+UFTP 2.23.0
+-----------
+ - simplify backed i/o streams (remove separate classes needed)
+ - dependency updates
+
+UFTP 2.22.0
+-----------
+ - add i/o streams backed by uftp files (e.g. used for shared data downloads 
+   in the authserver)
+ - dependency updates
+
+UFTP 2.21.0
+-----------
+ - dependency updates
+
+UFTP 2.20.4
 -----------
  - check server error after completed data movement
  - remove unused run() mode of session client

@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -18,8 +19,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 
-import eu.unicore.uftp.client.BackedInputStream;
-import eu.unicore.uftp.client.BackedOutputStream;
 import eu.unicore.uftp.client.FileInfo;
 import eu.unicore.uftp.client.UFTPSessionClient;
 import eu.unicore.uftp.dpc.Utils.EncryptionAlgorithm;
@@ -291,8 +290,8 @@ public class TestSessionBasics extends ClientServerTestBase{
 		try(UFTPSessionClient client = new UFTPSessionClient(host, srvPort)){
 			client.setSecret(secret);
 			client.connect();
-			try(BackedOutputStream os = client.getOutputStream(target.getName(), data.length(), 0l, -1)){
-				os.addCleanupHandler(()->{System.out.println("+++ Exiting");});
+			Closeable onClose = ()->{System.out.println("+++ Exiting");};
+			try(OutputStream os = client.getOutputStream(target.getName(), data.length(), 0l, onClose)){
 				os.write(data.getBytes());
 			}
 			long rSize=client.getFileSize(target.getName());
@@ -300,8 +299,7 @@ public class TestSessionBasics extends ClientServerTestBase{
 			assertEquals(Utils.md5(data.getBytes()), Utils.md5(target));
 			target.delete();
 			// with indefinite size - write till stream closes
-			try(BackedOutputStream os = client.getOutputStream(target.getName(), -1l, 0l, -1)){
-				os.addCleanupHandler(()->{System.out.println("+++ Exiting");});
+			try(OutputStream os = client.getOutputStream(target.getName(), -1l, 0l, onClose)){
 				os.write(data.getBytes());
 			}
 			rSize=client.getFileSize(target.getName());
@@ -383,12 +381,28 @@ public class TestSessionBasics extends ClientServerTestBase{
 			client.setSecret(secret);
 			client.connect();
 			long size = client.getFileSize(realSourceName);
-			try(BackedInputStream is = client.getInputStream(realSourceName, 0, size, -1)){
-				is.addCleanupHandler(()->{System.out.println("+++ Exiting");});
+			Closeable onClose = ()->{System.out.println("+++ Exiting");};
+			try(InputStream is = client.getInputStream(realSourceName, 0, size, onClose)){
 				byte[] buffer = new byte[Math.toIntExact(size)];
 				IOUtils.readFully(is, buffer);
 				String readMD5 = Utils.md5(buffer);
 				String expected = Utils.md5(realSource);
+				assertEquals(expected, readMD5);
+			}
+			// test skip()
+			try(InputStream is = client.getInputStream(realSourceName, 0, size, onClose)){
+				int toSkip = 1;
+				long skipped = is.skip(toSkip);
+				assertEquals(1, skipped);
+				byte[] buffer = new byte[Math.toIntExact(size-toSkip)];
+				IOUtils.readFully(is, buffer);
+				String readMD5 = Utils.md5(buffer);
+				FileInputStream fis = new FileInputStream(realSource);
+				long skipped2 = fis.skip(toSkip);
+				assertEquals(1, skipped2);
+				byte[] buffer2 = new byte[Math.toIntExact(size-toSkip)];
+				IOUtils.readFully(fis, buffer2);
+				String expected = Utils.md5(buffer2);
 				assertEquals(expected, readMD5);
 			}
 			System.out.println(client.pwd());

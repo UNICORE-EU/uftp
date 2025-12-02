@@ -1,4 +1,6 @@
-# UNICORE File transfer (UFTP) services
+# UNICORE File transfer (UFTP) core libs and Authserver
+
+[![Unit tests](https://github.com/UNICORE-EU/uftp/actions/workflows/maven.yml/badge.svg)](https://github.com/UNICORE-EU/uftp/actions/workflows/maven.yml)
 
 This repository contains the source code for the Auth servers
 for the UNICORE FTP high-performance file transfer toolkit.
@@ -24,4 +26,3 @@ The UFTPD file server cam be found in its own repository:
 Client components can be found in their own repositoris:
  * [PyUFTP commandline client](https://github.com/UNICORE-EU/pyuftp)
  * ['uftp' Java commandline client](https://github.com/UNICORE-EU/uftp-javaclient)
-

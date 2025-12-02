@@ -58,15 +58,15 @@ public class FileInfo {
 	}
 
 	protected void parseLSEntry(String ls){
-		String[]tok=ls.trim().split(" ", 4);
+		String[]tok = ls.trim().split(" ", 4);
 		parsePermissions(tok[0].toLowerCase());
-		size=Long.valueOf(tok[1]);
-		lastModified=Long.valueOf(tok[2]);
-		path=tok[3];
+		size = Long.valueOf(tok[1]);
+		lastModified = Long.valueOf(tok[2]);
+		path = tok[3];
 	}
 
 	protected void parsePermissions(String perms){
-		isDirectory='d'==perms.charAt(0);
+		isDirectory = 'd'==perms.charAt(0);
 		if(perms.length()>1){
 			try{
 				readable = 'r'==perms.charAt(1);
@@ -427,7 +427,6 @@ public class FileInfo {
 	 */
 	public final static Date parseFTPDate(String dateStr) throws ParseException{
 		return FTP_DATE_FORMAT.get().parse(dateStr);
-
 	}
 
 	public String getLISTFormat() {
