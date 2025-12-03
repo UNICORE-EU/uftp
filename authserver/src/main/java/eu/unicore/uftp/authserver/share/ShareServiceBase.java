@@ -1,5 +1,6 @@
 package eu.unicore.uftp.authserver.share;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.InputStream;
 import java.net.InetAddress;
@@ -24,7 +25,6 @@ import eu.unicore.uftp.authserver.UFTPDInstance;
 import eu.unicore.uftp.authserver.UserAttributes;
 import eu.unicore.uftp.authserver.messages.AuthRequest;
 import eu.unicore.uftp.authserver.messages.AuthResponse;
-import eu.unicore.uftp.client.BackedInputStream;
 import eu.unicore.uftp.client.FileInfo;
 import eu.unicore.uftp.client.UFTPSessionClient;
 import eu.unicore.uftp.datashare.AccessType;
@@ -100,10 +100,10 @@ public abstract class ShareServiceBase extends ServiceBase {
 			offset = range.offset;
 			size = range.length;
 		}
-		BackedInputStream in = uc.getInputStream(remoteFile, offset, size, -1);
-		in.addCleanupHandler(()->{
-			uc.close();
-		});
+		Closeable cl = ()->uc.close();
+//		eu.unicore.uftp.client.BackedInputStream in = uc.getInputStream(remoteFile, offset, size, -1);
+//		in.addCleanupHandler(cl);
+		InputStream in = uc.getInputStream(remoteFile, offset, size, cl);
 		ResponseBuilder rb = rangeHeader!=null? Response.status(Status.PARTIAL_CONTENT) : Response.ok();
 		rb.entity(in);
 		rb.header("Content-Disposition", "attachment; filename=\""+fileName+"\"");

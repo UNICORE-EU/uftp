@@ -22,9 +22,9 @@
   </scm>
 
   <properties>
-    <use.version>5.5.0</use.version>
-    <uftp.version>2.22.0</uftp.version>
-    <datashare.version>0.21.1</datashare.version>
+    <use.version>5.5.2</use.version>
+    <uftp.version>2.23.1</uftp.version>
+    <datashare.version>0.21.2</datashare.version>
     <package.version>${project.version}</package.version>
     <package.release>1</package.release>
     <automatic.module.name>${project.groupId}.authserver</automatic.module.name>

@@ -14,7 +14,6 @@ import org.apache.logging.log4j.Logger;
 
 import eu.unicore.services.ExternalSystemConnector;
 import eu.unicore.services.Kernel;
-import eu.unicore.services.rest.security.UserPublicKeyCache.UserInfoSource;
 import eu.unicore.services.utils.Utilities;
 import eu.unicore.uftp.authserver.reservations.Reservations;
 import eu.unicore.uftp.server.requests.UFTPGetUserInfoRequest;
@@ -29,7 +28,7 @@ import eu.unicore.util.configuration.PropertyGroupHelper;
  *
  * @author schuller
  */
-public class UFTPBackend implements UserInfoSource {
+public class UFTPBackend {
 
 	public static final Logger log = Log.getLogger(Log.SERVICES, UFTPBackend.class);
 
@@ -60,8 +59,7 @@ public class UFTPBackend implements UserInfoSource {
 		String desc = properties.getProperty(prefix+"description", "n/a");
 		setDescription(desc);
 		Boolean enableReservations = Boolean.parseBoolean(properties.getProperty(prefix+"reservations.enable"));
-		if(enableReservations)
-		{
+		if(enableReservations) {
 			String path = properties.getProperty(prefix+"reservations.file");
 			if(path!=null) try {
 				this.reservations = new Reservations(path);
@@ -71,7 +69,6 @@ public class UFTPBackend implements UserInfoSource {
 				log.warn("Static reservations file <"+path+"> not found. Skipping.");
 			}
 		}
-
 		if(properties.getProperty(prefix+"host")!=null) {
 			UFTPDInstance server = createUFTPD(name, prefix, properties);
 			instances.add(server);
@@ -101,6 +98,7 @@ public class UFTPBackend implements UserInfoSource {
 
 	private static String[] internal = new String[]
 			{ "class", "reservations.enable", "reservations.file" };
+
 	private void mapSettings(Object thing, String prefix, Properties properties) {
 		Map<String,String>params = new PropertyGroupHelper(properties, 
 			new String[]{prefix}).getFilteredMap();
@@ -126,20 +124,18 @@ public class UFTPBackend implements UserInfoSource {
 	}
 
 	public Collection<ExternalSystemConnector>getExternalConnections(){
-		Collection<ExternalSystemConnector>l = new ArrayList<>();
-		l.addAll(instances);
-		return l;
+		return new ArrayList<>(instances);
 	}
 
 	public String toString(){
-		return "[UFTPD Server '"+serverName+"' "+getStatusDescription()+"]";
+		return String.format("[UFTPD Server '%s' %s]", serverName, getStatusDescription());
 	}
 
 	public boolean isAvailable(){
 		checkConnection();
 		return isUp;
 	}
-	
+
 	private synchronized void checkConnection(){
 		isUp = false;
 		int avail = 0;
@@ -192,8 +188,7 @@ public class UFTPBackend implements UserInfoSource {
 	public boolean hasInstance(Integer index){
 		return index==null || index<=instances.size();
 	}
-	
-	@Override
+
 	public List<String> getAcceptedKeys(String requestedUserName){
 		List<String>acceptedKeys = new ArrayList<>();
 		try {
