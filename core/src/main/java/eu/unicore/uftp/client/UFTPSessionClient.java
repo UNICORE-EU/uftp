@@ -110,10 +110,30 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 	 * @return BackedInputStream
 	 * @throws IOException
 	 */
-	public InputStream getInputStream(String remoteFile, long offset, long length, final Closeable onClose) 
+	public InputStream getInputStream(String remoteFile, long offset, long length, final Closeable onClose)
 	throws IOException {
-		prepareGet(remoteFile, offset, length, null);
+		final long dataSize = prepareGet(remoteFile, offset, length, null);
 		return new java.io.FilterInputStream(reader) {
+
+			private long bytesRead = 0;
+
+			@Override
+			public int read() throws IOException {
+				if(bytesRead>=dataSize)return -1;
+				int b = super.read();
+				if(b>-1)bytesRead++;
+				return b;
+			}
+
+			@Override
+			public int read(byte[] buffer, int offset, int len) throws IOException {
+				if(bytesRead>=dataSize)return -1;
+				int want = Math.toIntExact(Math.min(length-bytesRead, buffer.length));
+				int n = super.read(buffer, offset, want);
+				bytesRead+=n;
+				return n;
+			}
+
 			@Override
 			public void close() throws IOException{
 				logger.debug("Closing data connection.");
