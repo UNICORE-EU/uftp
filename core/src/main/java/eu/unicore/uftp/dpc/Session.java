@@ -266,6 +266,11 @@ public class Session {
 		}
 
 		else if (chk.startsWith("PASV") || chk.startsWith("EPSV")) {
+			// "EPSV ALL" from RFC2428
+			if(chk.startsWith("EPSV ALL")){
+				connection.sendControl("200 OK");
+				return ACTION_NONE;
+			}
 			if(numParCons<=maxParCons){
 				connection.addNewDataConnection(cmd);
 			}
