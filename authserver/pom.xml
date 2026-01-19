@@ -22,8 +22,8 @@
   </scm>
 
   <properties>
-    <use.version>5.5.2</use.version>
-    <uftp.version>2.23.1</uftp.version>
+    <use.version>5.5.4</use.version>
+    <uftp.version>2.23.2</uftp.version>
     <datashare.version>0.21.2</datashare.version>
     <package.version>${project.version}</package.version>
     <package.release>1</package.release>
@@ -52,6 +52,11 @@
       <groupId>eu.unicore.uftp</groupId>
       <artifactId>uftp-datashare</artifactId>
       <version>${datashare.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>eu.unicore.services</groupId>
+      <artifactId>use-core</artifactId>
+      <version>${use.version}-1</version>
     </dependency>
     <dependency>
       <groupId>eu.unicore.services</groupId>

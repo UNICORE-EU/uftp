@@ -66,10 +66,15 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 		super.closeData();
 	}
 
+	private boolean _closed = false;
+
 	@Override
 	public void close() throws IOException {
-		client.sendControl("QUIT");
-		super.close();
+		if(!_closed) {
+			client.sendControl("QUIT");
+			super.close();
+			_closed = true;
+		}
 	}
 
 	/**

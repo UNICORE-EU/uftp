@@ -145,20 +145,16 @@ public class Session {
 		this.includes = parsePathlist(job.getIncludes());
 		this.excludes = parsePathlist(job.getExcludes());
 		this.job = job;
-		
 	}
 
 	public int getNextAction() throws IOException, ProtocolViolationException {
 		String cmd = connection.readControl();
 		String chk = cmd!=null? cmd.toUpperCase() : null;
-		
 		if (chk == null || chk.startsWith("BYE") || chk.startsWith("QUIT")) {
 			isAlive = false;
 			return ACTION_END;
 		}
-		
 		if(chk.isEmpty())return ACTION_NONE;
-		
 		else if (chk.startsWith("NOOP ")) {
 			boolean wantDataConnections = handleNoop(cmd);
 			if(wantDataConnections) {
@@ -166,105 +162,81 @@ public class Session {
 				return ACTION_CLOSE_DATA;
 			}
 		}
-
 		else if (chk.startsWith("RANG ")) {
 			handleRange(cmd);
 		}
-
 		else if (chk.startsWith("REST ")) {
 			handleRestart(cmd);
 		}
-
 		else if (chk.startsWith("RETR ")) {
 			boolean ok = handleRetrieve(cmd);
 			return ok ? ACTION_RETRIEVE : ACTION_NONE;
 		}
-
 		else if (chk.startsWith("HASH ")) {
 			boolean ok = handleHash(cmd);
 			return ok ? ACTION_SEND_HASH : ACTION_NONE;
 		}
-
 		else if (chk.startsWith("STAT ")) {
 			handleStat(cmd);
 		}
-		
 		else if (chk.startsWith("MLST")) {
 			handleMStat(cmd);
 		}
-		
 		else if (chk.startsWith("CDUP")) {
 			handleCDUP();
 		}
-
 		else if (chk.startsWith("CWD ")) {
 			handleCWD(cmd);
 		}
-
 		else if (chk.startsWith("MKD ")) {
 			handleMKD(cmd);
 		}
-
 		else if (chk.startsWith("DELE ") || chk.startsWith("RMD ")) {
 			handleRM(cmd);
 		}
-
 		else if (chk.startsWith("SIZE ")) {
 			handleSize(cmd);
 		}
-
 		else if (chk.startsWith("PWD")) {
 			handlePWD();
 		}
-
 		else if (chk.startsWith("ALLO ")) {
 			handleAllocate(cmd);
 		}
-
 		else if (chk.startsWith("STOR ")) {
 			boolean ok = handleStore(cmd);
 			return ok ? ACTION_STORE : ACTION_NONE;
 		}
-
 		else if (chk.startsWith("APPE ")) {
 			boolean ok = handleAppend(cmd);
 			return ok ? ACTION_STORE : ACTION_NONE;
 		}
-		
 		else if (chk.startsWith("SYNC-TO-CLIENT")) {
 			boolean ok = setupSyncFile(cmd);
 			return ok ? ACTION_SYNC_TO_CLIENT: ACTION_NONE;
 		}
-
 		else if (chk.startsWith("SYNC-TO-SERVER ")) {
 			boolean ok = setupSyncFile(cmd);
 			return ok ? ACTION_SYNC_TO_SERVER : ACTION_NONE;
 		}
-
 		else if (chk.startsWith("RNFR ")) {
 			handleRenameFrom(cmd);
 		}
-
 		else if (chk.startsWith("RNTO ")) {
 			handleRenameTo(cmd);
 		}
-
 		else if (chk.startsWith("MFMT ")) {
 			handleSetModificationTime(cmd);
 		}
-
 		else if (chk.startsWith("SYST")) {
 			handleSystem(cmd);
 		}
-
 		else if (chk.startsWith("FEAT")) {
 			handleFeatures(cmd);
 		}
-
 		else if (chk.startsWith("OPTS ")) {
 			handleOptions(cmd);
 		}
-
 		else if (chk.startsWith("PASV") || chk.startsWith("EPSV")) {
 			// "EPSV ALL" from RFC2428
 			if(chk.startsWith("EPSV ALL")){
@@ -281,41 +253,32 @@ public class Session {
 				return ACTION_OPEN_SOCKET;
 			}
 		}
-
 		else if (chk.startsWith("TYPE ")) {
 			handleType(cmd);
 		}
-
 		else if (chk.startsWith("LIST")) {
 			boolean ok = handleList(cmd);
 			return ok? ACTION_SEND_STREAM_DATA : ACTION_CLOSE_DATA;
 		}
-		
 		else if (chk.startsWith("MLSD")) {
 			boolean ok = handleMList(cmd);
 			return ok? ACTION_SEND_STREAM_DATA : ACTION_CLOSE_DATA;
 		}
-		
 		else if (chk.startsWith("SEND-FILE ")) {
 			launchSendFile(cmd);
 		}
-
 		else if (chk.startsWith("RECEIVE-FILE ")) {
 			launchReceiveFile(cmd);
 		}
-
 		else if (chk.startsWith("KEEP-ALIVE")) {
 			handleKeepAlive(cmd);
 		}
-		
 		else if (chk.startsWith("ABOR")) {
 			return ACTION_CLOSE_DATA;
 		}
-		
 		else {
 			connection.sendError("Command not implemented / not understood.");
 		}
-		
 		return ACTION_NONE;
 	}
 
@@ -351,7 +314,7 @@ public class Session {
 		connection.sendControl( UFTPCommands.RETR_OK+" " + numberOfBytes + " bytes available for reading.");
 		return true;
 	}
-	
+
 	private boolean handleHash(String cmd) throws IOException {
 		assertMode(Mode.READ);
 		String[] tok = cmd.trim().split(" ", 2);
@@ -372,12 +335,8 @@ public class Session {
 					+hashAlgorithm+"': "+e.getMessage());
 			return false;
 		}
-		long size ;
-
-		if(haveRange) {
-			size = numberOfBytes;
-		}
-		else {
+		long size = numberOfBytes;
+		if(!haveRange){
 			size = stat(localFile).getSize();
 			numberOfBytes = size - offset;
 		}

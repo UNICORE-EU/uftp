@@ -71,7 +71,7 @@ public abstract class UFTPBaseRequest {
 	 * (usually: no)
 	 */
 	protected boolean isPersistent = false;
-	
+
     private final AtomicInteger activeSessions = new AtomicInteger(0);
 
 	/**
@@ -84,9 +84,7 @@ public abstract class UFTPBaseRequest {
     	os.write(("client-ip=" + Utils.encodeInetAddresses(clientAddress) + "\n").getBytes());
         os.write(("user=" + ( user != null ? user : "") + "\n").getBytes());
         os.write(("secret=" + secret + "\n").getBytes());
-        if (isPersistent) {
-            os.write(("persistent=" + isPersistent + "\n").getBytes());
-        }
+        os.write(("persistent=" + isPersistent + "\n").getBytes());
     };
     
     protected abstract String getRequestType();

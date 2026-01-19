@@ -14,7 +14,7 @@
   </parent>
 
   <properties>
-    <uftp.version>2.23.0</uftp.version>
+    <uftp.version>2.23.2</uftp.version>
     <automatic.module.name>${project.groupId}.datashare</automatic.module.name>
   </properties>
 
