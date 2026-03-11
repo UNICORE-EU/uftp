@@ -98,7 +98,17 @@ public abstract class ServiceBase extends ApplicationBaseResource implements Ker
 		Pair<String,Integer> sn = getServerSpec(serverName);
 		return getConfig().getServer(sn.getM1()).getUFTPDInstance(sn.getM2());
 	}
-	
+
+	@Override
+	protected Map<String, Object> renderServerProperties() throws Exception {
+		Map<String, Object> p = super.renderServerProperties();
+		try {
+			String v = getClass().getPackage().getSpecificationVersion();
+			p.put("version", v!=null? v : "DEVELOPMENT");
+		}catch(Exception ex){}
+		return p;
+	}
+
 	@Override
 	protected Map<String, Object> getProperties() throws Exception {
 		 return new HashMap<>();
