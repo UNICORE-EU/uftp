@@ -40,7 +40,7 @@ import jakarta.ws.rs.core.Response.ResponseBuilder;
 import jakarta.ws.rs.core.Response.Status;
 
 /**
- * common stuff for the share and access services
+ * common base for the share and access services
  * @author schuller
  */
 public abstract class ShareServiceBase extends ServiceBase {
@@ -101,8 +101,6 @@ public abstract class ShareServiceBase extends ServiceBase {
 			size = range.length;
 		}
 		Closeable cl = ()->uc.close();
-//		eu.unicore.uftp.client.BackedInputStream in = uc.getInputStream(remoteFile, offset, size, -1);
-//		in.addCleanupHandler(cl);
 		InputStream in = uc.getInputStream(remoteFile, offset, size, cl);
 		ResponseBuilder rb = rangeHeader!=null? Response.status(Status.PARTIAL_CONTENT) : Response.ok();
 		rb.entity(in);

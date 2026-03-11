@@ -5,7 +5,6 @@ import java.net.URI;
 import java.util.Collection;
 import java.util.Iterator;
 
-import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -26,7 +25,6 @@ import eu.unicore.uftp.datashare.SharingUser;
 import eu.unicore.uftp.datashare.Target;
 import eu.unicore.uftp.datashare.db.ACLStorage;
 import eu.unicore.uftp.datashare.db.ShareDAO;
-import eu.unicore.util.Log;
 import eu.unicore.util.Pair;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
@@ -39,15 +37,12 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.Response.Status;
 
 /**
  * @author schuller
  */
 @Path("/")
 public class ShareServiceImpl extends ShareServiceBase {
-
-	private static final Logger logger = Log.getLogger(Log.SERVICES,ShareServiceImpl.class);
 
 	/**
 	 * create or update a share
@@ -60,7 +55,7 @@ public class ShareServiceImpl extends ShareServiceBase {
 		UFTPBackend server = getLogicalServer(serverName);
 		ACLStorage shareDB = getShareDB(serverName);
 		if(shareDB==null || server==null){
-			throw new WebApplicationException(404);
+			return createErrorResponse(404, "No sharing for '"+serverName+"'");
 		}
 		try{
 			UFTPDInstance uftp = getUFTPD(serverName);
@@ -130,7 +125,7 @@ public class ShareServiceImpl extends ShareServiceBase {
 		UFTPBackend server = getLogicalServer(serverName);
 		ACLStorage shareDB = getShareDB(serverName);
 		if(shareDB==null || server==null){
-			throw new WebApplicationException(404);
+			return createErrorResponse(404, "No sharing for '"+serverName+"'");
 		}
 		try{
 			UserAttributes ua = assembleAttributes(server, null);
@@ -161,14 +156,14 @@ public class ShareServiceImpl extends ShareServiceBase {
 		UFTPBackend server = getLogicalServer(serverName);
 		ACLStorage shareDB = getShareDB(serverName);
 		if(shareDB==null || server==null){
-			throw new WebApplicationException(404);
+			return createErrorResponse(404, "No sharing for '"+serverName+"'");
 		}
 		try{
 			UserAttributes ua = assembleAttributes(server, null);
 			Owner owner = new Owner(getNormalizedCurrentUserName(), ua.uid, ua.gid);
 			ShareDAO share = shareDB.read(uniqueID);
 			if(share == null){
-				throw new WebApplicationException(404);
+				return createErrorResponse(404, "Not found: '"+uniqueID+"'");
 			}
 			if(!share.getOwnerID().equals(owner.getName())){
 				throw new WebApplicationException(401);
@@ -196,14 +191,14 @@ public class ShareServiceImpl extends ShareServiceBase {
 		UFTPBackend server = getLogicalServer(serverName);
 		ACLStorage shareDB = getShareDB(serverName);
 		if(shareDB==null || server==null){
-			throw new WebApplicationException(404);
+			return createErrorResponse(404, "No sharing for '"+serverName+"'");
 		}
 		try{
 			UserAttributes ua = assembleAttributes(server, null);
 			Owner owner = new Owner(getNormalizedCurrentUserName(), ua.uid, ua.gid);
 			ShareDAO share = shareDB.read(uniqueID);
 			if(share == null){
-				throw new WebApplicationException(404);
+				return createErrorResponse(404, "Not found: '"+uniqueID+"'");
 			}
 			if(!share.getOwnerID().equals(owner.getName())){
 				throw new WebApplicationException(401);
@@ -286,10 +281,10 @@ public class ShareServiceImpl extends ShareServiceBase {
 		UFTPBackend server = getConfig().getServer(serverName);
 		ACLStorage shareDB = getShareDB(serverName);
 		if(shareDB==null || server==null){
-			throw new WebApplicationException(404);
+			return createErrorResponse(404, "No sharing for '"+serverName+"'");
 		}
 		if(AuthZAttributeStore.getTokens()==null){
-			throw new WebApplicationException(Status.UNAUTHORIZED);
+			throw new WebApplicationException(401);
 		}
 		try{
 			ShareDAO d = shareDB.read(uniqueID);

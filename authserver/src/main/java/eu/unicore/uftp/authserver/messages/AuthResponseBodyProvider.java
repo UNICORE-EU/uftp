@@ -23,8 +23,7 @@ public class AuthResponseBodyProvider implements MessageBodyWriter<AuthResponse>
 	final static Gson GSON;
 
 	static {
-		GsonBuilder gsonBuilder = new GsonBuilder();
-		GSON = gsonBuilder.create();
+		GSON = new GsonBuilder().create();
 	}
 
 	@Override

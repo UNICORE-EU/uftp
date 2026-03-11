@@ -43,7 +43,6 @@ public class AuthServerFeature extends FeatureImpl {
 		}
 	}
 
-	
 	public static class AuthServerStartup implements StartupTask {
 
 		private final Kernel kernel;

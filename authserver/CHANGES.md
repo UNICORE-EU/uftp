@@ -7,6 +7,15 @@ https://github.com/UNICORE-EU/uftp/issues
 Full documentation is at:
 https://uftp-docs.readthedocs.io
 
+** JAVA VERSION NOTE **
+
+   This release requires Java 17 or later!
+
+Auth Server 3.3.0 (released Mar dd, 2026)
+-----------------------------------------
+ - update to UNICORE 11 base line (requires Java 17)
+
+
 Auth Server 3.2.0 (released Sep 24, 2025)
 ------------------------------------------
  - improvement: don't use additional threads for shared file downloads 

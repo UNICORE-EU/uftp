@@ -5,6 +5,9 @@ import java.util.Set;
 
 import eu.unicore.services.Kernel;
 import eu.unicore.services.rest.USERestApplication;
+import eu.unicore.services.security.pdp.DefaultPDP;
+import eu.unicore.services.security.pdp.DefaultPDP.Rule;
+import eu.unicore.services.security.pdp.PDPResult.Decision;
 import jakarta.ws.rs.core.Application;
 
 /**
@@ -28,6 +31,14 @@ public class AccessService extends Application implements USERestApplication {
 	@Override
 	public void initialize(Kernel kernel)throws Exception {
 		ShareServiceProperties.get(kernel);
+		DefaultPDP pdp = DefaultPDP.get(kernel);
+		if(pdp!=null) {
+			pdp.setServiceRules("access",PERMIT);
+		}
 	}
+
+	public static Rule PERMIT = (c,a,d) -> {
+		return Decision.PERMIT;
+	};
 
 }
