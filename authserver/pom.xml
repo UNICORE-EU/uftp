@@ -23,6 +23,7 @@
 
   <properties>
     <use.version>6.0.0</use.version>
+    <use.rest.version>6.0.0-1</use.rest.version>
     <uftp.version>2.24.0</uftp.version>
     <datashare.version>0.21.2</datashare.version>
     <package.version>${project.version}</package.version>
@@ -61,7 +62,7 @@
     <dependency>
       <groupId>eu.unicore.services</groupId>
       <artifactId>use-rest</artifactId>
-      <version>${use.version}</version>
+      <version>${use.rest.version}</version>
     </dependency>
     <dependency>
       <groupId>eu.unicore.services</groupId>
