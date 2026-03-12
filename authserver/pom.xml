@@ -25,7 +25,7 @@
     <use.version>6.0.0</use.version>
     <use.rest.version>6.0.0-1</use.rest.version>
     <uftp.version>2.24.0</uftp.version>
-    <datashare.version>0.21.2</datashare.version>
+    <datashare.version>0.22.0</datashare.version>
     <package.version>${project.version}</package.version>
     <package.release>1</package.release>
     <automatic.module.name>${project.groupId}.authserver</automatic.module.name>
