@@ -308,6 +308,18 @@ public final class DPCClient implements Closeable {
 		return res;
 	}
 
+	public Reply runCommand(String command) throws IOException {
+		return runCommand(command, null);
+	}
+
+	public Reply runCommand(String command, int...acceptableReturnCodes) throws IOException {
+		sendControl(command);
+		Reply reply = Reply.read(this);
+		if (!reply.checkStatus(acceptableReturnCodes)) {
+			throw new IOException("Error: got " + reply+" for command <"+command+">");
+		}
+		return reply;
+	}
 	private void checkConnected() {
 		if (!connected) {
 			throw new IllegalStateException("Not connected");

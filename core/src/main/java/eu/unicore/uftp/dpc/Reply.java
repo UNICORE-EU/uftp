@@ -5,18 +5,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * reply from server, containing a code and the actual result line(s)
+ * reply from server, containing the code, status line (includng the code)
+ * and any additional result line(s)
  */
 public class Reply {
 
-	private int code;
+	private final int code;
 
 	private final List<String>results;
 
-	private String statusLine;
+	private final String statusLine;
 
-	private Reply(){
-		results = new ArrayList<>();
+	private Reply(int code, String statusLine, List<String>results){
+		this.results = results;
+		this.statusLine = statusLine!=null? statusLine: "";
+		this.code = code;
 	}
 
 	public int getCode(){
@@ -28,21 +31,28 @@ public class Reply {
 	}
 
 	public boolean isError(){
-		return code>=500;
+		return code>=500 || code < 100;
 	}
 
-	public void assertStatus(int expectedCode) throws IOException {
-		if (code!=expectedCode) {
-			throw new IOException("Error: server reply " + getStatusLine());
+	public boolean checkStatus(int expectedCode) {
+		return code==expectedCode;
+	}
+
+	/**
+	 * returns true if the reply code is one of the accepted ones
+	 * (if null, it will check for generic error codes)
+	 * 
+	 * @param acceptableCodes
+	 * @return
+	 */
+	public boolean checkStatus(int...acceptableCodes) {
+		if(acceptableCodes==null || acceptableCodes.length==0) {
+			return !isError();
 		}
-	}
-
-	public void assertStatus(int[]acceptableCodes) throws IOException {
-		if(acceptableCodes==null || acceptableCodes.length==0)return;
 		for(int i: acceptableCodes) {
-			if(code==i)return;
+			if(code==i)return true;
 		}
-		throw new IOException("Error: server reply " + getStatusLine());
+		return false;
 	}
 
 	public String getStatusLine(){
@@ -53,38 +63,48 @@ public class Reply {
 		return results;
 	}
 
+	@Override
 	public String toString(){
-		return statusLine!=null ? statusLine : super.toString();
+		return "[" + code + " " + statusLine + "]";
 	}
 
 	public static Reply read(DPCClient client)throws IOException{
-		Reply r=new Reply();
+		int code;
+		String statusLine;
+		List<String>results = new ArrayList<>();
 		String reply = client.readControl();
-		if(reply==null)throw new ProtocolViolationException("Got unexpected null reply");
-		reply = reply.trim();
-
-		//first read status code
-		String codeS = reply.substring(0, 3);
-		r.code = Integer.parseInt(codeS);
-		r.statusLine = reply;
-
-		boolean multiline = reply.length()>3 && '-' == reply.charAt(3);
-		if(multiline){
-			//read remaining lines
-			while(true){
-				reply = client.readControl();
-				if(reply==null)break;
-				// e.g. HASH sends repeated "213-" to avoid timeouts
-				if((codeS+"-").equals(reply))continue;
-				if(reply.startsWith(" ")) {
-					r.results.add(reply.trim());
-				}
-				if(reply.startsWith(String.valueOf(r.code))){
-					r.statusLine = reply;
-					break;
+		if(reply==null) {
+			code = 1;
+			statusLine = "Control connection unexpectedly at EOF.";
+		}
+		else {
+			reply = reply.trim();
+			// status code
+			String codeS = reply.substring(0, 3);
+			code = Integer.parseInt(codeS);
+			statusLine = reply;
+			boolean multiline = reply.length()>3 && '-' == reply.charAt(3);
+			if(multiline){
+				// read remaining lines
+				while(true){
+					reply = client.readControl();
+					if(reply==null) {
+						code = 1;
+						statusLine = "Control connection unexpectedly at EOF.";
+						break;
+					}
+					// e.g. HASH sends repeated "213-" to avoid timeouts
+					if((codeS+"-").equals(reply))continue;
+					if(reply.startsWith(" ")) {
+						results.add(reply.trim());
+					}
+					if(reply.startsWith(String.valueOf(code))){
+						statusLine = reply;
+						break;
+					}
 				}
 			}
 		}
-		return r;
+		return new Reply(code, statusLine, results);
 	}
 }

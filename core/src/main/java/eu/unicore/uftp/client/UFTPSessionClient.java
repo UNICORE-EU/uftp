@@ -144,10 +144,9 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 				logger.debug("Closing data connection.");
 				closeData();
 				Reply reply = Reply.read(client);
-				if(reply.isError()) {
-					throw new IOException("Server error: "+reply.getStatusLine());
+				if(!reply.checkStatus(226)) {
+					throw new IOException("Error closing data connection(s): "+reply);
 				}
-				reply.assertStatus(226);
 				super.close();
 				if(onClose!=null)onClose.close();
 			}
@@ -241,10 +240,9 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 				logger.debug("Closing data connection.");
 				closeData();
 				Reply reply = Reply.read(client);
-				if(reply.isError()) {
-					throw new IOException("Server error: "+reply.getStatusLine());
+				if(!reply.checkStatus(226)) {
+					throw new IOException("Error closing data connection: "+reply.getStatusLine());
 				}
-				reply.assertStatus(226);
 				if(onClose!=null)onClose.close();
 			}
 		};
@@ -342,9 +340,8 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 
 	public long getFileSize(String pathName) throws IOException {
 		checkConnected();
-		Reply reply = runCommand( "SIZE " + pathName);
-		//expect "213 <size> ..."
-		reply.assertStatus(213);
+		// expect "213 <size> ..."
+		Reply reply = runCommand( "SIZE " + pathName, 213);
 		return Long.parseLong(reply.getStatusLine().split(" ")[1]);
 	}
 
@@ -352,8 +349,7 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 		checkConnected();
 		openDataConnection();
 		setupForGet(os);
-		Reply reply = runCommand( "MLSD " + path);
-		reply.assertStatus(150);
+		runCommand( "MLSD " + path, 150);
 		moveData(-1);
 	}
 
@@ -361,8 +357,7 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 		checkConnected();
 		openDataConnection();
 		setupForGet(os);
-		Reply reply = runCommand( "LIST " + path);
-		reply.assertStatus(150);
+		runCommand( "LIST " + path, 150);
 		moveData(-1);
 	}
 
@@ -440,7 +435,6 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 		runCommand("RNTO " + to);
 	}
 
-
 	/**
 	 * set the modification time of a remote file/directory
 	 *
@@ -454,14 +448,13 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 		String time = FileInfo.toTimeVal(to.getTime().getTime());
 		runCommand(UFTPCommands.MFMT + " " + time + " " + path);
 	}
-	
+
 	/**
 	 * get the current directory
 	 */
 	public String pwd() throws IOException {
 		checkConnected();
-		Reply reply = runCommand("PWD");
-		reply.assertStatus(257);
+		Reply reply = runCommand("PWD", 257);
 		return reply.getStatusLine().split(" ", 2)[1];
 	}
 
@@ -473,36 +466,34 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 		if(TYPE_ARCHIVE.equalsIgnoreCase(type)) {
 			assertFeature(TYPE_ARCHIVE);
 		}
-		client.sendControl("TYPE "+type);
-		Reply reply = Reply.read(client);
-		if (reply.isError()) {
-			throw new IOException("Error: server reply " + reply);
-		}
+		runCommand("TYPE "+type);
 	}
 
 	/**
 	 * sync a local file with its up-to-date remote version
 	 *
-	 * @param remoteMaster - the remote file (up of date)
-	 * @param localSlave - the local file (out of date)
+	 * @param remotePrimary - the remote file (up of date)
+	 * @param local - the local file (out of date)
 	 */
-	public RsyncStats syncLocalFile(String remoteMaster, File localSlave) throws Exception {
-		runCommand("SYNC-TO-CLIENT " + remoteMaster);
-		Follower slave = new Follower(localSlave, new SocketFollowerChannel(socket), localSlave.getAbsolutePath());
-		return slave.call();
+	public RsyncStats syncLocalFile(String remotePrimary, File local) throws Exception {
+		runCommand("SYNC-TO-CLIENT " + remotePrimary);
+		return new Follower(local, new SocketFollowerChannel(socket),
+				local.getAbsolutePath())
+				.call();
 	}
 
 	/**
 	 * sync a remote file with its up-to-date local version
 	 *
-	 * @param localMaster - the local file (up of date)
-	 * @param remoteSlave - the remote file (out of date)
+	 * @param localPrimary - the local file (up of date)
+	 * @param remote - the remote file (out of date)
 	 * @return RsyncStats info about the rsync process
 	 */
-	public RsyncStats syncRemoteFile(File localMaster, String remoteSlave) throws Exception {
-		runCommand("SYNC-TO-SERVER " + remoteSlave);
-		Leader master = new Leader(localMaster, new SocketLeaderChannel(socket), localMaster.getAbsolutePath());
-		return master.call();
+	public RsyncStats syncRemoteFile(File localPrimary, String remote) throws Exception {
+		runCommand("SYNC-TO-SERVER " + remote);
+		return new Leader(localPrimary, new SocketLeaderChannel(socket),
+				localPrimary.getAbsolutePath())
+				.call();
 	}
 
 	/**
@@ -519,8 +510,9 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 	 * @throws Exception
 	 */
 	public String sendFile(String localFile, String remoteFile, String remoteServer, String password) throws Exception {
-		String cmd = String.format("SEND-FILE '%s' '%s' '%s' '%s'", localFile, remoteFile, remoteServer, password);
-		return runCommand(cmd).getStatusLine();
+		return runCommand(String.format("SEND-FILE '%s' '%s' '%s' '%s'",
+				localFile, remoteFile, remoteServer, password))
+				.getStatusLine();
 	}
 
 	/**
@@ -537,8 +529,9 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 	 * @throws Exception
 	 */
 	public String receiveFile(String localFile, String remoteFile, String remoteServer, String password) throws Exception {
-		String cmd = String.format("RECEIVE-FILE '%s' '%s' '%s' '%s'", localFile, remoteFile, remoteServer, password);
-		return runCommand(cmd).getStatusLine();
+		return runCommand(String.format("RECEIVE-FILE '%s' '%s' '%s' '%s'",
+				localFile, remoteFile, remoteServer, password))
+				.getStatusLine();
 	}
 
 	/**
@@ -566,19 +559,13 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 
 	public String getHashAlgorithm() throws IOException {
 		checkConnected();
-		client.sendControl("OPTS HASH");
-		Reply reply = Reply.read(client);
-		if (reply.isError()) {
-			throw new IOException("Error: server reply " + reply);
-		}
-		else {
-			return reply.toString().split("200 ")[1];
-		}
+		Reply reply = runCommand("OPTS HASH", 200);
+		return reply.getStatusLine().split("200 ")[1];
 	}
 
 	public String setHashAlgorithm(String algo) throws IOException {
 		checkConnected();
-		Reply reply = runCommand("OPTS HASH " + algo);
+		Reply reply = runCommand("OPTS HASH " + algo, 200);
 		return reply.getStatusLine().split("200 ")[1];
 	}
 
@@ -681,7 +668,7 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 		if(closed || !streamingMode) {
 			Reply reply = Reply.read(client);
 			if(reply.isError()) {
-				throw new IOException("Server error: "+reply.getStatusLine());
+				throw new IOException("Server error: "+reply);
 			}
 		}
 		return total;
@@ -716,17 +703,11 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 	}
 
 	public Reply runCommand(String command) throws IOException {
-		return runCommand(command, null);
+		return client.runCommand(command);
 	}
-	
-	public Reply runCommand(String command, int[]acceptableReturnCodes) throws IOException {
-		client.sendControl(command);
-		Reply reply = Reply.read(client);
-		if (reply.isError()) {
-			throw new IOException("Error: server reply " + reply);
-		}
-		reply.assertStatus(acceptableReturnCodes);
-		return reply;
+
+	public Reply runCommand(String command, int...acceptableReturnCodes) throws IOException {
+		return client.runCommand(command, acceptableReturnCodes);
 	}
 
 	//
@@ -735,9 +716,7 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 	//
 	public void sendRangeCommand(long offset, long length) throws IOException {
 		long endByte = rfcCompliantRange ? offset+length-1 : offset+length;
-		String message = "RANG " + offset + " " + endByte;
-		Reply reply = runCommand(message);
-		reply.assertStatus(350);
+		runCommand("RANG " + offset + " " + endByte, 350);
 	}
 
 	/**
@@ -748,8 +727,7 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 		if (baseDir == null) {
 			baseDir = ".";
 		}
-		Reply reply = runCommand("STAT " + (dir? "N ": "F ") + baseDir);
-		return reply.getResults();
+		return runCommand("STAT " + (dir? "N ": "F ") + baseDir).getResults();
 	}
 
 	private void sendStoreCommand(String remoteFile, long size, Long offset) throws IOException {

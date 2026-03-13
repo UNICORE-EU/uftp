@@ -55,16 +55,9 @@ public class ClientProtocol {
 	 * @throws IOException
 	 */
 	public void login(String user, String password) throws IOException {
-        client.sendControl(user);
-        String response = client.readControl();
-        if(response.startsWith("331")){
-        	client.sendControl("PASS "+password);
-        }
-        else{
-            throw new ProtocolViolationException("'" + response + "' does not comply with protocol.");
-        }
-        response = client.readControl();
-        if(!response.startsWith("230")){
+        client.runCommand(user, 331);
+        Reply response = client.runCommand("PASS "+password);
+        if(response.getCode()!=230){
             throw new ProtocolViolationException( "Login failed: "+response);
         }
 	}
@@ -76,27 +69,10 @@ public class ClientProtocol {
 	}
 	
     protected void readFeatures() throws IOException {
-        String response;
-        client.sendControl(UFTPCommands.SYST);
-        response = client.readControl();
-        client.sendControl(UFTPCommands.FEATURES_REQUEST);
-        response = client.readControl();
-        if (!response.startsWith("211")) {
-            throw new ProtocolViolationException("Expected 211 reply.");
-        }
-        while (true) {
-            response = client.readControl();
-            if (response == null || features.size() > 64) {
-                throw new ProtocolViolationException("Illegal server reply: too many features");
-            }
-            if (UFTPCommands.ENDCODE.equals(response)) {
-                break;
-            } else {
-                features.add(response.trim());
-            }
-        }
+        client.runCommand(UFTPCommands.SYST);
+        Reply r = client.runCommand(UFTPCommands.FEATURES_REQUEST);
+        features.addAll(r.getResults());
     }
-
 
     protected void checkPassiveSupport(List<String> features) throws ProtocolViolationException {
         if (features == null || features.isEmpty() || !features.contains(UFTPCommands.PASV)) {
