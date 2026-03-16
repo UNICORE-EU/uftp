@@ -181,10 +181,9 @@ public final class DPCClient implements Closeable {
 		if (dataSockets.size() > 0) {
 			throw new IllegalStateException("There are already open data connections.");
 		}
-		//send numParCons using "NOOP <n>"
-		String noopMsg = "NOOP " + numParCons ;
-		sendControl(noopMsg);
-		String noopResponse = readControl();
+		// send numParCons using "NOOP <n>"
+		// UFTPD replies '222' if accepted, or with '223 numConns' if limited
+		String noopResponse = runCommand("NOOP " + numParCons, 222, 223).getStatusLine();
 		if (noopResponse.startsWith("223")) {
 			// adjust our number of connections since server may have imposed a limit
 			numParCons = Integer.parseInt(noopResponse.split(" ")[2]);
@@ -210,25 +209,21 @@ public final class DPCClient implements Closeable {
 	private static final Pattern epsv_response = Pattern.compile("(\\d+)\\D+(\\d+).*"); 
 
 	private Socket epsv() throws IOException {
-		sendControl(UFTPCommands.EPSV);
-		String inputLine = readControl();
+		String inputLine = runCommand(UFTPCommands.EPSV, 229).getStatusLine();
 		Matcher m = epsv_response.matcher(inputLine);
 		if(m.matches()){
 			try{
-				int code = Integer.parseInt(m.group(1));
-				if(229==code){
-					int port = Integer.parseInt(m.group(2));
-					SocketChannel sChannel = SocketChannel.open();
-					sChannel.connect(new InetSocketAddress(controlSocket.getInetAddress(), port));
-					Socket s = sChannel.socket();
-					if(so_buffer_size>0) {
-						try {
-							s.setSendBufferSize(so_buffer_size);
-							s.setReceiveBufferSize(so_buffer_size);
-						}catch(SocketException e) {}
-					}
-					return s;
+				int port = Integer.parseInt(m.group(2));
+				SocketChannel sChannel = SocketChannel.open();
+				sChannel.connect(new InetSocketAddress(controlSocket.getInetAddress(), port));
+				Socket s = sChannel.socket();
+				if(so_buffer_size>0) {
+					try {
+						s.setSendBufferSize(so_buffer_size);
+						s.setReceiveBufferSize(so_buffer_size);
+					}catch(SocketException e) {}
 				}
+				return s;
 			}
 			catch(NumberFormatException ex){
 				throw new IOException("Could not parse response from server: <"+inputLine+">");
@@ -238,8 +233,7 @@ public final class DPCClient implements Closeable {
 	}
 
 	private Socket pasv() throws IOException {
-		sendControl(UFTPCommands.PASV);
-		String inputLine = readControl();
+		String inputLine = runCommand(UFTPCommands.PASV, 227).getStatusLine();
 		String[] inputString = inputLine.split(" ")[4].substring(1).split(",");	//"i1,i2,i3,i4,p1,p2)".split(",")
 		InetAddress dataAddress = InetAddress.getByName(inputString[0] + "." + inputString[1] + "." + inputString[2]
 				+ "." + inputString[3]);

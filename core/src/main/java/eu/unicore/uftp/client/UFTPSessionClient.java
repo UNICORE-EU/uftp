@@ -71,7 +71,9 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 	@Override
 	public void close() throws IOException {
 		if(!_closed) {
-			client.sendControl("QUIT");
+			try{
+				client.sendControl("QUIT");
+			}catch(Exception ex) { /* we don't care any more */ }
 			super.close();
 			_closed = true;
 		}
