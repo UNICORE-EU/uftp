@@ -2,10 +2,11 @@ package eu.unicore.uftp.server;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.net.ssl.SSLSocketFactory;
 
@@ -34,15 +35,15 @@ public abstract class UFTPDInstanceBase {
 
 	private int commandPort;
 
-	private boolean ssl=true;
+	private boolean ssl = true;
 
-	private String description="n/a";
+	private String description = "n/a";
 
-	protected String statusMessage = "N/A";
+	protected volatile String statusMessage = "N/A";
 
-	protected boolean isUp = false;
+	protected volatile boolean isUp = false;
 
-	private long lastChecked;
+	private volatile long lastChecked;
 
 	private final Map<String,String>serverInfo = new HashMap<>();
 
@@ -114,34 +115,41 @@ public abstract class UFTPDInstanceBase {
 		return isUp;
 	}
 
-	protected void checkConnection(){
-		if (lastChecked+60000>System.currentTimeMillis())
-			return;
+	private final AtomicBoolean pingInProgress = new AtomicBoolean(false);
 
-		boolean ok = true;
-		UFTPPingRequest req = new UFTPPingRequest();
-		try{
-			String response = doSendRequest(req);
-			for(String line: IOUtils.readLines(new StringReader(response))){
-				if(!line.contains(":"))continue;
-				try {
-					String[]tok = line.split(":", 2);
-					serverInfo.put(tok[0].trim(), tok[1].trim());
-				}catch(Exception e) {}
+	protected void checkConnection(){
+		if (pingInProgress.get() || (lastChecked+60000>System.currentTimeMillis()))
+			return;
+		pingInProgress.set(true);
+		try {
+			boolean ok = true;
+			UFTPPingRequest req = new UFTPPingRequest();
+			try{
+				String response = doSendRequest(req);
+				for(String line: IOUtils.readLines(new StringReader(response))){
+					if(!line.contains(":"))continue;
+					try {
+						String[]tok = line.split(":", 2);
+						serverInfo.put(tok[0].trim(), tok[1].trim());
+					}catch(Exception e) {}
+				}
+			}
+			catch(IOException e){
+				ok = false;
+				statusMessage="CAN'T CONNECT TO UFTPD: "+Log.createFaultMessage("Error", e);
+			}
+			if(ok){
+				isUp = true;
+				statusMessage="UFTPD connection OK";
+			}
+			else {
+				isUp = false;
 			}
 		}
-		catch(IOException e){
-			ok = false;
-			statusMessage="CAN'T CONNECT TO UFTPD: "+Log.createFaultMessage("Error", e);
+		finally {
+			lastChecked = System.currentTimeMillis();
+			pingInProgress.set(false);
 		}
-		if(ok){
-			isUp = true;
-			statusMessage="UFTPD connection OK";
-		}
-		else {
-			isUp = false;
-		}
-		lastChecked=System.currentTimeMillis();
 	}
 
 	/**
@@ -174,11 +182,16 @@ public abstract class UFTPDInstanceBase {
 		return 20;
 	}
 
+	/**
+	 * connection timeout in seconds
+	 */
+	protected int getConnectTimeout(){
+		return 10;
+	}
+
 	private String doSendRequest(final UFTPBaseRequest request)throws IOException{
 		try{
-			try (Socket socket = ssl ? 
-					getSSLSocketFactory().createSocket(commandHost, commandPort):
-					new Socket(InetAddress.getByName(commandHost),commandPort))
+			try (Socket socket = createSocket())
 			{
 				socket.setSoTimeout(1000*getPingTimeout());
 				log.debug("Sending {} request to {}:{}, SSL={}",
@@ -190,6 +203,12 @@ public abstract class UFTPDInstanceBase {
 			isUp = false;
 			throw new IOException(ie);
 		}
+	}
+
+	private Socket createSocket() throws IOException{
+		Socket s = ssl? getSSLSocketFactory().createSocket() : new Socket();
+		s.connect(new InetSocketAddress(commandHost, commandPort), 1000*getConnectTimeout());
+		return s;
 	}
 
 }
