@@ -18,8 +18,10 @@ import eu.unicore.uftp.server.requests.UFTPPingRequest;
 import eu.unicore.util.Log;
 
 /**
- * Holds properties and parameters for a single UFTPD server,
- * and is used for communicating with the UFTPD.
+ * Base class for communicating with the command channel of 
+ * a single UFTPD server. It holds properties and parameters
+ * that server, including the FTP host/port, and checks the
+ * status of the server.
  *
  * @author schuller
  */
@@ -45,7 +47,8 @@ public abstract class UFTPDInstanceBase {
 
 	private volatile long lastChecked;
 
-	private final Map<String,String>serverInfo = new HashMap<>();
+	// server info received from a ping request
+	protected final Map<String,String> serverInfo = new HashMap<>();
 
 	/**
 	 * the address of the FTP socket
@@ -123,9 +126,8 @@ public abstract class UFTPDInstanceBase {
 		pingInProgress.set(true);
 		try {
 			boolean ok = true;
-			UFTPPingRequest req = new UFTPPingRequest();
 			try{
-				String response = doSendRequest(req);
+				String response = doSendRequest(new UFTPPingRequest());
 				for(String line: IOUtils.readLines(new StringReader(response))){
 					if(!line.contains(":"))continue;
 					try {
@@ -176,10 +178,10 @@ public abstract class UFTPDInstanceBase {
 	protected abstract SSLSocketFactory getSSLSocketFactory();
 
 	/**
-	 * ping timeout in seconds
+	 * socket read timeout in seconds
 	 */
-	protected int getPingTimeout(){
-		return 20;
+	protected int getReadTimeout(){
+		return 60;
 	}
 
 	/**
@@ -191,12 +193,17 @@ public abstract class UFTPDInstanceBase {
 
 	private String doSendRequest(final UFTPBaseRequest request)throws IOException{
 		try{
-			try (Socket socket = createSocket())
+			Socket socket = null;
+			try
 			{
-				socket.setSoTimeout(1000*getPingTimeout());
+				socket = createSocket();
+				socket.setSoTimeout(1000*getReadTimeout());
 				log.debug("Sending {} request to {}:{}, SSL={}",
 						request.getClass().getSimpleName(), commandHost, commandPort, ssl);
 				return request.sendTo(socket);
+			}
+			finally {
+				IOUtils.closeQuietly(socket);
 			}
 		}catch(Exception ie){
 			statusMessage = "CAN'T CONNECT TO UFTPD: "+Log.createFaultMessage("Error", ie);
@@ -205,7 +212,12 @@ public abstract class UFTPDInstanceBase {
 		}
 	}
 
-	private Socket createSocket() throws IOException{
+	/**
+	 * create connected socket to the control port
+	 * will timeout if the connection cannot be made in the
+	 * time configured via getConnectTimeout()
+	 */
+	protected Socket createSocket() throws IOException{
 		Socket s = ssl? getSSLSocketFactory().createSocket() : new Socket();
 		s.connect(new InetSocketAddress(commandHost, commandPort), 1000*getConnectTimeout());
 		return s;
