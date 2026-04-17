@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -36,7 +37,11 @@ public final class DPCClient implements Closeable {
 
 	private static final Logger logger = Utils.getLogger(Utils.LOG_CLIENT, DPCClient.class);
 
-	private int timeout;
+	// socket read timeout in millis
+	private int timeout = 60000;
+
+	// socket connect timeout in millis
+	private int connectTimeout = 5000;
 
 	private Socket controlSocket;
 
@@ -61,15 +66,14 @@ public final class DPCClient implements Closeable {
 	}
 
 	/**
-	 * establishes an authorised pseudo FTP connection. Only a single connection
-	 * to a server can be open at the same time. A connection can be closed
-	 * using close().
+	 * Establishes the FTP control channel by connecting to one of the supplied
+	 * addresses and logging in. Only a single connection to a server can be open
+	 * at the same time. A connection can be closed using close().
 	 *
 	 * @param server - server addresses
 	 * @param port - server port
 	 * @param secret - the authentication secret
 	 * @throws IOException
-	 * @throws ProtocolViolationException
 	 * @throws AuthorizationFailureException
 	 */
 	public void connect(InetAddress[] server, int port, String secret) throws IOException,
@@ -134,11 +138,10 @@ public final class DPCClient implements Closeable {
 		int tries = 0;
 		List<InetAddress> servers = new ArrayList<>();
 		servers.addAll(Arrays.asList(server));
-
 		outer:
 			while (servers.size() > 0 && tries < 3) {
 				tries++;
-				int currentTimeoutValue = tries * timeout;
+				int currentTimeoutValue = tries * connectTimeout;
 				Iterator<InetAddress> iter = servers.iterator();
 				while (iter.hasNext()) {
 					InetAddress s = iter.next();
@@ -152,7 +155,7 @@ public final class DPCClient implements Closeable {
 					} catch (SocketTimeoutException ste) {
 						// probably some firewall thing, will retry with a longer timeout to be sure
 					} catch (Exception ex) {
-						// this should take care of "cleaner" network level errors
+						// this should take care of other network level errors
 						iter.remove();
 						Utils.closeQuietly(controlSocket);
 						errors.append("[").append(s).append(": ").append(Log.createFaultMessage(s.toString(), ex)).append("]");
@@ -164,7 +167,7 @@ public final class DPCClient implements Closeable {
 		}
 		controlWriter = new BufferedWriter(new OutputStreamWriter(controlSocket.getOutputStream()));
 		controlReader = new BufferedReader(new InputStreamReader(controlSocket.getInputStream()));
-		logger.info("FTP control connection established to {}:{}", selectedServer.getHostAddress(), port);
+		logger.info("UFTP control connection established to {}:{}", selectedServer.getHostAddress(), port);
 	}
 
 	/**
@@ -185,11 +188,11 @@ public final class DPCClient implements Closeable {
 		// UFTPD replies '222' if accepted, or with '223 numConns' if limited
 		String noopResponse = runCommand("NOOP " + numParCons, 222, 223).getStatusLine();
 		if (noopResponse.startsWith("223")) {
-			// adjust our number of connections since server may have imposed a limit
+			// adjust our number of connections since server has imposed a limit
 			numParCons = Integer.parseInt(noopResponse.split(" ")[2]);
 			logger.info("Server limit: <{}> data connection(s).", numParCons);
 		}
-		//open data connections
+		// open data connections
 		for (int i = 0; i < numParCons; i++) {
 			dataSockets.add(getNewConnection());
 		}
@@ -214,16 +217,7 @@ public final class DPCClient implements Closeable {
 		if(m.matches()){
 			try{
 				int port = Integer.parseInt(m.group(2));
-				SocketChannel sChannel = SocketChannel.open();
-				sChannel.connect(new InetSocketAddress(controlSocket.getInetAddress(), port));
-				Socket s = sChannel.socket();
-				if(so_buffer_size>0) {
-					try {
-						s.setSendBufferSize(so_buffer_size);
-						s.setReceiveBufferSize(so_buffer_size);
-					}catch(SocketException e) {}
-				}
-				return s;
+				return createDataSocket(controlSocket.getInetAddress(), port);
 			}
 			catch(NumberFormatException ex){
 				throw new IOException("Could not parse response from server: <"+inputLine+">");
@@ -239,9 +233,24 @@ public final class DPCClient implements Closeable {
 				+ "." + inputString[3]);
 		int dataPort = Integer.parseInt(inputString[4]) * 256 + //get control port (p1 * 256 + p2) 
 				Integer.parseInt(inputString[5].substring(0, inputString[5].length() - 1));
+		return createDataSocket(dataAddress, dataPort);
+	}
+
+	private Socket createDataSocket(InetAddress dataHost, int dataPort) throws IOException {
 		SocketChannel sChannel = SocketChannel.open();
-		sChannel.connect(new InetSocketAddress(dataAddress, dataPort));
-		return sChannel.socket();
+		sChannel.connect(new InetSocketAddress(dataHost, dataPort));
+		Socket s = sChannel.socket();
+		if(so_buffer_size>0) {
+			try {
+				s.setSendBufferSize(so_buffer_size);
+				s.setReceiveBufferSize(so_buffer_size);
+			}catch(SocketException e) {}
+		}
+		if(timeout>0) {
+			System.out.println("+++ timeout "+timeout);
+			s.setSoTimeout(timeout);
+		}
+		return s;
 	}
 
 	/**
@@ -277,8 +286,14 @@ public final class DPCClient implements Closeable {
 		return features;
 	}
 
-	public void setTimeout(int timeout) {
-		this.timeout = timeout;
+	public void setTimeout(int timeout, TimeUnit timeUnit) {
+		this.timeout = Math.toIntExact(
+				TimeUnit.MILLISECONDS.convert(timeout, timeUnit));
+		for(Socket s: dataSockets) {
+			try {
+				s.setSoTimeout(this.timeout);
+			}catch(Exception e) {}
+		}
 	}
 
 	/**

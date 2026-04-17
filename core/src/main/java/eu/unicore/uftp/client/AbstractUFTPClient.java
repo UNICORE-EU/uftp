@@ -7,6 +7,7 @@ import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import eu.unicore.uftp.dpc.AuthorizationFailureException;
 import eu.unicore.uftp.dpc.DPCClient;
@@ -35,7 +36,10 @@ public abstract class AbstractUFTPClient implements Closeable {
 
 	private final InetAddress[] servers;
 	private final int port;
-	private int timeout = 3000;
+
+	// socket timeout in milliseconds
+	protected int timeout = 60*1000;
+
 	private String secret;
 
 	protected long bandwidthLimit = -1;
@@ -72,7 +76,7 @@ public abstract class AbstractUFTPClient implements Closeable {
 	}
 
 	public void connect() throws IOException, AuthorizationFailureException {
-		client.setTimeout(timeout);
+		client.setTimeout(timeout, TimeUnit.SECONDS);
 		client.connect(servers, port, secret);
 		openDataConnection();
 	}
@@ -182,8 +186,14 @@ public abstract class AbstractUFTPClient implements Closeable {
 		this.numcons = num;
 	}
 
-	public void setTimeout(int timeout) {
-		this.timeout = timeout;
+	/**
+	 * set socket connect/read timeout
+	 * @param timeout
+	 * @param timeUnit
+	 */
+	public void setTimeout(int timeout, TimeUnit timeUnit) {
+		this.timeout = Math.toIntExact(TimeUnit.MILLISECONDS.convert(timeout, timeUnit));
+		this.client.setTimeout(timeout, timeUnit);
 	}
 
 	public void setSecret(String secret) {

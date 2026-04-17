@@ -18,7 +18,7 @@ import eu.unicore.uftp.server.requests.UFTPPingRequest;
 import eu.unicore.util.Log;
 
 /**
- * Base class for communicating with the command channel of 
+ * Base class for communicating with the command channel of
  * a single UFTPD server. It holds properties and parameters
  * that server, including the FTP host/port, and checks the
  * status of the server.
@@ -193,17 +193,12 @@ public abstract class UFTPDInstanceBase {
 
 	private String doSendRequest(final UFTPBaseRequest request)throws IOException{
 		try{
-			Socket socket = null;
-			try
+			try(Socket socket = createSocket())
 			{
-				socket = createSocket();
 				socket.setSoTimeout(1000*getReadTimeout());
 				log.debug("Sending {} request to {}:{}, SSL={}",
 						request.getClass().getSimpleName(), commandHost, commandPort, ssl);
 				return request.sendTo(socket);
-			}
-			finally {
-				IOUtils.closeQuietly(socket);
 			}
 		}catch(Exception ie){
 			statusMessage = "CAN'T CONNECT TO UFTPD: "+Log.createFaultMessage("Error", ie);

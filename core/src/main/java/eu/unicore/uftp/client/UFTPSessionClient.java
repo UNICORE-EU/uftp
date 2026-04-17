@@ -11,6 +11,7 @@ import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.logging.log4j.Logger;
 
@@ -478,10 +479,18 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 	 * @param local - the local file (out of date)
 	 */
 	public RsyncStats syncLocalFile(String remotePrimary, File local) throws Exception {
-		runCommand("SYNC-TO-CLIENT " + remotePrimary);
-		return new Follower(local, new SocketFollowerChannel(socket),
-				local.getAbsolutePath())
-				.call();
+		int t = this.timeout;
+		try {
+			// the current implementation can take a long
+			// time to compute the checksums
+			setTimeout(0, TimeUnit.MILLISECONDS);
+			runCommand("SYNC-TO-CLIENT " + remotePrimary);
+			return new Follower(local, new SocketFollowerChannel(socket),
+					local.getAbsolutePath())
+					.call();
+		}finally {
+			setTimeout(t, TimeUnit.MILLISECONDS);
+		}
 	}
 
 	/**
