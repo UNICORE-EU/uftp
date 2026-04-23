@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>eu.unicore.uftp</groupId>
   <artifactId>uftp-authserver</artifactId>
-  <version>3.3.0</version>
+  <version>3.3.1</version>
   <packaging>jar</packaging>
   <name>UFTP Authentication Server</name>
   <url>https://www.unicore.eu</url>
@@ -22,9 +22,8 @@
   </scm>
 
   <properties>
-    <use.version>6.0.0</use.version>
-    <use.rest.version>6.0.0-1</use.rest.version>
-    <uftp.version>2.24.0</uftp.version>
+    <use.version>6.0.2</use.version>
+    <uftp.version>2.24.4</uftp.version>
     <datashare.version>0.22.0</datashare.version>
     <package.version>${project.version}</package.version>
     <package.release>1</package.release>
@@ -62,7 +61,7 @@
     <dependency>
       <groupId>eu.unicore.services</groupId>
       <artifactId>use-rest</artifactId>
-      <version>${use.rest.version}</version>
+      <version>${use.version}</version>
     </dependency>
     <dependency>
       <groupId>eu.unicore.services</groupId>

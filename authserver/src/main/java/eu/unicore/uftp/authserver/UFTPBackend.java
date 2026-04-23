@@ -139,10 +139,9 @@ public class UFTPBackend {
 	private synchronized void checkConnection(){
 		isUp = false;
 		int avail = 0;
-
 		for(UFTPDInstance i: instances){
 			String state = "DOWN";
-			if(i.isUFTPAvailable()) {
+			if(i.isOK()) {
 				isUp = true;
 				state = "UP";
 				avail++;
@@ -152,9 +151,10 @@ public class UFTPBackend {
 		
 		}
 		if(instances.size()>1) {
-			statusMessage = "OK ["+avail+" of "+instances.size()+" UFTPD servers available]";
+			statusMessage = (isUp? "OK": "DOWN") +
+					" ["+avail+" of "+instances.size()+" UFTPD servers available]";
 		}else {
-			statusMessage = instances.get(0).getConnectionStatusMessage();	
+			statusMessage = (isUp? "OK": "DOWN");
 		}
 	}
 
@@ -166,7 +166,7 @@ public class UFTPBackend {
 			UFTPDInstance i = instances.get(index);
 			index++;
 			if(index==instances.size())index=0;
-			if(i.isUFTPAvailable()) {
+			if(i.isServiceAvailable()) {
 				return i;
 			}
 			c++;
@@ -179,7 +179,7 @@ public class UFTPBackend {
 			return getUFTPDInstance();
 		}
 		UFTPDInstance i = instances.get(index-1);
-		if(!i.isUFTPAvailable()) {
+		if(!i.isServiceAvailable()) {
 			throw new IOException("Requested UFTP server instance is not available!");
 		}
 		return i;

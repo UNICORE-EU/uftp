@@ -1,6 +1,5 @@
 package eu.unicore.uftp.authserver.share;
 
-import java.io.Closeable;
 import java.io.File;
 import java.io.InputStream;
 import java.net.InetAddress;
@@ -10,6 +9,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -100,15 +100,18 @@ public abstract class ShareServiceBase extends ServiceBase {
 			offset = range.offset;
 			size = range.length;
 		}
-		Closeable cl = ()->uc.close();
-		InputStream in = uc.getInputStream(remoteFile, offset, size, cl);
 		ResponseBuilder rb = rangeHeader!=null? Response.status(Status.PARTIAL_CONTENT) : Response.ok();
-		rb.entity(in);
 		rb.header("Content-Disposition", "attachment; filename=\""+fileName+"\"");
 		if(rangeHeader!=null) {
 			rb.header("Content-Range", String.format("bytes %d-%d/%d", offset, size+1, fi.getSize()));
 		}
-		return rb.build();
+		try{
+			rb.entity(uc.getInputStream(remoteFile, offset, size, ()->uc.close()));
+			return rb.build();
+		}catch(Exception ex) {
+			IOUtils.closeQuietly(uc);
+			throw ex;
+		}
 	}
 
 	/**

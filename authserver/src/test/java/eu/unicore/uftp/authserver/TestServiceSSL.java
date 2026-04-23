@@ -28,7 +28,7 @@ public class TestServiceSSL {
 
 	@Test
 	public void testAuthService() throws Exception {
-		System.out.println(k.getConnectionStatus());
+		System.out.println(k.getSubsystemsReport());
 		String desc = k.getAttribute(AuthServiceConfig.class).getStatusDescription();
 		assertTrue(desc.contains("TEST"));
 		assertTrue(desc.contains("MULTI"));
