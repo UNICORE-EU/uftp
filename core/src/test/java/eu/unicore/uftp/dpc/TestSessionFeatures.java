@@ -397,6 +397,26 @@ public class TestSessionFeatures extends ClientServerTestBase{
 		}
 	}
 
+	@Test
+	public void testOptions() throws Exception {
+		String secret = UUID.randomUUID().toString();
+		String cwd = dataDir.getAbsolutePath();
+		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret, cwd);
+		job.sendTo(host[0], jobPort);
+		Thread.sleep(1000);
+
+		try(UFTPSessionClient client = new UFTPSessionClient(host, srvPort)){
+			client.setSecret(secret);
+			client.connect();
+			var opts = client.getSessionOptions();
+			System.out.println("Options: "+opts);
+			assertEquals("MD5", opts.get("HASH"));
+			client.setSessionOption("HASH", "SHA-1");
+			opts = client.getSessionOptions();
+			assertEquals("SHA-1", opts.get("HASH"));	
+		}
+	}
+
 	private void makeTestFile2(File file, int lines) throws IOException {
 		try(FileOutputStream fos = new FileOutputStream(file)) {
 			for (int i = 0; i < lines; i++) {

@@ -6,7 +6,6 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.net.ssl.SSLSocketFactory;
 
@@ -16,6 +15,7 @@ import org.apache.logging.log4j.Logger;
 import eu.unicore.uftp.server.requests.UFTPBaseRequest;
 import eu.unicore.uftp.server.requests.UFTPPingRequest;
 import eu.unicore.util.Log;
+import eu.unicore.util.Pair;
 
 /**
  * Base class for communicating with the command channel of
@@ -40,12 +40,6 @@ public abstract class UFTPDInstanceBase {
 	private boolean ssl = true;
 
 	private String description = "n/a";
-
-	protected volatile String statusMessage = "N/A";
-
-	protected volatile boolean isUp = false;
-
-	private volatile long lastChecked;
 
 	// server info received from a ping request
 	protected final Map<String,String> serverInfo = new HashMap<>();
@@ -104,54 +98,37 @@ public abstract class UFTPDInstanceBase {
 		this.description = description;
 	}
 
-	public String getConnectionStatusMessage(){
-		checkConnection();
-		return statusMessage;
-	}
-
 	public String toString(){
 		return "[UFTPD server: cmd"+(ssl?"(ssl)":"")+"="+commandHost+":"+commandPort+" ftp="+host+":"+port+"]";
 	}
 
-	public boolean isUFTPAvailable(){
-		checkConnection();
-		return isUp;
-	}
+	public boolean isOK() { return true; }
 
-	private final AtomicBoolean pingInProgress = new AtomicBoolean(false);
+	protected void notOK(String errorMsg) {}
 
-	protected void checkConnection(){
-		if (pingInProgress.get() || (lastChecked+60000>System.currentTimeMillis()))
-			return;
-		pingInProgress.set(true);
-		try {
-			boolean ok = true;
-			try{
-				String response = doSendRequest(new UFTPPingRequest());
-				for(String line: IOUtils.readLines(new StringReader(response))){
-					if(!line.contains(":"))continue;
-					try {
-						String[]tok = line.split(":", 2);
-						serverInfo.put(tok[0].trim(), tok[1].trim());
-					}catch(Exception e) {}
-				}
-			}
-			catch(IOException e){
-				ok = false;
-				statusMessage="CAN'T CONNECT TO UFTPD: "+Log.createFaultMessage("Error", e);
-			}
-			if(ok){
-				isUp = true;
-				statusMessage="UFTPD connection OK";
-			}
-			else {
-				isUp = false;
+	protected void setOK() {}
+
+	/**
+	 * @return true/false for the status and a message/error
+	 */
+	protected Pair<Boolean, String> checkConnection(){
+		boolean ok = true;
+		String msg = "OK";
+		try{
+			String response = doSendRequest(new UFTPPingRequest());
+			for(String line: IOUtils.readLines(new StringReader(response))){
+				if(!line.contains(":"))continue;
+				try {
+					String[]tok = line.split(":", 2);
+					serverInfo.put(tok[0].trim(), tok[1].trim());
+				}catch(Exception e) {}
 			}
 		}
-		finally {
-			lastChecked = System.currentTimeMillis();
-			pingInProgress.set(false);
+		catch(IOException e){
+			ok = false;
+			msg = Log.getDetailMessage(e);
 		}
+		return new Pair<>(ok, msg);
 	}
 
 	/**
@@ -161,8 +138,8 @@ public abstract class UFTPDInstanceBase {
 	 * @throws IOException in case of IO errors or timeout
 	 */
 	public String sendRequest(final UFTPBaseRequest request)throws IOException {
-		if(!isUFTPAvailable()){
-			throw new IOException(statusMessage);
+		if(!isOK()){
+			throw new IOException("UFTPD server is not available");
 		}
 		return doSendRequest(request);
 	}
@@ -192,18 +169,17 @@ public abstract class UFTPDInstanceBase {
 	}
 
 	private String doSendRequest(final UFTPBaseRequest request)throws IOException{
-		try{
-			try(Socket socket = createSocket())
-			{
-				socket.setSoTimeout(1000*getReadTimeout());
-				log.debug("Sending {} request to {}:{}, SSL={}",
-						request.getClass().getSimpleName(), commandHost, commandPort, ssl);
-				return request.sendTo(socket);
-			}
-		}catch(Exception ie){
-			statusMessage = "CAN'T CONNECT TO UFTPD: "+Log.createFaultMessage("Error", ie);
-			isUp = false;
-			throw new IOException(ie);
+		try(Socket socket = createSocket())
+		{
+			socket.setSoTimeout(1000*getReadTimeout());
+			log.debug("Sending {} request to {}:{}, SSL={}",
+					request.getClass().getSimpleName(), commandHost, commandPort, ssl);
+			String reply = request.sendTo(socket);
+			setOK();
+			return reply;
+		}catch(IOException e) {
+			notOK(Log.getDetailMessage(e));
+			throw e;
 		}
 	}
 

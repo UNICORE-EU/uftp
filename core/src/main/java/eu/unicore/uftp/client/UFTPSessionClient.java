@@ -10,7 +10,9 @@ import java.net.InetAddress;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.logging.log4j.Logger;
@@ -481,8 +483,7 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 	public RsyncStats syncLocalFile(String remotePrimary, File local) throws Exception {
 		int t = this.timeout;
 		try {
-			// the current implementation can take a long
-			// time to compute the checksums
+			// sync can take a long time to compute the checksums
 			setTimeout(0, TimeUnit.MILLISECONDS);
 			runCommand("SYNC-TO-CLIENT " + remotePrimary);
 			return new Follower(local, new SocketFollowerChannel(socket),
@@ -501,10 +502,17 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 	 * @return RsyncStats info about the rsync process
 	 */
 	public RsyncStats syncRemoteFile(File localPrimary, String remote) throws Exception {
-		runCommand("SYNC-TO-SERVER " + remote);
-		return new Leader(localPrimary, new SocketLeaderChannel(socket),
-				localPrimary.getAbsolutePath())
-				.call();
+		int t = this.timeout;
+		try {
+			// sync can take a long time to compute the checksums
+			setTimeout(0, TimeUnit.MILLISECONDS);
+			runCommand("SYNC-TO-SERVER " + remote);
+			return new Leader(localPrimary, new SocketLeaderChannel(socket),
+					localPrimary.getAbsolutePath())
+					.call();
+		}finally {
+			setTimeout(t, TimeUnit.MILLISECONDS);
+		}
 	}
 
 	/**
@@ -596,6 +604,20 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 		String hash = tokens[3];
 		String path = tokens[4];
 		return new HashInfo(path, hash, algo, first, last);
+	}
+
+	public void setSessionOption(String key, String value) throws IOException {
+		runCommand("OPTS "+key+" "+value);
+	}
+
+	public Map<String,String>getSessionOptions() throws IOException {
+		Reply r = runCommand("OPTS");
+		Map<String,String> opts = new HashMap<>();
+		for(String l: r.getResults()){
+			String[]kv = l.split(" ", 2);
+			opts.put(kv[0], kv[1]);
+		}
+		return opts;
 	}
 
 	public static class HashInfo {

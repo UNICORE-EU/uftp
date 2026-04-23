@@ -23,10 +23,12 @@ public class UFTPDInstanceBaseTest extends ClientServerTestBase {
 		i.setHost("localhost");
 		i.setPort(srvPort);
 		System.out.println(i.toString());
-		System.out.println(i.getConnectionStatusMessage()
+		System.out.println("OK="+i.isOK()
 				+", v"+i.getVersion()
 				+", max. sessions="+i.getSessionLimit());
 		i.sendRequest(new UFTPPingRequest());
+		i.notOK("Some error");
+		i.setOK();
 	}
 
 }

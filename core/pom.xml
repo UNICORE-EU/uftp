@@ -17,7 +17,7 @@
     <compiler.fork>false</compiler.fork>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <seclib.version>8.1.2</seclib.version>
-    <commons-io.version>2.21.0</commons-io.version>
+    <commons-io.version>2.22.0</commons-io.version>
     <commons-compress.version>1.28.0</commons-compress.version>
     <automatic.module.name>${project.groupId}.core</automatic.module.name>
   </properties>

@@ -247,7 +247,6 @@ public final class DPCClient implements Closeable {
 			}catch(SocketException e) {}
 		}
 		if(timeout>0) {
-			System.out.println("+++ timeout "+timeout);
 			s.setSoTimeout(timeout);
 		}
 		return s;

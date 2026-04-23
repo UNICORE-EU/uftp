@@ -234,7 +234,7 @@ public class Session {
 		else if (chk.startsWith("FEAT")) {
 			handleFeatures(cmd);
 		}
-		else if (chk.startsWith("OPTS ")) {
+		else if (chk.startsWith("OPTS")) {
 			handleOptions(cmd);
 		}
 		else if (chk.startsWith("PASV") || chk.startsWith("EPSV")) {
@@ -789,7 +789,11 @@ public class Session {
 		try {
 			String[] tokens = cmd.split(" ");
 			if(tokens.length<2){
-				throw new IllegalArgumentException("'OPTS' requires at least one argument.");
+				connection.sendControl("211-OPTS");
+				connection.sendControl(" HASH "+hashAlgorithm);
+				connection.sendControl(" KEEP-ALIVE "+keepAlive);
+				connection.sendControl("211 END");
+				return;
 			}
 			String optArg = tokens[1];
 			if("HASH".equalsIgnoreCase(optArg)) {
