@@ -12,8 +12,9 @@ https://uftp-docs.readthedocs.io
    This release requires Java 17 or later!
 
 
-Auth Server 3.3.1 (released Apr dd, 2026)
+Auth Server 3.3.1 (released Apr 27, 2026)
 -----------------------------------------
+ - improved status checking
  - dependency updates
 
 Auth Server 3.3.0 (released Mar 12, 2026)
