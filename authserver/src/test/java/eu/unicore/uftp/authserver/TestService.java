@@ -25,7 +25,7 @@ import eu.unicore.services.restclient.RESTException;
 import eu.unicore.services.restclient.UsernamePassword;
 import eu.unicore.services.restclient.jwt.JWTUtils;
 import eu.unicore.services.restclient.sshkey.PasswordSupplierImpl;
-import eu.unicore.services.restclient.sshkey.SSHKey;
+import eu.unicore.services.restclient.sshkey.SSHKeyAuthN;
 import eu.unicore.services.server.JettyServer;
 import eu.unicore.uftp.authserver.messages.AuthRequest;
 import eu.unicore.uftp.server.UFTPServer;
@@ -103,7 +103,7 @@ public class TestService {
 	@Test
 	public void testSSHKeyAuthentication() throws Exception {
 		// static public key from file
-		IAuthCallback auth = new SSHKey("demouser", new File("src/test/resources/ssh/id_ed25519"),
+		IAuthCallback auth = new SSHKeyAuthN("demouser", new File("src/test/resources/ssh/id_ed25519"),
 				new PasswordSupplierImpl("test123".toCharArray()));
 		JettyServer server=k.getServer();
 		String url = server.getUrls()[0].toExternalForm()+"/rest/auth";
@@ -113,7 +113,7 @@ public class TestService {
 		assertEquals("user", o.getJSONObject("client").getJSONObject("role").getString("selected"));
 
 		// public key loaded via UserInfoSource class in defined in container.properties
-		auth = new SSHKey("demouser-dyn", new File("src/test/resources/ssh/id_ed25519"),
+		auth = new SSHKeyAuthN("demouser-dyn", new File("src/test/resources/ssh/id_ed25519"),
 				new PasswordSupplierImpl("test123".toCharArray()));
 		client = new BaseClient(url, k.getClientConfiguration(), auth);
 		o = client.getJSON();

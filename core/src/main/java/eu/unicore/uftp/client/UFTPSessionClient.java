@@ -38,10 +38,20 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 
 	private static final Logger logger = Utils.getLogger(Utils.LOG_CLIENT, UFTPSessionClient.class);
 
-	protected final byte[] buffer = new byte[BUFFSIZE];
 	private File baseDirectory;
 	protected boolean keepAlive = false;
 	protected boolean rfcCompliantRange = false;
+
+	protected int buffersize = BUFFSIZE;
+
+	/**
+	 * set the size of the buffer used for data copy operations
+	 * (only effective if the number of parallel streams is "1")
+	 * @param buffersize
+	 */
+	public void setBuffersize(int buffersize) {
+		this.buffersize = buffersize;
+	}
 
 	/**
 	 * create a new UFTP session client
@@ -659,6 +669,9 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 		long want = 0;
 		long remaining = maxBytes;
 		long total = 0;
+		int _s = numcons==1? buffersize : BUFFSIZE;
+		byte[] buffer = new byte[_s];
+
 		while (streamingMode || remaining > 0 && !cancelled) {
 			want = streamingMode? buffer.length : (buffer.length > remaining ? remaining : buffer.length);  
 			n = reader.read(buffer,0,(int)want);

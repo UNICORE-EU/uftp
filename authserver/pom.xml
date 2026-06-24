@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>eu.unicore.uftp</groupId>
   <artifactId>uftp-authserver</artifactId>
-  <version>3.3.1</version>
+  <version>3.3.2</version>
   <packaging>jar</packaging>
   <name>UFTP Authentication Server</name>
   <url>https://www.unicore.eu</url>
@@ -22,8 +22,9 @@
   </scm>
 
   <properties>
-    <use.version>6.0.2</use.version>
-    <uftp.version>2.24.4</uftp.version>
+    <use.version>6.1.1</use.version>
+    <uftp.version>2.24.5</uftp.version>
+    <seclib.version>8.2.0</seclib.version>
     <datashare.version>0.22.0</datashare.version>
     <package.version>${project.version}</package.version>
     <package.release>1</package.release>
@@ -42,6 +43,11 @@
       <artifactId>junit-platform-launcher</artifactId>
       <version>1.12.0</version>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>eu.unicore.security</groupId>
+      <artifactId>securityLibrary</artifactId>
+      <version>${seclib.version}</version>
     </dependency>
     <dependency>
       <groupId>eu.unicore.uftp</groupId>
