@@ -20,9 +20,10 @@ DOCUMENTATION for users and administrators can be found at
 
  * datashare - library containing support code for the data sharing feature
 
-The UFTPD file server cam be found in its own repository:
+The UFTPD file server can be found in its own repository:
  * [UFTPD file server](https://github.com/UNICORE-EU/uftpd)
 
 Client components can be found in their own repositoris:
- * [PyUFTP commandline client](https://github.com/UNICORE-EU/pyuftp)
  * ['uftp' Java commandline client](https://github.com/UNICORE-EU/uftp-javaclient)
+ * [PyUFTP commandline client](https://github.com/UNICORE-EU/pyuftp)
+ 
