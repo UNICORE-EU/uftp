@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>eu.unicore.uftp</groupId>
   <artifactId>uftp-authserver</artifactId>
-  <version>3.3.2</version>
+  <version>3.3.3</version>
   <packaging>jar</packaging>
   <name>UFTP Authentication Server</name>
   <url>https://www.unicore.eu</url>
@@ -11,7 +11,7 @@
   <parent>
     <groupId>eu.unicore</groupId>
     <artifactId>unicore-parent</artifactId>
-    <version>4.1.0</version>
+    <version>4.2.0</version>
   </parent>
 
   <scm>
@@ -22,10 +22,11 @@
   </scm>
 
   <properties>
-    <use.version>6.1.1</use.version>
+    <use.version>6.1.2</use.version>
     <uftp.version>2.24.5</uftp.version>
-    <seclib.version>8.2.0</seclib.version>
+    <seclib.version>8.2.1</seclib.version>
     <datashare.version>0.22.0</datashare.version>
+    <junit.version>6.1.3</junit.version>
     <package.version>${project.version}</package.version>
     <package.release>1</package.release>
     <automatic.module.name>${project.groupId}.authserver</automatic.module.name>
@@ -35,13 +36,13 @@
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter</artifactId>
-      <version>5.12.0</version>
+      <version>${junit.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.junit.platform</groupId>
       <artifactId>junit-platform-launcher</artifactId>
-      <version>1.12.0</version>
+      <version>${junit.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>

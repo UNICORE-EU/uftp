@@ -11,8 +11,10 @@ https://uftp-docs.readthedocs.io
 
    This release requires Java 17 or later!
 
+Auth Server 3.3.3 (released mmm dd, 2026)
+-----------------------------------------
 
-Auth Server 3.3.2 (released Jun26, 2026)
+Auth Server 3.3.2 (released Jun 26, 2026)
 -----------------------------------------
  - update to UNICORE 11.1.0 base line
 
