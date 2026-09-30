@@ -1,6 +1,23 @@
 Changelog
 ---------
 
+UFTP 2.25.0
+ - update to new securityLibrary
+
+UFTP 2.24.4
+-----------
+ - add client support for OPTS and server impl
+ - correctly handle connection timeout
+ - set data socket read timeouts
+ - better error reporting; more consistent internal APIs
+ - update to UNICORE 11 baseline
+
+UFTP 2.24.0
+-----------
+ - fix: client: don't read more data than is available
+ - implement "EPSV ALL"
+ - dependency updates
+
 UFTP 2.23.0
 -----------
  - simplify backed i/o streams (remove separate classes needed)
