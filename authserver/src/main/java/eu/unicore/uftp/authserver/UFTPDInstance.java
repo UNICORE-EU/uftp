@@ -4,7 +4,6 @@ import java.security.SecureRandom;
 
 import javax.net.ssl.SSLSocketFactory;
 
-import eu.emi.security.authn.x509.impl.SocketFactoryCreator2;
 import eu.unicore.services.ExternalSystemConnector;
 import eu.unicore.services.Kernel;
 import eu.unicore.services.utils.ExternalConnectorHelper;
@@ -13,6 +12,7 @@ import eu.unicore.uftp.server.requests.UFTPPingRequest;
 import eu.unicore.util.httpclient.HostnameMismatchCallbackImpl;
 import eu.unicore.util.httpclient.IClientConfiguration;
 import eu.unicore.util.httpclient.ServerHostnameCheckingMode;
+import io.imunity.tanl.x509.impl.SocketFactoryCreator2;
 
 /**
  * Holds properties and parameters for a single UFTPD server,

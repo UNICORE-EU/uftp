@@ -65,9 +65,6 @@ public class ShareServiceImpl extends ShareServiceBase {
 			JSONObject json = new JSONObject(jsonString);
 			String requestedGroup = json.optString("group", null);
 			UserAttributes ua = assembleAttributes(server, requestedGroup);
-			if("nobody".equalsIgnoreCase(ua.uid)){
-				return createErrorResponse(401, "Your User ID cannot share, please check your access level");
-			}
 			AccessType accessType = AccessType.valueOf(json.optString("access", "READ"));
 			if(AccessType.WRITE.equals(accessType)&&!getShareServiceProperties().isWriteAllowed()){
 				return createErrorResponse(401, "Writable shares not allowed");

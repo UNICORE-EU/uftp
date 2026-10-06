@@ -18,7 +18,7 @@ import eu.unicore.services.utils.deployment.FeatureImpl;
 public class AuthServerFeature extends FeatureImpl {
 
 	public AuthServerFeature() {
-		this.name = "AuthServer";
+		super("AuthServer");
 	}
 
 	@Override

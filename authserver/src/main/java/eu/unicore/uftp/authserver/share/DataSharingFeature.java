@@ -13,7 +13,7 @@ import eu.unicore.services.utils.deployment.FeatureImpl;
 public class DataSharingFeature extends FeatureImpl {
 
 	public DataSharingFeature() {
-		this.name = "DataSharing";
+		super("DataSharing");
 	}
 
 	@Override

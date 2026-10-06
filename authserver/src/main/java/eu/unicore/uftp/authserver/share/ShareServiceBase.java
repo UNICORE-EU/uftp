@@ -15,7 +15,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import eu.emi.security.authn.x509.impl.X500NameUtils;
 import eu.unicore.services.rest.RESTUtils.HtmlBuilder;
 import eu.unicore.services.security.util.AuthZAttributeStore;
 import eu.unicore.uftp.authserver.ServiceBase;
@@ -34,6 +33,7 @@ import eu.unicore.uftp.datashare.db.ACLStorage;
 import eu.unicore.uftp.datashare.db.ShareDAO;
 import eu.unicore.uftp.dpc.Session.Mode;
 import eu.unicore.util.Log;
+import io.imunity.tanl.x509.impl.X500NameUtils;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.ResponseBuilder;

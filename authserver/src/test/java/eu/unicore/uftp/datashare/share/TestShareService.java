@@ -29,7 +29,6 @@ import org.junit.jupiter.api.Test;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import eu.emi.security.authn.x509.impl.X500NameUtils;
 import eu.unicore.services.Kernel;
 import eu.unicore.services.restclient.BaseClient;
 import eu.unicore.services.restclient.IAuthCallback;
@@ -40,6 +39,7 @@ import eu.unicore.uftp.authserver.share.ShareServiceProperties;
 import eu.unicore.uftp.datashare.db.ACLStorage;
 import eu.unicore.uftp.datashare.db.ShareDAO;
 import eu.unicore.uftp.server.UFTPServer;
+import io.imunity.tanl.x509.impl.X500NameUtils;
 
 public class TestShareService {
 
@@ -68,9 +68,28 @@ public class TestShareService {
 		bc.setURL(getBaseURL()+"/share/NOSUCHSERVER");
 		JSONObject o = new JSONObject();
 		o.put("path","/tmp/");
-		assertThrows(RESTException.class, ()->{
+		var re = assertThrows(RESTException.class, ()->{
 			bc.create(o);
 		});
+		assertEquals(404, re.getStatus());
+		re = assertThrows(RESTException.class, ()->{
+			bc.getJSON();
+		});
+		assertEquals(404, re.getStatus());
+		bc.setURL(bc.getURL()+"/123");
+		re = assertThrows(RESTException.class, ()->{
+			bc.put(o);
+		});
+		assertEquals(404, re.getStatus());
+		re = assertThrows(RESTException.class, ()->{
+			bc.getJSON();
+		});
+		assertEquals(404, re.getStatus());
+		re = assertThrows(RESTException.class, ()->{
+			bc.delete();
+		});
+		assertEquals(404, re.getStatus());
+		
 	}
 
 	@Test
@@ -127,8 +146,16 @@ public class TestShareService {
 		dao = acl.read(id);
 		assertEquals("/tmp/newpath", dao.getPath());
 		assertTrue(dao.getExpires()>0);
+
+		// unset expiry
+		upd = new JSONObject();
+		upd.put("lifetime", "0");
+		try(ClassicHttpResponse res = bc.put(upd)){
+			JSONObject reply = bc.asJSON(res);
+			assertEquals("OK", reply.get("lifetime"));
+		}
 	}
-	
+
 	@Test
 	public void testOnetimeShare() throws Exception {
 		File f = new File("./pom.xml");
@@ -156,6 +183,24 @@ public class TestShareService {
 			}	
 		});
 		assertEquals(404, re.getStatus());
+	}
+
+	@Test
+	public void testNoWriteShares() throws Exception {
+		k.getAttribute(ShareServiceProperties.class).setProperty("allowWriteAccess", "false");
+		BaseClient bc = getShareClient();
+		bc.setURL(getBaseURL()+"/share/TEST");
+		// create
+		JSONObject o = new JSONObject();
+		o.put("path","/tmp/");
+		o.put("user","CN=Other User, O=Testing");
+		o.put("group","hpc1");
+		o.put("access","WRITE");
+		var re = assertThrows(RESTException.class, ()->{
+					bc.create(o);
+				});
+		assertEquals(401, re.getStatus());
+		k.getAttribute(ShareServiceProperties.class).setProperty("allowWriteAccess", "true");		
 	}
 
 	// do a get to find the configured servers
@@ -204,8 +249,15 @@ public class TestShareService {
 		assertEquals(1,shares.length());
 
 		// delete share by via its unique ID
-		bc.setURL( getBaseURL()+"/share/TEST/"+id);
+		bc.setURL(getBaseURL()+"/share/TEST/"+id);
 		bc.delete();
+
+		// check 404 for access to non existent entry
+		bc.setURL(getBaseURL()+"/share/TEST/nosuchid");
+		var re = assertThrows(RESTException.class, ()->{
+			bc.getJSON();
+		});
+		assertEquals(404, re.getStatus());
 
 		// check updated list of entries
 		bc.setURL(getBaseURL()+"/share/TEST");
@@ -232,7 +284,7 @@ public class TestShareService {
 		bc.setURL(getBaseURL() + "/share/TEST");
 		System.out.println("Accessible shares:");
 		System.out.println(bc.getJSON());
-		
+
 		// as target user, get a directory listing
 		String resource = getBaseURL() + "/access/TEST/"+id+"/";
 		System.out.println("Getting directory listing from "+resource);
@@ -248,6 +300,13 @@ public class TestShareService {
 		Gson gson = new GsonBuilder().create();
 		JSONObject transferReq = new JSONObject(gson.toJson(req));
 		System.out.println(transferReq);
+		
+		BaseClient bc2 = getTargetUserClient();
+		bc2.setURL(getBaseURL()+"/access/NOSUCHSERVER");
+		var re = assertThrows(RESTException.class,()->{
+			bc2.postQuietly(transferReq);});
+		assertEquals(404, re.getStatus());
+
 		bc.setURL(getBaseURL()+"/access/TEST");
 		bc.postQuietly(transferReq);
 
@@ -259,7 +318,7 @@ public class TestShareService {
 		bc.setURL(resource);
 		bc.postQuietly(o);
 	}
-	
+
 	private JSONObject createShare(File file, String access, String user) throws Exception {
 		return createShare(file,access,user,false);
 	}
@@ -276,12 +335,12 @@ public class TestShareService {
 		bc.setURL(shareLink);
 		return bc.getJSON();
 	}
-	
+
 	private void checkGetInfo() throws Exception {
 		JSONObject share = createShare(new File("pom.xml"), "READ", "CN=Demo User, O=UNICORE, C=EU");
 		System.out.println(share.toString(2));
 	}
-	
+
 	private void checkDownload() throws Exception {
 		String s = doDownload(0, -1);
 		assertTrue(s.contains("modelVersion"));
@@ -302,6 +361,12 @@ public class TestShareService {
 			String range = "bytes="+offset+"-"+(offset+length-1);
 			headers.put("range", range);
 		}
+		
+		bc.setURL(shareLink.replace("/TEST/", "/NOPE/"));
+		var re = assertThrows(RESTException.class,()->{
+			bc.get(null, headers);
+		});
+		assertEquals(404, re.getStatus());
 		// download the file
 		bc.setURL(shareLink);
 		try(ClassicHttpResponse r = bc.get(null, headers)){
@@ -326,6 +391,14 @@ public class TestShareService {
 		System.out.println(share.toString(2));
 		String shareLink = share.getJSONObject("share").getString("http");
 		BaseClient bc = getShareClient();
+
+		bc.setURL(shareLink.replace("/TEST/", "/NOPE/"));
+		var re = assertThrows(RESTException.class,()->{
+			bc.putQuietly(new ByteArrayInputStream("".getBytes()),
+					ContentType.APPLICATION_OCTET_STREAM);
+		});
+		assertEquals(404, re.getStatus());
+
 		bc.setURL(shareLink);
 		// upload file
 		ByteArrayInputStream content = new ByteArrayInputStream("some content".getBytes());

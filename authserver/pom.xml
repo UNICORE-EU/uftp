@@ -22,9 +22,9 @@
   </scm>
 
   <properties>
-    <use.version>6.1.2</use.version>
-    <uftp.version>2.24.5</uftp.version>
-    <seclib.version>8.2.1</seclib.version>
+    <use.version>6.2.0</use.version>
+    <uftp.version>2.25.0</uftp.version>
+    <seclib.version>8.3.0</seclib.version>
     <datashare.version>0.22.0</datashare.version>
     <junit.version>6.1.3</junit.version>
     <package.version>${project.version}</package.version>
