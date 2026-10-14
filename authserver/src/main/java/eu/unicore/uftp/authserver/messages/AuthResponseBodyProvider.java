@@ -20,20 +20,11 @@ import jakarta.ws.rs.ext.MessageBodyWriter;
  */
 public class AuthResponseBodyProvider implements MessageBodyWriter<AuthResponse> {
 
-	final static Gson GSON;
-
-	static {
-		GSON = new GsonBuilder().create();
-	}
+	final static Gson GSON = new GsonBuilder().create();
 
 	@Override
 	public boolean isWriteable(Class<?> type, Type type1, Annotation[] antns, MediaType mt) {
 		return AuthResponse.class.isAssignableFrom(type);
-	}
-
-	@Override
-	public long getSize(AuthResponse t, Class<?> type, Type type1, Annotation[] antns, MediaType mt) {
-		return -1;
 	}
 
 	@Override

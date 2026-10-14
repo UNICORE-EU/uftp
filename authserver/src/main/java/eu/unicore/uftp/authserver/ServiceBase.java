@@ -1,7 +1,6 @@
 package eu.unicore.uftp.authserver;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -102,16 +101,9 @@ public abstract class ServiceBase extends ApplicationBaseResource implements Ker
 	@Override
 	protected Map<String, Object> renderServerProperties() throws Exception {
 		Map<String, Object> p = super.renderServerProperties();
-		try {
-			String v = getClass().getPackage().getSpecificationVersion();
-			p.put("version", v!=null? v : "DEVELOPMENT");
-		}catch(Exception ex){}
+		String v = getClass().getPackage().getSpecificationVersion();
+		p.put("version", v!=null? v : "DEVELOPMENT");
 		return p;
-	}
-
-	@Override
-	protected Map<String, Object> getProperties() throws Exception {
-		 return new HashMap<>();
 	}
 
 	public static Pair<String, Integer> getServerSpec(String serverName){
@@ -126,7 +118,7 @@ public abstract class ServiceBase extends ApplicationBaseResource implements Ker
 		}
 		return new Pair<>(serverName, index);
 	}
-	
+
     // used only for backwards compatibility
     protected static final String _tag = "___UFTP___MULTI___FILE___SESSION___MODE___";
 

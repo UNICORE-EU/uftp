@@ -51,10 +51,7 @@ public class UFTPBackend {
 		this.kernel = kernel;
 	}
 
-	public void configure(String name, Properties properties) {
-		if(name.contains("-")) {
-			throw new ConfigurationException("Server name cannot contain the '-' character, sorry.");
-		}
+	public void configure(String name, Properties properties) {	
 		String prefix = "authservice.server." + name + ".";
 		String desc = properties.getProperty(prefix+"description", "n/a");
 		setDescription(desc);
@@ -125,10 +122,6 @@ public class UFTPBackend {
 
 	public Collection<ExternalSystemConnector>getExternalConnections(){
 		return new ArrayList<>(instances);
-	}
-
-	public String toString(){
-		return String.format("[UFTPD Server '%s' %s]", serverName, getStatusDescription());
 	}
 
 	public boolean isAvailable(){

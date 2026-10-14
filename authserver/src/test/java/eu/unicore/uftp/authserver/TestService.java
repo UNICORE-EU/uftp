@@ -46,22 +46,23 @@ public class TestService {
 		BaseClient client = new BaseClient(url, k.getClientConfiguration(), auth);
 		JSONObject o = client.getJSON();
 		System.out.println("Service reply: "+o.toString(2));
-
 		JSONObject serverInfo = o.getJSONObject("TEST");
 		// check attributes
 		assertEquals("user1", serverInfo.getString("uid"));
 		assertEquals("hpc1", serverInfo.getString("gid"));
 		assertEquals(209715200, serverInfo.getLong("rateLimit"));
-		
+
 		// authenticate
 		String authUrl = serverInfo.getString("href");
 		client.setURL(authUrl);
 		Gson gson = new GsonBuilder().create();
 		AuthRequest req = new AuthRequest();
-		req.serverPath="/tmp/foo";
+		req.serverPath = "/tmp/foo";
+		req.client = "127.0.0.1";
 		try(ClassicHttpResponse response = client.post(new JSONObject(gson.toJson(req)))){
 			System.out.println("Service reply: " + EntityUtils.toString(response.getEntity()));
 		}
+		client.close();
 	}
 
 	@Test
@@ -98,6 +99,7 @@ public class TestService {
 			}
 		});
 		System.out.println(re);
+		client.close();
 	}
 
 	@Test
@@ -115,10 +117,12 @@ public class TestService {
 		// public key loaded via UserInfoSource class in defined in container.properties
 		auth = new SSHKeyAuthN("demouser-dyn", new File("src/test/resources/ssh/id_ed25519"),
 				new PasswordSupplierImpl("test123".toCharArray()));
+		client.close();
 		client = new BaseClient(url, k.getClientConfiguration(), auth);
 		o = client.getJSON();
 		assertEquals("CN=demouser-dyn, OU=ssh-local-users", o.getJSONObject("client").getString("dn"));
 		assertEquals("user", o.getJSONObject("client").getJSONObject("role").getString("selected"));
+		client.close();
 	}
 	
 	@Test
@@ -132,8 +136,9 @@ public class TestService {
 		JettyServer server=k.getServer();
 		String url = server.getUrls()[0].toExternalForm()+"/rest/auth/token";
 		IAuthCallback auth = new UsernamePassword("demouser", "test123");
-		BaseClient client = new BaseClient(url, k.getClientConfiguration(), auth);
-		try(ClassicHttpResponse res = client.get(ContentType.TEXT_PLAIN)){
+		try(BaseClient client = new BaseClient(url, k.getClientConfiguration(), auth);
+			ClassicHttpResponse res = client.get(ContentType.TEXT_PLAIN))
+		{
 			String tokS = EntityUtils.toString(res.getEntity(), "UTF-8");
 			JSONObject tok= JWTUtils.getPayload(tokS);
 			System.out.println("Issued token payload: "+tok.toString(2));

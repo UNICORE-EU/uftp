@@ -97,6 +97,7 @@ public class AuthServiceConfig implements ISubSystem {
 		propsLogger.info("Will configure servers: {}", Arrays.asList(servers));
 		Map<String,UFTPBackend> newServerMap = new HashMap<>();
 		for(String s: servers){
+			assertLegal(s);
 			UFTPBackend server = configure(s);
 			newServerMap.put(s, server);
 			propsLogger.info("Configured server: {}", server);
@@ -115,5 +116,11 @@ public class AuthServiceConfig implements ISubSystem {
 		UFTPBackend server = new UFTPBackend(name, kernel);
 		server.configure(name, kernel.getContainerProperties().getRawProperties());
 		return server;
+	}
+
+	static void assertLegal(String name) throws ConfigurationException {
+		if(!name.matches("^[\\w]+")) {
+			throw new ConfigurationException("Server name contains illegal character, must be alpha-numeric");
+		}
 	}
 }

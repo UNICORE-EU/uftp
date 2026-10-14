@@ -2,16 +2,20 @@ package eu.unicore.uftp.authserver;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import java.io.IOException;
 import java.util.Properties;
 
 import org.junit.jupiter.api.Test;
 
+import eu.unicore.uftp.authserver.messages.AuthResponse;
 import eu.unicore.uftp.authserver.share.ShareServiceBase;
 import eu.unicore.uftp.datashare.AccessType;
 import eu.unicore.util.Pair;
+import eu.unicore.util.configuration.ConfigurationException;
 
 public class TestUtils {
 
@@ -67,5 +71,24 @@ public class TestUtils {
 		assertFalse(props.hasChanges(p2));
 		p2.put(AuthServiceProperties.PREFIX+AuthServiceProperties.PROP_SERVERS, "TEST ANOTHER");
 		assertTrue(props.hasChanges(p2));
+	}
+
+	@Test
+	public void testAuthResponse(){
+		AuthResponse r = new AuthResponse(false, "foo");
+		IOException e = assertThrows(IOException.class, ()->{r.assertSuccess();});
+		assertTrue(e.getMessage().contains("foo"));
+	}
+
+	@Test
+	public void testLegalNames() {
+		for(String legal: new String[] {"TEST", "TEST1", "foo123BAR", "TEST_"}) {
+			AuthServiceConfig.assertLegal(legal);
+		}
+		for(String illegal: new String[] {"TE:ST", "Te-ST", "TE/ST"}) {
+			assertThrows(ConfigurationException.class, ()->{
+				AuthServiceConfig.assertLegal(illegal);
+			});
+		}
 	}
 }

@@ -89,7 +89,6 @@ public class TestShareService {
 			bc.delete();
 		});
 		assertEquals(404, re.getStatus());
-		
 	}
 
 	@Test
@@ -200,7 +199,7 @@ public class TestShareService {
 					bc.create(o);
 				});
 		assertEquals(401, re.getStatus());
-		k.getAttribute(ShareServiceProperties.class).setProperty("allowWriteAccess", "true");		
+		k.getAttribute(ShareServiceProperties.class).setProperty("allowWriteAccess", "true");
 	}
 
 	// do a get to find the configured servers
@@ -258,6 +257,10 @@ public class TestShareService {
 			bc.getJSON();
 		});
 		assertEquals(404, re.getStatus());
+		var re2 = assertThrows(RESTException.class, ()->{
+			bc.put(new JSONObject());
+		});
+		assertEquals(404, re2.getStatus());
 
 		// check updated list of entries
 		bc.setURL(getBaseURL()+"/share/TEST");
@@ -300,7 +303,7 @@ public class TestShareService {
 		Gson gson = new GsonBuilder().create();
 		JSONObject transferReq = new JSONObject(gson.toJson(req));
 		System.out.println(transferReq);
-		
+
 		BaseClient bc2 = getTargetUserClient();
 		bc2.setURL(getBaseURL()+"/access/NOSUCHSERVER");
 		var re = assertThrows(RESTException.class,()->{
@@ -361,7 +364,6 @@ public class TestShareService {
 			String range = "bytes="+offset+"-"+(offset+length-1);
 			headers.put("range", range);
 		}
-		
 		bc.setURL(shareLink.replace("/TEST/", "/NOPE/"));
 		var re = assertThrows(RESTException.class,()->{
 			bc.get(null, headers);

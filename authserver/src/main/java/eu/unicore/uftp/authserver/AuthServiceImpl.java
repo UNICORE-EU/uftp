@@ -39,9 +39,6 @@ public class AuthServiceImpl extends ServiceBase {
 	@Path("/{serverName}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response authenticateAndInitTransfer(@PathParam("serverName") String serverName, String json) {
-		if(AuthZAttributeStore.getTokens()==null){
-			throw new WebApplicationException(Status.UNAUTHORIZED);
-		}
 		String clientIP = AuthZAttributeStore.getTokens().getClientIP();
 		logger.debug("Incoming request from: {} {}", clientIP, json);
 		UFTPBackend server = getLogicalServer(serverName);
@@ -85,9 +82,8 @@ public class AuthServiceImpl extends ServiceBase {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/")
 	public Response getInfo() {
-		Response r = null;
-		JSONObject o = new JSONObject();
 		try{
+			JSONObject o = new JSONObject();
 			for(UFTPBackend i : getConfig().getServers()){
 				String name = i.getServerName();
 				String url = kernel.getContainerProperties().getContainerURL()+"/rest/auth/"+name;
@@ -118,11 +114,10 @@ public class AuthServiceImpl extends ServiceBase {
 			}
 			o.put("client", renderClientProperties());
 			o.put("server", renderServerProperties());
-			r = Response.ok().entity(o.toString(2)).build();
+			return Response.ok().entity(o.toString(2)).build();
 		}catch(Exception ex){
-			r = handleError(500, "", ex, logger);
+			return handleError(500, "", ex, logger);
 		}
-		return r;
 	}
 
 	protected JSONObject getShareServiceInfo(String name) throws JSONException {

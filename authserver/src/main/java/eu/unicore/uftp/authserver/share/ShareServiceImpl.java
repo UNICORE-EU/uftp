@@ -100,11 +100,7 @@ public class ShareServiceImpl extends ShareServiceBase {
 	private void handleDelete(String path, Owner owner,ACLStorage shareDB) throws Exception {
 		Collection<ShareDAO> shares = shareDB.readAll(path, false, owner);
 		if(shares.size()==0) {
-			// try again with '/' appended or removed
-			if(path.endsWith("/"))path=path.substring(0, path.length()-1);
-			else path = path +"/";
-			if(path.length()==0)return;
-			shares = shareDB.readAll(path, false, owner);
+			throw new WebApplicationException(400);
 		}
 		for(ShareDAO share: shares) {
 			shareDB.delete(share.getID());

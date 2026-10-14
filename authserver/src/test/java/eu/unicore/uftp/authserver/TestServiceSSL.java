@@ -56,6 +56,7 @@ public class TestServiceSSL {
 		try(ClassicHttpResponse response = client.post(new JSONObject(gson.toJson(req)))){
 			System.out.println("Service reply: " + EntityUtils.toString(response.getEntity()));
 		}
+		client.close();
 	}
 
 	protected static UFTPServer server;
