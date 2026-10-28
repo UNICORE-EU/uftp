@@ -9,18 +9,19 @@ import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.FileTime;
-import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
+import java.util.zip.CRC32;
 
 import org.apache.commons.io.FilenameUtils;
 
 import eu.unicore.uftp.client.FileInfo;
 import eu.unicore.uftp.client.UFTPSessionClient;
 import eu.unicore.uftp.dpc.DPCServer.Connection;
+import eu.unicore.uftp.dpc.Utils.Hash;
 import eu.unicore.uftp.server.FileAccess;
 import eu.unicore.uftp.server.UFTPCommands;
 import eu.unicore.uftp.server.UserFileAccess;
@@ -96,12 +97,15 @@ public class Session {
 
 	// hash algorithm
 	private String hashAlgorithm = "MD5";
-	private final String[] supportedHashAlgorithms = new String[] { "MD5", "SHA-1", "SHA-256", "SHA-512" };
-	private MessageDigest md;
+	public static final String[] supportedHashAlgorithms = new String[] { "MD5", "SHA-1", "SHA-256", "SHA-512", "CRC32" };
+	private Hash md;
 
 	private final Map<String, Pattern>patterns = new HashMap<>();
 
 	private boolean archiveMode = false;
+
+	private boolean checksumEnabled = false;
+	private CRC32 checksum;
 
 	// false = UFTP "legacy bug" in how to interpret RANG
 	// true  = be compliant with the IETF draft
@@ -311,6 +315,9 @@ public class Session {
 			size = stat(localFile).getSize();
 			numberOfBytes = size - offset;
 		}
+		if(checksumEnabled) {
+			checksum = new CRC32();
+		}
 		connection.sendControl( UFTPCommands.RETR_OK+" " + numberOfBytes + " bytes available for reading.");
 		return true;
 	}
@@ -329,7 +336,7 @@ public class Session {
 			return false;
 		}
 		try {
-			md = MessageDigest.getInstance(hashAlgorithm);
+			md = new Hash(hashAlgorithm);
 		}catch(Exception e){
 			connection.sendError( "Can't create message digest for algorithm '"
 					+hashAlgorithm+"': "+e.getMessage());
@@ -629,46 +636,40 @@ public class Session {
 	}
 
 	private boolean handleStore(String cmd) throws IOException {
-		assertMode(Mode.WRITE);
-		String[] tok = cmd.trim().split(" ", 2);
-		String localFileName = tok[1];
-		localFile = getFile(localFileName);
 		try {
-			assertACL(localFile, Mode.WRITE);
-			if(!archiveMode)localRandomAccessFile = createRandomAccessFile(localFile, "rw");
+			prepareLocalWrite(cmd);
 		} catch (Exception ex) {
 			connection.sendError("Can't open file for writing: " + ex.getMessage());
 			return false;
-		}
-		if(numberOfBytes<=0){
-			// could have STOR without ALLO
-			numberOfBytes = Long.MAX_VALUE;
 		}
 		connection.sendControl(UFTPCommands.RETR_OK);
 		return true;
 	}
 
-	
 	private boolean handleAppend(String cmd) throws IOException {
-		assertMode(Mode.WRITE);
-		String[] tok = cmd.trim().split(" ", 2);
-		String localFileName = tok[1];
-		localFile = getFile(localFileName);
 		try {
-			assertACL(localFile, Mode.WRITE);
-			localRandomAccessFile = createRandomAccessFile(localFile, "rw");
+			prepareLocalWrite(cmd);
 		} catch (Exception ex) {
 			connection.sendError("Can't open file for writing: " + ex.getMessage());
 			return false;
 		}
+		offset = localFile.exists() ? localFile.length() : 0;
+		connection.sendControl(UFTPCommands.RETR_OK);
+		return true;
+	}
+
+	private void prepareLocalWrite(String cmd) throws IOException {
+		assertMode(Mode.WRITE);
+		String[] tok = cmd.trim().split(" ", 2);
+		String localFileName = tok[1];
+		localFile = getFile(localFileName);
+		assertACL(localFile, Mode.WRITE);
+		if(!archiveMode)localRandomAccessFile = createRandomAccessFile(localFile, "rw");
 		if(numberOfBytes<=0){
 			// could have STOR without ALLO
 			numberOfBytes = Long.MAX_VALUE;
 		}
-		offset = localFile.exists() ? localFile.length() : 0;
-		
-		connection.sendControl(UFTPCommands.RETR_OK);
-		return true;
+		if(checksumEnabled)checksum = new CRC32();
 	}
 
 	private boolean setupSyncFile(String cmd) throws IOException {
@@ -792,6 +793,7 @@ public class Session {
 				connection.sendControl("211-OPTS");
 				connection.sendControl(" HASH "+hashAlgorithm);
 				connection.sendControl(" KEEP-ALIVE "+keepAlive);
+				connection.sendControl(" CHECKSUM "+checksumEnabled);
 				connection.sendControl("211 END");
 				return;
 			}
@@ -813,11 +815,16 @@ public class Session {
 				}
 				connection.sendControl("200 "+hashAlgorithm);
 			}
+			else if("CHECKSUM".equalsIgnoreCase(optArg)) {
+				checksumEnabled = Boolean.parseBoolean(tokens[2]);
+				connection.sendControl("200 CRC32 enabled");
+			}
 			else {
 				throw new IllegalArgumentException("Parameters to 'OPTS' command not understood");
 			}
 		} catch(Exception ex){
 			connection.sendControl(UFTPCommands.ERROR+" "+Log.createFaultMessage("Error: ", ex));
+			return;
 		}
 	}
 
@@ -960,9 +967,14 @@ public class Session {
 		resetRange();
 		Utils.closeQuietly(localRandomAccessFile);
 		if(!keepAlive)connection.closeData();
-		if(send226)connection.sendControl("226 File transfer successful");
+		if(send226) {
+			String msg = "226 File transfer successful"+
+					(checksumEnabled? " CRC32:"+checksum.getValue() : "");
+			connection.sendControl(msg);
+		}
 		Utils.closeQuietly(stream);
 		md = null;
+		checksum = null;
 		stream = null;
 	}
 
@@ -1018,8 +1030,16 @@ public class Session {
 	public boolean isArchiveMode() {
 		return archiveMode;
 	}
-	
-	public MessageDigest getMessageDigest() {
+
+	public boolean isChecksumEnabled() {
+		return checksumEnabled;
+	}
+
+	public CRC32 getChecksum() {
+		return checksum;
+	}
+
+	public Hash getMessageDigest() {
 		return md;
 	}
 	

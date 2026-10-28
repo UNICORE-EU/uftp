@@ -310,6 +310,33 @@ public class TestSessionFeatures extends ClientServerTestBase{
 	}
 
 	@Test
+	public void testCRC32() throws Exception {
+		File sourceFile = new File(dataDir,"testsourcefile-"+System.currentTimeMillis());
+		makeTestFile2(sourceFile, 1024*500);
+		String target = "target/testdata/testfile-" + System.currentTimeMillis();
+		String secret = UUID.randomUUID().toString();
+		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret,
+				sourceFile.getParentFile().getAbsolutePath());
+		job.sendTo(host[0], jobPort);
+
+		Thread.sleep(1000);
+		try(UFTPSessionClient client = new UFTPSessionClient(host, srvPort);
+				FileOutputStream fos = new FileOutputStream(target)){
+			client.setSecret(secret);
+			client.connect();
+			client.enableChecksum();
+			var opts = client.getSessionOptions();
+			System.out.println(opts);
+			assertEquals("true", opts.get("CHECKSUM"));
+			client.get(sourceFile.getName(),fos);
+		}
+		System.out.println("Finished client.");
+		File targetFile = new File(target);
+		String expected = Utils.md5(sourceFile);
+		checkFile(targetFile, expected);
+	}
+
+	@Test
 	public void testHashing() throws Exception {
 		String fileName = "source-"+System.currentTimeMillis();
 		File dataFile = new File("target/testdata/"+fileName);
@@ -329,14 +356,14 @@ public class TestSessionFeatures extends ClientServerTestBase{
 				client.setHashAlgorithm("no_such_algo");
 			});
 			assertTrue(ok.getMessage().contains("not supported"));
-			String[] algos = new String[] {"MD5", "SHA-1", "SHA-256", "SHA-512"};
-			for(String algo: algos) {
-				System.out.println("Hash algorithm set to: " + client.setHashAlgorithm(algo));
+			for(String algo: Session.supportedHashAlgorithms) {
+				client.setHashAlgorithm(algo);
+				System.out.println("Hash algorithm set to: " + algo);
 				HashInfo hashInfo = client.getHash(fileName, 0, dataFile.length());
 				System.out.println("Remote hash:   "+hashInfo.fullInfo());
 				HashInfo hashInfo2 = client.getHash(fileName);
 				System.out.println("Remote hash 2: "+hashInfo2.fullInfo());
-				String localMD = Utils.hexString(Utils.digest(dataFile, algo));
+				String localMD = Utils.digest(dataFile, algo);
 				String remoteMD = hashInfo.toString();
 				System.out.println(algo+" local: "+localMD+" remote: "+remoteMD);
 				assertEquals(localMD, remoteMD);

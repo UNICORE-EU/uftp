@@ -17,6 +17,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.CRC32;
 import java.util.zip.GZIPInputStream;
 
 import javax.crypto.Cipher;
@@ -198,7 +199,7 @@ public class Utils {
 	}
 
 	public static String md5(File file) throws Exception {
-		return hexString(digest(file));
+		return digest(file, "MD5");
 	}
 
 	public static String md5(byte[] data) {
@@ -217,15 +218,21 @@ public class Utils {
 		}
 	}
 
-	public static MessageDigest digest(File file) throws Exception {
+	/**
+	 * returns the MD5 hash of the given file
+	 */
+	public static String digest(File file) throws Exception {
 		return digest(file, "MD5");
 	}
 
-	public static MessageDigest digest(File file, String algo) throws Exception {
+	/**
+	 * returns the hash over the given file
+	 */
+	public static String digest(File file, String algo) throws Exception {
 		try(FileInputStream fis = new FileInputStream(file)){
 			byte[] buf = new byte[1024];
 			int r = 0;
-			MessageDigest md = MessageDigest.getInstance(algo);
+			Hash md = new Hash(algo);
 			while (true) {
 				r = fis.read(buf);
 				if (r < 0) {
@@ -233,7 +240,7 @@ public class Utils {
 				}
 				md.update(buf, 0, r);
 			}
-			return md;
+			return md.getValue();
 		}
 	}
 
@@ -380,4 +387,35 @@ public class Utils {
 		return p;
 	}
 
+	/**
+	 * wrapper providing a common interface to MessageDigest (MD5 etc) 
+	 * and a simple CRC32 checksum
+	 */
+	public static class Hash {
+
+		private final MessageDigest md;
+
+		private final CRC32 crc;
+
+		public Hash(String algorithm) throws Exception {
+			if("CRC32".equals(algorithm)) {
+				crc = new CRC32();
+				md = null;
+			}
+			else {
+				crc = null;
+				md = MessageDigest.getInstance(algorithm);
+			}
+		}
+
+		public void update(byte[] buf, int offset, int length) {
+			if(md!=null)md.update(buf, offset, length);
+			else crc.update(buf, offset, length);
+		}
+
+		public String getValue() {
+			if(md!=null)return hexString(md);
+			else return String.valueOf(crc.getValue());
+		}
+	}
 }

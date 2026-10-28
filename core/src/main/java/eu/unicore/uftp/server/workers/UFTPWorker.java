@@ -8,8 +8,8 @@ import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.security.MessageDigest;
 import java.util.List;
+import java.util.zip.CRC32;
 
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.ArchiveException;
@@ -22,14 +22,15 @@ import eu.unicore.uftp.dpc.DPCServer.Connection;
 import eu.unicore.uftp.dpc.Session;
 import eu.unicore.uftp.dpc.UFTPConstants;
 import eu.unicore.uftp.dpc.Utils;
+import eu.unicore.uftp.dpc.Utils.Hash;
 import eu.unicore.uftp.jparss.PSocket;
+import eu.unicore.uftp.rsync.Follower;
+import eu.unicore.uftp.rsync.FollowerChannel;
 import eu.unicore.uftp.rsync.Leader;
 import eu.unicore.uftp.rsync.LeaderChannel;
 import eu.unicore.uftp.rsync.RsyncStats;
-import eu.unicore.uftp.rsync.Follower;
-import eu.unicore.uftp.rsync.FollowerChannel;
-import eu.unicore.uftp.rsync.SocketLeaderChannel;
 import eu.unicore.uftp.rsync.SocketFollowerChannel;
+import eu.unicore.uftp.rsync.SocketLeaderChannel;
 import eu.unicore.uftp.server.ServerThread;
 import eu.unicore.uftp.server.requests.UFTPSessionRequest;
 import eu.unicore.util.Log;
@@ -73,6 +74,8 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 	 */
 	private final int bufferSize;
 
+	private final Session session;
+
 	/**
 	 *
 	 * @param server
@@ -86,7 +89,13 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 		this.connection = connection;
 		this.job = job;
 		this.maxStreams = maxStreams;
-		this.bufferSize = bufferSize;        
+		this.bufferSize = bufferSize;
+		this.session = new Session(connection, job, server.getFileAccess(), maxStreams);
+		this.session.setRFCRangeMode(server.getRFCRangeMode());
+		int count = job.newActiveSession();
+		boolean isPersistent = job.isPersistent();
+		if(isPersistent)logger.info("New session for <{}> this is number <{}>", job.getUser(), count);
+		
 	}
 
 	/**
@@ -96,25 +105,20 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 	 */
 	@Override
 	public void run() {
-		Session session = new Session(connection, job, server.getFileAccess(), maxStreams);
-		session.setRFCRangeMode(server.getRFCRangeMode());
+		runSession();
 		boolean isPersistent = job.isPersistent();
-		int count = job.newActiveSession();
-		if(isPersistent)logger.info("New session for <{}> this is number <{}>", job.getUser(), count);
-		runSession(session);
-		count = job.endActiveSession();
 		if(isPersistent) {
+			int count = job.endActiveSession();
 			logger.info("Ending session for <{}> remaining: {}",
 				job.getUser(), count+( count==0 ?", request processing finished.":""));
+			if(count==0)server.invalidateJob(job);
 		}
-		if(count==0 && isPersistent)server.invalidateJob(job);
 	}
 
 	/**
-	 * transfer multiple files. File names and byte ranges are read from the
-	 * control channel, while data is sent over the data socket(s).
+	 * Processes the FTP session, reading commands from the control connection
 	 */
-	protected void runSession(Session session) {
+	protected void runSession() {
 		int action = 0;
 		logger.info("Processing {}", session);
 		try {
@@ -143,19 +147,19 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 					break;
 
 				case Session.ACTION_RETRIEVE:
-					sendData(session);
+					sendData();
 					break;
 
 				case Session.ACTION_STORE:
-					readData(session);
+					readData();
 					break;
 
 				case Session.ACTION_SYNC_TO_CLIENT:
-					syncToClient(session);
+					syncToClient();
 					break;
 
 				case Session.ACTION_SYNC_TO_SERVER:
-					syncToServer(session);
+					syncToServer();
 					break;
 
 				case Session.ACTION_END:
@@ -163,11 +167,11 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 					break;
 					
 				case Session.ACTION_SEND_STREAM_DATA:
-					sendStreamData(session);
+					sendStreamData();
 					break;
 
 				case Session.ACTION_SEND_HASH:
-					sendHashData(session);
+					sendHashData();
 					break;
 
 				case Session.ACTION_NONE:
@@ -220,9 +224,9 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 	 * @throws IOException
 	 * @throws java.lang.InterruptedException
 	 */
-	protected void sendData(Session session) throws IOException, InterruptedException {
+	protected void sendData() throws IOException, InterruptedException {
 		RandomAccessFile ra = session.getLocalRandomAccessFile();
-		OutputStream target = preSend(session);
+		OutputStream target = preSend();
 		
 		ra.seek( session.getOffset());
 
@@ -232,6 +236,8 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 		final int bufSize = buffer.length;
 		int n, len;
 		long total = 0;
+		boolean checksum = session.isChecksumEnabled();
+		CRC32 crc = session.getChecksum();
 		while (total < bytesToSend) {
 			len = (int) Math.min(bufSize, bytesToSend - total);
 			n = ra.read(buffer, 0, len);
@@ -243,6 +249,7 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 			if (controlRate) {
 				controlRate(total, startTime);
 			}
+			if(checksum)crc.update(buffer, 0, n);
 		}
 		postSend(target, session, total, startTime, "Send", true);
 	}
@@ -254,7 +261,7 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 	 * @throws IOException
 	 * @throws java.lang.InterruptedException
 	 */
-	protected void sendHashData(Session session) throws IOException, InterruptedException {
+	protected void sendHashData() throws IOException, InterruptedException {
 		RandomAccessFile ra = session.getLocalRandomAccessFile();
 		ra.seek(session.getOffset());
 		long startTime = System.currentTimeMillis();
@@ -263,7 +270,7 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 		final int bufSize = buffer.length;
 		int n, len;
 		long total = 0;
-		MessageDigest md = session.getMessageDigest();
+		Hash md = session.getMessageDigest();
 		while (total < bytesToSend) {
 			len = (int) Math.min(bufSize, bytesToSend - total);
 			n = ra.read(buffer, 0, len);
@@ -278,15 +285,14 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 				connection.sendControl("213-");
 			}
 		}
-		String hash = Utils.hexString(md);
 		String msg = "213 "+session.getHashAlgorithm()+" "
 					+session.getOffset()+"-"+(bytesToSend-1)
-					+ " "+hash+" "+session.getLocalFile().getPath();
+					+ " "+md.getValue()+" "+session.getLocalFile().getPath();
 		connection.sendControl(msg);
 		postSend(null, session, total, startTime, session.getHashAlgorithm(), false);
 	}
 
-	protected void readData(Session session) throws IOException, InterruptedException {
+	protected void readData() throws IOException, InterruptedException {
 		InputStream reader;
 		if(!(socket instanceof PSocket)){
 			if (job.getKey() != null) {
@@ -390,6 +396,8 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 		long total = 0;
 		long startTime = System.currentTimeMillis();
 		boolean controlRate = job.getRateLimit() > 0;
+		boolean checksum = session.isChecksumEnabled();
+		CRC32 crc = session.getChecksum();
 		while (total < bytesToRead) {
 			len = (int) Math.min(bufSize, bytesToRead - total);
 			n = in.read(buffer, 0, len);
@@ -401,6 +409,7 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 			if (controlRate) {
 				controlRate(total, startTime);
 			}
+			if(checksum)crc.update(buffer, 0, n);
 		}
 		return total;
 	}
@@ -411,9 +420,9 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 	 * @param session - the session containing the required information
 	 * @throws IOException
 	 * @throws java.lang.InterruptedException  */
-	protected void sendStreamData(Session session) throws IOException, InterruptedException {
+	protected void sendStreamData() throws IOException, InterruptedException {
 		InputStream source = session.getStream();
-		OutputStream target = preSend(session);
+		OutputStream target = preSend();
 
 		long bytesToSend = session.getNumberOfBytes();
 		long startTime = System.currentTimeMillis();
@@ -436,7 +445,7 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 		postSend(target, session, total, startTime, "Send", true);
 	}
 	
-	private OutputStream preSend(Session session)throws IOException {
+	private OutputStream preSend()throws IOException {
 		OutputStream target = null;
 		if(!(socket instanceof PSocket)){
 			if (job.getKey() != null) {
@@ -466,7 +475,7 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 		logUsage(operation, total, millis, connection.getAddress(), -1);
 	}
 	
-	protected void syncToClient(Session session) throws Exception {
+	protected void syncToClient() throws Exception {
 		LeaderChannel channel = new SocketLeaderChannel(socket);
 		String name = session.getLocalFile().getAbsolutePath();
 		Leader master = new Leader(session.getLocalRandomAccessFile(), channel, name);
@@ -474,7 +483,7 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 		logger.info(stats);
 	}
 
-	protected void syncToServer(Session session) throws Exception {
+	protected void syncToServer() throws Exception {
 		FollowerChannel channel = new SocketFollowerChannel(socket);
 		String name = session.getLocalFile().getAbsolutePath();
 		int blockSize = Follower.reasonableBlockSize(session.getLocalFile());

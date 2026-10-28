@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.zip.CRC32;
 
 import org.apache.logging.log4j.Logger;
 
@@ -43,6 +44,9 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 	protected boolean rfcCompliantRange = false;
 
 	protected int buffersize = BUFFSIZE;
+
+	private boolean checksumEnabled = false;
+	private CRC32 checksum;
 
 	/**
 	 * set the size of the buffer used for data copy operations
@@ -199,6 +203,7 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 			((UFTPProgressListener2)progressListener).setTransferSize(size);
 		}
 		setupForGet(localTarget);
+		if(checksumEnabled)checksum = new CRC32();
 		return size;
 	}
 
@@ -269,6 +274,7 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 		openDataConnection();
 		sendStoreCommand(remoteFile, size, offset);
 		setupForPut(localSource);
+		if(checksumEnabled)checksum = new CRC32();
 	}
 
 	/**
@@ -592,10 +598,9 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 		return reply.getStatusLine().split("200 ")[1];
 	}
 
-	public String setHashAlgorithm(String algo) throws IOException {
+	public void setHashAlgorithm(String algo) throws IOException {
 		checkConnected();
-		Reply reply = runCommand("OPTS HASH " + algo, 200);
-		return reply.getStatusLine().split("200 ")[1];
+		runCommand("OPTS HASH " + algo, 200);
 	}
 
 	public HashInfo getHash(String file) throws IOException {
@@ -614,6 +619,19 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 		String hash = tokens[3];
 		String path = tokens[4];
 		return new HashInfo(path, hash, algo, first, last);
+	}
+
+	public void enableChecksum() {
+		try{
+			setSessionOption("CHECKSUM", "true");
+			checksumEnabled = true;
+		}catch(IOException e) {
+			checksumEnabled = false;
+		}
+	}
+
+	public boolean isChecksumEnabled() {
+		return checksumEnabled;
 	}
 
 	public void setSessionOption(String key, String value) throws IOException {
@@ -692,6 +710,7 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 					controlRate(total, time);
 				}catch(Exception ex) {}
 			}
+			if(checksumEnabled)checksum.update(buffer, 0, n);
 		}
 		writer.flush();
 		Utils.finishWriting(writer);
@@ -715,6 +734,14 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 			Reply reply = Reply.read(client);
 			if(reply.isError()) {
 				throw new IOException("Server error: "+reply);
+			}
+			if(checksumEnabled) {
+				long local = checksum.getValue();
+				long remote = Long.parseLong(reply.getStatusLine().split("CRC32:")[1]);
+				logger.debug("CRC32 check, local:{} remote:{}", local, remote);
+				if(local!=remote) {
+					throw new IOException("CRC32 checksum mismatch.");
+				}
 			}
 		}
 		return total;
