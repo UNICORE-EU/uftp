@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
+import java.io.RandomAccessFile;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
@@ -48,9 +48,9 @@ public class TestAsync extends ClientServerTestBase{
 		InetAddress[]server=host;
 
 		try(UFTPSessionClient client = new UFTPSessionClient(server, srvPort);
-			FileOutputStream fos = new FileOutputStream(target);
+			RandomAccessFile fos = new RandomAccessFile(target, "rw");
 			UFTPSessionClient client2 = new UFTPSessionClient(server, srvPort);
-			FileOutputStream fos2 = new FileOutputStream(target2))
+			RandomAccessFile fos2 = new RandomAccessFile(target2, "rw"))
 		{
 			client.setSecret(secret);
 			client.connect();
@@ -112,5 +112,5 @@ public class TestAsync extends ClientServerTestBase{
 			assertEquals(realSource.length(),rSize);
 		}
 	}
-	
+
 }

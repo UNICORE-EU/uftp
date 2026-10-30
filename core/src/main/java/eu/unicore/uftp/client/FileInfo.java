@@ -84,10 +84,6 @@ public class FileInfo {
 		return isDirectory;
 	}
 
-	public void setDirectory(boolean isDirectory) {
-		this.isDirectory = isDirectory;
-	}
-
 	public String getPath() {
 		return path;
 	}
@@ -100,40 +96,20 @@ public class FileInfo {
 		return lastModified;
 	}
 
-	public void setLastModified(long lastModified) {
-		this.lastModified = lastModified;
-	}
-
 	public long getSize() {
 		return size;
-	}
-
-	public void setSize(long size) {
-		this.size = size;
 	}
 
 	public boolean isReadable() {
 		return readable;
 	}
 
-	public void setReadable(boolean readable) {
-		this.readable = readable;
-	}
-
 	public boolean isWritable() {
 		return writable;
 	}
 
-	public void setWritable(boolean writable) {
-		this.writable = writable;
-	}
-
 	public boolean isExecutable() {
 		return executable;
-	}
-
-	public void setExecutable(boolean executable) {
-		this.executable = executable;
 	}
 
 	private String getIsDirectory(){
@@ -150,33 +126,18 @@ public class FileInfo {
 		return perm.toString();
 	}
 
-	public String toString(DateFormat format){
+	public String toString(){
 		StringBuilder info = new StringBuilder();
 		info.append(getIsDirectory());
 		info.append(getUnixPermissions("-"));
 		info.append(" ").append(size);
 		info.append(" ");
-		if(format==null) {
-			info.append(lastModified);
-		}
-		else {
-			info.append(format.format(new Date(lastModified)));	
-		}
+		info.append(lastModified);
 		info.append(" ").append(path);
 		return info.toString();
 	}
 
 	final static SimpleDateFormat defaultFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
-
-	public String toString(){
-		return toString(null);			
-	}
-
-	public String toPrettyString(){
-		synchronized (defaultFormat) {
-			return toString(defaultFormat);			
-		}
-	}
 
 	public String toMListEntry(){
 		StringBuilder info = new StringBuilder();

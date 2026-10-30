@@ -29,75 +29,61 @@ public abstract class UFTPDInstanceBase {
 
 	protected static final Logger log = Log.getLogger(Log.SERVICES, UFTPDInstanceBase.class);
 
-	private String host;
+	protected String host;
 
-	private int port;
+	protected int port;
 
-	private String commandHost;
+	protected String commandHost;
 
-	private int commandPort;
+	protected int commandPort;
 
-	private boolean ssl = true;
+	protected boolean ssl = true;
 
-	private String description = "n/a";
+	protected String description = "n/a";
 
 	// server info received from a ping request
 	protected final Map<String,String> serverInfo = new HashMap<>();
 
 	/**
-	 * the address of the FTP socket
+	 * set the address of the FTP socket
 	 */
-	public String getHost() {
-		return host;
-	}
-
 	public void setHost(String host) {
 		this.host = host;
 	}
 
 	/**
-	 * the port of the FTP socket
+	 * set the port of the FTP socket
 	 */
-	public int getPort() {
-		return port;
-	}
-
 	public void setPort(int port) {
 		this.port = port;
 	}
 
-	public String getCommandHost() {
-		return commandHost;
-	}
-
+	/**
+	 * set the address of the FTP socket
+	 */
 	public void setCommandHost(String commandHost) {
 		this.commandHost = commandHost;
 	}
 
-	public int getCommandPort() {
-		return commandPort;
-	}
-
+	/**
+	 * set the port of the FTP socket
+	 */
 	public void setCommandPort(int commandPort) {
 		this.commandPort = commandPort;
 	}
 
-	public boolean isSsl() {
-		return ssl;
-	}
-
+	/**
+	 * select SSL mode on the command socket
+	 */
 	public void setSsl(boolean ssl) {
 		this.ssl = ssl;
-	}
-
-	public String getDescription() {
-		return description;
 	}
 
 	public void setDescription(String description) {
 		this.description = description;
 	}
 
+	@Override
 	public String toString(){
 		return "[UFTPD server: cmd"+(ssl?"(ssl)":"")+"="+commandHost+":"+commandPort+" ftp="+host+":"+port+"]";
 	}

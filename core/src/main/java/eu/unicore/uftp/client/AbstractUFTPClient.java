@@ -150,10 +150,6 @@ public abstract class AbstractUFTPClient implements Closeable {
 		reader = localSource;
 	}
 
-	protected Socket createSocket(int numConnections, DPCClient client, byte[] key, EncryptionAlgorithm algo) throws IOException {
-		return createSocket(numConnections, client, key, false, algo);
-	}
-
 	protected Socket createSocket(final int numConnections, DPCClient client, byte[] key, boolean compress, EncryptionAlgorithm algo)
 			throws IOException {
 		Socket localSocket;
@@ -180,9 +176,7 @@ public abstract class AbstractUFTPClient implements Closeable {
 	}
 
 	public void setNumConnections(int num) {
-		if (num < 1) {
-			throw new IllegalArgumentException();
-		}
+		assert num >= 1;
 		this.numcons = num;
 	}
 
@@ -221,6 +215,10 @@ public abstract class AbstractUFTPClient implements Closeable {
 		this.progressListener = progressListener;
 	}
 
+	/**
+	 * set (approximate) bandwith limit in bytes per second
+	 * @param limit
+	 */
 	public void setBandwidthLimit(long limit) {
 		this.bandwidthLimit = limit;
 	}

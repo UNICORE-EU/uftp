@@ -152,14 +152,10 @@ public class UFTPServer implements Runnable {
 					jobSocket.setSoTimeout(jobReadTimeout);
 					jobSocket.setKeepAlive(true);
 					sslHelper.checkAccess(jobSocket);
-
 					JobConnectionWorker jcw = new JobConnectionWorker(jobSocket, svrThread);
 					Utils.getExecutor().execute(jcw);
-
-				} catch (RejectedExecutionException ree) {
-					handleErrorAndClose(jobSocket, "", ree);
-				} catch (IOException e) {
-					handleErrorAndClose(jobSocket, "Error receiving job", e);
+				} catch (RejectedExecutionException | IOException e) {
+					handleErrorAndClose(jobSocket, "", e);
 				}
 			}catch(java.net.SocketTimeoutException ste) {
 				// "Accept timed out" will happen regularly  - ignore it
@@ -169,14 +165,6 @@ public class UFTPServer implements Runnable {
 			}
 		}
 		logger.info("Exiting UFTP server.");
-	}
-
-	public int getTimeout() {
-		return timeout;
-	}
-
-	public void setTimeout(int timeout) {
-		this.timeout = timeout;
 	}
 
 	public void setCheckClientIP(boolean checkIP){
@@ -210,10 +198,6 @@ public class UFTPServer implements Runnable {
 			VER = "DEVELOPMENT";
 		}
 		return VER;
-	}
-
-	public static void printHeader() {
-		logger.info("**** UFTPD Version {} starting", getVersion());
 	}
 
 	public String getServerInfo() {

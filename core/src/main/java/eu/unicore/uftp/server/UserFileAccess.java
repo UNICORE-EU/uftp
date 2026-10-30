@@ -2,8 +2,6 @@ package eu.unicore.uftp.server;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.RandomAccessFile;
 
 import eu.unicore.uftp.client.FileInfo;
@@ -29,18 +27,6 @@ public class UserFileAccess {
 		this.fileAccess = fa;
 		this.userID = userID;
 		this.groupID = groupID;
-	}
-	
-	/**
-	 * create a {@link InputStream} for reading
-	 * 
-	 * @param canonicalPath - the canonical path to the file
-	 * @param bufferSize - the buffer size for reading from
-	 * @return a {@link InputStream}
-	 * @throws Exception  
-	 */
-	public InputStream readFile(String canonicalPath, int bufferSize) throws Exception{
-		return fileAccess.readFile(canonicalPath, userID, groupID, bufferSize);
 	}
 
 	/**
@@ -85,26 +71,6 @@ public class UserFileAccess {
 	public FileInfo stat(String path){
 		return fileAccess.stat(path, userID, groupID);
 	}
-	
-	/**
-	 * create a {@link OutputStream} for writing
-	 * 
-	 * @param canonicalPath - the canonical path to the file
-	 * @param bufferSize - the buffer size for writing to disk
-	 * @return {@link OutputStream}
-	 */
-	public OutputStream writeFile(String canonicalPath, boolean append, int bufferSize) throws Exception{
-		return fileAccess.writeFile(canonicalPath, append, userID, groupID, bufferSize);
-	}
-
-	/**
-	 * set user/group on the given file
-	 * 
-	 * @param canonicalPath
-	 */
-	public void setUser(String canonicalPath) throws Exception{
-		fileAccess.setUser(canonicalPath, userID, groupID);
-	}
 
 	/**
 	 * create a directory. all parent directories must exist
@@ -125,16 +91,6 @@ public class UserFileAccess {
 		fileAccess.rm(canonicalPath,userID,groupID);
 	}
 
-	/**
-	 * gets the user's home directory
-	 * 
-	 * @return user's home directory
-	 * @throws Exception
-	 */
-	public String getHome(){
-		return fileAccess.getHome(userID);
-	}
-	
 	/**
 	 * run the given task as the current user 
 	 * @param runnable

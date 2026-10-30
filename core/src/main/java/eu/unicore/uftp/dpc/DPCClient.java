@@ -179,7 +179,7 @@ public final class DPCClient implements Closeable {
 	 * @throws ProtocolViolationException
 	 */
 	public List<Socket>openDataConnections(int numParCons) throws IOException {
-		checkConnected();
+		assert connected;
 		logger.info("Opening <{}> data connection(s).", numParCons);
 		if (dataSockets.size() > 0) {
 			throw new IllegalStateException("There are already open data connections.");
@@ -215,13 +215,8 @@ public final class DPCClient implements Closeable {
 		String inputLine = runCommand(UFTPCommands.EPSV, 229).getStatusLine();
 		Matcher m = epsv_response.matcher(inputLine);
 		if(m.matches()){
-			try{
-				int port = Integer.parseInt(m.group(2));
-				return createDataSocket(controlSocket.getInetAddress(), port);
-			}
-			catch(NumberFormatException ex){
-				throw new IOException("Could not parse response from server: <"+inputLine+">");
-			}
+			int port = Integer.parseInt(m.group(2));
+			return createDataSocket(controlSocket.getInetAddress(), port);
 		}
 		throw new IOException("Could not parse response from server: <"+inputLine+">");	
 	}
@@ -281,7 +276,7 @@ public final class DPCClient implements Closeable {
 	}
 
 	public List<String>getServerFeatures(){
-		checkConnected();
+		assert connected;
 		return features;
 	}
 
@@ -327,11 +322,6 @@ public final class DPCClient implements Closeable {
 			throw new IOException("Error: got " + reply+" for command <"+command+">");
 		}
 		return reply;
-	}
-	private void checkConnected() {
-		if (!connected) {
-			throw new IllegalStateException("Not connected");
-		}
 	}
 
 	private List<String> getFroxFeatures(){

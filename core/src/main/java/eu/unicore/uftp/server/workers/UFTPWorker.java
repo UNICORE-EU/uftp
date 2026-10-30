@@ -219,10 +219,6 @@ public class UFTPWorker extends Thread implements UFTPConstants {
 
 	/**
 	 * send data from a file
-	 *
-	 * @param session - the session containing the required information
-	 * @throws IOException
-	 * @throws java.lang.InterruptedException
 	 */
 	protected void sendData() throws IOException, InterruptedException {
 		RandomAccessFile ra = session.getLocalRandomAccessFile();

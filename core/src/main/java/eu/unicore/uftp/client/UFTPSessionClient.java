@@ -39,13 +39,14 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 
 	private static final Logger logger = Utils.getLogger(Utils.LOG_CLIENT, UFTPSessionClient.class);
 
-	private File baseDirectory;
 	protected boolean keepAlive = false;
+
 	protected boolean rfcCompliantRange = false;
 
 	protected int buffersize = BUFFSIZE;
 
 	private boolean checksumEnabled = false;
+
 	private CRC32 checksum;
 
 	/**
@@ -567,22 +568,6 @@ public class UFTPSessionClient extends AbstractUFTPClient {
 		return runCommand(String.format("RECEIVE-FILE '%s' '%s' '%s' '%s'",
 				localFile, remoteFile, remoteServer, password))
 				.getStatusLine();
-	}
-
-	/**
-	 * set the local base directory
-	 *
-	 * @param base - the base directory
-	 */
-	public void setBaseDirectory(File base) {
-		if (!base.isDirectory()) {
-			throw new IllegalArgumentException("Not a directory: " + base.getPath());
-		}
-		this.baseDirectory = base;
-	}
-
-	public File getBaseDirectory() {
-		return baseDirectory;
 	}
 
 	public boolean supportsHashes() {

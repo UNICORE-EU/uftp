@@ -76,7 +76,8 @@ public class TestSessionFeatures extends ClientServerTestBase{
 		properties.setProperty("excludes","*forbidden*");
 		UFTPSessionRequest job = new UFTPSessionRequest(properties);
 		Session s = new Session(null,job,Utils.getFileAccess(null),1);
-		assertEquals(3,s.getIncludes().length);
+		assertEquals(3,s.includes.length);
+		assertEquals(1,s.excludes.length);
 		assertFalse(s.checkACL(new File("/ham"), Mode.READ));
 		assertTrue(s.checkACL(new File("/foo"),Mode.READ));
 		assertTrue(s.checkACL(new File("/bar"),Mode.READ));
@@ -358,6 +359,7 @@ public class TestSessionFeatures extends ClientServerTestBase{
 			assertTrue(ok.getMessage().contains("not supported"));
 			for(String algo: Session.supportedHashAlgorithms) {
 				client.setHashAlgorithm(algo);
+				assertEquals(algo, client.getHashAlgorithm());
 				System.out.println("Hash algorithm set to: " + algo);
 				HashInfo hashInfo = client.getHash(fileName, 0, dataFile.length());
 				System.out.println("Remote hash:   "+hashInfo.fullInfo());
@@ -421,6 +423,8 @@ public class TestSessionFeatures extends ClientServerTestBase{
 			client.mlsd(".", os);
 			os = new ByteArrayOutputStream();
 			client.list(".", os);
+			os = new ByteArrayOutputStream();
+			client.list("-a", os);
 		}
 	}
 

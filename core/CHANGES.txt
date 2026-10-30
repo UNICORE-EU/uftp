@@ -4,6 +4,7 @@ Changelog
 UFTP 2.26.0
 -----------
  - support CRC32 checksums for data transfer integrity checking
+ - cleanup client API, improve tests, update dependencies
 
 UFTP 2.25.0
 -----------

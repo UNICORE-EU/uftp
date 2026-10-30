@@ -378,6 +378,7 @@ public class TestSessionBasics extends ClientServerTestBase{
 		Thread.sleep(1000);
 		InetAddress[]server=host;
 		try(UFTPSessionClient client = new UFTPSessionClient(server, srvPort)){
+			client.setBandwidthLimit(20*1024*24);
 			client.setSecret(secret);
 			client.connect();
 			long size = client.getFileSize(realSourceName);
@@ -409,4 +410,45 @@ public class TestSessionBasics extends ClientServerTestBase{
 		}
 	}
 
+
+	@Test
+	public void testSessionREST() throws Exception {
+		String realSourceName = "target/testdata/sourcefile";
+		File realSource = new File(realSourceName);
+		FileUtils.deleteQuietly(realSource);
+		String testString = "this is a test for the session client";
+		Utils.writeToFile(testString, realSource);
+		String secret = String.valueOf(System.currentTimeMillis());
+		String cwd = dataDir.getAbsolutePath();
+		UFTPSessionRequest job = new UFTPSessionRequest(host, "nobody", secret, cwd);
+		job.sendTo(host[0], jobPort);
+		Thread.sleep(1000);
+
+		try(UFTPSessionClient client = new UFTPSessionClient(host, srvPort)){
+			client.setSecret(secret);
+			client.connect();
+			System.out.println(client.getServerFeatures());
+			String newDir="test-"+System.currentTimeMillis();
+			client.mkdir(newDir);
+			client.cd(newDir);
+			int offset = 20;
+
+			// write the first 20 bytes
+			try(FileInputStream fis=new FileInputStream(realSource)){
+				client.put("test", offset, fis);
+			}
+			// "manually" send REST
+			client.runCommand("REST 20", 350);
+			// write second part of test file
+			try(FileInputStream fis=new FileInputStream(realSource)){
+				fis.skip(offset);
+				client.put("test", realSource.length()-offset, fis);
+			}
+			long rSize=client.getFileSize("test");
+			assertEquals(realSource.length(),rSize);
+			String md5Orig = Utils.md5(realSource);
+			String md5Remote = Utils.md5(new File(cwd, newDir+"/test"));
+			assertEquals(md5Orig, md5Remote, "File content mismatch");
+		}
+	}
 }

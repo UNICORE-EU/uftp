@@ -86,10 +86,10 @@ public class Session {
 	private File currentDirectory;
 
 	// allowed file patterns
-	private String[]includes = {};
+	final String[]includes;
 
 	// forbidden file patterns
-	private String[]excludes = {};
+	final String[]excludes;
 	private String[] defaultExcludes = {};
 
 	// original file name for rename operation
@@ -994,11 +994,6 @@ public class Session {
 		return localFile;
 	}
 
-	public void setupLocalFile(File file, boolean write) throws IOException {
-		this.localFile = file;
-		this.localRandomAccessFile = createRandomAccessFile(file, write?"rw":"r");
-	}
-
 	public File getBaseDirectory() {
 		return baseDirectory;
 	}
@@ -1013,14 +1008,6 @@ public class Session {
 	 */
 	public RandomAccessFile createRandomAccessFile(File file, String mode) throws IOException {
 		return fileAccess.getRandomAccessFile(file, mode);
-	}
-
-	public String[] getIncludes() {
-		return includes;
-	}
-
-	public String[] getExcludes() {
-		return excludes;
 	}
 
 	public boolean isKeepAlive() {
