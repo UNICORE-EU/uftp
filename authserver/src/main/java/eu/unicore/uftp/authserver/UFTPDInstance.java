@@ -34,6 +34,26 @@ public class UFTPDInstance extends UFTPDInstanceBase implements ExternalSystemCo
 		ech.setExternalSystemName("UFTPD server '"+serverName+"'");
 	}
 
+	public void setHost(String host) {
+		this.host = host;
+	}
+
+	public void setPort(int port) {
+		this.port = port;
+	}
+
+	public void setCommandHost(String cmdHost) {
+		this.commandHost= cmdHost;
+	}
+
+	public void setCommandPort(int cmdPort) {
+		this.commandPort = cmdPort;
+	}
+
+	public void setSSL(boolean ssl) {
+		this.ssl = ssl;
+	}
+
 	@Override
 	public Status getConnectionStatus() {
 		return ech.getConnectionStatus();
@@ -41,12 +61,12 @@ public class UFTPDInstance extends UFTPDInstanceBase implements ExternalSystemCo
 
 	@Override
 	public String getConnectionStatusMessage() {
-		return  ech.getConnectionStatusMessage();
+		return ech.getConnectionStatusMessage();
 	}
 
 	@Override
 	public String getExternalSystemName() {
-		return  ech.getExternalSystemName();
+		return ech.getExternalSystemName();
 	}
 
 	@Override

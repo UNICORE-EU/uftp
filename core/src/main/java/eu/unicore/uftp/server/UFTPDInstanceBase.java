@@ -44,43 +44,24 @@ public abstract class UFTPDInstanceBase {
 	// server info received from a ping request
 	protected final Map<String,String> serverInfo = new HashMap<>();
 
-	/**
-	 * set the address of the FTP socket
-	 */
-	public void setHost(String host) {
-		this.host = host;
+	public String getHost() {
+		return host;
 	}
 
-	/**
-	 * set the port of the FTP socket
-	 */
-	public void setPort(int port) {
-		this.port = port;
+	public int getPort() {
+		return port;
 	}
 
-	/**
-	 * set the address of the FTP socket
-	 */
-	public void setCommandHost(String commandHost) {
-		this.commandHost = commandHost;
+	public String getCommandHost() {
+		return commandHost;
 	}
 
-	/**
-	 * set the port of the FTP socket
-	 */
-	public void setCommandPort(int commandPort) {
-		this.commandPort = commandPort;
+	public int getCommandPort() {
+		return commandPort;
 	}
 
-	/**
-	 * select SSL mode on the command socket
-	 */
-	public void setSsl(boolean ssl) {
-		this.ssl = ssl;
-	}
-
-	public void setDescription(String description) {
-		this.description = description;
+	public boolean isSsl() {
+		return ssl;
 	}
 
 	@Override

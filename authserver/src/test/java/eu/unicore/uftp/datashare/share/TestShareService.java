@@ -303,7 +303,7 @@ public class TestShareService {
 		Gson gson = new GsonBuilder().create();
 		JSONObject transferReq = new JSONObject(gson.toJson(req));
 		System.out.println(transferReq);
-
+		
 		BaseClient bc2 = getTargetUserClient();
 		bc2.setURL(getBaseURL()+"/access/NOSUCHSERVER");
 		var re = assertThrows(RESTException.class,()->{
@@ -313,6 +313,13 @@ public class TestShareService {
 		bc.setURL(getBaseURL()+"/access/TEST");
 		bc.postQuietly(transferReq);
 
+		// test access to non-existent path
+		req.serverPath="/no_such_path/test123";
+		JSONObject transferReq2 = new JSONObject(gson.toJson(req));
+		var re2 = assertThrows(RESTException.class,()->{
+				bc2.postQuietly(transferReq2);});
+		assertEquals(404, re2.getStatus());
+		
 		// as original sharing user, delete share by setting access to NONE
 		bc = getShareClient();
 		resource  = getBaseURL()+"/share/TEST";

@@ -19,12 +19,16 @@ public class TestUFTPDInstanceBase extends ClientServerTestBase {
 		UFTPDInstanceBase i = new UFTPDInstanceBase() {
 			protected SSLSocketFactory getSSLSocketFactory() {return null;}
 		};
-		i.setCommandHost("localhost");
-		i.setCommandPort(jobPort);
-		i.setSsl(false);
-		i.setDescription("test");
-		i.setHost("localhost");
-		i.setPort(srvPort);
+		i.commandHost = "localhost";
+		i.commandPort = jobPort;
+		i.ssl = false;
+		i.description = "test";
+		i.host = "localhost";
+		i.port = srvPort;
+		assertEquals("localhost", i.getCommandHost());
+		assertEquals(jobPort, i.getCommandPort());
+		assertEquals("localhost", i.getHost());
+		assertEquals(srvPort, i.getPort());
 		var connStatus = i.checkConnection();
 		assertTrue(connStatus.getM1());
 		assertEquals("OK", connStatus.getM2());

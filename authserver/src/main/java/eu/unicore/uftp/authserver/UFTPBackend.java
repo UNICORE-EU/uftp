@@ -93,13 +93,13 @@ public class UFTPBackend {
 		return server;
 	}
 
-	private static String[] internal = new String[]
-			{ "class", "reservations.enable", "reservations.file" };
+	private static String[] not_mapped = new String[]
+			{ "class", "reservations.enable", "reservations.file", "description" };
 
 	private void mapSettings(Object thing, String prefix, Properties properties) {
 		Map<String,String>params = new PropertyGroupHelper(properties, 
 			new String[]{prefix}).getFilteredMap();
-		for(String i: internal)params.remove(prefix+i);
+		for(String i: not_mapped)params.remove(prefix+i);
 		Utilities.mapParams(thing, params, log);
 	}
 

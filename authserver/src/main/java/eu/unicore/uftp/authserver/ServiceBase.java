@@ -27,7 +27,7 @@ public abstract class ServiceBase extends ApplicationBaseResource implements Ker
 	private static final Logger logger = Log.getLogger("authservice", ServiceBase.class);
 
 	protected static final Gson gson = new GsonBuilder().create();
-	
+
 	protected UserAttributes assembleAttributes(UFTPBackend server, String requestedGroup){
 		String serverName = server.getServerName();
 		Client client = AuthZAttributeStore.getClient();
