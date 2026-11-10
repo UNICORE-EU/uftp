@@ -34,6 +34,7 @@ import eu.unicore.uftp.datashare.db.ShareDAO;
 import eu.unicore.uftp.dpc.Session.Mode;
 import eu.unicore.util.Log;
 import io.imunity.tanl.x509.impl.X500NameUtils;
+import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.ResponseBuilder;
@@ -164,8 +165,10 @@ public abstract class ShareServiceBase extends ServiceBase {
 		res.end();
 	}
 
-	protected ACLStorage getShareDB(String serverName){
-		return getShareServiceProperties().getDB(serverName);
+	protected ACLStorage getShareDB(String serverName, boolean failOnMissing) throws WebApplicationException {
+		ACLStorage db = getShareServiceProperties().getDB(serverName);
+		if(db==null && failOnMissing)throw new WebApplicationException(404);
+		return db;
 	}
 
 	protected String normalize(String targetUser){

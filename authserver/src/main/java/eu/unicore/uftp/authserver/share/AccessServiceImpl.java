@@ -71,16 +71,9 @@ public class AccessServiceImpl extends ShareServiceBase {
 	}
 
 	private Response handleDownload(String serverName, String uniqueID, String path, String range) {
-		UFTPBackend server = getLogicalServer(serverName);
-		ACLStorage shareDB = getShareDB(serverName);
-		if(shareDB==null || server==null){
-			return createErrorResponse(404, "No server or no data sharing for '"+serverName+"'");
-		}
-		if(!server.isAvailable()) {
-			return createErrorResponse(503, server.getStatusDescription());
-		}
 		Response r = null;
 		try{
+			ACLStorage shareDB = getShareDB(serverName, true);
 			UFTPDInstance uftp = getUFTPD(serverName);
 			ShareDAO share = shareDB.read(uniqueID);
 			if(share==null){
@@ -149,16 +142,9 @@ public class AccessServiceImpl extends ShareServiceBase {
 	@Path("/{serverName}/{uniqueID}/{path:.*}")
 	public Response uploadPath(InputStream content, @PathParam("serverName") String serverName, 
 			@PathParam("uniqueID") String uniqueID, @PathParam("path") String path) {
-		UFTPBackend server = getLogicalServer(serverName);
-		ACLStorage shareDB = getShareDB(serverName);
-		if(shareDB==null || server==null) {
-			throw new WebApplicationException(404);
-		}
-		if(!server.isAvailable()) {
-			throw new WebApplicationException(503);
-		}
 		Response r = null;
 		try{
+			ACLStorage shareDB = getShareDB(serverName, true);
 			UFTPDInstance uftp = getUFTPD(serverName);
 			ShareDAO share = shareDB.read(uniqueID);
 			if(share==null){
@@ -195,17 +181,11 @@ public class AccessServiceImpl extends ShareServiceBase {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response auth(@PathParam("serverName") String serverName, String json) {
-		UFTPBackend server = getLogicalServer(serverName);
-		ACLStorage shareDB = getShareDB(serverName);
-		if(shareDB==null || server==null){
-			return createErrorResponse(404, "No sharing for / no server '"+serverName+"', please check your URL");
-		}
-		if(!server.isAvailable()) {
-			return createErrorResponse(503, server.getStatusDescription());
-		}
 		String clientIP = AuthZAttributeStore.getTokens().getClientIP();
 		Response r = null;
 		try{
+			UFTPBackend server = getLogicalServer(serverName);
+			ACLStorage shareDB = getShareDB(serverName, true);
 			UFTPDInstance uftp = getUFTPD(serverName);
 			AuthRequest authRequest = gson.fromJson(json, AuthRequest.class);
 			UserAttributes ua = assembleAttributes(server, null);

@@ -16,6 +16,7 @@ import eu.unicore.services.rest.impl.ApplicationBaseResource;
 import eu.unicore.services.security.util.AuthZAttributeStore;
 import eu.unicore.util.Log;
 import eu.unicore.util.Pair;
+import jakarta.ws.rs.WebApplicationException;
 
 /**
  * some common stuff for the auth and sharing services
@@ -81,11 +82,14 @@ public abstract class ServiceBase extends ApplicationBaseResource implements Ker
 	 * get the logical server for the  given server name
 	 *
 	 * @param serverName
+	 * @throws WebApplicationException
 	 */
-	protected UFTPBackend getLogicalServer(String serverName) {
+	protected UFTPBackend getLogicalServer(String serverName) throws WebApplicationException {
 		Pair<String,Integer> sn = getServerSpec(serverName);
 		UFTPBackend u = getConfig().getServer(sn.getM1());
-		return u!=null && u.hasInstance(sn.getM2()) ? u : null;
+		if(u==null || !u.hasInstance(sn.getM2()))throw new WebApplicationException(404);
+		if(u!=null && !u.isAvailable())throw new WebApplicationException(503);
+		return u;
 	}
 
 	/**
@@ -93,9 +97,9 @@ public abstract class ServiceBase extends ApplicationBaseResource implements Ker
 	 *
 	 * @param serverName
 	 */
-	protected UFTPDInstance getUFTPD(String serverName) throws IOException {
+	protected UFTPDInstance getUFTPD(String serverName) throws WebApplicationException, IOException {
 		Pair<String,Integer> sn = getServerSpec(serverName);
-		return getConfig().getServer(sn.getM1()).getUFTPDInstance(sn.getM2());
+		return getLogicalServer(serverName).getUFTPDInstance(sn.getM2());
 	}
 
 	@Override

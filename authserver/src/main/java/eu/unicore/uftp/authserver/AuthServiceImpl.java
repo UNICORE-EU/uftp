@@ -1,6 +1,5 @@
 package eu.unicore.uftp.authserver;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -63,15 +62,9 @@ public class AuthServiceImpl extends ServiceBase {
 	public Response authenticateAndInitTransfer(@PathParam("serverName") String serverName, String json) {
 		String clientIP = AuthZAttributeStore.getTokens().getClientIP();
 		logger.debug("Incoming request from: {} {}", clientIP, json);
-		UFTPBackend server = getLogicalServer(serverName);
-		if(server == null){
-			return createErrorResponse(404, "No such server: '"+serverName+"', please check your URL");
-		}
-		if(!server.isAvailable()) {
-			return createErrorResponse(503, server.getStatusDescription());
-		}
-		AuthRequest authRequest = gson.fromJson(json, AuthRequest.class);
 		try {
+			UFTPBackend server = getLogicalServer(serverName);
+			AuthRequest authRequest = gson.fromJson(json, AuthRequest.class);
 			UFTPDInstance uftpd = getUFTPD(serverName);
 			UserAttributes authData = null;
 			try{
@@ -95,7 +88,7 @@ public class AuthServiceImpl extends ServiceBase {
 			}else {
 				return handleError(500, response.reason, null, logger);
 			}
-		} catch (IOException e) {
+		} catch (Exception e) {
 			return handleError(500,"Cannot connect to UFTPD server",e,logger);
 		}	
 	}

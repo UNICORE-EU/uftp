@@ -41,7 +41,7 @@ public class TestService {
 		System.out.println("Configured "+desc);
 		// do a get to find the configured servers
 		JettyServer server=k.getServer();
-		String url = server.getUrls()[0].toExternalForm()+"/rest/auth";
+		final String url = server.getUrls()[0].toExternalForm()+"/rest/auth";
 		IAuthCallback auth = new UsernamePassword("demouser", "test123");
 		BaseClient client = new BaseClient(url, k.getClientConfiguration(), auth);
 		JSONObject o = client.getJSON();
@@ -61,6 +61,10 @@ public class TestService {
 		req.client = "127.0.0.1";
 		try(ClassicHttpResponse response = client.post(new JSONObject(gson.toJson(req)))){
 			System.out.println("Service reply: " + EntityUtils.toString(response.getEntity()));
+		}
+		client.setURL(url);
+		try(ClassicHttpResponse response = client.get(ContentType.TEXT_HTML)){
+			assertTrue(EntityUtils.toString(response.getEntity()).contains("href"));
 		}
 		client.close();
 	}

@@ -25,7 +25,6 @@ import eu.unicore.uftp.datashare.SharingUser;
 import eu.unicore.uftp.datashare.Target;
 import eu.unicore.uftp.datashare.db.ACLStorage;
 import eu.unicore.uftp.datashare.db.ShareDAO;
-import eu.unicore.util.Pair;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
@@ -52,12 +51,9 @@ public class ShareServiceImpl extends ShareServiceBase {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response share(@PathParam("serverName") String serverName, String jsonString) {
-		UFTPBackend server = getLogicalServer(serverName);
-		ACLStorage shareDB = getShareDB(serverName);
-		if(shareDB==null || server==null){
-			return createErrorResponse(404, "No sharing for '"+serverName+"'");
-		}
 		try{
+			UFTPBackend server = getLogicalServer(serverName);
+			ACLStorage shareDB = getShareDB(serverName, true);
 			UFTPDInstance uftp = getUFTPD(serverName);
 			String clientIP = AuthZAttributeStore.getTokens().getClientIP();
 			logger.debug("Incoming request from: {} {}", clientIP, jsonString);
@@ -115,12 +111,9 @@ public class ShareServiceImpl extends ShareServiceBase {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/{serverName}")
 	public Response getShares(@PathParam("serverName") String serverName) {
-		UFTPBackend server = getLogicalServer(serverName);
-		ACLStorage shareDB = getShareDB(serverName);
-		if(shareDB==null || server==null){
-			return createErrorResponse(404, "No sharing for '"+serverName+"'");
-		}
 		try{
+			UFTPBackend server = getLogicalServer(serverName);
+			ACLStorage shareDB = getShareDB(serverName, true);
 			UserAttributes ua = assembleAttributes(server, null);
 			Owner owner = new Owner(getNormalizedCurrentUserName(), ua.uid, ua.gid);
 			JSONObject o = new JSONObject();
@@ -146,12 +139,9 @@ public class ShareServiceImpl extends ShareServiceBase {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/{serverName}/{uniqueID}")
 	public Response getShareInfo(@PathParam("serverName") String serverName, @PathParam("uniqueID") String uniqueID) {
-		UFTPBackend server = getLogicalServer(serverName);
-		ACLStorage shareDB = getShareDB(serverName);
-		if(shareDB==null || server==null){
-			return createErrorResponse(404, "No sharing for '"+serverName+"'");
-		}
 		try{
+			UFTPBackend server = getLogicalServer(serverName);
+			ACLStorage shareDB = getShareDB(serverName, true);
 			UserAttributes ua = assembleAttributes(server, null);
 			Owner owner = new Owner(getNormalizedCurrentUserName(), ua.uid, ua.gid);
 			ShareDAO share = shareDB.read(uniqueID);
@@ -181,12 +171,9 @@ public class ShareServiceImpl extends ShareServiceBase {
 	@Path("/{serverName}/{uniqueID}")
 	public Response updateShare(@PathParam("serverName") String serverName, @PathParam("uniqueID") String uniqueID,
 			String json) {
-		UFTPBackend server = getLogicalServer(serverName);
-		ACLStorage shareDB = getShareDB(serverName);
-		if(shareDB==null || server==null){
-			return createErrorResponse(404, "No sharing for '"+serverName+"'");
-		}
 		try{
+			UFTPBackend server = getLogicalServer(serverName);
+			ACLStorage shareDB = getShareDB(serverName, true);
 			UserAttributes ua = assembleAttributes(server, null);
 			Owner owner = new Owner(getNormalizedCurrentUserName(), ua.uid, ua.gid);
 			ShareDAO share = shareDB.read(uniqueID);
@@ -246,7 +233,7 @@ public class ShareServiceImpl extends ShareServiceBase {
 		try{
 			for(UFTPBackend i : getConfig().getServers()){
 				String name = i.getServerName();
-				ACLStorage shareDB = getShareDB(name);
+				ACLStorage shareDB = getShareDB(name, false);
 				if(shareDB==null)continue;
 				String url = kernel.getContainerProperties().getContainerURL()+"/rest/share/"+name;
 				JSONObject server = new JSONObject();
@@ -269,17 +256,8 @@ public class ShareServiceImpl extends ShareServiceBase {
 	@DELETE
 	@Path("/{serverName}/{uniqueID}")
 	public Response delete(@PathParam("serverName") String serverName, @PathParam("uniqueID") String uniqueID) {
-		Pair<String,Integer> sn = getServerSpec(serverName);
-		serverName = sn.getM1();
-		UFTPBackend server = getConfig().getServer(serverName);
-		ACLStorage shareDB = getShareDB(serverName);
-		if(shareDB==null || server==null){
-			return createErrorResponse(404, "No sharing for '"+serverName+"'");
-		}
-		if(AuthZAttributeStore.getTokens()==null){
-			throw new WebApplicationException(401);
-		}
 		try{
+			ACLStorage shareDB = getShareDB(serverName, true);
 			ShareDAO d = shareDB.read(uniqueID);
 			if(d!=null) {
 				if(!d.getOwnerID().equals(getNormalizedCurrentUserName())){

@@ -224,6 +224,15 @@ public class TestShareService {
 		o.put("user","CN=Other User, O=Testing");
 		o.put("group","hpc1");
 		o.put("lifetime", "3600");
+
+		// trigger 404
+		bc.setURL(getBaseURL()+"/share/NOPE");
+		var re1 = assertThrows(RESTException.class,()->{
+			bc.create(o);
+		});
+		assertEquals(404, re1.getStatus());
+	
+		// now for real
 		bc.setURL(getBaseURL()+"/share/TEST");
 		String loc = bc.create(o);
 		String id = new File(loc).getName();
